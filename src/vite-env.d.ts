@@ -12,6 +12,7 @@ declare global {
 		gameManager: typeof gameManager;
 		ACHIEVEMENTS: typeof ACHIEVEMENTS;
 		BUILDINGS: typeof BUILDINGS;
+		SKILL_UPGRADES: typeof SKILL_UPGRADES;
 		UPGRADES: typeof UPGRADES;
 	}
 }

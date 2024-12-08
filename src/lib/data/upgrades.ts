@@ -145,7 +145,7 @@ function createPowerUpIntervalUpgrades() {
 		cost: i => 10_000 * 2 ** (i * 7),
 		effects: i => [
 			{
-				type: 'power_up',
+				type: 'power_up_interval',
 				value_type: 'multiply',
 				value: i > 5 ? 0.9 : 0.8,
 			},

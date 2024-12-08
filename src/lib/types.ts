@@ -10,17 +10,16 @@ export interface Building {
 }
 
 export interface Upgrade {
-	condition?: (state: GameState) => boolean;
-	cost: number;
-	description: string;
-	effects: Effect[];
 	id: string;
 	name: string;
+	description: string;
+	effects: Effect[];
+	cost: number;
 }
 
 export interface Effect {
 	target?: string;
-	type: 'building' | 'click' | 'global' | 'power_up';
+	type: 'building' | 'click' | 'global' | 'power_up_interval';
 	value: number;
 	value_type: 'add' | 'add_aps' | 'add_ach' | 'multiply';
 }
@@ -51,8 +50,24 @@ export interface GameState {
 	}
 	lastSave: number;
 	totalClicks: number;
+    skillUpgrades: string[];
 	upgrades: string[];
 	version: typeof SAVE_VERSION;
 }
 
 export type Range = [number, number];
+
+export interface SkillUpgrade {
+	id: string;
+	name: string;
+	description: string;
+	position: { x: number; y: number };
+	condition?: (state: GameState) => boolean;
+	effects: Effect[];
+	requires?: string[];
+}
+
+export interface SkillTreeState {
+	offset: { x: number; y: number };
+	scale: number;
+}

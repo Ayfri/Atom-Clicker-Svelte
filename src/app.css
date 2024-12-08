@@ -1,4 +1,5 @@
 :root {
+	--accent-color: #4a90e2;
 	background-color: #1a1a1a;
 	background-blend-mode: screen;
 
@@ -54,4 +55,16 @@ button:focus-visible {
 
 * {
 	box-sizing: border-box;
+}
+
+@keyframes pulse {
+	0% {
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(1.1);
+	}
+	100% {
+		transform: scale(1);
+	}
 }

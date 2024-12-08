@@ -5,9 +5,22 @@ import {ACHIEVEMENTS} from '../data/achievements';
 import {BUILDING_LEVEL_UP_COST, BUILDINGS, type BuildingType} from '../data/buildings';
 import {UPGRADES} from '../data/upgrades';
 import {loadSavedState, SAVE_KEY, SAVE_VERSION} from './saves';
-import {achievements, activePowerUps, atoms, buildings, lastSave, totalClicks, upgrades} from '../stores/gameStore';
+import {achievements, activePowerUps, atoms, buildings, lastSave, totalClicks, upgrades, skillUpgrades} from '../stores/gameStore';
 import {info} from '../stores/toasts';
 import type {GameState, PowerUp} from '../types';
+import type { Building } from '../types';
+
+interface SaveData {
+	achievements: string[];
+	activePowerUps: PowerUp[];
+	atoms: number;
+	buildings: Record<BuildingType, Building>;
+	lastSave: number;
+	totalClicks: number;
+	upgrades: string[];
+	version: number;
+	skillUpgrades: string[];
+}
 
 export const gameManager = {
 	initialize() {
@@ -20,6 +33,7 @@ export const gameManager = {
 			lastSave.set(savedState.lastSave);
 			totalClicks.set(savedState.totalClicks);
 			upgrades.set(savedState.upgrades.filter(u => u in UPGRADES));
+			skillUpgrades.set(savedState.skillUpgrades || []);
 
 			get(activePowerUps).forEach(powerUp =>
 				setTimeout(() => {
@@ -29,6 +43,8 @@ export const gameManager = {
 
 			// Save in case of data migration
 			this.save();
+		} else {
+			skillUpgrades.set([]);
 		}
 
 		// Check achievements periodically
@@ -57,6 +73,7 @@ export const gameManager = {
 			totalClicks: get(totalClicks),
 			upgrades: get(upgrades),
 			version: SAVE_VERSION,
+			skillUpgrades: get(skillUpgrades),
 		};
 	},
 
@@ -138,10 +155,22 @@ export const gameManager = {
 		lastSave.set(Date.now());
 		totalClicks.set(0);
 		upgrades.set([]);
+		skillUpgrades.set([]);
 	},
 
 	save() {
 		const currentState = this.getCurrentState();
 		localStorage.setItem(SAVE_KEY, JSON.stringify(currentState));
+	},
+
+	load(saveData: SaveData) {
+		achievements.set(saveData.achievements.filter(a => a in ACHIEVEMENTS));
+		activePowerUps.set(saveData.activePowerUps);
+		atoms.set(saveData.atoms);
+		buildings.set(saveData.buildings);
+		lastSave.set(saveData.lastSave);
+		totalClicks.set(saveData.totalClicks);
+		upgrades.set(saveData.upgrades.filter(u => u in UPGRADES));
+		skillUpgrades.set(saveData.skillUpgrades);
 	},
 };

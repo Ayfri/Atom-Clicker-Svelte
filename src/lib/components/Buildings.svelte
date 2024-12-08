@@ -1,10 +1,15 @@
 <script lang="ts">
+	import {Network} from 'lucide-svelte';
+	import NotificationDot from './NotificationDot.svelte';
+	import { mobile } from '../stores/window';
+	import {skillPointsAvailable} from '../stores/gameStore';
 	import {gameManager} from '../helpers/gameManager';
 	import {BUILDING_COLORS, type BuildingData, BUILDINGS, type BuildingType} from '../data/buildings';
 	import {buildingProductions, atoms, buildings, globalMultiplier, bonusMultiplier} from '../stores/gameStore';
 	import type {Building} from '../types';
 	import {formatNumber} from '../utils';
 	import {fade} from 'svelte/transition';
+	import SkillTree from './SkillTree.svelte';
 
 	const buildingsEntries = Object.entries(BUILDINGS) as [BuildingType, BuildingData][];
 
@@ -15,10 +20,23 @@
 	$: buildingsEntries.filter(([type]) => unlockedBuildings.map(u => u[0]).indexOf(type) === -1 && unaffordableBuildings.map(u => u[0]).indexOf(type) === -1).forEach(([type]) => {
 		gameManager.unlockBuilding(type);
 	});
+
+	let showSkillTree = false;
 </script>
 
+{#if showSkillTree}
+	<SkillTree onClose={() => showSkillTree = false}/>
+{/if}
+
 <div class="buildings">
-	<h2>Buildings</h2>
+	<h2>
+		Buildings
+		{#if !$mobile}
+			<NotificationDot class="skill-tree-icon" on:click={() => showSkillTree = true} title="Open skill tree" hasNotification={$skillPointsAvailable > 0}>
+				<Network />
+			</NotificationDot>
+		{/if}
+	</h2>
 	{#each buildingsEntries as [type, building], i}
 		{@const saveData = $buildings[type]}
 		{@const unaffordable = $atoms < (saveData?.cost ?? building.cost)}
@@ -76,6 +94,11 @@
 		&:hover:not(.disabled) {
 			background: rgba(255, 255, 255, 0.1);
 		}
+	}
+
+	:global(.skill-tree-icon) {
+		cursor: pointer;
+		float: right;
 	}
 
 	.info h3 {

@@ -2,7 +2,8 @@ import {derived, get, writable} from 'svelte/store';
 import {type BuildingType} from '../data/buildings';
 import {POWER_UP_DEFAULT_INTERVAL} from '../data/powerUp';
 import {UPGRADES} from '../data/upgrades';
-import type {Building, Effect, PowerUp, Range, Upgrade} from '../types';
+import {SKILL_UPGRADES} from '../data/skillTree';
+import type {Building, Effect, PowerUp, Range, Upgrade, SkillUpgrade, SkillTreeState} from '../types';
 
 // Individual stores
 export const achievements = writable<string[]>([]);
@@ -12,6 +13,7 @@ export const buildings = writable<Partial<Record<BuildingType, Building>>>({});
 export const lastSave = writable<number>(Date.now());
 export const totalClicks = writable<number>(0);
 export const upgrades = writable<string[]>([]);
+export const skillUpgrades = writable<string[]>([]);
 
 interface SearchEffectsOptions {
 	target?: Effect['target'];
@@ -19,58 +21,67 @@ interface SearchEffectsOptions {
 	value_type?: Effect['value_type'];
 }
 
-function getUpgradesWithEffects(upgrades: Upgrade[], options: SearchEffectsOptions) {
-	return upgrades.filter(upgrade => {
-		const effects = upgrade.effects;
-		let isType = true;
-		let isValueType = true;
-		let isTarget = true;
+function getUpgradesWithEffects(upgrades: (Upgrade | SkillUpgrade)[], options: SearchEffectsOptions) {
+	return upgrades.filter((upgrade): upgrade is (Upgrade | SkillUpgrade) => {
+		// First check if it's a regular upgrade
+		if ('effects' in upgrade && Array.isArray(upgrade.effects)) {
+			const effects = upgrade.effects;
+			let isType = true;
+			let isValueType = true;
+			let isTarget = true;
 
-		if (options.type) {
-			isType = effects.some(effect => effect.type === options.type);
+			if (options.type) {
+				isType = effects.some(effect => effect.type === options.type);
+			}
+			if (options.value_type) {
+				isValueType = effects.some(effect => effect.value_type === options.value_type);
+			}
+			if (options.target) {
+				isTarget = effects.some(effect => effect.target === options.target);
+			}
+			return isType && isValueType && isTarget;
 		}
-		if (options.value_type) {
-			isValueType = effects.some(effect => effect.value_type === options.value_type);
-		}
-		if (options.target) {
-			isTarget = effects.some(effect => effect.target === options.target);
-		}
-		return isType && isValueType && isTarget;
+
+		return false;
 	});
 }
 
-function calculateEffects(upgrades: Upgrade[], defaultValue: number = 0): number {
-	const addEffects = upgrades.flatMap(upgrade => upgrade.effects.filter(effect => effect.value_type === 'add'));
-	const addEffectsResult = addEffects.reduce(
-		(accEffects, effect) => accEffects + effect.value, defaultValue
-	);
+function calculateEffects(upgrades: (Upgrade | SkillUpgrade)[], defaultValue: number = 0): number {
+	let multiplier = defaultValue;
 
-	const addAPSEffects = upgrades.flatMap(upgrade => upgrade.effects.filter(effect => effect.value_type === 'add_aps'));
-	const addAPSEffectsMultiplier = addAPSEffects.reduce(
-		(accEffects, effect) => accEffects + effect.value, 0
-	);
-	const addAPSEffectsResult = addAPSEffectsMultiplier > 0 ? get(atomsPerSecond) * addAPSEffectsMultiplier : 0;
+	upgrades.forEach((upgrade) => {
+		if ('effects' in upgrade && Array.isArray(upgrade.effects)) {
+			const addEffects = upgrade.effects.filter(effect => effect.value_type === 'add');
+			multiplier += addEffects.reduce((acc, effect) => acc + effect.value, 0);
 
-	const addAchEffects = upgrades.flatMap(upgrade => upgrade.effects.filter(effect => effect.value_type === 'add_ach'));
-	const addAchEffectsMultiplier = addAchEffects.reduce(
-		(accEffects, effect) => accEffects + effect.value, 0
-	);
-	const addAchEffectsResult = addAchEffectsMultiplier > 0 ? 1 + get(achievements).length * addAchEffectsMultiplier : 1;
+			const multiplyEffects = upgrade.effects.filter(effect => effect.value_type === 'multiply');
+			multiplier *= multiplyEffects.reduce((acc, effect) => acc * effect.value, 1);
+		} else {
+			const skillUpgrade = upgrade as SkillUpgrade;
+			if ('buildingLevel' in skillUpgrade && 'description' in skillUpgrade) {
+				const description = skillUpgrade.description;
+				const percentageMatch = description.match(/(\d+)%/);
+				if (percentageMatch) {
+					const percentage = parseInt(percentageMatch[1]);
+					multiplier *= (1 + percentage / 100);
+				}
+			}
+		}
+	});
 
-	const multiplyEffects = upgrades.flatMap(upgrade => upgrade.effects.filter(effect => effect.value_type === 'multiply'));
-	const multiplyEffectsMultiplier = multiplyEffects.reduce(
-		(accEffects, effect) => accEffects * effect.value, 1
-	);
-
-	return addEffectsResult * multiplyEffectsMultiplier * addAchEffectsResult + addAPSEffectsResult;
+	return multiplier;
 }
 
 // Derived stores
-export const currentUpgradesBought = derived(upgrades, $upgrades => {
-	return Object.keys(UPGRADES)
-	             .filter(id => $upgrades.includes(id))
-	             .map(id => UPGRADES[id]);
-});
+export const currentUpgradesBought = derived(
+	[upgrades, skillUpgrades],
+	([$upgrades, $skillUpgrades]) => {
+		const allUpgradeIds = [...$upgrades, ...$skillUpgrades];
+		return allUpgradeIds
+			.filter(id => UPGRADES[id] || SKILL_UPGRADES[id])
+			.map(id => UPGRADES[id] || SKILL_UPGRADES[id]);
+	}
+);
 
 export const bonusMultiplier = derived(activePowerUps, $activePowerUps => {
 	return $activePowerUps.reduce((acc, powerUp) => acc * powerUp.multiplier, 1);
@@ -115,6 +126,9 @@ export const atomsPerSecond = derived(
 		return Object.entries($buildingProductions).reduce((total, [_, building]) => total + building, 0);
 	}
 );
+
+export const skillPointsTotal = derived([buildings], ([$buildings]) => Object.values($buildings).reduce((sum, building) => sum + building.level, 0));
+export const skillPointsAvailable = derived([skillPointsTotal, skillUpgrades], ([$skillPointsTotal, $skillUpgrades]) => $skillPointsTotal - $skillUpgrades.length);
 
 export const clickPower = derived(
 	[
