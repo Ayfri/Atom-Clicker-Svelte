@@ -1,9 +1,9 @@
-import {SKILL_UPGRADES} from './data/skillTree';
-import {gameManager} from './helpers/gameManager';
-import {ACHIEVEMENTS} from './data/achievements';
-import {BUILDINGS} from './data/buildings';
-import {UPGRADES} from './data/upgrades';
-import {formatNumber} from './utils';
+import {SKILL_UPGRADES} from '$data/skillTree';
+import {gameManager} from '$helpers/gameManager';
+import {ACHIEVEMENTS} from '$data/achievements';
+import {BUILDINGS} from '$data/buildings';
+import {UPGRADES} from '$data/upgrades';
+import {formatNumber} from '$lib/utils';
 
 export function setGlobals() {
 	window.ACHIEVEMENTS = ACHIEVEMENTS;

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import {atomsPerSecond, atoms, hasBonus} from '../stores/gameStore';
-	import {formatNumber} from '../utils';
+	import {atomsPerSecond, atoms, hasBonus} from '$stores/gameStore';
+	import {formatNumber} from '$lib/utils';
 </script>
 
 <div class="counter" class:bonus={$hasBonus}>

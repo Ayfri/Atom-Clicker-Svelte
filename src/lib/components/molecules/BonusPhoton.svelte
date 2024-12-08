@@ -1,11 +1,10 @@
 <script lang="ts">
 	import {onDestroy, onMount} from 'svelte';
 	import {fade} from 'svelte/transition';
-	import {gameManager} from '../helpers/gameManager';
-	import {powerUpInterval} from '../stores/gameStore';
-	import type {PowerUp} from '../types';
-	import {randomBetween, randomValue} from '../utils';
-	import {formatNumber} from '../utils.js';
+	import {gameManager} from '$helpers/gameManager';
+	import {powerUpInterval} from '$stores/gameStore';
+	import type {PowerUp} from '$lib/types';
+	import {randomBetween, randomValue, formatNumber} from '$lib/utils';
 
 	const powerUps = [
 		{

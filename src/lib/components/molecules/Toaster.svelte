@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {removeToast, toasts} from '../stores/toasts';
+	import {removeToast, toasts} from '$stores/toasts';
 	import {fade} from 'svelte/transition';
 </script>
 

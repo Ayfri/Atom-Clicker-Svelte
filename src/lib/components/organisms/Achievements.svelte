@@ -1,7 +1,7 @@
 <script lang="ts">
-	import {gameManager} from '../helpers/gameManager';
-	import {ACHIEVEMENTS} from '../data/achievements';
-	import {achievements} from '../stores/gameStore';
+	import {gameManager} from '$helpers/gameManager';
+	import {ACHIEVEMENTS} from '$data/achievements';
+	import {achievements} from '$stores/gameStore';
 
 	$: unlockedAchievements = Object.entries(ACHIEVEMENTS).map(([name, achievement]) => ({
 		...achievement,

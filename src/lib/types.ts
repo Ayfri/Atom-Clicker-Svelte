@@ -1,5 +1,5 @@
-import type {BuildingType} from './data/buildings';
-import type {SAVE_VERSION} from './helpers/saves';
+import type {BuildingType} from '$data/buildings';
+import type {SAVE_VERSION} from '$helpers/saves';
 
 export interface Building {
 	count: number;
@@ -12,6 +12,7 @@ export interface Building {
 export interface Upgrade {
 	id: string;
 	name: string;
+	condition?: (state: GameState) => boolean;
 	description: string;
 	effects: Effect[];
 	cost: number;
@@ -65,9 +66,4 @@ export interface SkillUpgrade {
 	condition?: (state: GameState) => boolean;
 	effects: Effect[];
 	requires?: string[];
-}
-
-export interface SkillTreeState {
-	offset: { x: number; y: number };
-	scale: number;
 }

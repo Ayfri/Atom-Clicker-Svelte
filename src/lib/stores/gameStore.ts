@@ -1,9 +1,9 @@
 import {derived, get, writable} from 'svelte/store';
-import {type BuildingType} from '../data/buildings';
-import {POWER_UP_DEFAULT_INTERVAL} from '../data/powerUp';
-import {UPGRADES} from '../data/upgrades';
-import {SKILL_UPGRADES} from '../data/skillTree';
-import type {Building, Effect, PowerUp, Range, Upgrade, SkillUpgrade, SkillTreeState} from '../types';
+import {type BuildingType} from '$data/buildings';
+import {POWER_UP_DEFAULT_INTERVAL} from '$data/powerUp';
+import {UPGRADES} from '$data/upgrades';
+import {SKILL_UPGRADES} from '$data/skillTree';
+import type {Building, Effect, PowerUp, Range, Upgrade, SkillUpgrade} from '../types';
 
 // Individual stores
 export const achievements = writable<string[]>([]);
@@ -148,6 +148,6 @@ export const clickPower = derived(
 );
 
 export const powerUpInterval = derived(currentUpgradesBought, $currentUpgradeBought => {
-	const powerUpIntervalUpgrades = getUpgradesWithEffects($currentUpgradeBought, { type: 'power_up' });
+	const powerUpIntervalUpgrades = getUpgradesWithEffects($currentUpgradeBought, { type: 'power_up_interval' });
 	return POWER_UP_DEFAULT_INTERVAL.map(interval => calculateEffects(powerUpIntervalUpgrades, interval)) as Range;
 });

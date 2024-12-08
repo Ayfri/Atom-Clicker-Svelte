@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Handle, type NodeProps, Position } from '@xyflow/svelte';
-	import type { SkillUpgrade } from '../types';
+	import { Handle, Position } from '@xyflow/svelte';
+	import type { SkillUpgrade } from '$lib/types';
 
 	interface SkillNode extends SkillUpgrade {
 		onClick?: () => void;

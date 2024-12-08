@@ -1,12 +1,12 @@
 // Game store manager
 import {get} from 'svelte/store';
 import {BUILDING_COST_MULTIPLIER} from '../constants';
-import {ACHIEVEMENTS} from '../data/achievements';
-import {BUILDING_LEVEL_UP_COST, BUILDINGS, type BuildingType} from '../data/buildings';
-import {UPGRADES} from '../data/upgrades';
+import {ACHIEVEMENTS} from '$data/achievements';
+import {BUILDING_LEVEL_UP_COST, BUILDINGS, type BuildingType} from '$data/buildings';
+import {UPGRADES} from '$data/upgrades';
 import {loadSavedState, SAVE_KEY, SAVE_VERSION} from './saves';
-import {achievements, activePowerUps, atoms, buildings, lastSave, totalClicks, upgrades, skillUpgrades} from '../stores/gameStore';
-import {info} from '../stores/toasts';
+import {achievements, activePowerUps, atoms, buildings, lastSave, totalClicks, upgrades, skillUpgrades} from '$stores/gameStore';
+import {info} from '$stores/toasts';
 import type {GameState, PowerUp} from '../types';
 import type { Building } from '../types';
 

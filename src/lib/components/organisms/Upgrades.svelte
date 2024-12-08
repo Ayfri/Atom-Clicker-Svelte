@@ -1,8 +1,8 @@
 <script lang="ts">
-	import {gameManager} from '../helpers/gameManager';
-	import {atoms, upgrades} from '../stores/gameStore';
-	import {UPGRADES} from '../data/upgrades';
-	import {formatNumber} from '../utils';
+	import {gameManager} from '$helpers/gameManager';
+	import {atoms, upgrades} from '$stores/gameStore';
+	import {UPGRADES} from '$data/upgrades';
+	import {formatNumber} from '$lib/utils';
 
 	$: availableUpgrades = Object.values(UPGRADES).filter(upgrade => {
 		const condition = upgrade.condition?.(gameManager.getCurrentState()) ?? true;

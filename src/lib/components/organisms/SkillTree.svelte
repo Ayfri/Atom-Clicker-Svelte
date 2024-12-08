@@ -1,12 +1,12 @@
 <script lang="ts">
 	import '@xyflow/svelte/dist/style.css';
 	import { X } from 'lucide-svelte';
-	import {mobile} from '../stores/window';
+	import {mobile} from '$stores/window';
 	import {onDestroy, onMount} from 'svelte';
-	import { SKILL_UPGRADES } from '../data/skillTree';
-	import { gameManager } from '../helpers/gameManager';
-	import {skillPointsAvailable, skillUpgrades} from '../stores/gameStore';
-	import type { SkillUpgrade } from '../types';
+	import { SKILL_UPGRADES } from '$data/skillTree';
+	import { gameManager } from '$helpers/gameManager';
+	import {skillPointsAvailable, skillUpgrades} from '$stores/gameStore';
+	import type { SkillUpgrade } from '$lib/types';
 	import { fade, fly } from 'svelte/transition';
 	import { SvelteFlow, Background, Controls, type Node, type Edge, Position } from '@xyflow/svelte';
 	import {writable} from 'svelte/store';

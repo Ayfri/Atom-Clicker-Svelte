@@ -1,11 +1,11 @@
 <script lang="ts">
-	import {gameManager} from '../helpers/gameManager';
-	import {BUILDING_TYPES, BUILDING_COLORS, BUILDING_LEVEL_UP_COST} from '../data/buildings';
+	import {gameManager} from '$helpers/gameManager';
+	import {BUILDING_TYPES, BUILDING_COLORS, BUILDING_LEVEL_UP_COST} from '$data/buildings';
 	import {onDestroy} from 'svelte';
-	import {createClickParticle, createClickTextParticle, type Particle} from '../helpers/particles';
-	import {buildings, clickPower, hasBonus, totalClicks} from '../stores/gameStore';
-	import {formatNumber} from '../utils';
-	import {particles} from '../stores/canvas';
+	import {createClickParticle, createClickTextParticle, type Particle} from '$helpers/particles';
+	import {buildings, clickPower, hasBonus, totalClicks} from '$stores/gameStore';
+	import {formatNumber} from '$lib/utils';
+	import {particles} from '$stores/canvas';
 
 	let spawnInterval: number;
 

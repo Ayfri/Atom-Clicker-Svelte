@@ -1,8 +1,8 @@
 import {get} from 'svelte/store';
-import {atomsPerSecond} from '../stores/gameStore';
-import type {Achievement, GameState} from '../types';
-import {formatNumber} from '../utils';
-import {BUILDING_TYPES, BUILDINGS, type BuildingType} from './buildings';
+import {atomsPerSecond} from '$stores/gameStore';
+import type {Achievement, GameState} from '$lib/types';
+import {formatNumber} from '$lib/utils';
+import {BUILDING_TYPES, BUILDINGS, type BuildingType} from '$data/buildings';
 
 export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
 	{

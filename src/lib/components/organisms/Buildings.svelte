@@ -1,13 +1,13 @@
 <script lang="ts">
 	import {Network} from 'lucide-svelte';
-	import NotificationDot from './NotificationDot.svelte';
-	import { mobile } from '../stores/window';
-	import {skillPointsAvailable} from '../stores/gameStore';
-	import {gameManager} from '../helpers/gameManager';
-	import {BUILDING_COLORS, type BuildingData, BUILDINGS, type BuildingType} from '../data/buildings';
-	import {buildingProductions, atoms, buildings, globalMultiplier, bonusMultiplier} from '../stores/gameStore';
-	import type {Building} from '../types';
-	import {formatNumber} from '../utils';
+	import NotificationDot from '@components/atoms/NotificationDot.svelte';
+	import { mobile } from '$stores/window';
+	import {skillPointsAvailable} from '$stores/gameStore';
+	import {gameManager} from '$helpers/gameManager';
+	import {BUILDING_COLORS, type BuildingData, BUILDINGS, type BuildingType} from '$data/buildings';
+	import {buildingProductions, atoms, buildings, globalMultiplier, bonusMultiplier} from '$stores/gameStore';
+	import type {Building} from '$lib/types';
+	import {formatNumber} from '$lib/utils';
 	import {fade} from 'svelte/transition';
 	import SkillTree from './SkillTree.svelte';
 

@@ -1,5 +1,5 @@
-import type {SkillUpgrade} from '../types';
-import {BUILDINGS, type BuildingData, type BuildingType, BUILDING_TYPES} from './buildings';
+import type {SkillUpgrade} from '$lib/types';
+import {BUILDINGS, type BuildingData, type BuildingType, BUILDING_TYPES} from '$data/buildings';
 
 // Update constants for positioning
 export const GRID_SIZE = {

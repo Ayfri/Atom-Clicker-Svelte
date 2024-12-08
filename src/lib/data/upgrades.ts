@@ -1,6 +1,6 @@
-import type {Effect, GameState, Upgrade} from '../types';
-import {capitalize, formatNumber, shortNumberText} from '../utils';
-import {BUILDING_TYPES, BUILDINGS, type BuildingType} from './buildings';
+import type {Effect, GameState, Upgrade} from '$lib/types';
+import {capitalize, formatNumber, shortNumberText} from '$lib/utils';
+import {BUILDING_TYPES, BUILDINGS, type BuildingType} from '$data/buildings';
 
 export const SPECIAL_UPGRADES: Upgrade[] = [];
 

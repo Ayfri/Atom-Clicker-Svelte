@@ -1,8 +1,8 @@
 <script lang="ts">
 	import {Application, Container} from 'pixi.js';
 	import {onDestroy, onMount} from 'svelte';
-	import {particles} from '../stores/canvas';
-	import { app } from '../stores/pixi';
+	import {particles} from '$stores/canvas';
+	import { app } from '$stores/pixi';
 
 	let particlesContainer: Container;
 
