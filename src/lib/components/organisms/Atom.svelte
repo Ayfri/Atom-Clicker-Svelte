@@ -64,6 +64,7 @@
 		transition: transform 0.1s;
 		width: 450px;
 		height: 450px;
+		-webkit-tap-highlight-color: transparent;
 
 		&.bonus {
 			--speed: 2;

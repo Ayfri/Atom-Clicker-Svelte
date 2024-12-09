@@ -153,12 +153,33 @@ function createPowerUpIntervalUpgrades() {
 	});
 }
 
+function createLevelBoostUpgrades() {
+	const upgrades: Upgrade[] = [];
+	for (let i = 1; i <= 5; i++) {
+		upgrades.push({
+			id: `level_boost_${i}`,
+			name: `Level Boost ${i}`,
+			description: `Increase all building production by ${i * 10}% per level`,
+			cost: 10 ** (i * 3),
+			effects: [
+				{
+					type: 'global',
+					value_type: 'add_levels',
+					value: 1 + i / 10,
+				},
+			],
+		});
+	}
+	return upgrades;
+}
+
 const upgrades = [
 	...SPECIAL_UPGRADES,
 	...BUILDING_TYPES.map(createBuildingUpgrades).flat(),
 	...createClickPowerUpgrades(),
 	...createGlobalUpgrades(),
 	...createPowerUpIntervalUpgrades(),
+	...createLevelBoostUpgrades(),
 ];
 
 export const UPGRADES = Object.fromEntries(upgrades.map(upgrade => [

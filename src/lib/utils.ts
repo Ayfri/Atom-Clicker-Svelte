@@ -46,16 +46,15 @@ const SUFFIXES = [
 	"TQag"
 ];
 
-export function formatNumber(num: number): string {
+export function formatNumber(num: number, precision = 2): string {
 	if (!Number.isFinite(num)) {
 		throw new Error(`Number '${num}' must be finite.`);
 	}
 
 	const absNum = Math.abs(num);
-	const sign = num < 0 ? "-" : "";
 
 	if (absNum < 1000) {
-		return `${num.toFixed(2)}`;
+		return `${num.toFixed(precision)}`;
 	}
 
 	const exponent = Math.floor(Math.log(absNum) / Math.log(1000));
@@ -63,7 +62,7 @@ export function formatNumber(num: number): string {
 	const suffix = SUFFIXES[suffixIndex];
 	const scaled = num / Math.pow(1000, suffixIndex);
 
-	return `${sign}${scaled.toFixed(2)}${suffix}`;
+	return `${scaled.toFixed(precision)}${suffix}`;
 }
 
 export function shortNumberText(num: number): string {

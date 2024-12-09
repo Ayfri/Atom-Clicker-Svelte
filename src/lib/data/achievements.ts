@@ -1,5 +1,5 @@
 import {get} from 'svelte/store';
-import {atomsPerSecond} from '$stores/gameStore';
+import {atomsPerSecond, playerLevel} from '$stores/gameStore';
 import type {Achievement, GameState} from '$lib/types';
 import {formatNumber} from '$lib/utils';
 import {BUILDING_TYPES, BUILDINGS, type BuildingType} from '$data/buildings';
@@ -113,12 +113,26 @@ function createTotalClicksAchievements(): Achievement[] {
 	return [1, 100, 500, 1000, 5000, 10_000, 50_000, 100_000, 500_000, 1_000_000, 5_000_000, 10_000_000, 50_000_000, 100_000_000].map(createTotalClicksAchievement);
 }
 
+function createTotalLevelsAchievements(): Achievement[] {
+	function createTotalLevelsAchievement(count: number): Achievement {
+		return {
+			id: `levels_${count}`,
+			name: `Level ${count}`,
+			description: `Be at least ${count} xp level`,
+			condition: (state: GameState) => get(playerLevel) >= count,
+		};
+	}
+
+	return [1, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10_000, 25_000, 50_000, 100_000, 250_000, 500_000, 1_000_000].map(createTotalLevelsAchievement);
+}
+
 const achievementsArray: Achievement[] = [
 	...BUILDING_TYPES.map(createBuildingAchievements).flat(),
 	...createBuildingTotalAchievements(),
 	...createBuildingLevelsAchievements(),
 	...createAtomsPerSecondAchievements(),
 	...createTotalClicksAchievements(),
+	...createTotalLevelsAchievements(),
 	...SPECIAL_ACHIEVEMENTS,
 ];
 

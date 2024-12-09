@@ -1,27 +1,29 @@
 <script lang="ts">
-	import {Ticker} from "pixi.js";
-	import NotificationDot from '@components/atoms/NotificationDot.svelte';
-	import {onDestroy, onMount} from "svelte";
-	import Achievements from "@components/organisms/Achievements.svelte";
-	import Analytics from "@components/atoms/Analytics.svelte";
-	import Atom from "@components/organisms/Atom.svelte";
-	import BonusPhoton from "@components/molecules/BonusPhoton.svelte";
-	import Buildings from "@components/organisms/Buildings.svelte";
-	import Canvas from "@components/molecules/Canvas.svelte";
-	import Counter from "@components/molecules/Counter.svelte";
-	import Header from "@components/atoms/Header.svelte";
-	import SEO from "@components/atoms/SEO.svelte";
-	import SkillTree from "@components/organisms/SkillTree.svelte";
-	import Toaster from "@components/molecules/Toaster.svelte";
-	import Upgrades from "@components/organisms/Upgrades.svelte";
-	import {setGlobals} from "$lib/globals";
-	import {gameManager} from "$lib/helpers/gameManager";
-	import {atomsPerSecond, skillPointsAvailable} from "$stores/gameStore";
-	import {app} from "$stores/pixi";
+	import {setGlobals} from '$lib/globals';
+	import {gameManager} from '$lib/helpers/gameManager';
+	import {atomsPerSecond, skillPointsAvailable} from '$stores/gameStore';
+	import {app} from '$stores/pixi';
 	import {mobile} from '$stores/window';
+	import Analytics from '@components/atoms/Analytics.svelte';
+	import Header from '@components/atoms/Header.svelte';
+	import NotificationDot from '@components/atoms/NotificationDot.svelte';
+	import SEO from '@components/atoms/SEO.svelte';
+	import BonusPhoton from '@components/molecules/BonusPhoton.svelte';
+	import Canvas from '@components/molecules/Canvas.svelte';
+	import Counter from '@components/molecules/Counter.svelte';
+	import Toaster from '@components/molecules/Toaster.svelte';
+	import Achievements from '@components/organisms/Achievements.svelte';
+	import Atom from '@components/organisms/Atom.svelte';
+	import Buildings from '@components/organisms/Buildings.svelte';
+	import Levels from '@components/organisms/Levels.svelte';
+	import SkillTree from '@components/organisms/SkillTree.svelte';
+	import Upgrades from '@components/organisms/Upgrades.svelte';
+	import {RefreshCcw} from 'lucide-svelte';
+	import {Ticker} from 'pixi.js';
+	import {onDestroy, onMount} from 'svelte';
 
 	const SAVE_INTERVAL = 1000;
-	let activeTab: "achievements" | "buildings" | "upgrades" = "upgrades";
+	let activeTab: 'achievements' | 'buildings' | 'upgrades' = 'upgrades';
 	let saveLoop: number;
 	let showSkillTree = false;
 
@@ -46,7 +48,7 @@
 			try {
 				gameManager.save();
 			} catch (e) {
-				console.error("Failed to save game:", e);
+				console.error('Failed to save game:', e);
 			}
 		}, SAVE_INTERVAL);
 	});
@@ -56,11 +58,15 @@
 	});
 
 	$: $mobile && activeTab && $app?.stage && $app?.queueResize();
+
+	const isDev = import.meta.env.MODE === 'development';
 </script>
 
-<svelte:window on:resize={() => {
-	$mobile = window.innerWidth <= 900;
-}}/>
+<svelte:window
+	on:resize={() => {
+		$mobile = window.innerWidth <= 900;
+	}}
+/>
 
 <Analytics/>
 <svelte:head>
@@ -69,6 +75,13 @@
 
 <Header/>
 <main>
+	{#if isDev}
+		<button on:click={() => gameManager.reset()} class="reset-all">
+			<RefreshCcw /> Reset All
+		</button>
+	{/if}
+
+	<Levels/>
 	<Canvas/>
 	{#if $app === null}
 		<h1 class="loading">Loading...</h1>
@@ -78,38 +91,23 @@
 		<div class="game-container">
 			<div class="left-panel">
 				<div class="tabs">
-					<button
-						class:active={activeTab === "upgrades"}
-						on:click={() => activeTab = "upgrades"}
-					>
-						Upgrades
-					</button>
-					<button
-						class:active={activeTab === "achievements"}
-						on:click={() => activeTab = "achievements"}
-					>
+					<button class:active={activeTab === 'upgrades'} on:click={() => activeTab = 'upgrades'}> Upgrades</button>
+					<button class:active={activeTab === 'achievements'} on:click={() => activeTab = 'achievements'}>
 						Achievements
 					</button>
 					{#if $mobile}
-						<button
-							class:active={activeTab === "buildings"}
-							on:click={() => activeTab = "buildings"}
-						>
-							Buildings
-						</button>
+						<button class:active={activeTab === 'buildings'} on:click={() => activeTab = 'buildings'}> Buildings</button>
 						<NotificationDot hasNotification={$skillPointsAvailable > 0} style="flex: 1">
-							<button on:click={() => showSkillTree = true}>
-								Skill Tree
-							</button>
+							<button on:click={() => showSkillTree = true}> Skill Tree</button>
 						</NotificationDot>
 					{/if}
 				</div>
 				<div class="tab-content">
-					{#if activeTab === "upgrades"}
+					{#if activeTab === 'upgrades'}
 						<Upgrades/>
-					{:else if activeTab === "achievements"}
+					{:else if activeTab === 'achievements'}
 						<Achievements/>
-					{:else if activeTab === "buildings"}
+					{:else if activeTab === 'buildings'}
 						<Buildings/>
 					{/if}
 				</div>
@@ -131,9 +129,28 @@
 <style>
 	main {
 		margin-bottom: 3rem;
+		margin-top: 3rem;
 
 		@media screen and (width <= 900px) {
-			margin: 0;
+			margin: 2rem 0 0;
+		}
+	}
+
+	.reset-all {
+		align-items: center;
+		color: #ff6b6b;
+		display: flex;
+		font-weight: bolder;
+		gap: 0.5rem;
+		left: 0.5rem;
+		padding: 0.5rem;
+		position: fixed;
+		text-transform: uppercase;
+		top: 5rem;
+		z-index: 100;
+
+		@media screen and (width <= 900px) {
+			top: 3rem;
 		}
 	}
 
@@ -148,7 +165,7 @@
 		display: grid;
 		gap: 2rem;
 		grid-template-columns: 250px 1fr 250px;
-		grid-template-areas: "upgrades atom buildings";
+		grid-template-areas: 'upgrades atom buildings';
 		margin: 0 auto;
 		max-width: 1500px;
 		overflow: hidden;
@@ -158,15 +175,15 @@
 			gap: 0;
 			grid-template-columns: 1fr 1fr;
 			grid-template-areas:
-        "upgrades atom"
-        "buildings atom";
+				'upgrades atom'
+				'buildings atom';
 			max-width: 100%;
 		}
 
 		@media screen and (width <= 700px) {
 			gap: 1rem;
 			grid-template-columns: 1fr;
-			grid-template-areas: "atom" "upgrades" "buildings";
+			grid-template-areas: 'atom' 'upgrades' 'buildings';
 		}
 	}
 

@@ -5,7 +5,7 @@ import {ACHIEVEMENTS} from '$data/achievements';
 import {BUILDING_LEVEL_UP_COST, BUILDINGS, type BuildingType} from '$data/buildings';
 import {UPGRADES} from '$data/upgrades';
 import {loadSavedState, SAVE_KEY, SAVE_VERSION} from './saves';
-import {achievements, activePowerUps, atoms, buildings, lastSave, totalClicks, upgrades, skillUpgrades} from '$stores/gameStore';
+import {achievements, activePowerUps, atoms, buildings, lastSave, totalClicks, upgrades, skillUpgrades, totalXP} from '$stores/gameStore';
 import {info} from '$stores/toasts';
 import type {GameState, PowerUp} from '../types';
 import type { Building } from '../types';
@@ -17,6 +17,7 @@ interface SaveData {
 	buildings: Record<BuildingType, Building>;
 	lastSave: number;
 	totalClicks: number;
+	totalXP: number;
 	upgrades: string[];
 	version: number;
 	skillUpgrades: string[];
@@ -31,9 +32,10 @@ export const gameManager = {
 			atoms.set(savedState.atoms);
 			buildings.set(savedState.buildings);
 			lastSave.set(savedState.lastSave);
-			totalClicks.set(savedState.totalClicks);
-			upgrades.set(savedState.upgrades.filter(u => u in UPGRADES));
 			skillUpgrades.set(savedState.skillUpgrades || []);
+			totalClicks.set(savedState.totalClicks);
+			totalXP.set(savedState.totalXP || 0);
+			upgrades.set(savedState.upgrades.filter(u => u in UPGRADES));
 
 			get(activePowerUps).forEach(powerUp =>
 				setTimeout(() => {
@@ -61,6 +63,19 @@ export const gameManager = {
 				}
 			});
 		}, 1000);
+
+		// Add XP every 100ms
+		let previousAtoms = get(atoms);
+		setInterval(() => {
+			const currentAtoms = get(atoms);
+			const deltaAtoms = currentAtoms - previousAtoms;
+			const xpPerAtom = 0.1;
+			const xp = deltaAtoms * xpPerAtom;
+			if (xp > 0) {
+				totalXP.update(current => current + xp);
+			}
+			previousAtoms = currentAtoms;
+		}, 100);
 	},
 
 	getCurrentState(): GameState {
@@ -70,10 +85,11 @@ export const gameManager = {
 			atoms: get(atoms),
 			buildings: get(buildings),
 			lastSave: get(lastSave),
+			skillUpgrades: get(skillUpgrades),
 			totalClicks: get(totalClicks),
+			totalXP: get(totalXP),
 			upgrades: get(upgrades),
 			version: SAVE_VERSION,
-			skillUpgrades: get(skillUpgrades),
 		};
 	},
 
@@ -153,9 +169,10 @@ export const gameManager = {
 		atoms.set(0);
 		buildings.set({});
 		lastSave.set(Date.now());
-		totalClicks.set(0);
-		upgrades.set([]);
 		skillUpgrades.set([]);
+		totalClicks.set(0);
+		totalXP.set(0);
+		upgrades.set([]);
 	},
 
 	save() {
@@ -169,8 +186,9 @@ export const gameManager = {
 		atoms.set(saveData.atoms);
 		buildings.set(saveData.buildings);
 		lastSave.set(saveData.lastSave);
-		totalClicks.set(saveData.totalClicks);
-		upgrades.set(saveData.upgrades.filter(u => u in UPGRADES));
 		skillUpgrades.set(saveData.skillUpgrades);
+		totalClicks.set(saveData.totalClicks);
+		totalXP.set(saveData.totalXP);
+		upgrades.set(saveData.upgrades.filter(u => u in UPGRADES));
 	},
 };

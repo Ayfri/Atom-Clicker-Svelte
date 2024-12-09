@@ -22,7 +22,7 @@ export interface Effect {
 	target?: string;
 	type: 'building' | 'click' | 'global' | 'power_up_interval';
 	value: number;
-	value_type: 'add' | 'add_aps' | 'add_ach' | 'multiply';
+	value_type: 'add' | 'add_aps' | 'add_ach' | 'add_levels' | 'multiply';
 }
 
 export interface Achievement {
@@ -50,8 +50,9 @@ export interface GameState {
 		[key in BuildingType]?: Building;
 	}
 	lastSave: number;
+	skillUpgrades: string[];
 	totalClicks: number;
-    skillUpgrades: string[];
+	totalXP: number;
 	upgrades: string[];
 	version: typeof SAVE_VERSION;
 }

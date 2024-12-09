@@ -17,7 +17,7 @@
 	header {
 		display: flex;
 		justify-content: flex-end;
-		padding: 1rem;
+		padding: 0.5rem;
 	}
 
 	.github {
@@ -39,6 +39,10 @@
 			width: 1.5rem;
 			height: 1.5rem;
 			object-fit: contain;
+		}
+
+		@media (width < 768px) {
+			transform: translateY(2rem);
 		}
 	}
 </style>

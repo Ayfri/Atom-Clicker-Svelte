@@ -11,9 +11,41 @@ export const activePowerUps = writable<PowerUp[]>([]);
 export const atoms = writable<number>(0);
 export const buildings = writable<Partial<Record<BuildingType, Building>>>({});
 export const lastSave = writable<number>(Date.now());
-export const totalClicks = writable<number>(0);
-export const upgrades = writable<string[]>([]);
 export const skillUpgrades = writable<string[]>([]);
+export const totalClicks = writable<number>(0);
+export const totalXP = writable<number>(0);
+export const upgrades = writable<string[]>([]);
+
+// Using a geometric progression formula
+export function getXPForLevel(level: number) {
+	const base = 100;
+	const taux = 0.42; // 42%
+	return Math.floor(base * Math.pow(1 + taux, level - 1));
+}
+
+// Derived stores for level system
+export const playerLevel = derived(totalXP, $totalXP => {
+    let level = 0;
+	let remainingXP = $totalXP;
+	while (remainingXP >= getXPForLevel(level + 1)) {
+		remainingXP -= getXPForLevel(level + 1);
+		level++;
+	}
+	return level;
+});
+
+export const currentLevelXP = derived([totalXP, playerLevel], ([$totalXP, $playerLevel]) => {
+    if ($playerLevel === 0) return $totalXP;
+    const previousLevelXP = Array.from({ length: $playerLevel }, (_, i) => getXPForLevel(i + 1)).reduce((acc, val) => acc + val, 0);
+    return Math.max(0, $totalXP - previousLevelXP);
+});
+
+export const nextLevelXP = derived(playerLevel, $playerLevel => getXPForLevel($playerLevel + 1));
+
+export const xpProgress = derived(
+    [currentLevelXP, nextLevelXP],
+    ([$currentLevelXP, $nextLevelXP]) => ($currentLevelXP / $nextLevelXP) * 100
+);
 
 interface SearchEffectsOptions {
 	target?: Effect['target'];
@@ -56,6 +88,18 @@ function calculateEffects(upgrades: (Upgrade | SkillUpgrade)[], defaultValue: nu
 
 			const multiplyEffects = upgrade.effects.filter(effect => effect.value_type === 'multiply');
 			multiplier *= multiplyEffects.reduce((acc, effect) => acc * effect.value, 1);
+
+			// Add by % of atoms per second
+			const addAPSEffects = upgrade.effects.filter(effect => effect.value_type === 'add_aps');
+			multiplier += addAPSEffects.reduce((acc, effect) => acc + effect.value, 0) * get(atomsPerSecond);
+
+			// Add by % of achievements unlocked
+			const addAchEffects = upgrade.effects.filter(effect => effect.value_type === 'add_ach');
+			multiplier += addAchEffects.reduce((acc, effect) => acc + effect.value, 0) * get(achievements).length;
+
+			// Add by xp level
+			const addLevelsEffects = upgrade.effects.filter(effect => effect.value_type === 'add_levels');
+			multiplier += addLevelsEffects.reduce((acc, effect) => acc + effect.value, 0) * get(playerLevel);
 		} else {
 			const skillUpgrade = upgrade as SkillUpgrade;
 			if ('buildingLevel' in skillUpgrade && 'description' in skillUpgrade) {
@@ -63,7 +107,7 @@ function calculateEffects(upgrades: (Upgrade | SkillUpgrade)[], defaultValue: nu
 				const percentageMatch = description.match(/(\d+)%/);
 				if (percentageMatch) {
 					const percentage = parseInt(percentageMatch[1]);
-					multiplier *= (1 + percentage / 100);
+					multiplier *= 1 + percentage / 100;
 				}
 			}
 		}

@@ -1,9 +1,9 @@
 /// <reference types="svelte" />
-import {gameManager} from './helpers/gameManager';
-import type {ACHIEVEMENTS} from './lib/data/achievements';
-import type {BUILDINGS} from './lib/data/buildings';
-import type {UPGRADES} from './lib/data/upgrades';
-import type {formatNumber} from './lib/utils';
+import {gameManager} from '$helpers/gameManager';
+import type {ACHIEVEMENTS} from '$data/achievements';
+import type {BUILDINGS} from '$data/buildings';
+import type {UPGRADES} from '$data/upgrades';
+import type {formatNumber} from '$lib/utils';
 /// <reference types="vite/client" />
 
 declare global {

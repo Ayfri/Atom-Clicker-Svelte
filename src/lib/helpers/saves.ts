@@ -2,7 +2,7 @@ import {BUILDING_LEVEL_UP_COST, type BuildingType} from '$data/buildings';
 import type {Building, GameState} from '../types';
 
 export const SAVE_KEY = 'atomic-clicker-save';
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 // Helper functions for state management
 export function loadSavedState(): GameState | null {
@@ -35,6 +35,10 @@ function isValidGameState(state: any): state is GameState {
 		[
 			'atoms',
 			(v: any) => typeof v === 'number',
+		],
+		[
+			'totalXP',
+			(v: any) => typeof v === 'number' || v === undefined,
 		],
 		[
 			'buildings',
@@ -86,6 +90,12 @@ function migrateSavedState(savedState: any): GameState | undefined {
 			savedState[key] = building;
 		});
 		savedState.version = 3;
+	}
+	if (savedState.version === 3) {
+		// Add skillUpgrades
+		savedState.skillUpgrades = [];
+		savedState.totalXP = 0;
+		savedState.version = 4;
 	}
 
 	return savedState;
