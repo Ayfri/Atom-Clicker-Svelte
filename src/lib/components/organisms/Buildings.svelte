@@ -9,7 +9,6 @@
 	import type {Building} from '$lib/types';
 	import {formatNumber} from '$lib/utils';
 	import {fade} from 'svelte/transition';
-	import SkillTree from './SkillTree.svelte';
 
 	const buildingsEntries = Object.entries(BUILDINGS) as [BuildingType, BuildingData][];
 
@@ -20,23 +19,10 @@
 	$: buildingsEntries.filter(([type]) => unlockedBuildings.map(u => u[0]).indexOf(type) === -1 && unaffordableBuildings.map(u => u[0]).indexOf(type) === -1).forEach(([type]) => {
 		gameManager.unlockBuilding(type);
 	});
-
-	let showSkillTree = false;
 </script>
 
-{#if showSkillTree}
-	<SkillTree onClose={() => showSkillTree = false}/>
-{/if}
-
 <div class="buildings">
-	<h2>
-		Buildings
-		{#if !$mobile}
-			<NotificationDot class="skill-tree-icon" on:click={() => showSkillTree = true} title="Open skill tree" hasNotification={$skillPointsAvailable > 0}>
-				<Network />
-			</NotificationDot>
-		{/if}
-	</h2>
+	<h2>Buildings</h2>
 	{#each buildingsEntries as [type, building], i}
 		{@const saveData = $buildings[type]}
 		{@const unaffordable = $atoms < (saveData?.cost ?? building.cost)}

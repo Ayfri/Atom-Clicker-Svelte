@@ -1,15 +1,15 @@
 <script lang="ts">
 	import '@xyflow/svelte/dist/style.css';
 	import { X } from 'lucide-svelte';
-	import {mobile} from '$stores/window';
-	import {onDestroy, onMount} from 'svelte';
+	import { mobile } from '$stores/window';
+	import { onDestroy, onMount } from 'svelte';
 	import { SKILL_UPGRADES } from '$data/skillTree';
 	import { gameManager } from '$helpers/gameManager';
-	import {skillPointsAvailable, skillUpgrades} from '$stores/gameStore';
+	import { skillPointsAvailable, skillUpgrades } from '$stores/gameStore';
 	import type { SkillUpgrade } from '$lib/types';
 	import { fade, fly } from 'svelte/transition';
 	import { SvelteFlow, Background, Controls, type Node, type Edge, Position } from '@xyflow/svelte';
-	import {writable} from 'svelte/store';
+	import { writable } from 'svelte/store';
 	import SkillNode from './SkillNode.svelte';
 
 	export let onClose: () => void;
@@ -113,12 +113,16 @@
 </script>
 
 <div class="overlay" on:click={onClose} on:keypress|stopPropagation|capture={onKeydown} transition:fade={{ duration: 300 }}>
-	<div class="skill-tree" on:click|stopPropagation transition:fly={{ y: -100, duration: 300 }}>
+	<div
+		class="skill-tree bg-gradient-to-br from-accent-900 to-accent-800"
+		on:click|stopPropagation
+		transition:fly={{ y: -100, duration: 300 }}
+	>
 		<div class="header">
 			<h2>Skill Tree</h2>
 			<div class="points-counter">Available Points: {$skillPointsAvailable}</div>
-			<div class="exit" on:click={onClose}>
-				<X />
+			<div class="exit hover:*:stroke-[3]" on:click={onClose}>
+				<X class="transition-all duration-300" />
 			</div>
 		</div>
 
@@ -148,7 +152,7 @@
 					unlockSkill(data);
 				}}
 			>
-				<Background bgColor="#222" gap={35} lineWidth={1} />
+				<Background gap={35} lineWidth={1} />
 				{#if !$mobile}
 					<Controls showZoom={true} showFitView={false} showLock={false} position="bottom-right" />
 				{/if}
@@ -159,15 +163,15 @@
 
 <svelte:window on:keydown={onKeydown} />
 
-<style>
+<style lang="postcss">
 	:global(.svelte-flow) {
 		--background-color: transparent;
-		--bg-color: #222;
-		--xy-edge-stroke: #444;
+		--xy-background-color: theme('colors.accent.900');
+		--xy-edge-stroke: theme('colors.accent.800');
 		--xy-edge-stroke-width: 5;
-		--xy-controls-button-background-color: #333;
-		--xy-controls-button-border-color: #444;
-		--xy-controls-button-color: #fff;
+		--xy-controls-button-background-color: theme('colors.accent.800');
+		--xy-controls-button-border-color: theme('colors.accent.800');
+		--xy-controls-button-color: theme('colors.accent.50');
 		--xy-attribution-background-color-default: transparent;
 	}
 
@@ -183,7 +187,6 @@
 	}
 
 	.skill-tree {
-		background: #1a1a1a;
 		border-radius: 16px;
 		box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
 		display: flex;
@@ -209,14 +212,20 @@
 		justify-content: space-between;
 		gap: 1rem;
 		padding: 1.5rem 1rem 1.5rem 2rem;
+
+		@media (max-width: 768px) {
+			gap: 0.5rem;
+			padding: 1rem 1rem 1rem 1.5rem;
+		}
 	}
 
 	.header h2 {
 		color: #fff;
 		flex: 1;
 		font-size: 1.5rem;
-		font-weight: 600;
+		font-weight: 700;
 		margin: 0;
+		white-space: nowrap;
 	}
 
 	.points-counter {
@@ -226,6 +235,10 @@
 		color: var(--accent-color);
 		font-weight: 500;
 		padding: 0.75rem 1.25rem;
+
+		@media (max-width: 768px) {
+			padding: 0.5rem 1rem;
+		}
 	}
 
 	.exit {
@@ -239,11 +252,14 @@
 
 	.graph-container {
 		flex: 1;
-		background: #222;
 		border-radius: 12px;
 		margin: 0.75rem;
 		overflow: hidden;
 		position: relative;
+
+		@media (max-width: 768px) {
+			margin: 0.4rem;
+		}
 	}
 
 	:global(.svelte-flow__edge.unlocking path) {

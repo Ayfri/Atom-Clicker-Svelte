@@ -3,8 +3,7 @@
 	background-color: #1a1a1a;
 	background-blend-mode: screen;
 
-	background-image:
-		radial-gradient(circle at 10% 20%, rgba(74, 144, 226, 0.12) 0%, transparent 60%),
+	background-image: radial-gradient(circle at 10% 20%, rgba(74, 144, 226, 0.12) 0%, transparent 60%),
 		radial-gradient(circle at 90% 80%, rgba(74, 144, 226, 0.12) 0%, transparent 50%);
 	color: rgba(255, 255, 255, 0.87);
 	color-scheme: light dark;
@@ -27,7 +26,12 @@ body {
 	overflow-x: hidden;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
 	line-height: 1.2;
 	margin: 0;
 }
@@ -44,13 +48,9 @@ button {
 	transition: border-color 0.25s;
 }
 
-button:hover {
-	border-color: #646cff;
-}
-
 button:focus,
 button:focus-visible {
-	outline: 4px auto -webkit-focus-ring-color;
+	outline: none;
 }
 
 * {
@@ -68,3 +68,7 @@ button:focus-visible {
 		transform: scale(1);
 	}
 }
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

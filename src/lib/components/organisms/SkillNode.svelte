@@ -19,17 +19,17 @@
 	$$restProps;
 </script>
 
-<Handle id="{id}-{Position.Bottom}" type="source" position={Position.Bottom} class="hidden-handle"/>
-<Handle id="{id}-{Position.Bottom}" type="target" position={Position.Bottom} class="hidden-handle"/>
+<Handle id="{id}-{Position.Bottom}" type="source" position={Position.Bottom} class="hidden-handle" />
+<Handle id="{id}-{Position.Bottom}" type="target" position={Position.Bottom} class="hidden-handle" />
 
-<Handle id="{id}-{Position.Top}" type="source" position={Position.Top} class="hidden-handle"/>
-<Handle id="{id}-{Position.Top}" type="target" position={Position.Top} class="hidden-handle"/>
+<Handle id="{id}-{Position.Top}" type="source" position={Position.Top} class="hidden-handle" />
+<Handle id="{id}-{Position.Top}" type="target" position={Position.Top} class="hidden-handle" />
 
-<Handle id="{id}-{Position.Left}" type="source" position={Position.Left} class="hidden-handle"/>
-<Handle id="{id}-{Position.Left}" type="target" position={Position.Left} class="hidden-handle"/>
+<Handle id="{id}-{Position.Left}" type="source" position={Position.Left} class="hidden-handle" />
+<Handle id="{id}-{Position.Left}" type="target" position={Position.Left} class="hidden-handle" />
 
-<Handle id="{id}-{Position.Right}" type="source" position={Position.Right} class="hidden-handle"/>
-<Handle id="{id}-{Position.Right}" type="target" position={Position.Right} class="hidden-handle"/>
+<Handle id="{id}-{Position.Right}" type="source" position={Position.Right} class="hidden-handle" />
+<Handle id="{id}-{Position.Right}" type="target" position={Position.Right} class="hidden-handle" />
 
 <div class="skill-node" class:unlocked={data.unlocked} class:available={data.available} on:click={() => data.onClick?.()}>
 	<div class="skill-content">
@@ -40,7 +40,7 @@
 
 <style>
 	.skill-node {
-		background: #333;
+		background: theme('colors.accent.800');
 		border-radius: 8px;
 		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 		box-sizing: border-box;
