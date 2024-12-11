@@ -195,3 +195,19 @@ export const powerUpInterval = derived(currentUpgradesBought, $currentUpgradeBou
 	const powerUpIntervalUpgrades = getUpgradesWithEffects($currentUpgradeBought, { type: 'power_up_interval' });
 	return POWER_UP_DEFAULT_INTERVAL.map(interval => calculateEffects(powerUpIntervalUpgrades, interval)) as Range;
 });
+
+// Add new derived stores for power-up enhancements
+export const powerUpDurationMultiplier = derived(currentUpgradesBought, $currentUpgradesBought => {
+	const powerUpDurationUpgrades = getUpgradesWithEffects($currentUpgradesBought, { type: 'power_up_duration' });
+	return calculateEffects(powerUpDurationUpgrades, 1);
+});
+
+export const powerUpEffectMultiplier = derived(currentUpgradesBought, $currentUpgradesBought => {
+	const powerUpMultiplierUpgrades = getUpgradesWithEffects($currentUpgradesBought, { type: 'power_up_multiplier' });
+	return calculateEffects(powerUpMultiplierUpgrades, 1);
+});
+
+export const xpGainMultiplier = derived(currentUpgradesBought, $currentUpgradesBought => {
+	const xpGainUpgrades = getUpgradesWithEffects($currentUpgradesBought, { type: 'xp_gain' });
+	return calculateEffects(xpGainUpgrades, 1);
+});

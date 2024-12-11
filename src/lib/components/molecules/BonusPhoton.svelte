@@ -1,10 +1,10 @@
 <script lang="ts">
-	import {onDestroy, onMount} from 'svelte';
-	import {fade} from 'svelte/transition';
-	import {gameManager} from '$helpers/gameManager';
-	import {powerUpInterval} from '$stores/gameStore';
-	import type {PowerUp} from '$lib/types';
-	import {randomBetween, randomValue, formatNumber} from '$lib/utils';
+	import { onDestroy, onMount } from 'svelte';
+	import { fade } from 'svelte/transition';
+	import { gameManager } from '$helpers/gameManager';
+	import { powerUpInterval, powerUpDurationMultiplier, powerUpEffectMultiplier } from '$stores/gameStore';
+	import type { PowerUp } from '$lib/types';
+	import { randomBetween, randomValue, formatNumber } from '$lib/utils';
 
 	const powerUps = [
 		{
@@ -26,7 +26,7 @@
 		{
 			duration: 2500,
 			multiplier: 25,
-		}
+		},
 	];
 
 	const powerUp = {
@@ -49,13 +49,13 @@
 		x = Math.random() * (window.innerWidth - margin * 2) + margin;
 		y = Math.random() * (window.innerHeight - margin * 2) + margin;
 		const randomPowerUp = randomValue(powerUps);
-		powerUp.multiplier = randomPowerUp.multiplier;
-		powerUp.duration = randomPowerUp.duration;
+		powerUp.multiplier = randomPowerUp.multiplier * $powerUpEffectMultiplier;
+		powerUp.duration = randomPowerUp.duration * $powerUpDurationMultiplier;
 		powerUp.description = `Multiplies atoms by ${formatNumber(powerUp.multiplier)} for ${formatNumber(powerUp.duration / 1000)} seconds`;
 		powerUp.id = Date.now().toString();
 		visible = true;
 
-		setTimeout(() => visible = false, 30_000);
+		setTimeout(() => (visible = false), 30_000);
 	}
 
 	function onClick() {
@@ -65,14 +65,17 @@
 		gameManager.addPowerUp(powerUp);
 		const id = powerUp.id;
 		setTimeout(() => gameManager.removePowerUp(id), powerUp.duration);
-		setTimeout(() => messageShown = false, 3_000);
+		setTimeout(() => (messageShown = false), 3_000);
 	}
 
 	function setRandomInterval() {
-		timeout = setTimeout(() => {
-			spawnBonusAtom();
-			setRandomInterval();
-		}, randomBetween($powerUpInterval[0], $powerUpInterval[1]));
+		timeout = setTimeout(
+			() => {
+				spawnBonusAtom();
+				setRandomInterval();
+			},
+			randomBetween($powerUpInterval[0], $powerUpInterval[1]),
+		);
 	}
 
 	let timeout: number;
@@ -81,13 +84,12 @@
 	onDestroy(() => clearTimeout(timeout));
 </script>
 
-
 {#if visible}
-	<div class="power-up bonus-atom" on:click|once={onClick} transition:fade={{duration: 1000}} style="left: {x}px; top: {y}px;"/>
+	<div class="power-up bonus-atom" on:click|once={onClick} transition:fade={{ duration: 1000 }} style="left: {x}px; top: {y}px;" />
 {/if}
 
 {#if messageShown}
-	<p class="bonus-message" in:fade={{duration: 100}} out:fade={{duration: 400}} style="left: {x}px; top: {y}px;">
+	<p class="bonus-message" in:fade={{ duration: 100 }} out:fade={{ duration: 400 }} style="left: {x}px; top: {y}px;">
 		{powerUp.description}
 	</p>
 {/if}

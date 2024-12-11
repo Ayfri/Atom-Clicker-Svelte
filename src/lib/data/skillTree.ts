@@ -69,4 +69,63 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		effects: [{ type: 'power_up_interval', value: 0.8, value_type: 'multiply' }],
 		requires: ['bonusPhotonSpeed0'],
 	},
+	// Click power branch
+	clickPowerBoost0: {
+		id: 'clickPowerBoost0',
+		name: 'Click Power Boost',
+		description: 'Multiply click power by 2',
+		position: gridPos(0.5, -1),
+		effects: [{ type: 'click', value: 2, value_type: 'multiply' }],
+		requires: ['globalMultiplier'],
+	},
+	clickPowerBoost1: {
+		id: 'clickPowerBoost1',
+		name: 'Click Power Master',
+		description: 'Multiply click power by 3',
+		position: gridPos(1.5, -1),
+		effects: [{ type: 'click', value: 3, value_type: 'multiply' }],
+		requires: ['clickPowerBoost0'],
+	},
+	// Power-up enhancement branch
+	powerUpBoost0: {
+		id: 'powerUpBoost0',
+		name: 'Power-up Enhancement',
+		description: 'Increase power-up duration by 20%',
+		position: gridPos(2.5, 1),
+		effects: [{ type: 'power_up_duration', value: 1.2, value_type: 'multiply' }],
+		requires: ['bonusPhotonSpeed1'],
+	},
+	powerUpBoost1: {
+		id: 'powerUpBoost1',
+		name: 'Power-up Mastery',
+		description: 'Increase power-up multiplier effects by 50%',
+		position: gridPos(3.5, 1),
+		effects: [{ type: 'power_up_multiplier', value: 1.5, value_type: 'multiply' }],
+		requires: ['powerUpBoost0'],
+	},
+	// XP and level branch
+	xpBoost0: {
+		id: 'xpBoost0',
+		name: 'XP Boost',
+		description: 'Increase XP gain by 50%',
+		position: gridPos(-0.5, -1),
+		effects: [{ type: 'xp_gain', value: 1.5, value_type: 'multiply' }],
+		requires: ['globalMultiplier'],
+	},
+	xpBoost1: {
+		id: 'xpBoost1',
+		name: 'XP Master',
+		description: 'Double XP gain',
+		position: gridPos(-1.5, -1),
+		effects: [{ type: 'xp_gain', value: 2, value_type: 'multiply' }],
+		requires: ['xpBoost0'],
+	},
+	levelBoost0: {
+		id: 'levelBoost0',
+		name: 'Level Power',
+		description: 'Increase all production by 1% per level',
+		position: gridPos(-2.5, -1),
+		effects: [{ type: 'global', value: 0.01, value_type: 'add_levels' }],
+		requires: ['xpBoost1'],
+	},
 };

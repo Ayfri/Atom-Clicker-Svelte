@@ -5,7 +5,7 @@ import {ACHIEVEMENTS} from '$data/achievements';
 import {BUILDING_LEVEL_UP_COST, BUILDINGS, type BuildingType} from '$data/buildings';
 import {UPGRADES} from '$data/upgrades';
 import {loadSavedState, SAVE_KEY, SAVE_VERSION} from './saves';
-import {achievements, activePowerUps, atoms, buildings, lastSave, totalClicks, upgrades, skillUpgrades, totalXP} from '$stores/gameStore';
+import {achievements, activePowerUps, atoms, buildings, lastSave, totalClicks, upgrades, skillUpgrades, totalXP, xpGainMultiplier} from '$stores/gameStore';
 import {info} from '$stores/toasts';
 import type {GameState, PowerUp} from '../types';
 import type { Building } from '../types';
@@ -72,7 +72,7 @@ export const gameManager = {
 			const xpPerAtom = 0.1;
 			const xp = deltaAtoms * xpPerAtom;
 			if (xp > 0) {
-				totalXP.update(current => current + xp);
+				totalXP.update(current => current + xp * get(xpGainMultiplier));
 			}
 			previousAtoms = currentAtoms;
 		}, 100);
