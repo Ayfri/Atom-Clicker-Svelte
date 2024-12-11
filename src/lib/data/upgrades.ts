@@ -34,7 +34,7 @@ function createBuildingUpgrades(buildingType: BuildingType) {
 	const building = BUILDINGS[buildingType];
 	return createUpgrades({
 		condition: (_, state) => state.buildings[buildingType]?.unlocked === true,
-		count: 12,
+		count: 13,
 		id: buildingType.toLowerCase(),
 		name: i => `${building.name} Boost ${i}`,
 		description: (_, effects) => `${capitalize(shortNumberText(effects[0]!.value))} ${building.name} production`,
@@ -54,7 +54,7 @@ function createBuildingUpgrades(buildingType: BuildingType) {
 function createClickPowerUpgrades() {
 	const upgrades: Upgrade[] = [];
 	upgrades.push(...createUpgrades({
-		count: 12,
+		count: 13,
 		id: 'click_power_mul',
 		name: i => `Click Power ${i}`,
 		description: (_, effects) => `Add ${effects[0].value * 100 - 100}% click power`,
@@ -69,7 +69,7 @@ function createClickPowerUpgrades() {
 	}));
 
 	upgrades.push(...createUpgrades({
-		count: 5,
+		count: 6,
 		id: 'click_power_val',
 		name: i => `Click Value ${i}`,
 		description: i => `Add ${formatNumber(Math.ceil(10 ** i / 10))} atoms per click`,
@@ -84,7 +84,7 @@ function createClickPowerUpgrades() {
 	}));
 
 	upgrades.push(...createUpgrades({
-		count: 5,
+		count: 6,
 		id: 'click_power_aps',
 		name: i => `Global Click Power ${i}`,
 		description: i => `Gain ${i}% of your Atoms per second per click`,
@@ -119,7 +119,7 @@ function createGlobalUpgrades() {
 
 	upgrades.push(...createUpgrades({
 		id: 'global_achievements_mul',
-		count: 10,
+		count: 11,
 		condition: (i, state) => i > 1 ? state.achievements.length > 30 * i : true,
 		name: i => `Atom Soup ${i}`,
 		description: (_, effects) => `Gain ${effects[0].value * 100}% more atoms per unlocked achievement`,
@@ -139,7 +139,7 @@ function createGlobalUpgrades() {
 function createPowerUpIntervalUpgrades() {
 	return createUpgrades({
 		id: 'power_up_interval',
-		count: 9,
+		count: 10,
 		name: i => `Power Up Interval ${i + 1}`,
 		description: (_, effects) => `Reduce power up interval by ${Math.round((1 - effects[0]!.value) * 100)}%`,
 		cost: i => 10_000 * 2 ** (i * 7),
@@ -155,7 +155,8 @@ function createPowerUpIntervalUpgrades() {
 
 function createLevelBoostUpgrades() {
 	const upgrades: Upgrade[] = [];
-	for (let i = 1; i <= 5; i++) {
+	const count = 6;
+	for (let i = 1; i <= count; i++) {
 		upgrades.push({
 			id: `level_boost_${i}`,
 			name: `Level Boost ${i}`,
