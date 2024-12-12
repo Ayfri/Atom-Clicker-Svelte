@@ -27,9 +27,13 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 	globalMultiplier: {
 		id: 'globalMultiplier',
 		name: 'Global Multiplier',
-		description: 'Multiply by 2 the atoms production.',
+		description: '2x atoms production',
 		position: gridPos(0, 0),
-		effects: [{ type: 'global', value: 2, value_type: 'multiply' }],
+		effects: [{
+			type: 'global',
+			description: 'Multiply all production by 2',
+			apply: (currentValue) => currentValue * 2
+		}],
 	},
 	...createBuildingsSkillUpgrades(
 		(buildingType, building, i) => {
@@ -38,94 +42,128 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 			return {
 				id: `${buildingType}Multiplier`,
 				name: `${building.name} Multiplier`,
-				description: `Multiply by 2 the ${building.name} production.`,
+				description: `2x ${building.name} production`,
 				condition: state => (state.buildings[buildingType]?.count ?? 0) >= 100,
 				position: gridPos(-(i + 0.5), 1),
-				effects: [
-					{
-						target: building.name,
-						type: 'building',
-						value: 2,
-						value_type: 'multiply',
-					} as const,
-				],
+				effects: [{
+					type: 'building',
+					target: buildingType,
+					description: `Multiply ${building.name} production by 2`,
+					apply: (currentValue) => currentValue * 2
+				}],
 				requires: previousBuildingType ? [`${previousBuildingType}Multiplier`] : ['globalMultiplier'],
-			};
+			} satisfies SkillUpgrade;
 		},
 	),
 	bonusPhotonSpeed0: {
 		id: 'bonusPhotonSpeed0',
 		name: 'Bonus Photon Speed',
-		description: 'Reduce the power up interval by 10%',
+		description: '0.9x power up interval',
 		position: gridPos(0.5, 1),
-		effects: [{ type: 'power_up_interval', value: 0.9, value_type: 'multiply' }],
+		effects: [{
+			type: 'power_up_interval',
+			description: 'Multiply power up interval by 0.9',
+			apply: (currentValue) => currentValue * 0.9
+		}],
 		requires: ['globalMultiplier'],
 	},
 	bonusPhotonSpeed1: {
 		id: 'bonusPhotonSpeed1',
 		name: 'Bonus Photon Speed',
-		description: 'Reduce the power up interval by 20%',
+		description: '0.8x power up interval',
 		position: gridPos(1.5, 1),
-		effects: [{ type: 'power_up_interval', value: 0.8, value_type: 'multiply' }],
+		effects: [{
+			type: 'power_up_interval',
+			description: 'Multiply power up interval by 0.8',
+			apply: (currentValue) => currentValue * 0.8
+		}],
 		requires: ['bonusPhotonSpeed0'],
 	},
-	// Click power branch
 	clickPowerBoost0: {
 		id: 'clickPowerBoost0',
 		name: 'Click Power Boost',
-		description: 'Multiply click power by 2',
+		description: '2x click power',
 		position: gridPos(0.5, -1),
-		effects: [{ type: 'click', value: 2, value_type: 'multiply' }],
+		effects: [{
+			type: 'click',
+			description: 'Multiply click power by 2',
+			apply: (currentValue) => currentValue * 2
+		}],
 		requires: ['globalMultiplier'],
 	},
 	clickPowerBoost1: {
 		id: 'clickPowerBoost1',
 		name: 'Click Power Master',
-		description: 'Multiply click power by 3',
+		description: '3x click power',
 		position: gridPos(1.5, -1),
-		effects: [{ type: 'click', value: 3, value_type: 'multiply' }],
+		effects: [{
+			type: 'click',
+			description: 'Multiply click power by 3',
+			apply: (currentValue) => currentValue * 3
+		}],
 		requires: ['clickPowerBoost0'],
 	},
-	// Power-up enhancement branch
 	powerUpBoost0: {
 		id: 'powerUpBoost0',
 		name: 'Power-up Enhancement',
-		description: 'Increase power-up duration by 20%',
+		description: '1.2x power-up duration',
 		position: gridPos(2.5, 1),
-		effects: [{ type: 'power_up_duration', value: 1.2, value_type: 'multiply' }],
+		effects: [{
+			type: 'power_up_duration',
+			description: 'Multiply power-up duration by 1.2',
+			apply: (currentValue) => currentValue * 1.2
+		}],
 		requires: ['bonusPhotonSpeed1'],
 	},
 	powerUpBoost1: {
 		id: 'powerUpBoost1',
 		name: 'Power-up Mastery',
-		description: 'Increase power-up multiplier effects by 50%',
+		description: '1.5x power-up multiplier',
 		position: gridPos(3.5, 1),
-		effects: [{ type: 'power_up_multiplier', value: 1.5, value_type: 'multiply' }],
+		effects: [{
+			type: 'power_up_multiplier',
+			description: 'Multiply power-up effects by 1.5',
+			apply: (currentValue) => currentValue * 1.5
+		}],
 		requires: ['powerUpBoost0'],
 	},
-	// XP and level branch
 	xpBoost0: {
 		id: 'xpBoost0',
 		name: 'XP Boost',
-		description: 'Increase XP gain by 50%',
+		description: '1.5x XP gain',
 		position: gridPos(-0.5, -1),
-		effects: [{ type: 'xp_gain', value: 1.5, value_type: 'multiply' }],
+		effects: [{
+			type: 'xp_gain',
+			description: 'Multiply XP gain by 1.5',
+			apply: (currentValue) => currentValue * 1.5
+		}],
 		requires: ['globalMultiplier'],
 	},
 	xpBoost1: {
 		id: 'xpBoost1',
 		name: 'XP Master',
-		description: 'Double XP gain',
+		description: '2x XP gain',
 		position: gridPos(-1.5, -1),
-		effects: [{ type: 'xp_gain', value: 2, value_type: 'multiply' }],
+		effects: [{
+			type: 'xp_gain',
+			description: 'Multiply XP gain by 2',
+			apply: (currentValue) => currentValue * 2
+		}],
 		requires: ['xpBoost0'],
 	},
 	levelBoost0: {
 		id: 'levelBoost0',
 		name: 'Level Power',
-		description: 'Increase all production by 1% per level',
+		description: '+1% production per level',
 		position: gridPos(-2.5, -1),
-		effects: [{ type: 'global', value: 0.01, value_type: 'add_levels' }],
+		effects: [{
+			type: 'global',
+			description: 'Add 1% production per level',
+			apply: (currentValue, state) => {
+				const level = Math.floor(Math.sqrt(state.totalXP / 100));
+				return currentValue * (1 + level * 0.01);
+			}
+		}],
 		requires: ['xpBoost1'],
 	},
 };

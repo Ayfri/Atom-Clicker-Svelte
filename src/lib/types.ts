@@ -21,8 +21,8 @@ export interface Upgrade {
 export interface Effect {
 	target?: string;
 	type: 'building' | 'click' | 'global' | 'power_up_interval' | 'power_up_duration' | 'power_up_multiplier' | 'xp_gain';
-	value: number;
-	value_type: 'add' | 'add_aps' | 'add_ach' | 'add_levels' | 'multiply';
+	apply: (currentValue: number, state: GameState) => number;
+	description: string;
 }
 
 export interface Achievement {
