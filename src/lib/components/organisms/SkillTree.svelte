@@ -112,7 +112,7 @@
 	}
 </script>
 
-<div class="overlay" on:click={onClose} on:keypress|stopPropagation|capture={onKeydown} transition:fade={{ duration: 300 }}>
+<div class="overlay" on:click={onClose} on:keypress|stopPropagation|capture={onKeydown} transition:fade={{ duration: 200 }}>
 	<div
 		class="skill-tree bg-gradient-to-br from-accent-900 to-accent-800"
 		on:click|stopPropagation

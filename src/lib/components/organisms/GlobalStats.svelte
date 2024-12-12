@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { X } from 'lucide-svelte';
+	import { fade, fly } from 'svelte/transition';
 	import {
 		atomsPerSecond,
 		bonusMultiplier,
@@ -13,48 +14,24 @@
 		playerLevel,
 	} from '$stores/gameStore';
 	import { formatNumber } from '$lib/utils';
-	import { onMount } from 'svelte';
 	import StatItem from '$lib/components/atoms/StatItem.svelte';
 
 	export let onClose: () => void;
-	let dialog: HTMLDialogElement;
-
-	onMount(() => {
-		dialog?.showModal();
-	});
-
-	function handleClose() {
-		dialog?.close();
-		onClose();
-	}
 
 	function onKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
-			handleClose();
-		}
-	}
-
-	function handleBackdropClick(e: MouseEvent) {
-		if (e.target === dialog) {
-			handleClose();
+			onClose();
 		}
 	}
 </script>
 
 <svelte:window on:keydown={onKeydown} />
 
-<dialog
-	bind:this={dialog}
-	class="h-[90vh] w-[90vw] max-w-3xl rounded-2xl bg-gradient-to-br from-accent-900 to-accent-800 p-0 backdrop:bg-black/70 backdrop:backdrop-blur-sm sm:w-screen"
-	on:click={handleBackdropClick}
->
-	<div class="flex h-full flex-col">
+<div class="overlay" on:click={onClose} transition:fade={{ duration: 200 }}>
+	<div class="modal bg-gradient-to-br from-accent-900 to-accent-800" on:click|stopPropagation transition:fly={{ y: -100, duration: 300 }}>
 		<div class="flex items-center justify-between gap-4 border-b border-white/10 bg-black/40 p-6 sm:px-8">
 			<h2 class="flex-1 text-2xl font-bold text-white">Global Statistics</h2>
-			<button
-				class="flex h-10 w-10 items-center justify-center rounded-l transition-colors hover:*:stroke-[3]"
-				on:click={handleClose}
-			>
+			<button class="flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:*:stroke-[3]" on:click={onClose}>
 				<X class="transition-all duration-300" />
 			</button>
 		</div>
@@ -85,30 +62,21 @@
 			</div>
 		</div>
 	</div>
-</dialog>
+</div>
 
 <style lang="postcss">
-	dialog::backdrop {
-		@apply bg-black/70 backdrop-blur-sm;
+	.overlay {
+		@apply fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm;
 	}
 
-	dialog {
-		@apply text-white;
+	.modal {
+		@apply flex h-[85vh] w-[85vw] max-w-3xl flex-col overflow-hidden rounded-2xl shadow-2xl;
+
 	}
 
-	dialog[open] {
-		animation: zoom 300ms cubic-bezier(0.4, 0, 0.2, 1);
-	}
-
-	@keyframes zoom {
-		from {
-			opacity: 0;
-			transform: scale(0.95) translateY(-40px);
-		}
-
-		to {
-			opacity: 1;
-			transform: scale(1) translateY(0);
+	@media (width <= 768px) {
+		.modal {
+			@apply h-[100dvh] w-screen rounded-none;
 		}
 	}
 </style>

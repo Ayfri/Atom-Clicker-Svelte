@@ -138,7 +138,7 @@
 		position: fixed;
 		text-transform: uppercase;
 		top: 1rem;
-		z-index: 100;
+		z-index: 10;
 
 		@media screen and (width <= 900px) {
 			left: 1rem;

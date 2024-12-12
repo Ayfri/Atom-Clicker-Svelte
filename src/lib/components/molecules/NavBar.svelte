@@ -1,65 +1,89 @@
 <script lang="ts">
-	import { BarChart2, ChartBarIcon, ChartNoAxesColumn, Network } from 'lucide-svelte';
 	import { mobile } from '$stores/window';
-	import { skillPointsAvailable } from '$stores/gameStore';
 	import NotificationDot from '$lib/components/atoms/NotificationDot.svelte';
 	import GlobalStats from '$lib/components/organisms/GlobalStats.svelte';
 	import SkillTree from '$lib/components/organisms/SkillTree.svelte';
+	import Credits from '$lib/components/organisms/Credits.svelte';
+	import { ChartNoAxesColumn, Network, Info } from 'lucide-svelte';
+	import type { ComponentType } from 'svelte';
+	import { skillPointsAvailable } from '$lib/stores/gameStore';
 
-	let showStats = false;
-	let showSkillTree = false;
+	interface Link {
+		icon: ComponentType;
+		label: string;
+		component: ComponentType;
+		notification?: () => boolean;
+	}
+
+	const links: Link[] = [
+		{
+			icon: ChartNoAxesColumn,
+			label: 'Stats',
+			component: GlobalStats,
+		},
+		{
+			icon: Network,
+			label: 'Skill Tree',
+			component: SkillTree,
+			notification: () => $skillPointsAvailable > 0,
+		},
+		{
+			icon: Info,
+			label: 'Credits',
+			component: Credits,
+		},
+	];
+
+	let activeComponent: (typeof links)[number]['component'] | null = null;
 </script>
 
 {#if $mobile}
 	<div class="absolute max-md:left-4 md:right-4 max-md:top-1/3 md:top-1/4 -translate-y-1/2 flex flex-col gap-3 z-10">
-		<button
-			class="flex items-center justify-center rounded-lg bg-accent/90 p-2.5 text-white backdrop-blur-sm transition-all hover:bg-accent"
-			on:click={() => (showStats = true)}
-		>
-			<ChartNoAxesColumn size={32} />
-		</button>
-		<NotificationDot hasNotification={$skillPointsAvailable > 0}>
-			<button
-				class="flex items-center justify-center rounded-lg bg-accent/90 p-2.5 text-white backdrop-blur-sm transition-all hover:bg-accent"
-				on:click={() => (showSkillTree = true)}
-			>
-				<Network size={32} />
-			</button>
-		</NotificationDot>
+		{#each links as link}
+			<NotificationDot hasNotification={link.notification ? link.notification() : false}>
+				<button
+					class="flex items-center justify-center rounded-lg bg-accent/90 p-2.5 text-white backdrop-blur-sm transition-all hover:bg-accent"
+					on:click={() => (activeComponent = link.component)}
+				>
+					<svelte:component this={link.icon} size={32} />
+				</button>
+			</NotificationDot>
+		{/each}
 	</div>
 {:else}
-	<nav class="fixed left-0 top-0 z-50 flex h-full flex-col items-center gap-2 bg-black/30 px-4 py-6 backdrop-blur-md">
-		<button
-			class="group relative flex h-12 w-12 items-center justify-center rounded-lg bg-accent/90 text-white transition-all hover:bg-accent"
-			on:click={() => (showStats = true)}
-		>
-			<ChartNoAxesColumn size={32} />
-			<span
-				class="invisible absolute left-[calc(100%+0.75rem)] whitespace-nowrap rounded-lg bg-accent/90 px-3 py-2 text-sm opacity-0 transition-all group-hover:visible group-hover:opacity-100"
-			>
-				Stats
-			</span>
-		</button>
-		<NotificationDot hasNotification={$skillPointsAvailable > 0}>
-			<button
-				class="group relative flex h-12 w-12 items-center justify-center rounded-lg bg-accent/90 text-white transition-all hover:bg-accent"
-				on:click={() => (showSkillTree = true)}
-			>
-				<Network size={32} />
-				<span
-					class="invisible absolute left-[calc(100%+0.75rem)] whitespace-nowrap rounded-lg bg-accent/90 px-3 py-2 text-sm opacity-0 transition-all group-hover:visible group-hover:opacity-100"
+	<nav class="fixed left-0 top-0 z-50 flex h-full flex-col items-center gap-5 bg-black/20 px-3 py-6 backdrop-blur">
+		{#each links as link}
+			<NotificationDot hasNotification={link.notification ? link.notification() : false}>
+				<button
+					class="group relative flex h-12 w-12 items-center justify-center rounded-lg bg-accent/90 text-white transition-all hover:bg-accent"
+					on:click={() => (activeComponent = link.component)}
 				>
-					Skill Tree
-				</span>
-			</button>
-		</NotificationDot>
+					<svelte:component this={link.icon} size={32} />
+					<span
+						class="label invisible absolute left-[calc(100%+1.25rem)] whitespace-nowrap rounded-lg bg-accent/90 px-3 py-2 text-sm opacity-0 transition-all group-hover:visible group-hover:opacity-100 bg-accent-900"
+					>
+						{link.label}
+					</span>
+				</button>
+			</NotificationDot>
+		{/each}
 	</nav>
 {/if}
 
-{#if showStats}
-	<GlobalStats onClose={() => (showStats = false)} />
+{#if activeComponent}
+	<svelte:component this={activeComponent} onClose={() => (activeComponent = null)} />
 {/if}
 
-{#if showSkillTree}
-	<SkillTree onClose={() => (showSkillTree = false)} />
-{/if}
+<style lang="postcss">
+/* Label anchor, small triangle */
+.label::after {
+	content: '';
+	position: absolute;
+	left: -0.85rem;
+	top: 50%;
+	transform: translateY(-50%);
+	border-width: 0.5rem;
+	border-style: solid;
+	border-color: transparent  theme('colors.accent.900') transparent transparent;
+}
+</style>

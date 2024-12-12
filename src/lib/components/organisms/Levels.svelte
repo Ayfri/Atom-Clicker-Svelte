@@ -24,7 +24,7 @@
 		transform: translateX(-50%);
 		top: 0;
 		width: 60vw;
-		z-index: 50;
+		z-index: 10;
 
 		@media (width < 768px) {
 			padding: 0;
