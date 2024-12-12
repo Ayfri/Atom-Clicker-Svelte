@@ -1,4 +1,6 @@
 <script lang="ts">
+	import GitHub from '@components/icons/GitHub.svelte';
+	import Discord from '@components/icons/Discord.svelte';
 	import { ArrowRight, SquareArrowOutUpRight, X } from 'lucide-svelte';
 	import { fade, fly } from 'svelte/transition';
 
@@ -9,6 +11,21 @@
 		url: 'https://ayfri.com',
 		description: 'Visit website',
 	};
+
+	const socials = [
+		{
+			name: 'GitHub',
+			url: 'https://github.com/Ayfri/Atom-Clicker-Svelte',
+			description: 'View source code',
+			icon: GitHub,
+		},
+		{
+			name: 'Discord',
+			url: 'https://discord.gg/BySjRNQ9Je',
+			description: 'Join our community',
+			icon: Discord,
+		},
+	];
 
 	const technologies = [
 		{
@@ -56,12 +73,29 @@
 							href={creator.url}
 							target="_blank"
 							rel="noopener noreferrer"
-							class="group flex flex-row items-center gap-2 rounded-lg bg-black/20 p-4 transition-colors hover:bg-black/30 w-full"
+							class="group flex flex-row items-baseline gap-2 rounded-lg bg-black/20 p-4 transition-colors hover:bg-black/30 w-full"
 						>
 							<span class="text-lg font-semibold text-white group-hover:text-accent">{creator.name}</span>
 							<span class="text-sm text-white/60 flex-1">{creator.description}</span>
 							<SquareArrowOutUpRight size={16} />
 						</a>
+
+						<h3 class="border-b border-accent/50 pb-2 text-lg font-bold text-accent mt-6">Links</h3>
+						<div class="flex flex-col gap-4">
+							{#each socials as social}
+								<a
+									href={social.url}
+									target="_blank"
+									rel="noopener noreferrer"
+									class="group flex items-baseline gap-2 rounded-lg bg-black/20 p-4 transition-colors hover:bg-black/30"
+								>
+									<svelte:component this={social.icon} class="size-6 self-center mr-1" />
+									<span class="text-lg font-semibold text-white group-hover:text-accent">{social.name}</span>
+									<span class="text-sm text-white/60 flex-1">{social.description}</span>
+									<SquareArrowOutUpRight size={16} />
+								</a>
+							{/each}
+						</div>
 					</div>
 				</div>
 

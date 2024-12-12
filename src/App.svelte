@@ -5,7 +5,6 @@
 	import { app } from '$stores/pixi';
 	import { mobile } from '$stores/window';
 	import Analytics from '@components/atoms/Analytics.svelte';
-	import Header from '@components/atoms/Header.svelte';
 	import SEO from '@components/atoms/SEO.svelte';
 	import BonusPhoton from '@components/molecules/BonusPhoton.svelte';
 	import Canvas from '@components/molecules/Canvas.svelte';
@@ -71,7 +70,6 @@
 	<SEO />
 </svelte:head>
 
-<Header />
 <main>
 	{#if isDev}
 		<button on:click={() => gameManager.reset()} class="reset-all">
