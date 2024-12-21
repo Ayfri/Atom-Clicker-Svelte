@@ -1,0 +1,82 @@
+:root {
+	--accent-color: #4a90e2;
+	background-color: #1a1a1a;
+	background-blend-mode: screen;
+
+	background-image: radial-gradient(circle at 10% 20%, rgba(74, 144, 226, 0.12) 0%, transparent 60%),
+		radial-gradient(circle at 90% 80%, rgba(74, 144, 226, 0.12) 0%, transparent 50%);
+	color: rgba(255, 255, 255, 0.87);
+	color-scheme: light dark;
+	font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+
+	font-synthesis: none;
+	font-weight: 400;
+	line-height: 1.5;
+	text-rendering: optimizeLegibility;
+}
+
+* {
+	user-select: none;
+}
+
+body {
+	margin: 0;
+	min-height: 100vh;
+	min-width: 320px;
+	overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	line-height: 1.2;
+	margin: 0;
+}
+
+button {
+	background-color: #1a1a1a;
+	border: 1px solid transparent;
+	border-radius: 8px;
+	cursor: pointer;
+	font-family: inherit;
+	font-size: 1em;
+	font-weight: 500;
+	padding: 0.6em 1.2em;
+	transition: border-color 0.25s;
+}
+
+button:focus,
+button:focus-visible {
+	outline: none;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+@keyframes pulse {
+	0% {
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(1.1);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+
+canvas {
+	position: absolute;
+	top: 0;
+	left: 0;
+	pointer-events: none;
+	z-index: 1;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
