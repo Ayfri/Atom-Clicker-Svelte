@@ -74,9 +74,7 @@
 
 	<Levels />
 	<Canvas />
-	{#if $app === null}
-		<h1 class="loading">Loading...</h1>
-	{:else}
+	{#if $app !== null}
 		<Toaster />
 		<BonusPhoton />
 		<div class="game-container">
@@ -135,13 +133,6 @@
 			left: 1rem;
 			top: 3rem;
 		}
-	}
-
-	.loading {
-		color: white;
-		font-size: 3rem;
-		margin-top: 20vh;
-		text-align: center;
 	}
 
 	.game-container {
