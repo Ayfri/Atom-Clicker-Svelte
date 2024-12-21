@@ -84,6 +84,9 @@
 			<div class="left-panel">
 				<div class="tabs">
 					<button class:active={activeTab === 'upgrades'} on:click={() => (activeTab = 'upgrades')}> Upgrades</button>
+					{#if $mobile}
+						<button class:active={activeTab === 'buildings'} on:click={() => (activeTab = 'buildings')}> Buildings</button>
+					{/if}
 					<button class:active={activeTab === 'achievements'} on:click={() => (activeTab = 'achievements')}>
 						Achievements
 					</button>
