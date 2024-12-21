@@ -5,10 +5,13 @@
 	import SkillTree from '$lib/components/organisms/SkillTree.svelte';
 	import Credits from '$lib/components/organisms/Credits.svelte';
 	import Protonise from '$lib/components/organisms/Protonise.svelte';
-	import { ChartNoAxesColumn, Network, Info, Atom } from 'lucide-svelte';
+	import Leaderboard from '$lib/components/organisms/Leaderboard.svelte';
+	import { ChartNoAxesColumn, Network, Info, Atom, Trophy, LogIn, LogOut } from 'lucide-svelte';
 	import { onDestroy, onMount, type ComponentType } from 'svelte';
 	import { skillPointsAvailable, protons, atoms } from '$lib/stores/gameStore';
-	import {protoniseProtonsGain, PROTONS_ATOMS_REQUIRED} from '$lib/stores/protons';
+	import { protoniseProtonsGain, PROTONS_ATOMS_REQUIRED } from '$lib/stores/protons';
+	import { auth } from '$stores/auth';
+	import { fade } from 'svelte/transition'
 
 	interface Link {
 		icon: ComponentType;
@@ -23,6 +26,11 @@
 			icon: ChartNoAxesColumn,
 			label: 'Stats',
 			component: GlobalStats,
+		},
+		{
+			icon: Trophy,
+			label: 'Leaderboard',
+			component: Leaderboard,
 		},
 		{
 			icon: Network,
@@ -48,12 +56,12 @@
 	let activeComponent: ComponentType | null = null;
 	let visibleComponents: Link[] = [];
 
-	let interval: number | null = null;
+	let interval: ReturnType<typeof setInterval> | null = null;
 
 	onMount(() => {
-		visibleComponents = links.filter((link) => !link.condition || link.condition());
+		visibleComponents = links.filter(link => !link.condition || link.condition());
 		interval = setInterval(() => {
-			visibleComponents = links.filter((link) => !link.condition || link.condition());
+			visibleComponents = links.filter(link => !link.condition || link.condition());
 		}, 100);
 	});
 
@@ -68,7 +76,7 @@
 			<NotificationDot hasNotification={link.notification ? link.notification() : false}>
 				<button
 					class="flex items-center justify-center rounded-lg bg-accent/90 p-2.5 text-white backdrop-blur-sm transition-all hover:bg-accent"
-					on:click={() => (activeComponent = link.component)}
+					on:click={() => activeComponent = link.component}
 				>
 					<svelte:component this={link.icon} size={32} />
 				</button>
@@ -81,7 +89,7 @@
 			<NotificationDot hasNotification={link.notification ? link.notification() : false}>
 				<button
 					class="group relative flex h-12 w-12 items-center justify-center rounded-lg bg-accent/90 text-white transition-all hover:bg-accent"
-					on:click={() => (activeComponent = link.component)}
+					on:click={() => activeComponent = link.component}
 				>
 					<svelte:component this={link.icon} size={32} />
 					<span

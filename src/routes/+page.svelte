@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { setGlobals } from '$lib/globals';
 	import { gameManager } from '$helpers/gameManager';
+	import {auth} from '$stores/auth';
 	import { atomsPerSecond } from '$stores/gameStore';
 	import { app } from '$stores/pixi';
 	import { mobile } from '$stores/window';
@@ -29,6 +30,8 @@
 	onMount(async () => {
 		$mobile = window.innerWidth <= 900;
 		gameManager.initialize();
+		await auth.init();
+
 
 		while (!$app || !$app?.ticker) {
 			await new Promise((resolve) => setTimeout(resolve, 100));
