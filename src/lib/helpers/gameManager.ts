@@ -283,6 +283,7 @@ export const gameManager = {
 
 	save() {
 		const currentState = this.getCurrentState();
+		lastSave.set(Date.now());
 		localStorage.setItem(SAVE_KEY, JSON.stringify({
 			...currentState,
 			version: SAVE_VERSION,
