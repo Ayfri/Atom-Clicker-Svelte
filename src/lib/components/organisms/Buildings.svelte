@@ -1,31 +1,45 @@
 <script lang="ts">
-	import {Network} from 'lucide-svelte';
-	import NotificationDot from '@components/atoms/NotificationDot.svelte';
-	import { mobile } from '$stores/window';
-	import {skillPointsAvailable} from '$stores/gameStore';
-	import {gameManager} from '$helpers/gameManager';
-	import {BUILDING_COLORS, type BuildingData, BUILDINGS, type BuildingType} from '$data/buildings';
-	import {buildingProductions, atoms, buildings, globalMultiplier, bonusMultiplier} from '$stores/gameStore';
-	import type {Building} from '$lib/types';
-	import {formatNumber} from '$lib/utils';
-	import {fade} from 'svelte/transition';
+	import { currentState, gameManager } from '$helpers/gameManager';
+	import { BUILDING_COLORS, type BuildingData, BUILDINGS, type BuildingType } from '$data/buildings';
+	import { buildingProductions, buildings, globalMultiplier, bonusMultiplier } from '$stores/gameStore';
+	import type { Building } from '$lib/types';
+	import { formatNumber } from '$lib/utils';
+	import { fade } from 'svelte/transition';
 
 	const buildingsEntries = Object.entries(BUILDINGS) as [BuildingType, BuildingData][];
+	let unaffordableRootBuildings: [BuildingType, BuildingData][] = [];
+	let affordableBuildings: [BuildingType, Building][] = [];
+	let unlockedBuildings: [BuildingType, Building][] = [];
+	let hiddenBuildings: [BuildingType, BuildingData][] = [];
 
-	$: unaffordableBuildings = buildingsEntries.filter(([type, building]) => $atoms < ($buildings[type]?.cost ?? building.cost));
-	$: unlockedBuildings = Object.entries($buildings).filter(([,{unlocked}]) => unlocked) as [BuildingType, Building][];
-	$: hiddenBuildings = buildingsEntries.filter(([type]) => unlockedBuildings.map(u => u[0]).indexOf(type) === -1 && unaffordableBuildings.map(u => u[0]).indexOf(type) !== -1);
+	$: if ($currentState) {
+		unaffordableRootBuildings = buildingsEntries.filter(([type, building]) => gameManager.canAfford(building.cost) === false);
+		unlockedBuildings = Object.entries($buildings).filter(([, { unlocked }]) => unlocked) as [BuildingType, Building][];
+		hiddenBuildings = buildingsEntries.filter(
+			([type]) =>
+				unlockedBuildings.map((u) => u[0]).indexOf(type) === -1 && unaffordableRootBuildings.map((u) => u[0]).indexOf(type) !== -1,
+		);
 
-	$: buildingsEntries.filter(([type]) => unlockedBuildings.map(u => u[0]).indexOf(type) === -1 && unaffordableBuildings.map(u => u[0]).indexOf(type) === -1).forEach(([type]) => {
-		gameManager.unlockBuilding(type);
-	});
+		buildingsEntries
+			.filter(
+				([type]) =>
+					unlockedBuildings.map((u) => u[0]).indexOf(type) === -1 &&
+					unaffordableRootBuildings.map((u) => u[0]).indexOf(type) === -1,
+			)
+			.forEach(([type]) => gameManager.unlockBuilding(type));
+
+		affordableBuildings = Object.entries($buildings).filter(([type, building]) => gameManager.canAfford(building.cost)) as [
+			BuildingType,
+			Building,
+		][];
+	}
 </script>
 
 <div class="buildings">
 	<h2>Buildings</h2>
 	{#each buildingsEntries as [type, building], i}
 		{@const saveData = $buildings[type]}
-		{@const unaffordable = $atoms < (saveData?.cost ?? building.cost)}
+		{@const unaffordable = !affordableBuildings.some(([t]) => t === type)}
 		{@const obfuscated = hiddenBuildings.some(([t]) => t === type)}
 		{@const hidden = hiddenBuildings.slice(1).some(([t]) => t === type)}
 		{@const level = saveData?.level ?? 0}
@@ -35,21 +49,29 @@
 			class="building"
 			style="--color: {color};"
 			class:disabled={unaffordable}
-			on:click={() => {if (!unaffordable) gameManager.purchaseBuilding(type)}}
+			on:click={() => {
+				if (!unaffordable) gameManager.purchaseBuilding(type);
+			}}
 			transition:fade
 			{hidden}
 		>
 			<div class="info">
 				<h3>
-					{obfuscated ? '???' : building.name} {saveData?.count ? `(${saveData.count})` : ''}
+					{obfuscated ? '???' : building.name}
+					{saveData?.count ? `(${saveData.count})` : ''}
 					{#if level > 0}
 						<span>⇮{level}</span>
 					{/if}
 				</h3>
-				<p>{saveData && saveData.count > 0 ? 'Producing' : 'Will produce'}: {formatNumber($buildingProductions[type] || building.rate * $globalMultiplier * $bonusMultiplier)} atoms/s</p>
+				<p>
+					{saveData && saveData.count > 0 ? 'Producing' : 'Will produce'}: {formatNumber(
+						$buildingProductions[type] || building.rate * $globalMultiplier * $bonusMultiplier,
+					)} atoms/s
+				</p>
 			</div>
 			<div class="cost">
-				Cost: {formatNumber(saveData?.cost ?? building.cost)} atoms
+				Cost: {formatNumber(saveData?.cost?.amount ?? building.cost.amount)}
+				{building.cost.currency}
 			</div>
 		</div>
 	{/each}

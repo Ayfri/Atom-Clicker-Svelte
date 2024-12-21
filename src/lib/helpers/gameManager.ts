@@ -1,26 +1,62 @@
 // Game store manager
-import {get} from 'svelte/store';
-import {BUILDING_COST_MULTIPLIER} from '../constants';
 import {ACHIEVEMENTS} from '$data/achievements';
 import {BUILDING_LEVEL_UP_COST, BUILDINGS, type BuildingType} from '$data/buildings';
+import {CurrenciesTypes, type CurrencyName} from '$data/currencies';
 import {UPGRADES} from '$data/upgrades';
-import {loadSavedState, SAVE_KEY, SAVE_VERSION} from './saves';
-import {achievements, activePowerUps, atoms, buildings, lastSave, totalClicks, upgrades, skillUpgrades, totalXP, xpGainMultiplier} from '$stores/gameStore';
+import {protoniseProtonsGain, PROTONS_ATOMS_REQUIRED} from '$lib/stores/protons';
+import {
+	achievements,
+	activePowerUps,
+	atoms,
+	buildings,
+	lastSave,
+	protons,
+	skillUpgrades,
+	totalClicks,
+	totalProtonises,
+	totalXP,
+	upgrades,
+	xpGainMultiplier,
+} from '$stores/gameStore';
 import {info} from '$stores/toasts';
-import type {GameState, PowerUp} from '../types';
-import type { Building } from '../types';
+import {derived, get} from 'svelte/store';
+import {BUILDING_COST_MULTIPLIER} from '../constants';
+import type {Building, GameState, PowerUp, Price} from '../types';
+import {loadSavedState, SAVE_KEY, SAVE_VERSION} from './saves';
 
-interface SaveData {
-	achievements: string[];
-	activePowerUps: PowerUp[];
-	atoms: number;
-	buildings: Record<BuildingType, Building>;
-	lastSave: number;
-	totalClicks: number;
-	totalXP: number;
-	upgrades: string[];
-	version: number;
-	skillUpgrades: string[];
+interface SaveData extends GameState { }
+
+export const currentState = derived([achievements, activePowerUps, atoms, protons, buildings, lastSave, skillUpgrades, totalClicks, totalXP, upgrades, totalProtonises], ([achievements, activePowerUps, atoms, protons, buildings, lastSave, skillUpgrades, totalClicks, totalXP, upgrades, totalProtonises]) => {
+	return {
+		achievements,
+		activePowerUps,
+		atoms,
+		protons,
+		buildings,
+		lastSave,
+		skillUpgrades,
+		totalClicks,
+		totalXP,
+		upgrades,
+		totalProtonises,
+	} as GameState;
+});
+
+export function resetGameState(): GameState {
+	return {
+		achievements: [],
+		activePowerUps: [],
+		atoms: 0,
+		protons: 0,
+		buildings: {},
+		lastSave: Date.now(),
+		skillUpgrades: [],
+		totalClicks: 0,
+		totalXP: 0,
+		upgrades: [],
+		version: SAVE_VERSION,
+		totalProtonises: 0,
+	};
 }
 
 export const gameManager = {
@@ -32,8 +68,10 @@ export const gameManager = {
 			atoms.set(savedState.atoms);
 			buildings.set(savedState.buildings);
 			lastSave.set(savedState.lastSave);
+			protons.set(savedState.protons || 0);
 			skillUpgrades.set(savedState.skillUpgrades || []);
 			totalClicks.set(savedState.totalClicks);
+			totalProtonises.set(savedState.totalProtonises || 0);
 			totalXP.set(savedState.totalXP || 0);
 			upgrades.set(savedState.upgrades.filter(u => u in UPGRADES));
 
@@ -45,8 +83,6 @@ export const gameManager = {
 
 			// Save in case of data migration
 			this.save();
-		} else {
-			skillUpgrades.set([]);
 		}
 
 		// Check achievements periodically
@@ -79,22 +115,40 @@ export const gameManager = {
 	},
 
 	getCurrentState(): GameState {
-		return {
-			achievements: get(achievements),
-			activePowerUps: get(activePowerUps),
-			atoms: get(atoms),
-			buildings: get(buildings),
-			lastSave: get(lastSave),
-			skillUpgrades: get(skillUpgrades),
-			totalClicks: get(totalClicks),
-			totalXP: get(totalXP),
-			upgrades: get(upgrades),
-			version: SAVE_VERSION,
-		};
+		return get(currentState);
 	},
 
 	addAtoms(amount: number) {
 		atoms.update(current => current + amount);
+	},
+
+	addCurrency(price: Price) {
+		if (price.currency === CurrenciesTypes.ATOMS) {
+			atoms.update(current => current + price.amount);
+		} else if (price.currency === CurrenciesTypes.PROTONS) {
+			protons.update(current => current + price.amount);
+		}
+	},
+
+	canAfford(price: Price): boolean {
+		const currentState = this.getCurrentState();
+		if (price.currency === CurrenciesTypes.ATOMS && currentState.atoms >= price.amount) {
+			return true;
+		} else if (price.currency === CurrenciesTypes.PROTONS && currentState.protons >= price.amount) {
+			return true;
+		}
+		return false;
+	},
+
+	spendCurrency(price: Price): boolean {
+		if (!this.canAfford(price)) return false;
+
+		if (price.currency === CurrenciesTypes.ATOMS) {
+			atoms.update(current => current - price.amount);
+		} else if (price.currency === CurrenciesTypes.PROTONS) {
+			protons.update(current => current - price.amount);
+		}
+		return true;
 	},
 
 	purchaseBuilding(type: BuildingType) {
@@ -106,16 +160,18 @@ export const gameManager = {
 			level: 0,
 			count: 0,
 			unlocked: true,
-		};
+		} as Building;
 
-		if (currentState.atoms < currentBuilding.cost) return;
+		if (!this.spendCurrency(currentBuilding.cost)) return;
 
-		atoms.update(current => current - currentBuilding.cost);
 		buildings.update(current => ({
 			...current,
 			[type]: {
 				...currentBuilding,
-				cost: Math.round(currentBuilding.cost * BUILDING_COST_MULTIPLIER),
+				cost: {
+					amount: Math.round(currentBuilding.cost.amount * BUILDING_COST_MULTIPLIER),
+					currency: currentBuilding.cost.currency
+				},
 				rate: currentBuilding.rate,
 				count: currentBuilding.count + 1,
 				level: Math.floor((currentBuilding.count + 1) / BUILDING_LEVEL_UP_COST)
@@ -143,13 +199,55 @@ export const gameManager = {
 		const upgrade = UPGRADES[id];
 		const purchased = currentState.upgrades.includes(id);
 
-		if (!purchased && currentState.atoms >= upgrade.cost) {
-			atoms.update(current => current - upgrade.cost);
+		if (!purchased && this.spendCurrency(upgrade.cost)) {
 			upgrades.update(current => [
 				...current,
 				id,
 			]);
 		}
+	},
+
+	protonise() {
+		const currentState = this.getCurrentState();
+		const protonGain = get(protoniseProtonsGain);
+
+		if (currentState.atoms >= PROTONS_ATOMS_REQUIRED || protonGain > 0) {
+			// Keep protons and increment them
+			const newState = {
+				...resetGameState(),
+				protons: currentState.protons + protonGain,
+				totalProtonises: currentState.totalProtonises + 1,
+			};
+
+			// Apply quick start upgrades if any
+			const quickStartUpgrades = currentState.upgrades
+				.filter(id => id.startsWith('protonise_start_'))
+				.map(id => UPGRADES[id]);
+
+			if (quickStartUpgrades.length > 0) {
+				newState.atoms = Math.max(
+					...quickStartUpgrades.map(upgrade =>
+						parseInt(upgrade.description.match(/\\d+/)?.[0] || '0')
+					)
+				);
+			}
+
+			// Update all stores
+			achievements.set(newState.achievements);
+			activePowerUps.set(newState.activePowerUps);
+			atoms.set(newState.atoms);
+			protons.set(newState.protons);
+			buildings.set(newState.buildings);
+			lastSave.set(newState.lastSave);
+			skillUpgrades.set(newState.skillUpgrades);
+			totalClicks.set(newState.totalClicks);
+			totalXP.set(newState.totalXP);
+			upgrades.set(newState.upgrades);
+			totalProtonises.set(newState.totalProtonises);
+
+			return true;
+		}
+		return false;
 	},
 
 	addPowerUp(powerUp: PowerUp) {
@@ -164,20 +262,26 @@ export const gameManager = {
 	},
 
 	reset() {
-		achievements.set([]);
-		activePowerUps.set([]);
-		atoms.set(0);
-		buildings.set({});
-		lastSave.set(Date.now());
-		skillUpgrades.set([]);
-		totalClicks.set(0);
-		totalXP.set(0);
-		upgrades.set([]);
+		const newState = resetGameState();
+		achievements.set(newState.achievements);
+		activePowerUps.set(newState.activePowerUps);
+		atoms.set(newState.atoms);
+		buildings.set(newState.buildings);
+		lastSave.set(newState.lastSave);
+		protons.set(newState.protons);
+		totalClicks.set(newState.totalClicks);
+		totalProtonises.set(newState.totalProtonises);
+		skillUpgrades.set(newState.skillUpgrades);
+		totalXP.set(newState.totalXP);
+		upgrades.set(newState.upgrades);
 	},
 
 	save() {
 		const currentState = this.getCurrentState();
-		localStorage.setItem(SAVE_KEY, JSON.stringify(currentState));
+		localStorage.setItem(SAVE_KEY, JSON.stringify({
+			...currentState,
+			version: SAVE_VERSION,
+		}));
 	},
 
 	load(saveData: SaveData) {
@@ -186,8 +290,10 @@ export const gameManager = {
 		atoms.set(saveData.atoms);
 		buildings.set(saveData.buildings);
 		lastSave.set(saveData.lastSave);
-		skillUpgrades.set(saveData.skillUpgrades);
+		protons.set(saveData.protons || 0);
 		totalClicks.set(saveData.totalClicks);
+		totalProtonises.set(saveData.totalProtonises || 0);
+		skillUpgrades.set(saveData.skillUpgrades);
 		totalXP.set(saveData.totalXP);
 		upgrades.set(saveData.upgrades.filter(u => u in UPGRADES));
 	},

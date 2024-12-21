@@ -1,3 +1,5 @@
+node_modules
+
 # Logs
 logs
 *.log
@@ -7,10 +9,18 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
+# Dependencies
 dist
 dist-ssr
 *.local
+
+# Build output
+.output
+.vercel
+.netlify
+.wrangler
+/.svelte-kit
+/build
 
 # Editor directories and files
 .vscode/*
@@ -22,3 +32,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+Thumbs.db
+
+# Environment variables
+.env
+.env.*
+!.env.example
+!.env.test
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*

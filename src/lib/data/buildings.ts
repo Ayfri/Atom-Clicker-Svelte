@@ -1,3 +1,6 @@
+import {CurrenciesTypes} from '$data/currencies';
+import type {Price} from '$lib/types';
+
 export const BuildingTypes = {
 	MOLECULE: 'molecule',
 	CRYSTAL: 'crystal',
@@ -15,7 +18,7 @@ export type BuildingType = typeof BuildingTypes[keyof typeof BuildingTypes];
 export interface BuildingData {
 	name: string;
 	description: string;
-	cost: number;
+	cost: Price;
 	rate: number;
 }
 
@@ -23,55 +26,82 @@ export const BUILDINGS: Record<BuildingType, BuildingData> = {
 	[BuildingTypes.MOLECULE]: {
 		name: 'Molecule',
 		description: 'Basic building block of matter',
-		cost: 20,
+		cost: {
+			amount: 20,
+			currency: CurrenciesTypes.ATOMS
+		},
 		rate: 0.1,
 	},
 	[BuildingTypes.CRYSTAL]: {
 		name: 'Crystal',
 		description: 'Organized structure of molecules',
-		cost: 300,
+		cost: {
+			amount: 300,
+			currency: CurrenciesTypes.ATOMS
+		},
 		rate: 1.5,
 	},
 	[BuildingTypes.NANOSTRUCTURE]: {
 		name: 'Nanostructure',
 		description: 'Engineered atomic arrangements',
-		cost: 9000,
+		cost: {
+			amount: 9000,
+			currency: CurrenciesTypes.ATOMS
+		},
 		rate: 16,
 	},
 	[BuildingTypes.MICROORGANISM]: {
 		name: 'Micro-organism',
 		description: 'Living atomic factories',
-		cost: 251_000,
+		cost: {
+			amount: 251_000,
+			currency: CurrenciesTypes.ATOMS
+		},
 		rate: 100,
 	},
 	[BuildingTypes.ROCK]: {
 		name: 'Rock',
 		description: 'Solid mass of atoms',
-		cost: 8_808_080,
+		cost: {
+			amount: 8_808_080,
+			currency: CurrenciesTypes.ATOMS
+		},
 		rate: 4000,
 	},
 	[BuildingTypes.PLANET]: {
 		name: 'Planet',
 		description: 'Celestial body of atoms',
-		cost: 450_200_000,
+		cost: {
+			amount: 450_200_000,
+			currency: CurrenciesTypes.ATOMS
+		},
 		rate: 35_000,
 	},
 	[BuildingTypes.STAR]: {
 		name: 'Star',
 		description: 'Cosmic atom forge',
-		cost: 9_850_000_000,
+		cost: {
+			amount: 9_850_000_000,
+			currency: CurrenciesTypes.ATOMS
+		},
 		rate: 245_000,
 	},
 	[BuildingTypes.NEUTRON_STAR]: {
 		name: 'Neutron Star',
 		description: 'Ultra-dense atomic core',
-		cost: 77_700_000_000,
+		cost: {
+			amount: 77_700_000_000,
+			currency: CurrenciesTypes.ATOMS
+		},
 		rate: 1_700_000,
 	},
 	[BuildingTypes.BLACK_HOLE]: {
 		name: 'Black Hole',
 		description: 'Cosmic atom collector',
-		cost: 1_000_000_000_000,
+		cost: {
+			amount: 1_000_000_000_000,
+			currency: CurrenciesTypes.ATOMS
+		},
 		rate: 12_000_000,
 	}
 };

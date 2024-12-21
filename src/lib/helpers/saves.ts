@@ -1,8 +1,9 @@
 import {BUILDING_LEVEL_UP_COST, type BuildingType} from '$data/buildings';
+import {CurrenciesTypes} from '$data/currencies';
 import type {Building, GameState} from '../types';
 
 export const SAVE_KEY = 'atomic-clicker-save';
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 
 // Helper functions for state management
 export function loadSavedState(): GameState | null {
@@ -37,10 +38,6 @@ function isValidGameState(state: any): state is GameState {
 			(v: any) => typeof v === 'number',
 		],
 		[
-			'totalXP',
-			(v: any) => typeof v === 'number' || v === undefined,
-		],
-		[
 			'buildings',
 			(v: any) => typeof v === 'object',
 		],
@@ -49,7 +46,23 @@ function isValidGameState(state: any): state is GameState {
 			(v: any) => typeof v === 'number',
 		],
 		[
+			'protons',
+			(v: any) => typeof v === 'number',
+		],
+		[
+			'skillUpgrades',
+			Array.isArray,
+		],
+		[
 			'totalClicks',
+			(v: any) => typeof v === 'number',
+		],
+		[
+			'totalProtonises',
+			(v: any) => typeof v === 'number',
+		],
+		[
+			'totalXP',
 			(v: any) => typeof v === 'number',
 		],
 		[
@@ -62,7 +75,12 @@ function isValidGameState(state: any): state is GameState {
 		]
 	] as const;
 
-	return checks.every(([key, validator]) => key in state && validator(state[key]));
+	const validated = checks.filter(([key, validator]) => key in state && validator(state[key]));
+	if (validated.length !== checks.length) {
+		const missingKeys = checks.filter(([key]) => !(key in state));
+		console.log('Missing keys:', missingKeys);
+	}
+	return validated.length === checks.length;
 }
 
 function migrateSavedState(savedState: any): GameState | undefined {
@@ -96,6 +114,18 @@ function migrateSavedState(savedState: any): GameState | undefined {
 		savedState.skillUpgrades = [];
 		savedState.totalXP = 0;
 		savedState.version = 4;
+	}
+	if (savedState.version === 4) {
+		// Add totalProtonises
+		Object.entries<Partial<Building>>(savedState.buildings)?.forEach(([key, building]) => {
+			savedState[key].cost = {
+				amount: typeof building.cost === 'number' ? building.cost : building.cost?.amount,
+				currency: CurrenciesTypes.ATOMS,
+			}
+		});
+		savedState.protons = 0;
+		savedState.totalProtonises = 0;
+		savedState.version = 5;
 	}
 
 	return savedState;

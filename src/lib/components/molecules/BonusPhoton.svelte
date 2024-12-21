@@ -21,10 +21,10 @@
 		},
 		{
 			duration: 5000,
-			multiplier: 8,
+			multiplier: 6,
 		},
 		{
-			duration: 2500,
+			duration: 2000,
 			multiplier: 25,
 		},
 	];

@@ -1,9 +1,10 @@
 import type {BuildingType} from '$data/buildings';
+import type {CurrencyName} from '$data/currencies';
 import type {SAVE_VERSION} from '$helpers/saves';
 
 export interface Building {
 	count: number;
-	cost: number;
+	cost: Price;
 	level: number;
 	rate: number;
 	unlocked: boolean;
@@ -15,7 +16,7 @@ export interface Upgrade {
 	condition?: (state: GameState) => boolean;
 	description: string;
 	effects: Effect[];
-	cost: number;
+	cost: Price;
 }
 
 export interface Effect {
@@ -46,6 +47,7 @@ export interface GameState {
 	achievements: string[];
 	activePowerUps: PowerUp[];
 	atoms: number;
+	protons: number;
 	buildings: {
 		[key in BuildingType]?: Building;
 	}
@@ -55,6 +57,7 @@ export interface GameState {
 	totalXP: number;
 	upgrades: string[];
 	version: typeof SAVE_VERSION;
+	totalProtonises: number;
 }
 
 export type Range = [number, number];
@@ -67,4 +70,15 @@ export interface SkillUpgrade {
 	condition?: (state: GameState) => boolean;
 	effects: Effect[];
 	requires?: string[];
+}
+
+export interface Currency {
+	color: string;
+	name: string;
+	icon: string;
+}
+
+export interface Price {
+	amount: number;
+	currency: CurrencyName;
 }

@@ -1,31 +1,51 @@
 <script lang="ts">
-	import {gameManager} from '$helpers/gameManager';
-	import {atoms, upgrades} from '$stores/gameStore';
-	import {UPGRADES} from '$data/upgrades';
-	import {formatNumber} from '$lib/utils';
+	import {CURRENCIES, CurrenciesTypes} from '$data/currencies';
+	import { currentState, gameManager } from '$helpers/gameManager';
+	import { atoms, protons, upgrades, buildings, achievements, totalProtonises } from '$stores/gameStore';
+	import { UPGRADES } from '$data/upgrades';
+	import { formatNumber } from '$lib/utils';
+	import type { Upgrade } from '$lib/types';
 
-	$: availableUpgrades = Object.values(UPGRADES).filter(upgrade => {
-		const condition = upgrade.condition?.(gameManager.getCurrentState()) ?? true;
+	let availableUpgrades: Upgrade[] = [];
 
-		return condition && !$upgrades.includes(upgrade.id);
-	}).sort((a, b) => a.cost - b.cost);
+	$: if ($currentState) {
+		availableUpgrades = Object.values(UPGRADES)
+			.filter((upgrade) => {
+				const condition = upgrade.condition?.($currentState) ?? true;
+				const notPurchased = !$upgrades.includes(upgrade.id);
+				return condition && notPurchased;
+			})
+			.sort((a, b) => {
+				// Sort by currency first (atoms before protons)
+				if (a.cost.currency !== b.cost.currency) {
+					return a.cost.currency === CurrenciesTypes.ATOMS ? -1 : 1;
+				}
+				// Then sort by amount
+				return a.cost.amount - b.cost.amount;
+			});
+	}
 
-	$: visibleUpgrades = availableUpgrades.slice(0, 10);
+	$: affordableUpgrades = availableUpgrades.filter((upgrade) => gameManager.canAfford(upgrade.cost));
 </script>
 
 <div class="upgrades">
 	<h2>Upgrades</h2>
 	<div class="upgrade-grid">
-		{#each visibleUpgrades as upgrade}
-			{@const unaffordable = $atoms < upgrade.cost}
+		{#each availableUpgrades.slice(0, 10) as upgrade (upgrade.id)}
+			{@const affordable = affordableUpgrades.includes(upgrade)}
 			<div
 				class="upgrade"
-				class:disabled={unaffordable}
-				on:click={() => {if (!unaffordable) gameManager.purchaseUpgrade(upgrade.id)}}
+				class:disabled={!affordable}
+				on:click={() => {
+					if (affordable) gameManager.purchaseUpgrade(upgrade.id);
+				}}
 			>
 				<h3>{upgrade.name}</h3>
 				<p>{upgrade.description}</p>
-				<div class="cost">Cost: {formatNumber(upgrade.cost)} atoms</div>
+				<div class="cost" style="color: {CURRENCIES[upgrade.cost.currency].color}">
+					Cost: {formatNumber(upgrade.cost.amount)}
+					{upgrade.cost.currency}
+				</div>
 			</div>
 		{/each}
 	</div>
@@ -74,7 +94,6 @@
 	}
 
 	.cost {
-		color: #4a90e2;
 		font-size: 0.9rem;
 		margin-top: 0.5rem;
 	}

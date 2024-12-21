@@ -1,5 +1,5 @@
 import {get} from 'svelte/store';
-import {atomsPerSecond, playerLevel} from '$stores/gameStore';
+import {atomsPerSecond, playerLevel, totalProtonises} from '$stores/gameStore';
 import type {Achievement, GameState} from '$lib/types';
 import {formatNumber} from '$lib/utils';
 import {BUILDING_TYPES, BUILDINGS, type BuildingType} from '$data/buildings';
@@ -126,6 +126,20 @@ function createTotalLevelsAchievements(): Achievement[] {
 	return [1, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10_000, 25_000, 50_000, 100_000, 250_000, 500_000, 1_000_000].map(createTotalLevelsAchievement);
 }
 
+function createProtonisesAchievements(): Achievement[] {
+	function createProtonisesAchievement(count: number): Achievement {
+		return {
+			id: `protonises_${count}`,
+			name: `${count} Protonises`,
+			description: `Protonise ${count} times`,
+			condition: () => get(totalProtonises) >= count,
+			hiddenCondition: (state: GameState) => state.totalProtonises === 0,
+		};
+	}
+
+	return [1, 2, 3, 5, 10, 20, 50, 100, 250, 500, 1000].map(createProtonisesAchievement);
+}
+
 const achievementsArray: Achievement[] = [
 	...BUILDING_TYPES.map(createBuildingAchievements).flat(),
 	...createBuildingTotalAchievements(),
@@ -133,6 +147,7 @@ const achievementsArray: Achievement[] = [
 	...createAtomsPerSecondAchievements(),
 	...createTotalClicksAchievements(),
 	...createTotalLevelsAchievements(),
+	...createProtonisesAchievements(),
 	...SPECIAL_ACHIEVEMENTS,
 ];
 
