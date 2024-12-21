@@ -12,6 +12,7 @@ import {
 	lastSave,
 	protons,
 	skillUpgrades,
+	startDate,
 	totalClicks,
 	totalProtonises,
 	totalXP,
@@ -26,7 +27,7 @@ import {loadSavedState, SAVE_KEY, SAVE_VERSION} from './saves';
 
 interface SaveData extends GameState { }
 
-export const currentState = derived([achievements, activePowerUps, atoms, protons, buildings, lastSave, skillUpgrades, totalClicks, totalXP, upgrades, totalProtonises], ([achievements, activePowerUps, atoms, protons, buildings, lastSave, skillUpgrades, totalClicks, totalXP, upgrades, totalProtonises]) => {
+export const currentState = derived([achievements, activePowerUps, atoms, protons, buildings, lastSave, skillUpgrades, startDate, totalClicks, totalXP, upgrades, totalProtonises], ([achievements, activePowerUps, atoms, protons, buildings, lastSave, skillUpgrades, startDate, totalClicks, totalXP, upgrades, totalProtonises]) => {
 	return {
 		achievements,
 		activePowerUps,
@@ -35,6 +36,7 @@ export const currentState = derived([achievements, activePowerUps, atoms, proton
 		buildings,
 		lastSave,
 		skillUpgrades,
+		startDate,
 		totalClicks,
 		totalXP,
 		upgrades,
@@ -51,6 +53,7 @@ export function resetGameState(): GameState {
 		buildings: {},
 		lastSave: Date.now(),
 		skillUpgrades: [],
+		startDate: Date.now(),
 		totalClicks: 0,
 		totalXP: 0,
 		upgrades: [],
@@ -70,6 +73,7 @@ export const gameManager = {
 			lastSave.set(savedState.lastSave);
 			protons.set(savedState.protons || 0);
 			skillUpgrades.set(savedState.skillUpgrades || []);
+			startDate.set(savedState.startDate);
 			totalClicks.set(savedState.totalClicks);
 			totalProtonises.set(savedState.totalProtonises || 0);
 			totalXP.set(savedState.totalXP || 0);
@@ -232,7 +236,7 @@ export const gameManager = {
 				);
 			}
 
-			// Update all stores
+			// Update all stores except startDate
 			achievements.set(newState.achievements);
 			activePowerUps.set(newState.activePowerUps);
 			atoms.set(newState.atoms);
@@ -269,9 +273,10 @@ export const gameManager = {
 		buildings.set(newState.buildings);
 		lastSave.set(newState.lastSave);
 		protons.set(newState.protons);
+		skillUpgrades.set(newState.skillUpgrades);
+		startDate.set(newState.startDate);
 		totalClicks.set(newState.totalClicks);
 		totalProtonises.set(newState.totalProtonises);
-		skillUpgrades.set(newState.skillUpgrades);
 		totalXP.set(newState.totalXP);
 		upgrades.set(newState.upgrades);
 	},
@@ -294,6 +299,7 @@ export const gameManager = {
 		totalClicks.set(saveData.totalClicks);
 		totalProtonises.set(saveData.totalProtonises || 0);
 		skillUpgrades.set(saveData.skillUpgrades);
+		startDate.set(saveData.startDate);
 		totalXP.set(saveData.totalXP);
 		upgrades.set(saveData.upgrades.filter(u => u in UPGRADES));
 	},

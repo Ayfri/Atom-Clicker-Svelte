@@ -14,6 +14,7 @@ export const buildings = writable<Partial<Record<BuildingType, Building>>>({});
 export const lastSave = writable<number>(Date.now());
 export const protons = writable<number>(0);
 export const skillUpgrades = writable<string[]>([]);
+export const startDate = writable<number>(Date.now());
 export const totalClicks = writable<number>(0);
 export const totalProtonises = writable<number>(0);
 export const totalXP = writable<number>(0);

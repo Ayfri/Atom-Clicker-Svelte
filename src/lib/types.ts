@@ -53,6 +53,7 @@ export interface GameState {
 	}
 	lastSave: number;
 	skillUpgrades: string[];
+	startDate: number;
 	totalClicks: number;
 	totalXP: number;
 	upgrades: string[];
