@@ -71,14 +71,14 @@
 </script>
 
 {#if $mobile}
-	<div class="absolute max-md:left-4 md:right-4 max-md:top-1/3 md:top-1/4 -translate-y-1/2 flex flex-col gap-3 z-10">
+	<div class="absolute max-md:left-4 md:right-4 max-md:top-1/3 md:top-1/4 -translate-y-1/2 flex flex-col gap-3.5 z-10">
 		{#each visibleComponents as link}
 			<NotificationDot hasNotification={link.notification ? link.notification() : false}>
 				<button
-					class="flex items-center justify-center rounded-lg bg-accent/90 p-2.5 text-white backdrop-blur-sm transition-all hover:bg-accent"
+					class="flex items-center justify-center rounded-lg bg-accent/90 p-2 text-white transition-all hover:bg-accent"
 					on:click={() => activeComponent = link.component}
 				>
-					<svelte:component this={link.icon} size={32} />
+					<svelte:component this={link.icon} size={30} />
 				</button>
 			</NotificationDot>
 		{/each}
