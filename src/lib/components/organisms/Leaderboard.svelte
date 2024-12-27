@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {formatNumber} from '$lib/utils';
+	import {capitalize, formatNumber} from '$lib/utils';
 	import {auth} from '$stores/auth';
 	import {leaderboard} from '$stores/leaderboard';
 	import {startDate} from '$stores/gameStore';
@@ -84,6 +84,8 @@
 					</button>
 				</div>
 			{:else}
+				{@const authConnection = getAuthConnection($auth.provider)}
+
 				<div class="mb-8 rounded-lg bg-black/20 p-6">
 					<div class="flex items-center gap-6">
 						<div class="relative">
@@ -114,15 +116,19 @@
 									<div class="font-bold text-white text-lg capitalize">
 										{$auth.user?.name}
 									</div>
-									<img
-										class="size-4 align-middle"
-										src={getAuthConnection($auth.provider)?.icon}
-										alt={getAuthConnection($auth.provider)?.name}
-									/>
+									{#if authConnection}
+										<img
+											class="size-4 align-middle"
+											src={authConnection.icon}
+											alt={authConnection.name}
+											title="Connected with {capitalize(authConnection.name)}"
+										/>
+									{/if}
 								</div>
 								<button
 									on:click={() => auth.logout()}
 									class="flex items-center gap-2 text-sm text-red-500 hover:text-red-400 transition-colors"
+									title="Log out"
 								>
 									<LogOut class="size-5"/>
 								</button>

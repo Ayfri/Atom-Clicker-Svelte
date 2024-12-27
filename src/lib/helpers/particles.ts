@@ -1,4 +1,4 @@
-import {Assets, Sprite, Text, TextStyle, ViewContainer} from 'pixi.js';
+import {Assets, Sprite, Text, TextStyle, type ViewContainer} from 'pixi.js';
 
 export interface Particle {
 	sprite: ViewContainer;
