@@ -5,6 +5,7 @@
 	import { UPGRADES } from '$data/upgrades';
 	import { formatNumber } from '$lib/utils';
 	import type { Upgrade } from '$lib/types';
+	import Value from '@components/atoms/Value.svelte';
 
 	let availableUpgrades: Upgrade[] = [];
 
@@ -43,8 +44,7 @@
 				<h3>{upgrade.name}</h3>
 				<p>{upgrade.description}</p>
 				<div class="cost" style="color: {CURRENCIES[upgrade.cost.currency].color}">
-					Cost: {formatNumber(upgrade.cost.amount)}
-					{upgrade.cost.currency}
+					Cost: <Value value={upgrade.cost.amount} currency={upgrade.cost.currency}/>
 				</div>
 			</div>
 		{/each}
