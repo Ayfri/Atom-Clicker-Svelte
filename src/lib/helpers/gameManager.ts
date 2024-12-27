@@ -1,7 +1,7 @@
 // Game store manager
 import {ACHIEVEMENTS} from '$data/achievements';
 import {BUILDING_LEVEL_UP_COST, BUILDINGS, type BuildingType} from '$data/buildings';
-import {CurrenciesTypes, type CurrencyName} from '$data/currencies';
+import {CurrenciesTypes} from '$data/currencies';
 import {UPGRADES} from '$data/upgrades';
 import {protoniseProtonsGain, PROTONS_ATOMS_REQUIRED} from '$lib/stores/protons';
 import {

@@ -6,12 +6,10 @@
 	import Credits from '$lib/components/organisms/Credits.svelte';
 	import Protonise from '$lib/components/organisms/Protonise.svelte';
 	import Leaderboard from '$lib/components/organisms/Leaderboard.svelte';
-	import { ChartNoAxesColumn, Network, Info, Atom, Trophy, LogIn, LogOut } from 'lucide-svelte';
+	import { ChartNoAxesColumn, Network, Info, Atom, Trophy } from 'lucide-svelte';
 	import { onDestroy, onMount, type ComponentType } from 'svelte';
 	import { skillPointsAvailable, protons, atoms } from '$lib/stores/gameStore';
 	import { protoniseProtonsGain, PROTONS_ATOMS_REQUIRED } from '$lib/stores/protons';
-	import { auth } from '$stores/auth';
-	import { fade } from 'svelte/transition'
 
 	interface Link {
 		icon: ComponentType;
