@@ -4,6 +4,8 @@
 	import { buildingProductions, buildings, globalMultiplier, bonusMultiplier } from '$stores/gameStore';
 	import type { Building } from '$lib/types';
 	import { formatNumber } from '$lib/utils';
+	import Currency from '@components/atoms/Currency.svelte';
+	import Value from '@components/atoms/Value.svelte';
 	import { fade } from 'svelte/transition';
 
 	const buildingsEntries = Object.entries(BUILDINGS) as [BuildingType, BuildingData][];
@@ -64,14 +66,18 @@
 					{/if}
 				</h3>
 				<p>
-					{saveData && saveData.count > 0 ? 'Producing' : 'Will produce'}: {formatNumber(
-						$buildingProductions[type] || building.rate * $globalMultiplier * $bonusMultiplier,
-					)} atoms/s
+					{saveData && saveData.count > 0 ? '' : 'Will produce'}
+					<Value value={$buildingProductions[type] || building.rate * $globalMultiplier * $bonusMultiplier} currency="Atoms" postfix="/s" class="text-accent-300"/>
+					{#if $buildingProductions[type]}
+						<span class="opacity-60 text-[0.7rem] leading-3">
+							<Value value={$buildingProductions[type] / (saveData?.count ?? 1)} prefix="(" />
+							× {saveData?.count ?? 1})
+						</span>
+					{/if}
 				</p>
 			</div>
 			<div class="cost">
-				Cost: {formatNumber(saveData?.cost?.amount ?? building.cost.amount)}
-				{building.cost.currency}
+				Cost: <Value value={saveData?.cost?.amount ?? building.cost.amount} currency={saveData?.cost?.currency ?? building.cost.currency} />
 			</div>
 		</div>
 	{/each}
