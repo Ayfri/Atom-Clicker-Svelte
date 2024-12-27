@@ -2,6 +2,7 @@
 	import {formatNumber} from '$lib/utils';
 	import {auth} from '$stores/auth';
 	import {leaderboard} from '$stores/leaderboard';
+	import {startDate} from '$stores/gameStore';
 	import Login, {getAuthConnection} from '@components/organisms/Login.svelte';
 	import {LogOut, X} from 'lucide-svelte';
 	import {onDestroy, onMount} from 'svelte';
@@ -15,6 +16,16 @@
 		if (e.key === 'Escape') {
 			onClose();
 		}
+	}
+
+	function formatStartDate(timestamp: number) {
+		return new Intl.DateTimeFormat('en-us', {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric',
+			hour: '2-digit',
+			minute: '2-digit',
+		}).format(timestamp);
 	}
 
 	onMount(() => {
@@ -108,15 +119,9 @@
 									<LogOut class="size-5"/>
 								</button>
 							</div>
-							{#if userRank > 0}
-								<div class="text-sm text-white/60">
-									You are ranked #{userRank} in the global leaderboard.
-								</div>
-							{:else}
-								<div class="text-sm text-white/60">
-									Not yet ranked - start playing to appear on the leaderboard!
-								</div>
-							{/if}
+							<div class="text-sm text-white/60 mt-1">
+								Playing since {formatStartDate($startDate)}
+							</div>
 						</div>
 					</div>
 				</div>
