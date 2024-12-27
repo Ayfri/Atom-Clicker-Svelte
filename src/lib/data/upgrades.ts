@@ -5,7 +5,18 @@ import {capitalize, formatNumber, shortNumberText} from '$lib/utils';
 import {atomsPerSecond, playerLevel} from '$stores/gameStore';
 import {get} from 'svelte/store';
 
-export const SPECIAL_UPGRADES: Upgrade[] = [];
+export const SPECIAL_UPGRADES: Upgrade[] = [
+	{
+		id: 'feature_levels',
+		name: 'Unlock Levels',
+		description: 'Unlock the leveling system',
+		cost: {
+			amount: 10_000,
+			currency: CurrenciesTypes.ATOMS,
+		},
+		effects: []
+	}
+];
 
 interface CreateUpgradesOptions {
 	condition?: (index: number, state: GameState) => boolean;
@@ -177,16 +188,17 @@ function createLevelBoostUpgrades() {
 			name: `Level Boost ${i}`,
 			description: `+${1 + Math.ceil(i / 2)}% production per level`,
 			cost: {
-				amount: 5 ** (i * 4) * (i > 3 ? i ** 4 : 1),
+				amount: i === 1 ? 15_000 : 5 ** (i * 4) * (i > 3 ? i ** 4 : 1),
 				currency: 'Atoms',
 			},
+			condition: state => state.upgrades.includes('feature_levels') || i === 1,
 			effects: [
 				{
 					type: 'global',
 					description: `Add ${1 + Math.ceil(i / 2)}% production per level`,
-					apply: (currentValue) => {
+					apply: currentValue => {
 						const level = get(playerLevel);
-						return currentValue * (1 + (level * (1 + Math.ceil(i / 2)) / 100));
+						return currentValue * (1 + level * (1 + Math.ceil(i / 2)) / 100);
 					},
 				},
 			],

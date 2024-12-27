@@ -1,27 +1,27 @@
 <script lang="ts">
-	import { setGlobals } from '$lib/globals';
-	import { gameManager } from '$helpers/gameManager';
+	import {gameManager} from '$helpers/gameManager';
+	import {setGlobals} from '$lib/globals';
 	import {auth} from '$stores/auth';
-	import { atomsPerSecond } from '$stores/gameStore';
-	import { app } from '$stores/pixi';
-	import { mobile } from '$stores/window';
+	import {atomsPerSecond, upgrades} from '$stores/gameStore';
+	import {app} from '$stores/pixi';
+	import {mobile} from '$stores/window';
 	import BonusPhoton from '@components/molecules/BonusPhoton.svelte';
 	import Canvas from '@components/molecules/Canvas.svelte';
 	import Counter from '@components/molecules/Counter.svelte';
+	import NavBar from '@components/molecules/NavBar.svelte';
 	import Toaster from '@components/molecules/Toaster.svelte';
 	import Achievements from '@components/organisms/Achievements.svelte';
 	import Atom from '@components/organisms/Atom.svelte';
 	import Buildings from '@components/organisms/Buildings.svelte';
 	import Levels from '@components/organisms/Levels.svelte';
 	import Upgrades from '@components/organisms/Upgrades.svelte';
-	import NavBar from '@components/molecules/NavBar.svelte';
-	import { RefreshCcw } from 'lucide-svelte';
-	import { Ticker } from 'pixi.js';
-	import { onDestroy, onMount } from 'svelte';
+	import {RefreshCcw} from 'lucide-svelte';
+	import {Ticker} from 'pixi.js';
+	import {onDestroy, onMount} from 'svelte';
 
 	const SAVE_INTERVAL = 1000;
 	let activeTab: 'achievements' | 'buildings' | 'upgrades' = 'upgrades';
-	let saveLoop: number;
+	let saveLoop: ReturnType<typeof setInterval>;
 
 	function update(ticker: Ticker) {
 		gameManager.addAtoms(($atomsPerSecond * ticker.deltaMS) / 1000);
@@ -32,9 +32,8 @@
 		gameManager.initialize();
 		await auth.init();
 
-
 		while (!$app || !$app?.ticker) {
-			await new Promise((resolve) => setTimeout(resolve, 100));
+			await new Promise(resolve => setTimeout(resolve, 100));
 		}
 
 		$app.ticker.add(update);
@@ -62,51 +61,54 @@
 
 <svelte:window
 	on:resize={() => {
-		$mobile = window.innerWidth <= 900;
-	}}
+    $mobile = window.innerWidth <= 900
+  }}
 />
 
 <main>
 	{#if isDev}
 		<button on:click={() => gameManager.reset()} class="reset-all">
-			<RefreshCcw /> Reset All
+			<RefreshCcw/>
+			Reset All
 		</button>
 	{/if}
 
-	<NavBar />
+	<NavBar/>
 
-	<Levels />
-	<Canvas />
+	{#if $upgrades.includes('feature_levels')}
+		<Levels/>
+	{/if}
+	<Canvas/>
 	{#if $app !== null}
-		<Toaster />
-		<BonusPhoton />
+		<Toaster/>
+		<BonusPhoton/>
 		<div class="game-container">
 			<div class="left-panel">
 				<div class="tabs">
-					<button class:active={activeTab === 'upgrades'} on:click={() => (activeTab = 'upgrades')}> Upgrades</button>
+					<button class:active={activeTab === 'upgrades'} on:click={() => activeTab = 'upgrades'}> Upgrades</button>
 					{#if $mobile}
-						<button class:active={activeTab === 'buildings'} on:click={() => (activeTab = 'buildings')}> Buildings</button>
+						<button class:active={activeTab === 'buildings'} on:click={() => activeTab = 'buildings'}> Buildings</button>
 					{/if}
-					<button class:active={activeTab === 'achievements'} on:click={() => (activeTab = 'achievements')}>
+					<button class:active={activeTab === 'achievements'} on:click={() => activeTab = 'achievements'}>
 						Achievements
 					</button>
 				</div>
 				<div class="tab-content">
 					{#if activeTab === 'upgrades'}
-						<Upgrades />
+						<Upgrades/>
 					{:else if activeTab === 'achievements'}
-						<Achievements />
+						<Achievements/>
 					{:else if activeTab === 'buildings'}
-						<Buildings />
+						<Buildings/>
 					{/if}
 				</div>
 			</div>
 			<div class="central-area">
-				<Counter />
-				<Atom />
+				<Counter/>
+				<Atom/>
 			</div>
 			{#if !$mobile}
-				<Buildings />
+				<Buildings/>
 			{/if}
 		</div>
 	{/if}
@@ -160,8 +162,8 @@
 		@media screen and (width <= 900px) {
 			gap: 0;
 			grid-template-areas:
-				'upgrades atom'
-				'buildings atom';
+        'upgrades atom'
+        'buildings atom';
 			grid-template-columns: 1fr 1fr;
 			max-width: 100%;
 		}

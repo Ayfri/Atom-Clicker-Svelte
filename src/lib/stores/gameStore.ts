@@ -170,14 +170,14 @@ export const clickPower = derived(
 	([$currentUpgradesBought, $bonusMultiplier, $buildingProductions]) => {
 		// First, get all click upgrades
 		const clickUpgrades = getUpgradesWithEffects($currentUpgradesBought, { type: 'click' });
-		
+
 		// Separate APS-based upgrades from other click upgrades
 		const apsUpgrades = clickUpgrades.filter(upgrade => upgrade.id.startsWith('click_power_aps'));
 		const regularClickUpgrades = clickUpgrades.filter(upgrade => !upgrade.id.startsWith('click_power_aps'));
-		
+
 		// Calculate base click power with regular upgrades first
 		const baseClickPower = calculateEffects(regularClickUpgrades, 1) * $bonusMultiplier;
-		
+
 		// Then apply APS-based upgrades after all other multipliers
 		return calculateEffects(apsUpgrades, baseClickPower);
 	}
