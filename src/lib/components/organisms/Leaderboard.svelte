@@ -4,7 +4,7 @@
 	import {leaderboard} from '$stores/leaderboard';
 	import {startDate} from '$stores/gameStore';
 	import Login, {getAuthConnection} from '@components/organisms/Login.svelte';
-	import {LogOut, X} from 'lucide-svelte';
+	import {Info, LogOut, X} from 'lucide-svelte';
 	import {onDestroy, onMount} from 'svelte';
 	import {fade, fly} from 'svelte/transition';
 
@@ -52,7 +52,15 @@
 		<div
 			class="flex items-center justify-between gap-4 border-b border-white/10 bg-black/40 p-6 sm:px-8"
 		>
-			<h2 class="flex-1 text-2xl font-bold text-white">Global Leaderboard</h2>
+			<div class="flex items-center gap-2">
+				<h2 class="flex-1 text-2xl font-bold text-white">Global Leaderboard</h2>
+				<div class="group relative">
+					<Info size={20} class="cursor-help" />
+					<div class="absolute left-1/2 top-full z-10 mt-2 hidden w-64 -translate-x-1/2 rounded-lg bg-black/90 p-3 text-sm text-white/80 shadow-xl group-hover:block">
+						Your progress is stored locally and not tied to your account yet. The leaderboard only shows your highest recorded value.
+					</div>
+				</div>
+			</div>
 			<button
 				class="flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:*:stroke-[3]"
 				on:click={onClose}
