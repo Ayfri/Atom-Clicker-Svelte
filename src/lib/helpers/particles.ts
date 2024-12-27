@@ -21,14 +21,17 @@ export const createClickParticle = async (x: number, y: number): Promise<Particl
 
 	return {
 		sprite,
-		speedX: (1 + Math.random() * 0.5) * Math.cos(sprite.rotation),
-		speedY: (1 + Math.random() * 0.5) * Math.sin(sprite.rotation),
+		speedX: (1.5 + Math.random() * 0.5) * Math.cos(sprite.rotation),
+		speedY: (1.5 + Math.random() * 0.5) * Math.sin(sprite.rotation),
 		update: (particle, deltaTime) => {
+			particle.speedX! *= 0.995;
+			particle.speedY! *= 0.995;
+
 			sprite.x += particle.speedX! * deltaTime;
 			sprite.y += particle.speedY! * deltaTime;
 			sprite.scale.x -= 0.001 * deltaTime;
 			sprite.scale.y -= 0.001 * deltaTime;
-			sprite.alpha -= 0.01 * deltaTime;
+			sprite.alpha -= 0.015 * deltaTime;
 
 			if (sprite.alpha <= 0 || sprite.scale.x <= 0) {
 				sprite.destroy();
@@ -57,6 +60,8 @@ export const createClickTextParticle = (x: number, y: number, text: string): Par
 		sprite,
 		speedY: -1.5,
 		update: (particle, deltaTime) => {
+			particle.speedY! *= 0.995;
+
 			sprite.y += particle.speedY! * deltaTime;
 			sprite.alpha -= 0.015 * deltaTime;
 
