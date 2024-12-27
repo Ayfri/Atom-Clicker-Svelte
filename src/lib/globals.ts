@@ -10,6 +10,6 @@ export function setGlobals() {
 	window.BUILDINGS = BUILDINGS;
 	window.SKILL_UPGRADES = SKILL_UPGRADES;
 	window.UPGRADES = UPGRADES;
-	window.gameManager = gameManager;
+	if (import.meta.env.DEV) window.gameManager = gameManager;
 	window.formatNumber = formatNumber;
 }
