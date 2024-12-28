@@ -235,6 +235,7 @@ export const gameManager = {
 			// Keep protons and increment them
 			const newState = {
 				...resetGameState(),
+				achievements: currentState.achievements,
 				protons: currentState.protons + protonGain,
 				totalProtonises: currentState.totalProtonises + 1,
 			};
