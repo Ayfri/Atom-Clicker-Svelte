@@ -6,8 +6,8 @@ const config = {
 	kit: {
 		adapter: adapter({
 			platformProxy: {
-				configPath: 'wrangler.toml',
-				environment: undefined,
+				configPath: import.meta.env.DEV ? 'wrangler.toml' : undefined,
+				environment: import.meta.env.DEV ? 'development' : 'production',
 				experimentalJsonConfig: false,
 				persist: false
 			},
