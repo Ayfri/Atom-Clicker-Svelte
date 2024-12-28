@@ -5,12 +5,12 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 const config = {
 	kit: {
 		adapter: adapter({
-			platformProxy: {
-				configPath: import.meta.env.DEV ? 'wrangler.toml' : undefined,
-				environment: import.meta.env.DEV ? 'development' : 'production',
+			platformProxy: import.meta.env.DEV ? {
+				configPath: 'wrangler.toml',
+				environment: 'development',
 				experimentalJsonConfig: false,
 				persist: false
-			},
+			} : undefined,
 		}),
 		alias: {
 			'@components': 'src/lib/components/*',
