@@ -76,7 +76,7 @@
 
 {#if $mobile}
 	<div
-		class="absolute top-1/3 -translate-y-1/2 z-10 grid gap-3.5 w-full justify-between"
+		class="absolute top-1/3 -translate-y-1/2 z-10 grid gap-3.5 w-full justify-between pointer-events-none"
 		class:grid-cols-2={visibleComponents.length > 5}
 		class:px-2={visibleComponents.length > 5}
 		class:left-4={visibleComponents.length < 5}
@@ -85,7 +85,7 @@
 		{#each visibleComponents as link}
 			<NotificationDot hasNotification={link.notification ? link.notification() : false}>
 				<button
-					class="flex items-center justify-center rounded-lg bg-accent/90 p-2 text-white transition-all hover:bg-accent"
+					class="flex items-center justify-center rounded-lg bg-accent/90 p-2 text-white transition-all hover:bg-accent pointer-events-auto"
 					on:click={() => activeComponent = link.component}
 				>
 					<svelte:component this={link.icon} size={30} />
