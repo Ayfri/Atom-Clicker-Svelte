@@ -3,6 +3,7 @@
 	import { fade, fly } from 'svelte/transition';
 	import {
 		atomsPerSecond,
+		autoClicksPerSecond,
 		bonusMultiplier,
 		clickPower,
 		globalMultiplier,
@@ -46,6 +47,7 @@
 						<StatItem label="Player Level" value={$playerLevel} />
 						<StatItem label="Atoms per Second" value={formatNumber($atomsPerSecond)} />
 						<StatItem label="Click Power" value={formatNumber($clickPower)} />
+						<StatItem label="Auto Clicks per Second" value={formatNumber($autoClicksPerSecond)} />
 					</div>
 				</div>
 
