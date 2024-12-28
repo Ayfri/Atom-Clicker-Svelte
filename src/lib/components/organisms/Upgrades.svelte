@@ -1,36 +1,44 @@
 <script lang="ts">
-	import {CURRENCIES, CurrenciesTypes} from '$data/currencies';
+	import {CURRENCIES, CurrenciesTypes, type CurrencyName} from '$data/currencies';
 	import { currentState, gameManager } from '$helpers/gameManager';
 	import { atoms, protons, upgrades, buildings, achievements, totalProtonises } from '$stores/gameStore';
 	import { UPGRADES } from '$data/upgrades';
 	import { formatNumber } from '$lib/utils';
 	import type { Upgrade } from '$lib/types';
 	import Value from '@components/atoms/Value.svelte';
+	import Currency from '@components/atoms/Currency.svelte';
 
 	let availableUpgrades: Upgrade[] = [];
+	let selectedCurrency: CurrencyName = CurrenciesTypes.ATOMS;
 
 	$: if ($currentState) {
 		availableUpgrades = Object.values(UPGRADES)
 			.filter((upgrade) => {
 				const condition = upgrade.condition?.($currentState) ?? true;
 				const notPurchased = !$upgrades.includes(upgrade.id);
-				return condition && notPurchased;
+				const matchesCurrency = upgrade.cost.currency === selectedCurrency;
+				return condition && notPurchased && matchesCurrency;
 			})
-			.sort((a, b) => {
-				// Sort by currency first (atoms before protons)
-				if (a.cost.currency !== b.cost.currency) {
-					return a.cost.currency === CurrenciesTypes.ATOMS ? -1 : 1;
-				}
-				// Then sort by amount
-				return a.cost.amount - b.cost.amount;
-			});
+			.sort((a, b) => a.cost.amount - b.cost.amount);
 	}
 
 	$: affordableUpgrades = availableUpgrades.filter((upgrade) => gameManager.canAfford(upgrade.cost));
 </script>
 
 <div class="upgrades">
-	<h2>Upgrades</h2>
+	<div class="header">
+		<h2>Upgrades</h2>
+		{#if $protons > 0}
+			<button
+				class="currency-toggle"
+				on:click={() => selectedCurrency = selectedCurrency === CurrenciesTypes.ATOMS ? CurrenciesTypes.PROTONS : CurrenciesTypes.ATOMS}
+			>
+				{#key selectedCurrency}
+					<Currency name={selectedCurrency} />
+				{/key}
+			</button>
+		{/if}
+	</div>
 	<div class="upgrade-grid">
 		{#each availableUpgrades.slice(0, 10) as upgrade (upgrade.id)}
 			{@const affordable = affordableUpgrades.includes(upgrade)}
@@ -96,5 +104,27 @@
 	.cost {
 		font-size: 0.9rem;
 		margin-top: 0.5rem;
+	}
+
+	.header {
+		align-items: center;
+		display: flex;
+		gap: 1rem;
+		justify-content: space-between;
+	}
+
+	.currency-toggle {
+		align-items: center;
+		background: rgba(255, 255, 255, 0.05);
+		border: none;
+		border-radius: 8px;
+		cursor: pointer;
+		display: flex;
+		padding: 0.5rem;
+		transition: all 0.2s;
+	}
+
+	.currency-toggle:hover {
+		background: rgba(255, 255, 255, 0.1);
 	}
 </style>
