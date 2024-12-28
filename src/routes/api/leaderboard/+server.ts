@@ -25,6 +25,7 @@ export const GET: RequestHandler = async ({ platform }) => {
 
     try {
         const leaderboard = await platform.env.ATOM_CLICKER_LEADERBOARD.get(LEADERBOARD_KEY, 'json') || [];
+		cachedLeaderboard = leaderboard;
         return json(leaderboard);
     } catch (error) {
         console.error('Failed to fetch leaderboard:', error);
