@@ -34,6 +34,7 @@ export const createClickParticle = async (x: number, y: number): Promise<Particl
 			sprite.alpha -= 0.015 * deltaTime;
 
 			if (sprite.alpha <= 0 || sprite.scale.x <= 0) {
+				sprite.removeFromParent();
 				sprite.destroy();
 			}
 		}
@@ -66,6 +67,7 @@ export const createClickTextParticle = (x: number, y: number, text: string): Par
 			sprite.alpha -= 0.015 * deltaTime;
 
 			if (sprite.alpha <= 0) {
+				sprite.removeFromParent();
 				sprite.destroy();
 			}
 		}
