@@ -6,10 +6,11 @@
 	import Credits from '$lib/components/organisms/Credits.svelte';
 	import Protonise from '$lib/components/organisms/Protonise.svelte';
 	import Leaderboard from '$lib/components/organisms/Leaderboard.svelte';
-	import { ChartNoAxesColumn, Network, Info, Atom, Trophy } from 'lucide-svelte';
+	import { ChartNoAxesColumn, Network, Info, Atom, Trophy, MessageSquare } from 'lucide-svelte';
 	import { onDestroy, onMount, type ComponentType } from 'svelte';
 	import { skillPointsAvailable, protons, atoms } from '$lib/stores/gameStore';
 	import { protoniseProtonsGain, PROTONS_ATOMS_REQUIRED } from '$lib/stores/protons';
+	import FeedbackForm from '$lib/components/organisms/FeedbackForm.svelte';
 
 	interface Link {
 		icon: ComponentType;
@@ -49,6 +50,11 @@
 			label: 'Credits',
 			component: Credits,
 		},
+		{
+			icon: MessageSquare,
+			label: 'Feedback',
+			component: FeedbackForm
+		},
 	];
 
 	let activeComponent: ComponentType | null = null;
@@ -69,7 +75,13 @@
 </script>
 
 {#if $mobile}
-	<div class="absolute max-md:left-4 md:right-4 max-md:top-1/3 md:top-1/4 -translate-y-1/2 flex flex-col gap-3.5 z-10">
+	<div
+		class="absolute top-1/3 -translate-y-1/2 z-10 grid gap-3.5 w-full justify-between"
+		class:grid-cols-2={visibleComponents.length > 5}
+		class:px-2={visibleComponents.length > 5}
+		class:left-4={visibleComponents.length < 5}
+		style:grid-template-columns={visibleComponents.length > 5 ? 'auto auto' : 'auto'}
+	>
 		{#each visibleComponents as link}
 			<NotificationDot hasNotification={link.notification ? link.notification() : false}>
 				<button
