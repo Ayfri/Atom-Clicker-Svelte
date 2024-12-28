@@ -2,17 +2,40 @@
 	import { currentState, gameManager } from '$helpers/gameManager';
 	import { BUILDING_COLORS, type BuildingData, BUILDINGS, type BuildingType } from '$data/buildings';
 	import { buildingProductions, buildings, globalMultiplier, bonusMultiplier } from '$stores/gameStore';
-	import type { Building } from '$lib/types';
+	import type { Building, Price } from '$lib/types';
 	import { formatNumber } from '$lib/utils';
 	import Currency from '@components/atoms/Currency.svelte';
 	import Value from '@components/atoms/Value.svelte';
 	import { fade } from 'svelte/transition';
+	import { BUILDING_COST_MULTIPLIER } from '@/lib/constants';
 
 	const buildingsEntries = Object.entries(BUILDINGS) as [BuildingType, BuildingData][];
 	let unaffordableRootBuildings: [BuildingType, BuildingData][] = [];
 	let affordableBuildings: [BuildingType, Building][] = [];
 	let unlockedBuildings: [BuildingType, Building][] = [];
 	let hiddenBuildings: [BuildingType, BuildingData][] = [];
+
+	const PurchaseModes = {
+		x1: 1,
+		x5: 5,
+		x25: 25,
+		max: Infinity,
+	} as const;
+	const purchaseModes = Object.keys(PurchaseModes) as (keyof typeof PurchaseModes)[];
+	let purchaseAmounts: Record<BuildingType, number> = Object.fromEntries(
+		buildingsEntries.map(([type]) => [type, 0])
+	) as Record<BuildingType, number>;
+	
+	type PurchaseMode = keyof typeof PurchaseModes;
+	let selectedPurchaseMode: PurchaseMode = 'x1';
+
+	function handlePurchase(type: BuildingType) {
+		if (!affordableBuildings.some(([t]) => t === type)) return;
+		const amount = purchaseAmounts[type];
+		if (amount > 0) {
+			gameManager.purchaseBuilding(type, amount);
+		}
+	}
 
 	$: if ($currentState) {
 		unaffordableRootBuildings = buildingsEntries.filter(([type, building]) => gameManager.canAfford(building.cost) === false);
@@ -30,15 +53,55 @@
 			)
 			.forEach(([type]) => gameManager.unlockBuilding(type));
 
-		affordableBuildings = Object.entries($buildings).filter(([type, building]) => gameManager.canAfford(building.cost)) as [
+		affordableBuildings = Object.entries($buildings).filter(([type, building]) => {
+			const cost = structuredClone(building.cost);
+			cost.amount *= purchaseAmounts[type as BuildingType];
+			return gameManager.canAfford(cost);
+		}) as [
 			BuildingType,
 			Building,
 		][];
 	}
+
+	function getMaxAffordable(price: Price, multiplier: number = BUILDING_COST_MULTIPLIER): number {
+		const currency = gameManager.getCurrency(price);
+		if (currency < price.amount) return 1;
+
+		return Math.floor(
+			Math.log(1 + (currency / price.amount * (multiplier - 1))) / Math.log(multiplier)
+		);
+	}
+
+	function getPurchaseAmount(type: BuildingType): number {
+		if (selectedPurchaseMode !== 'max') {
+			return PurchaseModes[selectedPurchaseMode];
+		}
+		
+		const building = BUILDINGS[type];
+		const baseCost = structuredClone($buildings[type]?.cost ?? building.cost);
+		return getMaxAffordable(baseCost);
+	}
+
+	$: if (selectedPurchaseMode && $currentState) {
+		purchaseAmounts = Object.fromEntries(
+			buildingsEntries.map(([type]) => [type, getPurchaseAmount(type)])
+		) as Record<BuildingType, number>;
+	}
 </script>
 
-<div class="buildings">
+<div class="bg-black/10 backdrop-blur-sm rounded-lg p-4 buildings">
 	<h2>Buildings</h2>
+	<div class="flex items-center gap-2 my-2">
+		{#each purchaseModes as mode}
+			<button
+				class="bg-white/5 hover:bg-white/10 rounded px-2 py-1 text-sm text-white transition-all duration-200 cursor-pointer {selectedPurchaseMode === mode ? '!bg-white/20' : ''}"
+				on:click={() => selectedPurchaseMode = mode}
+			>
+				{mode === 'max' ? 'Max' : mode}
+			</button>
+		{/each}
+	</div>
+
 	{#each buildingsEntries as [type, building], i}
 		{@const saveData = $buildings[type]}
 		{@const unaffordable = !affordableBuildings.some(([t]) => t === type)}
@@ -46,26 +109,25 @@
 		{@const hidden = hiddenBuildings.slice(1).some(([t]) => t === type)}
 		{@const level = saveData?.level ?? 0}
 		{@const color = BUILDING_COLORS[level]}
+		{@const purchaseAmount = purchaseAmounts[type]}
+		{@const totalCost = (saveData?.cost?.amount ?? building.cost.amount) * purchaseAmount}
 
 		<div
-			class="building"
+			class="bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer mt-2 p-3 transition-all duration-200 {unaffordable ? 'opacity-50 cursor-not-allowed' : ''}"
 			style="--color: {color};"
-			class:disabled={unaffordable}
-			on:click={() => {
-				if (!unaffordable) gameManager.purchaseBuilding(type);
-			}}
+			on:click={() => handlePurchase(type)}
 			transition:fade
 			{hidden}
 		>
-			<div class="info">
-				<h3>
+			<div>
+				<h3 class="text-base m-0" style="color: var(--color);">
 					{obfuscated ? '???' : building.name}
 					{saveData?.count ? `(${saveData.count})` : ''}
 					{#if level > 0}
 						<span>⇮{level}</span>
 					{/if}
 				</h3>
-				<p>
+				<p class="text-sm my-1">
 					{saveData && saveData.count > 0 ? '' : 'Will produce'}
 					<Value value={$buildingProductions[type] || building.rate * $globalMultiplier * $bonusMultiplier} currency="Atoms" postfix="/s" class="text-accent-300"/>
 					{#if $buildingProductions[type]}
@@ -76,8 +138,11 @@
 					{/if}
 				</p>
 			</div>
-			<div class="cost">
-				Cost: <Value value={saveData?.cost?.amount ?? building.cost.amount} currency={saveData?.cost?.currency ?? building.cost.currency} />
+			<div class="text-sm mt-2" style="color: var(--color);">
+				Cost: <Value value={totalCost} currency={saveData?.cost?.currency ?? building.cost.currency} />
+				{#if selectedPurchaseMode === 'max' && purchaseAmount > 0}
+					<span class="opacity-60 text-[0.7rem] leading-3 ml-1">(×{purchaseAmount})</span>
+				{/if}
 			</div>
 		</div>
 	{/each}
@@ -85,50 +150,11 @@
 
 <style>
 	.buildings {
-		background: rgba(0, 0, 0, 0.1);
-		backdrop-filter: blur(3px);
-		border-radius: 8px;
-		padding: 1rem;
 		grid-area: buildings;
-	}
-
-	.building {
-		background: rgba(255, 255, 255, 0.05);
-		border-radius: 8px;
-		cursor: pointer;
-		margin-top: 0.5rem;
-		padding: 0.75rem;
-		transition: all 0.2s;
-
-		&.disabled {
-			cursor: not-allowed;
-			opacity: 0.5;
-		}
-
-		&:hover:not(.disabled) {
-			background: rgba(255, 255, 255, 0.1);
-		}
 	}
 
 	:global(.skill-tree-icon) {
 		cursor: pointer;
 		float: right;
-	}
-
-	.info h3 {
-		color: var(--color);
-		font-size: 1rem;
-		margin: 0;
-	}
-
-	.info p {
-		font-size: 0.8rem;
-		margin: 0.25rem 0;
-	}
-
-	.cost {
-		color: var(--color);
-		font-size: 0.9rem;
-		margin-top: 0.5rem;
 	}
 </style>

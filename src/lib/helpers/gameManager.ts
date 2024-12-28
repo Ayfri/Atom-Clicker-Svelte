@@ -135,13 +135,17 @@ export const gameManager = {
 	},
 
 	canAfford(price: Price): boolean {
-		const currentState = this.getCurrentState();
-		if (price.currency === CurrenciesTypes.ATOMS && currentState.atoms >= price.amount) {
-			return true;
-		} else if (price.currency === CurrenciesTypes.PROTONS && currentState.protons >= price.amount) {
-			return true;
+		const currency = this.getCurrency(price);
+		return currency >= price.amount;
+	},
+
+	getCurrency(price: Price): number {
+		if (price.currency === CurrenciesTypes.ATOMS) {
+			return get(atoms);
+		} else if (price.currency === CurrenciesTypes.PROTONS) {
+			return get(protons);
 		}
-		return false;
+		return 0;
 	},
 
 	spendCurrency(price: Price): boolean {
@@ -155,7 +159,7 @@ export const gameManager = {
 		return true;
 	},
 
-	purchaseBuilding(type: BuildingType) {
+	purchaseBuilding(type: BuildingType, amount: number = 1) {
 		const currentState = this.getCurrentState();
 		const building = BUILDINGS[type];
 		const currentBuilding = currentState.buildings[type] ?? {
@@ -166,19 +170,22 @@ export const gameManager = {
 			unlocked: true,
 		} as Building;
 
-		if (!this.spendCurrency(currentBuilding.cost)) return;
+		const cost = currentBuilding.cost;
+		cost.amount *= amount;
+
+		if (!this.spendCurrency(cost)) return;
 
 		buildings.update(current => ({
 			...current,
 			[type]: {
 				...currentBuilding,
 				cost: {
-					amount: Math.round(currentBuilding.cost.amount * BUILDING_COST_MULTIPLIER),
-					currency: currentBuilding.cost.currency
+					amount: Math.round(Array(amount).fill(cost.amount).reduce((a, b) => a + b, 0) * BUILDING_COST_MULTIPLIER),
+					currency: cost.currency
 				},
 				rate: currentBuilding.rate,
-				count: currentBuilding.count + 1,
-				level: Math.floor((currentBuilding.count + 1) / BUILDING_LEVEL_UP_COST)
+				count: currentBuilding.count + amount,
+				level: Math.floor((currentBuilding.count + amount) / BUILDING_LEVEL_UP_COST)
 			},
 		}));
 	},
