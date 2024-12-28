@@ -25,7 +25,7 @@
 	let purchaseAmounts: Record<BuildingType, number> = Object.fromEntries(
 		buildingsEntries.map(([type]) => [type, 0])
 	) as Record<BuildingType, number>;
-	
+
 	type PurchaseMode = keyof typeof PurchaseModes;
 	let selectedPurchaseMode: PurchaseMode = 'x1';
 
@@ -54,38 +54,64 @@
 			.forEach(([type]) => gameManager.unlockBuilding(type));
 
 		affordableBuildings = Object.entries($buildings).filter(([type, building]) => {
-			const cost = structuredClone(building.cost);
-			cost.amount *= purchaseAmounts[type as BuildingType];
-			return gameManager.canAfford(cost);
-		}) as [
-			BuildingType,
-			Building,
-		][];
+			const bulkCost = {
+				amount: getBulkBuyCost(type as BuildingType, purchaseAmounts[type as BuildingType]),
+				currency: building.cost.currency
+			};
+			return gameManager.canAfford(bulkCost);
+		}) as [BuildingType, Building][];
 	}
 
-	function getMaxAffordable(price: Price, multiplier: number = BUILDING_COST_MULTIPLIER): number {
+	function getMaxAffordable(price: Price, type: BuildingType): number {
 		const currency = gameManager.getCurrency(price);
-		if (currency < price.amount) return 1;
+		const baseCost = price.amount;
 
-		return Math.floor(
-			Math.log(1 + (currency / price.amount * (multiplier - 1))) / Math.log(multiplier)
-		);
+		if (currency < baseCost) return 1;
+
+		// Binary search for max affordable amount
+		let left = 1;
+		let right = 1000; // Reasonable upper limit
+
+		while (left <= right) {
+			const mid = Math.floor((left + right) / 2);
+			const cost = getBulkBuyCost(type, mid);
+
+			if (cost <= currency) {
+				left = mid + 1;
+			} else {
+				right = mid - 1;
+			}
+		}
+
+		return right;
 	}
 
 	function getPurchaseAmount(type: BuildingType): number {
 		if (selectedPurchaseMode !== 'max') {
 			return PurchaseModes[selectedPurchaseMode];
 		}
-		
+
 		const building = BUILDINGS[type];
 		const baseCost = structuredClone($buildings[type]?.cost ?? building.cost);
-		return getMaxAffordable(baseCost);
+		return getMaxAffordable(baseCost, type);
 	}
 
 	$: if (selectedPurchaseMode && $currentState) {
 		purchaseAmounts = Object.fromEntries(
 			buildingsEntries.map(([type]) => [type, getPurchaseAmount(type)])
 		) as Record<BuildingType, number>;
+	}
+
+	function getBulkBuyCost(type: BuildingType, amount: number): number {
+		const currentCount = $buildings[type]?.count ?? 0;
+		const baseCost = BUILDINGS[type].cost.amount;
+
+		let totalCost = 0;
+		for (let i = 0; i < amount; i++) {
+			totalCost += baseCost * (BUILDING_COST_MULTIPLIER ** (currentCount + i));
+		}
+
+		return Math.round(totalCost);
 	}
 </script>
 
@@ -110,7 +136,7 @@
 		{@const level = saveData?.level ?? 0}
 		{@const color = BUILDING_COLORS[level]}
 		{@const purchaseAmount = purchaseAmounts[type]}
-		{@const totalCost = (saveData?.cost?.amount ?? building.cost.amount) * purchaseAmount}
+		{@const totalCost = getBulkBuyCost(type, purchaseAmount)}
 
 		<div
 			class="bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer mt-2 p-3 transition-all duration-200 {unaffordable ? 'opacity-50 cursor-not-allowed' : ''}"

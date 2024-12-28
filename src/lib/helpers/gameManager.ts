@@ -171,10 +171,10 @@ export const gameManager = {
 		} as Building;
 
 		// Calculate total cost for all buildings being purchased
-		const baseCost = currentBuilding.cost.amount / BUILDING_COST_MULTIPLIER; // Get the actual base cost
+		const baseCost = building.cost.amount; // Use original base cost from BUILDINGS
 		let totalCost = 0;
 		for (let i = 0; i < amount; i++) {
-			totalCost += baseCost * (BUILDING_COST_MULTIPLIER ** (currentBuilding.count + i + 1));
+			totalCost += baseCost * (BUILDING_COST_MULTIPLIER ** (currentBuilding.count + i));
 		}
 
 		const cost = {
@@ -189,7 +189,7 @@ export const gameManager = {
 			[type]: {
 				...currentBuilding,
 				cost: {
-					amount: Math.round(baseCost * (BUILDING_COST_MULTIPLIER ** (currentBuilding.count + amount + 1))),
+					amount: Math.round(baseCost * (BUILDING_COST_MULTIPLIER ** (currentBuilding.count + amount))),
 					currency: cost.currency
 				},
 				rate: currentBuilding.rate,
