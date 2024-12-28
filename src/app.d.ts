@@ -8,7 +8,6 @@ declare global {
 
 		interface Platform {
 			env: {
-				COUNTER: DurableObjectNamespace;
 				ATOM_CLICKER_LEADERBOARD: KVNamespace;
 			};
 			context: {

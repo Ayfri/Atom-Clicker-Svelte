@@ -11,10 +11,6 @@ const config = {
 				experimentalJsonConfig: false,
 				persist: false
 			},
-			routes: {
-				include: ['/*'],
-				exclude: ['/api/*'],
-			},
 		}),
 		alias: {
 			'@components': 'src/lib/components/*',
