@@ -218,8 +218,8 @@ function createProtonUpgrades() {
 		name: i => `Proton Boost ${i}`,
 		description: i => `${2 + i}x all production`,
 		cost: i => {
-			const baseCost = Math.ceil(2 ** (i + 1));
-			return i > 5 ? baseCost * (i ** 3) : baseCost;
+			const baseCost = Math.ceil(2 ** (i * 2));
+			return i > 2 ? baseCost * (i ** 4) : baseCost;
 		},
 		effects: i => [{
 			type: 'global',
@@ -234,16 +234,16 @@ function createProtonUpgrades() {
 		count: 5,
 		currency: CurrenciesTypes.PROTONS,
 		name: i => `Protonise Master ${i}`,
-		description: i => `+${50 * i}% production per protonise`,
+		description: i => `+${25 * i}% production per protonise`,
 		cost: i => {
-			const baseCost = Math.ceil(5 * 2 ** (i + 1));
-			return i > 3 ? baseCost * (i ** 4) : baseCost;
+			const baseCost = Math.ceil(5 * 3 ** (i + 2));
+			return i > 3 ? baseCost * (i ** 5) : baseCost;
 		},
 		effects: i => [{
 			type: 'global',
-			description: `Add ${50 * i}% production per protonise`,
+			description: `Add ${25 * i}% production per protonise`,
 			apply: (currentValue, state) => {
-				const boost = (state.totalProtonises || 0) * (0.5 * i);
+				const boost = (state.totalProtonises || 0) * (0.25 * i);
 				return currentValue * (1 + boost);
 			}
 		}]
@@ -276,7 +276,7 @@ function createProtonUpgrades() {
 		description: i => `Automatically clicks ${Math.ceil(i / 2)} time${Math.ceil(i / 2) > 1 ? 's' : ''} per second`,
 		cost: i => {
 			const baseCost = Math.ceil(3 * 3 ** (i + 1));
-			return i > 3 ? baseCost * (i ** 4) : baseCost;
+			return i > 1 ? baseCost * (i ** 4) : baseCost;
 		},
 		effects: i => [{
 			type: 'auto_click',
