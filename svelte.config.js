@@ -4,14 +4,7 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
 	kit: {
-		adapter: adapter({
-			platformProxy: import.meta.env.DEV ? {
-				configPath: 'wrangler.toml',
-				environment: 'development',
-				experimentalJsonConfig: false,
-				persist: false
-			} : undefined,
-		}),
+		adapter: adapter(),
 		alias: {
 			'@components': 'src/lib/components/*',
 			'$data': 'src/lib/data/*',
