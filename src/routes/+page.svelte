@@ -162,10 +162,11 @@
 		@media screen and (width <= 900px) {
 			gap: 0;
 			grid-template-areas:
-        'upgrades atom'
-        'buildings atom';
+		        'upgrades atom'
+		        'buildings atom';
 			grid-template-columns: 1fr 1fr;
-			max-width: 100%;
+			max-width: 100vw;
+			overflow-x: hidden;
 		}
 
 		@media screen and (width <= 700px) {
