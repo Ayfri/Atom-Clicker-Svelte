@@ -238,6 +238,7 @@ export const gameManager = {
 				achievements: currentState.achievements,
 				protons: currentState.protons + protonGain,
 				totalProtonises: currentState.totalProtonises + 1,
+				upgrades: currentState.upgrades.filter(id => id.startsWith('proton')),
 			};
 
 			// Apply quick start upgrades if any
