@@ -14,7 +14,7 @@ export interface LeaderboardEntry {
 
 let debounceTimeout: ReturnType<typeof setTimeout> | null = null;
 let lastUpdate = 0;
-const REQUEST_INTERVAL = 60_000; // 1 minute
+const REQUEST_INTERVAL = 60_000; // Keep 1 minute for client updates
 
 function debounce<T extends (...args: any[]) => Promise<void>>(fn: T, interval: number = REQUEST_INTERVAL) {
 	return (...args: Parameters<T>) => {

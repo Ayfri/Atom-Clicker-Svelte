@@ -12,7 +12,11 @@ interface LeaderboardEntry {
 
 const LEADERBOARD_KEY = 'global_leaderboard';
 const MAX_ENTRIES = 100;
-const UPDATE_INTERVAL = 60 * 1000; // 1 minute
+const UPDATE_INTERVAL = 60 * 1000; // 1 minute for local updates
+const CLOUDFLARE_UPDATE_INTERVAL = 10 * 60 * 1000; // 10 minutes for Cloudflare KV updates
+
+let cachedLeaderboard: LeaderboardEntry[] = [];
+let lastCloudflareUpdate = 0;
 
 export const GET: RequestHandler = async ({ platform }) => {
     if (!platform?.env?.ATOM_CLICKER_LEADERBOARD) {
@@ -49,29 +53,38 @@ export const POST: RequestHandler = async ({ request, platform }) => {
             lastUpdated: Date.now()
         };
 
-        let leaderboard: LeaderboardEntry[] = await platform.env.ATOM_CLICKER_LEADERBOARD.get(LEADERBOARD_KEY, 'json') || [];
-        
-        // Update existing entry or add new one
-        const existingIndex = leaderboard.findIndex(e => e.userId === userId);
-        if (existingIndex !== -1) {
-            // Only update if the new score is higher and enough time has passed
-            const timeSinceLastUpdate = Date.now() - leaderboard[existingIndex].lastUpdated;
-            if (atoms > leaderboard[existingIndex].atoms && timeSinceLastUpdate >= UPDATE_INTERVAL) {
-                leaderboard[existingIndex] = entry;
-            }
-        } else {
-            leaderboard.push(entry);
+        // Initialize cache if empty
+        if (cachedLeaderboard.length === 0) {
+            cachedLeaderboard = await platform.env.ATOM_CLICKER_LEADERBOARD.get(LEADERBOARD_KEY, 'json') || [];
         }
 
-        // Sort by atoms (descending) and limit entries
-        leaderboard = leaderboard
+        // Update cache
+        const existingIndex = cachedLeaderboard.findIndex(e => e.userId === userId);
+        if (existingIndex !== -1) {
+            // Only update if the new score is higher and enough time has passed
+            const timeSinceLastUpdate = Date.now() - cachedLeaderboard[existingIndex].lastUpdated;
+            if (atoms > cachedLeaderboard[existingIndex].atoms && timeSinceLastUpdate >= UPDATE_INTERVAL) {
+                cachedLeaderboard[existingIndex] = entry;
+            }
+        } else {
+            cachedLeaderboard.push(entry);
+        }
+
+        // Sort and limit entries
+        cachedLeaderboard = cachedLeaderboard
             .sort((a, b) => b.atoms - a.atoms)
             .slice(0, MAX_ENTRIES);
 
-        await platform.env.ATOM_CLICKER_LEADERBOARD.put(LEADERBOARD_KEY, JSON.stringify(leaderboard));
+        // Update Cloudflare KV only if enough time has passed
+        const now = Date.now();
+        if (now - lastCloudflareUpdate >= CLOUDFLARE_UPDATE_INTERVAL) {
+            await platform.env.ATOM_CLICKER_LEADERBOARD.put(LEADERBOARD_KEY, JSON.stringify(cachedLeaderboard));
+            lastCloudflareUpdate = now;
+        }
+
         return json({ success: true });
     } catch (error) {
         console.error('Failed to update leaderboard:', error);
         return json({ error: 'Failed to update leaderboard' }, { status: 500 });
     }
-}; 
+};
