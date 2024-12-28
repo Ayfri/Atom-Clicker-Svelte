@@ -117,8 +117,8 @@ function createTotalLevelsAchievements(): Achievement[] {
 	function createTotalLevelsAchievement(count: number): Achievement {
 		return {
 			id: `levels_${count}`,
-			name: `Level ${count}`,
-			description: `Be at least ${count} xp level`,
+			name: `Level ${formatNumber(count, 0)}`,
+			description: `Be at least ${formatNumber(count, 0)} xp level`,
 			condition: (state: GameState) => get(playerLevel) >= count,
 		};
 	}
