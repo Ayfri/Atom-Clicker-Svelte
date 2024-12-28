@@ -267,6 +267,24 @@ function createProtonUpgrades() {
 		}]
 	}));
 
+	// Auto-clicker upgrade
+	upgrades.push(...createUpgrades({
+		id: 'proton_auto_click',
+		count: 5,
+		currency: CurrenciesTypes.PROTONS,
+		name: i => `Auto Clicker ${i}`,
+		description: i => `Automatically clicks ${Math.ceil(i / 2)} time${Math.ceil(i / 2) > 1 ? 's' : ''} per second`,
+		cost: i => {
+			const baseCost = Math.ceil(3 * 3 ** (i + 1));
+			return i > 3 ? baseCost * (i ** 4) : baseCost;
+		},
+		effects: i => [{
+			type: 'auto_click',
+			description: `Clicks ${Math.ceil(i / 2)} time${Math.ceil(i / 2) > 1 ? 's' : ''} per second automatically`,
+			apply: (currentValue) => currentValue + Math.ceil(i / 2)
+		}]
+	}));
+
 	return upgrades;
 }
 

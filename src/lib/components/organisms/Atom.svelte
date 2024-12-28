@@ -3,11 +3,35 @@
 	import {BUILDING_TYPES, BUILDING_COLORS, BUILDING_LEVEL_UP_COST} from '$data/buildings';
 	import {onDestroy} from 'svelte';
 	import {createClickParticle, createClickTextParticle, type Particle} from '$helpers/particles';
-	import {buildings, clickPower, hasBonus, totalClicks} from '$stores/gameStore';
+	import {autoClicksPerSecond, buildings, clickPower, currentUpgradesBought, hasBonus, totalClicks} from '$stores/gameStore';
 	import {formatNumber} from '$lib/utils';
 	import {particles} from '$stores/canvas';
 
 	let spawnInterval: number;
+	let atomElement: HTMLDivElement;
+
+	export function simulateClick() {
+		if (!atomElement) return;
+
+		const rect = atomElement.getBoundingClientRect();
+		const x = rect.left + Math.random() * rect.width;
+		const y = rect.top + Math.random() * rect.height;
+
+		const event = new MouseEvent('click', {
+			clientX: x,
+			clientY: y,
+			bubbles: true
+		});
+		atomElement.dispatchEvent(event);
+	}
+
+	let interval: ReturnType<typeof setInterval>;
+	autoClicksPerSecond.subscribe(value => {
+		if (interval) clearInterval(interval);
+		if (value > 0) {
+			interval = setInterval(() => simulateClick(), 1000 / value);
+		}
+	});
 
 	async function handleClick(event: MouseEvent) {
 		gameManager.addAtoms($clickPower);
@@ -31,6 +55,7 @@
 	class="atom"
 	class:bonus={$hasBonus}
 	on:click={async e => await handleClick(e)}
+	bind:this={atomElement}
 >
 	{#each BUILDING_TYPES.filter(name => name in $buildings) as name, i}
 		{@const data = $buildings[name]}

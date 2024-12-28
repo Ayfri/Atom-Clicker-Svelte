@@ -97,6 +97,14 @@ export const currentUpgradesBought = derived(
 	}
 );
 
+export const autoClicksPerSecond = derived(
+	[currentUpgradesBought],
+	([$currentUpgradesBought]) => {
+		const autoClickUpgrades = getUpgradesWithEffects($currentUpgradesBought, { type: 'auto_click' });
+		return calculateEffects(autoClickUpgrades, 0);
+	}
+);
+
 export const bonusMultiplier = derived(activePowerUps, $activePowerUps => {
 	return $activePowerUps.reduce((acc, powerUp) => acc * powerUp.multiplier, 1);
 });

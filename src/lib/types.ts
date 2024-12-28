@@ -21,7 +21,7 @@ export interface Upgrade {
 
 export interface Effect {
 	target?: string;
-	type: 'building' | 'click' | 'global' | 'power_up_interval' | 'power_up_duration' | 'power_up_multiplier' | 'xp_gain';
+	type: 'auto_click' | 'building' | 'click' | 'global' | 'power_up_interval' | 'power_up_duration' | 'power_up_multiplier' | 'xp_gain';
 	apply: (currentValue: number, state: GameState) => number;
 	description: string;
 }
