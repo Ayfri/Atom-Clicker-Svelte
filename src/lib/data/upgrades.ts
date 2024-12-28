@@ -218,7 +218,7 @@ function createProtonUpgrades() {
 		name: i => `Proton Boost ${i}`,
 		description: i => `${2 + i}x all production`,
 		cost: i => {
-			const baseCost = Math.ceil(2 ** (i - 1));
+			const baseCost = Math.ceil(2 ** (i + 1));
 			return i > 5 ? baseCost * (i ** 3) : baseCost;
 		},
 		effects: i => [{
@@ -236,7 +236,7 @@ function createProtonUpgrades() {
 		name: i => `Protonise Master ${i}`,
 		description: i => `+${50 * i}% production per protonise`,
 		cost: i => {
-			const baseCost = Math.ceil(5 * 2 ** (i - 1));
+			const baseCost = Math.ceil(5 * 2 ** (i + 1));
 			return i > 3 ? baseCost * (i ** 4) : baseCost;
 		},
 		effects: i => [{
@@ -257,7 +257,7 @@ function createProtonUpgrades() {
 		name: i => `Quick Start ${i}`,
 		description: i => `Start with ${formatNumber(10 ** (3 + i))} atoms after protonising`,
 		cost: i => {
-			const baseCost = Math.ceil(3 * 2 ** (i - 1));
+			const baseCost = Math.ceil(3 * 2 ** (i + 1));
 			return i > 2 ? baseCost * (i ** 3) : baseCost;
 		},
 		effects: i => [{
