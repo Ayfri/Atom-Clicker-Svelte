@@ -4,11 +4,13 @@ import { writable, derived } from 'svelte/store';
 import { PUBLIC_AUTH0_CALLBACK_URL, PUBLIC_AUTH0_CLIENT_ID, PUBLIC_AUTH0_DOMAIN } from '$env/static/public';
 import type { AuthProvider, AuthStore } from '$lib/types/auth';
 
-const requiredEnvVars = {
+const isAuthConfigured = PUBLIC_AUTH0_DOMAIN && PUBLIC_AUTH0_CLIENT_ID && PUBLIC_AUTH0_CALLBACK_URL;
+
+const requiredEnvVars = isAuthConfigured ? {
     domain: PUBLIC_AUTH0_DOMAIN,
     clientId: PUBLIC_AUTH0_CLIENT_ID,
     callbackUrl: PUBLIC_AUTH0_CALLBACK_URL
-};
+} : null;
 
 const STORAGE_KEY = 'auth_provider';
 
@@ -49,7 +51,7 @@ function createAuthStore() {
     const { subscribe, set, update } = writable<AuthStore>({
         isAuthenticated: false,
         user: null,
-        loading: true,
+        loading: !isAuthConfigured,
         auth0Client: null,
         error: null,
         provider: getStoredProvider()
@@ -58,20 +60,22 @@ function createAuthStore() {
     let auth0: Auth0Client;
 
     async function init() {
-        if (!browser) return;
+        if (!browser || !isAuthConfigured) {
+            update(state => ({
+                ...state,
+                loading: false
+            }));
+            return;
+        }
 
         try {
-            if (!requiredEnvVars.domain || !requiredEnvVars.clientId || !requiredEnvVars.callbackUrl) {
-                throw new Error('Missing required Auth0 configuration');
-            }
-
             const config = {
-                domain: requiredEnvVars.domain,
-                clientId: requiredEnvVars.clientId,
+                domain: requiredEnvVars!.domain,
+                clientId: requiredEnvVars!.clientId,
                 authorizationParams: {
-                    redirect_uri: requiredEnvVars.callbackUrl,
+                    redirect_uri: requiredEnvVars!.callbackUrl,
                     scope: 'openid profile email',
-                    audience: `https://${requiredEnvVars.domain}/api/v2/`,
+                    audience: `https://${requiredEnvVars!.domain}/api/v2/`,
                     response_type: 'code'
                 },
                 cacheLocation: 'localstorage',
@@ -131,7 +135,7 @@ function createAuthStore() {
     async function loginWithProvider(provider: AuthProvider) {
         if (!browser || !auth0) return;
         try {
-            if (!requiredEnvVars.callbackUrl) {
+            if (!requiredEnvVars!.callbackUrl) {
                 throw new Error('Missing callback URL configuration');
             }
 
@@ -141,10 +145,10 @@ function createAuthStore() {
 
             await auth0.loginWithRedirect({
                 authorizationParams: {
-                    redirect_uri: requiredEnvVars.callbackUrl,
+                    redirect_uri: requiredEnvVars!.callbackUrl,
                     connection: connection.connection,
                     scope: connection.scope,
-                    audience: `https://${requiredEnvVars.domain}/api/v2/`,
+                    audience: `https://${requiredEnvVars!.domain}/api/v2/`,
                     response_type: 'code'
                 }
             });

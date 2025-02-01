@@ -21,4 +21,4 @@ export interface AuthConnection {
     backgroundColor: string;
     hoverBackgroundColor: string;
     textColor: string;
-} 
+}

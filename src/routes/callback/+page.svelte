@@ -9,6 +9,17 @@
 
 	onMount(async () => {
 		try {
+			const envVars = {
+				domain: PUBLIC_AUTH0_DOMAIN,
+				clientId: PUBLIC_AUTH0_CLIENT_ID,
+				callbackUrl: PUBLIC_AUTH0_CALLBACK_URL
+			};
+
+			if (!envVars.domain || !envVars.clientId || !envVars.callbackUrl) {
+				error = 'Authentication is not configured. Please set up Auth0 environment variables or continue without authentication.';
+				return;
+			}
+
 			await auth.init();
 			if (!error) await goto('/');
 		} catch (e) {
