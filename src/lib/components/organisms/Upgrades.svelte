@@ -28,7 +28,7 @@
 <div class="upgrades">
 	<div class="header">
 		<h2>Upgrades</h2>
-		{#if $protons > 0}
+		{#if $totalProtonises > 0}
 			<button
 				class="currency-toggle"
 				on:click={() => selectedCurrency = selectedCurrency === CurrenciesTypes.ATOMS ? CurrenciesTypes.PROTONS : CurrenciesTypes.ATOMS}
