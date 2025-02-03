@@ -152,7 +152,9 @@ export const buildingProductions = derived(
 			if (building) {
 				const upgrades = getUpgradesWithEffects($currentUpgradesBought, { target: type, type: 'building' });
 				const multiplier = calculateEffects(upgrades, building.rate);
-				const levelMultiplier = building.level > 0 ? (building.count / 2) ** (building.level + 1) / 5 : 1;
+				const oldMultiplier = Math.pow(building.count / 2, building.level + 1) / 5;
+				const linearMultiplier = (building.level + 1) * 100;
+				const levelMultiplier = building.level > 0 ? Math.sqrt(oldMultiplier * linearMultiplier) : 1;
 				production = building.count * multiplier * levelMultiplier * $globalMultiplier * $bonusMultiplier;
 			}
 			return {
