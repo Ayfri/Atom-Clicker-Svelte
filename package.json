@@ -22,7 +22,7 @@
 		"tailwindcss": "^3.4.17",
 		"tslib": "^2.8.1",
 		"typescript": "^5.7.2",
-		"vite": "^5.4.11",
+		"vite": "^5.4.14",
 		"vite-tsconfig-paths": "^5.1.4"
 	},
 	"dependencies": {
