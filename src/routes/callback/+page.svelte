@@ -10,9 +10,9 @@
 	onMount(async () => {
 		try {
 			const envVars = {
-				domain: PUBLIC_AUTH0_DOMAIN,
-				clientId: PUBLIC_AUTH0_CLIENT_ID,
-				callbackUrl: PUBLIC_AUTH0_CALLBACK_URL
+				domain: import.meta.env.PUBLIC_AUTH0_DOMAIN,
+				clientId: import.meta.env.PUBLIC_AUTH0_CLIENT_ID,
+				callbackUrl: import.meta.env.PUBLIC_AUTH0_CALLBACK_URL
 			};
 
 			if (!envVars.domain || !envVars.clientId || !envVars.callbackUrl) {

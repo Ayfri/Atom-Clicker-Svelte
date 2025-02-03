@@ -4,13 +4,23 @@
 	import {leaderboard} from '$stores/leaderboard';
 	import {startDate} from '$stores/gameStore';
 	import Login, {getAuthConnection} from '@components/organisms/Login.svelte';
-	import {Info, LogOut, X} from 'lucide-svelte';
+	import {Info, LogOut, X, Edit2, Save} from 'lucide-svelte';
 	import {onDestroy, onMount} from 'svelte';
 	import {fade, fly} from 'svelte/transition';
+	import type { LeaderboardEntry } from '$lib/types/leaderboard';
+
+	function getDisplayUsername(user: LeaderboardEntry | undefined): string {
+		return user?.user_metadata?.username ??
+			user?.username ??
+			'Anonymous';
+	}
 
 	export let onClose: () => void;
 	let refreshInterval: ReturnType<typeof setInterval>;
 	let showLoginModal = false;
+	let isEditingUsername = false;
+	let newUsername = '';
+	let editError: string | null = null;
 
 	function onKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
@@ -38,7 +48,32 @@
 	});
 
 	$: currentUserId = $auth.user?.sub;
+	$: currentUserEntry = $leaderboard.find(entry => entry.userId === currentUserId);
+	$: username = getDisplayUsername(currentUserEntry);
 	$: userRank = $leaderboard.findIndex(entry => entry.userId === currentUserId) + 1;
+
+	async function handleUsernameUpdate() {
+		if (!$auth.auth0Client || !newUsername) return;
+
+		try {
+			await auth.updateUserMetadata({
+				username: newUsername
+			});
+
+			isEditingUsername = false;
+			editError = null;
+
+			await leaderboard.fetchLeaderboard();
+		} catch (error) {
+			editError = 'Failed to update username. Please try again.';
+			console.error('Error updating username:', error);
+		}
+	}
+
+	function startEditing() {
+		newUsername = getDisplayUsername(currentUserEntry);
+		isEditingUsername = true;
+	}
 </script>
 
 <svelte:window on:keydown={onKeydown}/>
@@ -86,20 +121,20 @@
 			{:else}
 				{@const authConnection = getAuthConnection($auth.provider)}
 
-				<div class="mb-8 rounded-lg bg-black/20 p-6">
+				<div class="mb-4 rounded-lg bg-black/20 p-6">
 					<div class="flex items-center gap-6">
 						<div class="relative">
 							{#if $auth.user?.picture}
 								<img
 									src={$auth.user.picture}
-									alt={$auth.user.name}
+									alt={username}
 									class="size-16 rounded-full object-cover ring-2 ring-accent ring-offset-2 ring-offset-accent-900"
 								/>
 							{:else}
 								<div
 									class="size-16 rounded-full bg-accent-400/30 flex items-center justify-center text-xl font-bold ring-2 ring-accent ring-offset-2 ring-offset-accent-900"
 								>
-									{$auth.user?.name?.[0].toUpperCase()}
+									{username[0].toUpperCase()}
 								</div>
 							{/if}
 							{#if userRank > 0}
@@ -113,9 +148,50 @@
 						<div class="flex-1">
 							<div class="mb-1 flex items-center justify-between">
 								<div class="flex items-center gap-2">
-									<div class="font-bold text-white text-lg capitalize">
-										{$auth.user?.name}
-									</div>
+									{#if isEditingUsername}
+										<form
+											on:submit|preventDefault={handleUsernameUpdate}
+											class="flex items-center gap-2"
+										>
+											<input
+												type="text"
+												bind:value={newUsername}
+												class="bg-black/20 rounded px-2 py-1 text-white border border-accent/50 focus:border-accent outline-none"
+												placeholder="Enter new username"
+												maxlength="30"
+												minlength="3"
+											/>
+											<button
+												type="submit"
+												class="text-accent hover:text-accent-400 transition-colors"
+												title="Save username"
+											>
+												<Save class="size-4" />
+											</button>
+											<button
+												type="button"
+												on:click={() => {
+													isEditingUsername = false;
+													editError = null;
+												}}
+												class="text-white/60 hover:text-white transition-colors"
+												title="Cancel"
+											>
+												Cancel
+											</button>
+										</form>
+									{:else}
+										<div class="font-bold text-white text-lg capitalize">
+											{username}
+											<button
+												on:click={startEditing}
+												class="ml-2 text-accent/60 hover:text-accent inline-flex items-center transition-colors"
+												title="Edit username"
+											>
+												<Edit2 class="size-4" />
+											</button>
+										</div>
+									{/if}
 									{#if authConnection}
 										<img
 											class="size-4 align-middle"
@@ -133,10 +209,24 @@
 									<LogOut class="size-5"/>
 								</button>
 							</div>
+							{#if editError}
+								<div class="text-red-500 text-sm mt-1" transition:fade>
+									{editError}
+								</div>
+							{/if}
 							<div class="text-sm text-white/60 mt-1">
 								Playing since {formatStartDate($startDate)}
 							</div>
 						</div>
+					</div>
+				</div>
+
+				<div class="mb-4 rounded-lg bg-black/40 p-4 text-sm text-white/80">
+					<div class="flex items-start gap-2">
+						<Info class="mt-0.5 size-4 shrink-0 text-accent" />
+						<p>
+							Changes to your score and username are stored immediately, but the leaderboard updates every 5 minutes to ensure smooth performance. Your latest changes will be visible in the next refresh.
+						</p>
 					</div>
 				</div>
 			{/if}
@@ -162,18 +252,20 @@
 							{#if entry.picture}
 								<img
 									src={entry.picture}
-									alt={entry.username}
+									alt={getDisplayUsername(entry)}
 									class="size-10 rounded-full object-cover"
 								/>
 							{:else}
 								<div
 									class="size-10 rounded-full bg-accent-400/30 flex items-center justify-center text-sm font-bold"
 								>
-									{entry.username[0].toUpperCase()}
+									{(getDisplayUsername(entry))[0].toUpperCase()}
 								</div>
 							{/if}
 							<div>
-								<div class="font-bold capitalize text-white">{entry.username}</div>
+								<div class="font-bold capitalize text-white">
+									{getDisplayUsername(entry)}
+								</div>
 								<div class="text-sm text-white/60">Level {entry.level}</div>
 							</div>
 						</div>

@@ -1,6 +1,6 @@
 import { createAuth0Client, type Auth0Client, type Auth0ClientOptions } from '@auth0/auth0-spa-js';
 import { browser } from '$app/environment';
-import { writable, derived } from 'svelte/store';
+import {writable, derived, get} from 'svelte/store';
 import { PUBLIC_AUTH0_CALLBACK_URL, PUBLIC_AUTH0_CLIENT_ID, PUBLIC_AUTH0_DOMAIN } from '$env/static/public';
 import type { AuthProvider, AuthStore } from '$lib/types/auth';
 
@@ -32,18 +32,20 @@ function setStoredProvider(provider: AuthProvider | null) {
     }
 }
 
+const commonScopes = 'openid profile email offline_access update:current_user_metadata';
+
 const AUTH_CONNECTIONS: Record<AuthProvider, { connection: string; scope: string }> = {
     google: {
         connection: 'google-oauth2',
-        scope: 'openid profile email'
+        scope: commonScopes
     },
     discord: {
         connection: 'discord',
-        scope: 'openid profile email identify'
+        scope: `${commonScopes} identify`
     },
     x: {
         connection: 'twitter',
-        scope: 'openid profile email'
+        scope: commonScopes
     }
 };
 
@@ -74,7 +76,7 @@ function createAuthStore() {
                 clientId: requiredEnvVars!.clientId,
                 authorizationParams: {
                     redirect_uri: requiredEnvVars!.callbackUrl,
-                    scope: 'openid profile email',
+                    scope: commonScopes,
                     audience: `https://${requiredEnvVars!.domain}/api/v2/`,
                     response_type: 'code'
                 },
@@ -175,11 +177,59 @@ function createAuthStore() {
         }
     }
 
+    async function updateUserMetadata(metadata: Record<string, any>) {
+        if (!browser || !auth0) return;
+
+        try {
+            const token = await auth0.getTokenSilently({
+                authorizationParams: {
+                    audience: `https://${requiredEnvVars!.domain}/api/v2/`,
+                }
+            });
+            const userId = (await auth0.getUser())?.sub;
+
+            if (!userId) throw new Error('No user ID found');
+
+            const response = await fetch(`https://${requiredEnvVars!.domain}/api/v2/users/${userId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    user_metadata: metadata
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Auth0 API Error:', errorData);
+                throw new Error('Failed to update user metadata');
+            }
+
+            // Update the local user state
+            update(state => ({
+	            ...state,
+	            user: state.user ? {
+		            ...state.user,
+		            user_metadata: {
+			            ...state.user.user_metadata,
+			            ...metadata,
+		            },
+	            } : null,
+            }));
+        } catch (error) {
+            console.error('Error updating user metadata:', error);
+            throw error;
+        }
+    }
+
     return {
         subscribe,
         init,
         loginWithProvider,
-        logout
+        logout,
+        updateUserMetadata
     };
 }
 
