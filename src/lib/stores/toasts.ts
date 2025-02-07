@@ -19,6 +19,10 @@ export function removeToast(id: number) {
 	toasts.update(t => t.filter(toast => toast.id !== id));
 }
 
+export function clearAllToasts() {
+	toasts.set([]);
+}
+
 export function error(title: string, message: string, duration = 10_000) {
 	addToast({
 		id: Date.now() + Math.floor(Math.random() * 100_000),

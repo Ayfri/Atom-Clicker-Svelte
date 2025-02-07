@@ -8,7 +8,7 @@
 	import Leaderboard from '$lib/components/organisms/Leaderboard.svelte';
 	import { ChartNoAxesColumn, Network, Info, Atom, Trophy, MessageSquare } from 'lucide-svelte';
 	import { onDestroy, onMount, type ComponentType } from 'svelte';
-	import { skillPointsAvailable, protons, atoms } from '$lib/stores/gameStore';
+	import { skillPointsAvailable, protons, atoms, skillPointsTotal } from '$lib/stores/gameStore';
 	import { protoniseProtonsGain, PROTONS_ATOMS_REQUIRED } from '$lib/stores/protons';
 	import FeedbackForm from '$lib/components/organisms/FeedbackForm.svelte';
 
@@ -35,7 +35,7 @@
 			icon: Network,
 			label: 'Skill Tree',
 			component: SkillTree,
-			condition: () => $skillPointsAvailable > 0,
+			condition: () => $skillPointsTotal > 0,
 			notification: () => $skillPointsAvailable > 0,
 		},
 		{
