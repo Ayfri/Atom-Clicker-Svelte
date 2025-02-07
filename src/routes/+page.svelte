@@ -13,15 +13,17 @@
 	import Achievements from '@components/organisms/Achievements.svelte';
 	import Atom from '@components/organisms/Atom.svelte';
 	import Buildings from '@components/organisms/Buildings.svelte';
+	import HardReset from '@components/organisms/HardReset.svelte';
 	import Levels from '@components/organisms/Levels.svelte';
 	import Upgrades from '@components/organisms/Upgrades.svelte';
-	import {RefreshCcw} from 'lucide-svelte';
+	import {RotateCcw} from 'lucide-svelte';
 	import type {Ticker} from 'pixi.js';
 	import {onDestroy, onMount} from 'svelte';
 
 	const SAVE_INTERVAL = 1000;
 	let activeTab: 'achievements' | 'buildings' | 'upgrades' = 'upgrades';
 	let saveLoop: ReturnType<typeof setInterval>;
+	let showHardReset = false;
 
 	function update(ticker: Ticker) {
 		gameManager.addAtoms(($atomsPerSecond * ticker.deltaMS) / 1000);
@@ -66,12 +68,14 @@
 />
 
 <main>
-	{#if isDev}
-		<button on:click={() => gameManager.reset()} class="reset-all">
-			<RefreshCcw/>
-			Reset All
-		</button>
-	{/if}
+	<button
+		class="fixed right-4 top-4 z-40 flex gap-2 py-1.5 px-3 items-center justify-center rounded-lg bg-red-900/30 text-white transition-colors hover:bg-red-900/50"
+		on:click={() => showHardReset = true}
+		title="Hard Reset"
+	>
+		<RotateCcw class="size-5" />
+		Reset
+	</button>
 
 	<NavBar/>
 
@@ -111,6 +115,10 @@
 				<Buildings/>
 			{/if}
 		</div>
+	{/if}
+
+	{#if showHardReset}
+		<HardReset onClose={() => showHardReset = false} />
 	{/if}
 </main>
 
