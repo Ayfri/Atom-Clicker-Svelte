@@ -114,7 +114,7 @@ const SUFFIXES = [
 
 export function formatNumber(num: number, precision = 2): string {
 	if (!Number.isFinite(num)) {
-		throw new Error(`Number '${num}' must be finite.`);
+		return "∞";
 	}
 
 	const absNum = Math.abs(num);
