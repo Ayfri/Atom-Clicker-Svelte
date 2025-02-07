@@ -11,6 +11,7 @@
 
 	function handleProtonise() {
 		gameManager.protonise();
+		onClose();
 	}
 </script>
 
