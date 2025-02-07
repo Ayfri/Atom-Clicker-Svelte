@@ -130,25 +130,6 @@
 		}
 	}
 
-	.reset-all {
-		align-items: center;
-		color: #ff6b6b;
-		display: flex;
-		font-weight: bolder;
-		gap: 0.5rem;
-		left: 8rem;
-		padding: 0.5rem;
-		position: fixed;
-		text-transform: uppercase;
-		top: 1rem;
-		z-index: 10;
-
-		@media screen and (width <= 900px) {
-			left: 1rem;
-			top: 3rem;
-		}
-	}
-
 	.game-container {
 		display: grid;
 		gap: 2rem;

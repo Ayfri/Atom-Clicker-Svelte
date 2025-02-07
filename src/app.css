@@ -2,9 +2,12 @@
 	--accent-color: #4a90e2;
 	background-color: #1a1a1a;
 	background-blend-mode: screen;
+	background-attachment: fixed;
+	min-height: 100vh;
+	min-height: 100dvh;
 
 	background-image: radial-gradient(circle at 10% 20%, rgba(74, 144, 226, 0.12) 0%, transparent 60%),
-		radial-gradient(circle at 90% 80%, rgba(74, 144, 226, 0.12) 0%, transparent 50%);
+		radial-gradient(circle at 95% 90%, rgba(74, 144, 226, 0.12) 0%, transparent 50%);
 	color: rgba(255, 255, 255, 0.87);
 	color-scheme: light dark;
 	font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -22,8 +25,10 @@
 body {
 	margin: 0;
 	min-height: 100vh;
+	min-height: 100dvh;
 	min-width: 320px;
 	overflow-x: hidden;
+	position: relative;
 }
 
 h1,
