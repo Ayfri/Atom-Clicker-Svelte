@@ -57,8 +57,6 @@
 	});
 
 	$: $mobile && activeTab && $app?.stage && $app?.queueResize();
-
-	const isDev = import.meta.env.MODE === 'development';
 </script>
 
 <svelte:window

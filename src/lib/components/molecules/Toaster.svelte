@@ -1,6 +1,6 @@
 <script lang="ts">
-	import {removeToast, toasts} from '$stores/toasts';
-	import {X} from 'lucide-svelte';
+	import {removeToast, toasts, clearAllToasts} from '$stores/toasts';
+	import {X, Trash2} from 'lucide-svelte';
 	import {fade} from 'svelte/transition';
 </script>
 
@@ -29,4 +29,15 @@
 			</p>
 		</div>
 	{/each}
+
+	{#if $toasts.length > 1}
+		<button
+			class="flex w-fit items-center self-end gap-2 rounded-lg bg-accent-900/90 p-2 text-white transition-all duration-300 hover:bg-accent-800/90"
+			on:click={clearAllToasts}
+			transition:fade={{ duration: 400 }}
+			title="Clear All"
+		>
+			<Trash2 size={18} />
+		</button>
+	{/if}
 </div>
