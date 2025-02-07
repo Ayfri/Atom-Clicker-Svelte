@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {goto} from '$app/navigation';
+    import { PUBLIC_AUTH0_CALLBACK_URL, PUBLIC_AUTH0_CLIENT_ID, PUBLIC_AUTH0_DOMAIN } from '$env/static/public';
 	import {auth} from '$stores/auth';
 	import {LoaderCircle} from 'lucide-svelte';
 	import {onMount} from 'svelte';
@@ -10,9 +11,9 @@
 	onMount(async () => {
 		try {
 			const envVars = {
-				domain: import.meta.env.PUBLIC_AUTH0_DOMAIN,
-				clientId: import.meta.env.PUBLIC_AUTH0_CLIENT_ID,
-				callbackUrl: import.meta.env.PUBLIC_AUTH0_CALLBACK_URL
+				domain: PUBLIC_AUTH0_DOMAIN,
+				clientId: PUBLIC_AUTH0_CLIENT_ID,
+				callbackUrl: PUBLIC_AUTH0_CALLBACK_URL
 			};
 
 			if (!envVars.domain || !envVars.clientId || !envVars.callbackUrl) {
