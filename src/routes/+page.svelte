@@ -16,7 +16,7 @@
 	import Levels from '@components/organisms/Levels.svelte';
 	import Upgrades from '@components/organisms/Upgrades.svelte';
 	import {RefreshCcw} from 'lucide-svelte';
-	import {Ticker} from 'pixi.js';
+	import type {Ticker} from 'pixi.js';
 	import {onDestroy, onMount} from 'svelte';
 
 	const SAVE_INTERVAL = 1000;

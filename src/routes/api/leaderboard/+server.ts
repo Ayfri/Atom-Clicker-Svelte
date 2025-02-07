@@ -22,26 +22,34 @@ let cachedLeaderboard: LeaderboardEntry[] = [];
 let lastCloudflareUpdate = 0;
 let userMetadataCache: Map<string, { data: Auth0User; timestamp: number }> = new Map();
 
-const auth0Management = new ManagementClient({
-    domain: PUBLIC_AUTH0_DOMAIN,
-    clientId: AUTH0_MGMT_CLIENT_ID,
-    clientSecret: AUTH0_MGMT_CLIENT_SECRET
-});
+let auth0Management: ManagementClient;
+
+function getAuth0Client() {
+    if (!auth0Management) {
+        auth0Management = new ManagementClient({
+            domain: PUBLIC_AUTH0_DOMAIN,
+            clientId: AUTH0_MGMT_CLIENT_ID,
+            clientSecret: AUTH0_MGMT_CLIENT_SECRET,
+            telemetry: false // Désactive la télémétrie qui cause l'erreur process.env
+        });
+    }
+    return auth0Management;
+}
 
 async function getUserMetadata(userId: string): Promise<Auth0User | null> {
     const now = Date.now();
     const cached = userMetadataCache.get(userId);
-    
+
     if (cached && now - cached.timestamp < USER_METADATA_CACHE_DURATION) {
         return cached.data;
     }
 
     try {
-        const response = await auth0Management.users.get({ id: userId });
-        // L'API retourne les données dans response.data
+        const client = getAuth0Client();
+        const response = await client.users.get({ id: userId });
         const userData = response.data;
         const user: Auth0User = {
-            user_id: userId, // On utilise l'ID qu'on a passé car on sait qu'il est correct
+            user_id: userId,
             user_metadata: userData.user_metadata
         };
         userMetadataCache.set(userId, { data: user, timestamp: now });
@@ -58,11 +66,9 @@ export const GET: RequestHandler = async ({ platform }) => {
     }
 
     try {
-        const leaderboard = await platform.env.ATOM_CLICKER_LEADERBOARD.get(LEADERBOARD_KEY, 'json') || [];
-        
+        const leaderboard: LeaderboardEntry[] = await platform.env.ATOM_CLICKER_LEADERBOARD.get(LEADERBOARD_KEY, 'json') || [];
         // Fetch user metadata for all users in the leaderboard
-        const userIds = leaderboard.map((entry: LeaderboardEntry) => entry.userId).filter(Boolean);
-        
+        const userIds = leaderboard.map((entry) => entry.userId).filter(Boolean);
         if (userIds.length === 0) {
             return json(leaderboard);
         }
@@ -73,7 +79,7 @@ export const GET: RequestHandler = async ({ platform }) => {
             const users = await Promise.all(usersPromises);
 
             // Map user metadata to leaderboard entries
-            const enrichedLeaderboard = leaderboard.map((entry: LeaderboardEntry) => {
+            const enrichedLeaderboard = leaderboard.map((entry) => {
                 const user = users.find((u: Auth0User | null) => u?.user_id === entry.userId);
                 return {
                     ...entry,
