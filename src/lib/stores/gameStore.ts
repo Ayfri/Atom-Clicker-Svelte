@@ -10,6 +10,7 @@ import { currentState } from '$lib/helpers/gameManager';
 export const achievements = writable<string[]>([]);
 export const activePowerUps = writable<PowerUp[]>([]);
 export const atoms = writable<number>(0);
+export const electrons = writable<number>(0);
 export const buildings = writable<Partial<Record<BuildingType, Building>>>({});
 export const lastSave = writable<number>(Date.now());
 export const protons = writable<number>(0);

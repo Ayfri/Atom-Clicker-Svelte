@@ -47,18 +47,17 @@ export interface GameState {
 	achievements: string[];
 	activePowerUps: PowerUp[];
 	atoms: number;
-	protons: number;
-	buildings: {
-		[key in BuildingType]?: Building;
-	}
+	buildings: Partial<Record<BuildingType, Building>>;
+	electrons: number;
 	lastSave: number;
+	protons: number;
 	skillUpgrades: string[];
 	startDate: number;
 	totalClicks: number;
+	totalProtonises: number;
 	totalXP: number;
 	upgrades: string[];
 	version: typeof SAVE_VERSION;
-	totalProtonises: number;
 }
 
 export type Range = [number, number];

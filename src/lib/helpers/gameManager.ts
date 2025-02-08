@@ -9,6 +9,7 @@ import {
 	activePowerUps,
 	atoms,
 	buildings,
+	electrons,
 	lastSave,
 	protons,
 	skillUpgrades,
@@ -27,11 +28,12 @@ import {loadSavedState, SAVE_KEY, SAVE_VERSION} from './saves';
 
 interface SaveData extends GameState { }
 
-export const currentState = derived([achievements, activePowerUps, atoms, protons, buildings, lastSave, skillUpgrades, startDate, totalClicks, totalXP, upgrades, totalProtonises], ([achievements, activePowerUps, atoms, protons, buildings, lastSave, skillUpgrades, startDate, totalClicks, totalXP, upgrades, totalProtonises]) => {
-	return {
+export const currentState = derived(
+	[
 		achievements,
 		activePowerUps,
 		atoms,
+		electrons,
 		protons,
 		buildings,
 		lastSave,
@@ -40,25 +42,57 @@ export const currentState = derived([achievements, activePowerUps, atoms, proton
 		totalClicks,
 		totalXP,
 		upgrades,
-		totalProtonises,
-	} as GameState;
-});
+		totalProtonises
+	],
+	([
+		achievements,
+		activePowerUps,
+		atoms,
+		electrons,
+		protons,
+		buildings,
+		lastSave,
+		skillUpgrades,
+		startDate,
+		totalClicks,
+		totalXP,
+		upgrades,
+		totalProtonises
+	]) => {
+		return {
+			achievements,
+			activePowerUps,
+			atoms,
+			electrons,
+			protons,
+			buildings,
+			lastSave,
+			skillUpgrades,
+			startDate,
+			totalClicks,
+			totalXP,
+			upgrades,
+			totalProtonises,
+		} as GameState;
+	}
+);
 
 export function resetGameState(): GameState {
 	return {
 		achievements: [],
 		activePowerUps: [],
 		atoms: 0,
-		protons: 0,
 		buildings: {},
+		electrons: 0,
 		lastSave: Date.now(),
+		protons: 0,
 		skillUpgrades: [],
 		startDate: Date.now(),
 		totalClicks: 0,
+		totalProtonises: 0,
 		totalXP: 0,
 		upgrades: [],
 		version: SAVE_VERSION,
-		totalProtonises: 0,
 	};
 }
 
@@ -70,6 +104,7 @@ export const gameManager = {
 			activePowerUps.set(savedState.activePowerUps);
 			atoms.set(savedState.atoms);
 			buildings.set(savedState.buildings);
+			electrons.set(savedState.electrons || 0);
 			lastSave.set(savedState.lastSave);
 			protons.set(savedState.protons || 0);
 			skillUpgrades.set(savedState.skillUpgrades || []);
@@ -129,6 +164,8 @@ export const gameManager = {
 	addCurrency(price: Price) {
 		if (price.currency === CurrenciesTypes.ATOMS) {
 			atoms.update(current => current + price.amount);
+		} else if (price.currency === CurrenciesTypes.ELECTRONS) {
+			electrons.update(current => current + price.amount);
 		} else if (price.currency === CurrenciesTypes.PROTONS) {
 			protons.update(current => current + price.amount);
 		}
@@ -142,6 +179,8 @@ export const gameManager = {
 	getCurrency(price: Price): number {
 		if (price.currency === CurrenciesTypes.ATOMS) {
 			return get(atoms);
+		} else if (price.currency === CurrenciesTypes.ELECTRONS) {
+			return get(electrons);
 		} else if (price.currency === CurrenciesTypes.PROTONS) {
 			return get(protons);
 		}
@@ -153,6 +192,8 @@ export const gameManager = {
 
 		if (price.currency === CurrenciesTypes.ATOMS) {
 			atoms.update(current => current - price.amount);
+		} else if (price.currency === CurrenciesTypes.ELECTRONS) {
+			electrons.update(current => current - price.amount);
 		} else if (price.currency === CurrenciesTypes.PROTONS) {
 			protons.update(current => current - price.amount);
 		}

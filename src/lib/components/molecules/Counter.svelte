@@ -1,10 +1,16 @@
 <script lang="ts">
-	import {atomsPerSecond, atoms, hasBonus, protons} from '$stores/gameStore';
+	import {atomsPerSecond, atoms, electrons, hasBonus, protons} from '$stores/gameStore';
 	import {formatNumber} from '$lib/utils';
 </script>
 
 <div class="mb-8 text-center z-[1] sm:mb-4">
 	<div class="mb-2">
+		{#if $electrons > 0}
+			<div>
+				<span id="electrons-value" class="text-2xl font-bold text-green-400">{formatNumber($electrons)}</span>
+				<span class="font-bold text-lg opacity-80">electrons</span>
+			</div>
+		{/if}
 		{#if $protons > 0}
 			<div>
 				<span id="protons-value" class="text-2xl font-bold text-yellow-400">{formatNumber($protons)}</span>
