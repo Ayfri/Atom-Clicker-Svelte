@@ -412,6 +412,39 @@ function createElectronUpgrades() {
 		}
 	);
 
+	// Power-up interval reduction
+	upgrades.push(
+		{
+			id: 'electron_power_up_interval_1',
+			name: 'Faster Power-ups',
+			description: 'Reduces power-up spawn interval by 10%',
+			cost: {
+				amount: 5,
+				currency: CurrenciesTypes.ELECTRONS
+			},
+			effects: [{
+				type: 'power_up_interval',
+				description: 'Multiply power-up interval by 0.9',
+				apply: (currentValue) => currentValue * 0.9
+			}]
+		},
+		{
+			id: 'electron_power_up_interval_2',
+			name: 'Even Faster Power-ups',
+			description: 'Reduces power-up spawn interval by another 10%',
+			condition: state => state.upgrades.includes('electron_power_up_interval_1'),
+			cost: {
+				amount: 10,
+				currency: CurrenciesTypes.ELECTRONS
+			},
+			effects: [{
+				type: 'power_up_interval',
+				description: 'Multiply power-up interval by 0.9',
+				apply: (currentValue) => currentValue * 0.9
+			}]
+		}
+	);
+
 	return upgrades;
 }
 
