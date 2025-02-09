@@ -10,7 +10,7 @@
 </script>
 
 {#if icon}
-	<img src={`/currencies/${currency.icon}.png`} alt={name} class="size-3.5 {className} inline" {...$$restProps} />
+	<img src={`/currencies/${currency.icon}.png`} alt={name} class="size-3.5 {className} object-contain inline" {...$$restProps} />
 {:else}
 	<span class="currency">{currency.name}</span>
 {/if}

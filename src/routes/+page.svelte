@@ -19,6 +19,7 @@
 	import {RotateCcw} from 'lucide-svelte';
 	import type {Ticker} from 'pixi.js';
 	import {onDestroy, onMount} from 'svelte';
+	import '$lib/stores/autoBuy';
 
 	const SAVE_INTERVAL = 1000;
 	let activeTab: 'achievements' | 'buildings' | 'upgrades' = 'upgrades';

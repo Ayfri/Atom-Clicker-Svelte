@@ -140,6 +140,20 @@ function createProtonisesAchievements(): Achievement[] {
 	return [1, 2, 3, 5, 10, 20, 50, 100, 250, 500, 1000].map(createProtonisesAchievement);
 }
 
+function createElectronizesAchievements(): Achievement[] {
+	function createElectronizesAchievement(count: number): Achievement {
+		return {
+			id: `electronizes_${count}`,
+			name: `${count} Electronizes`,
+			description: `Electronize ${count} times`,
+			condition: (state: GameState) => state.electrons >= count,
+			hiddenCondition: (state: GameState) => state.electrons === 0,
+		};
+	}
+
+	return [1, 2, 3, 5, 10, 20, 50, 100, 250, 500, 1000].map(createElectronizesAchievement);
+}
+
 const achievementsArray: Achievement[] = [
 	...BUILDING_TYPES.map(createBuildingAchievements).flat(),
 	...createBuildingTotalAchievements(),
@@ -148,7 +162,8 @@ const achievementsArray: Achievement[] = [
 	...createTotalClicksAchievements(),
 	...createTotalLevelsAchievements(),
 	...createProtonisesAchievements(),
+	...createElectronizesAchievements(),
 	...SPECIAL_ACHIEVEMENTS,
 ];
 
-export const ACHIEVEMENTS= Object.fromEntries(achievementsArray.map(achievement => [achievement.id, achievement]));
+export const ACHIEVEMENTS = Object.fromEntries(achievementsArray.map(achievement => [achievement.id, achievement]));

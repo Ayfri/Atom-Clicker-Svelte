@@ -288,6 +288,53 @@ function createProtonUpgrades() {
 	return upgrades;
 }
 
+function createElectronUpgrades() {
+	const upgrades: Upgrade[] = [];
+
+	// Auto-buy upgrades for each building
+	upgrades.push(...BUILDING_TYPES.map((buildingType, index) => {
+		const building = BUILDINGS[buildingType];
+		return {
+			id: `electron_auto_buy_${buildingType}`,
+			name: `Auto ${building.name}`,
+			description: `Automatically buys 1 ${building.name} every 30 seconds`,
+			cost: {
+				amount: 1 + index,
+				currency: CurrenciesTypes.ELECTRONS
+			},
+			effects: [{
+				type: 'auto_buy',
+				target: buildingType,
+				description: `Auto-buy 1 ${building.name} every 30 seconds`,
+				apply: (currentValue) => 30000 // 30 seconds in milliseconds
+			}]
+		} as Upgrade;
+	}));
+
+	// Auto-buy speed upgrades for each building
+	upgrades.push(...BUILDING_TYPES.map((buildingType, index) => {
+		const building = BUILDINGS[buildingType];
+		return {
+			id: `electron_auto_buy_speed_${buildingType}`,
+			name: `Faster Auto ${building.name}`,
+			description: `Reduces ${building.name} auto-buy interval by 5 seconds`,
+			condition: state => state.upgrades.includes(`electron_auto_buy_${buildingType}`),
+			cost: {
+				amount: 2 + index,
+				currency: CurrenciesTypes.ELECTRONS
+			},
+			effects: [{
+				type: 'auto_buy',
+				target: buildingType,
+				description: `Reduce auto-buy interval by 5 seconds`,
+				apply: (currentValue) => Math.max(1000, currentValue - 5000) // Minimum 1 second
+			}]
+		} as Upgrade;
+	}));
+
+	return upgrades;
+}
+
 const upgrades = [
 	...SPECIAL_UPGRADES,
 	...BUILDING_TYPES.map(createBuildingUpgrades).flat(),
@@ -296,6 +343,7 @@ const upgrades = [
 	...createPowerUpIntervalUpgrades(),
 	...createLevelBoostUpgrades(),
 	...createProtonUpgrades(),
+	...createElectronUpgrades(),
 ];
 
 export const UPGRADES = Object.fromEntries(upgrades.map(upgrade => [

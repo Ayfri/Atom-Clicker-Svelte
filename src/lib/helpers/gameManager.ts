@@ -4,6 +4,7 @@ import {BUILDING_LEVEL_UP_COST, BUILDINGS, type BuildingType} from '$data/buildi
 import {CurrenciesTypes} from '$data/currencies';
 import {UPGRADES} from '$data/upgrades';
 import {protoniseProtonsGain, PROTONS_ATOMS_REQUIRED} from '$lib/stores/protons';
+import {electronizeElectronsGain, ELECTRONS_PROTONS_REQUIRED} from '$lib/stores/electrons';
 import {
 	achievements,
 	activePowerUps,
@@ -223,7 +224,7 @@ export const gameManager = {
 			currency: currentBuilding.cost.currency
 		};
 
-		if (!this.spendCurrency(cost)) return;
+		if (!this.spendCurrency(cost)) return false;
 
 		buildings.update(current => ({
 			...current,
@@ -238,6 +239,8 @@ export const gameManager = {
 				level: Math.floor((currentBuilding.count + amount) / BUILDING_LEVEL_UP_COST)
 			},
 		}));
+
+		return true;
 	},
 
 	unlockBuilding(type: BuildingType) {
@@ -307,6 +310,38 @@ export const gameManager = {
 			totalXP.set(newState.totalXP);
 			upgrades.set(newState.upgrades);
 			totalProtonises.set(newState.totalProtonises);
+
+			return true;
+		}
+		return false;
+	},
+
+	electronize() {
+		const currentState = this.getCurrentState();
+		const electronGain = get(electronizeElectronsGain);
+
+		if (currentState.protons >= ELECTRONS_PROTONS_REQUIRED || electronGain > 0) {
+			// Keep electrons and increment them, reset protons
+			const newState = {
+				...resetGameState(),
+				achievements: currentState.achievements,
+				electrons: currentState.electrons + electronGain,
+				upgrades: currentState.upgrades.filter(id => id.startsWith('electron')),
+			};
+
+			// Update all stores except startDate
+			achievements.set(newState.achievements);
+			activePowerUps.set(newState.activePowerUps);
+			atoms.set(newState.atoms);
+			electrons.set(newState.electrons);
+			protons.set(0); // Reset protons
+			buildings.set(newState.buildings);
+			lastSave.set(newState.lastSave);
+			skillUpgrades.set(newState.skillUpgrades);
+			totalClicks.set(newState.totalClicks);
+			totalXP.set(newState.totalXP);
+			upgrades.set(newState.upgrades);
+			totalProtonises.set(0); // Reset protonises count
 
 			return true;
 		}

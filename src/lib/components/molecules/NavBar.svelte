@@ -5,11 +5,13 @@
 	import SkillTree from '$lib/components/organisms/SkillTree.svelte';
 	import Credits from '$lib/components/organisms/Credits.svelte';
 	import Protonise from '$lib/components/organisms/Protonise.svelte';
+	import Electronize from '$lib/components/organisms/Electronize.svelte';
 	import Leaderboard from '$lib/components/organisms/Leaderboard.svelte';
-	import { ChartNoAxesColumn, Network, Info, Atom, Trophy, MessageSquare } from 'lucide-svelte';
+	import { ChartNoAxesColumn, Network, Info, Atom, Trophy, MessageSquare, Orbit } from 'lucide-svelte';
 	import { onDestroy, onMount, type ComponentType } from 'svelte';
-	import { skillPointsAvailable, protons, atoms, skillPointsTotal } from '$lib/stores/gameStore';
+	import { skillPointsAvailable, protons, atoms, electrons, skillPointsTotal } from '$lib/stores/gameStore';
 	import { protoniseProtonsGain, PROTONS_ATOMS_REQUIRED } from '$lib/stores/protons';
+	import { electronizeElectronsGain, ELECTRONS_PROTONS_REQUIRED } from '$lib/stores/electrons';
 	import FeedbackForm from '$lib/components/organisms/FeedbackForm.svelte';
 
 	interface Link {
@@ -44,6 +46,13 @@
 			component: Protonise,
 			condition: () => $atoms >= PROTONS_ATOMS_REQUIRED || $protons > 0,
 			notification: () => $protoniseProtonsGain > $protons,
+		},
+		{
+			icon: Orbit,
+			label: 'Electronize',
+			component: Electronize,
+			condition: () => $protons >= ELECTRONS_PROTONS_REQUIRED || $electrons > 0,
+			notification: () => $electronizeElectronsGain > 0,
 		},
 		{
 			icon: Info,

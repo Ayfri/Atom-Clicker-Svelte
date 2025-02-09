@@ -1,7 +1,7 @@
 <script lang="ts">
 	import {CURRENCIES, CurrenciesTypes, type CurrencyName} from '$data/currencies';
 	import { currentState, gameManager } from '$helpers/gameManager';
-	import { atoms, protons, upgrades, buildings, achievements, totalProtonises } from '$stores/gameStore';
+	import { atoms, protons, electrons, upgrades, buildings, achievements, totalProtonises } from '$stores/gameStore';
 	import { UPGRADES } from '$data/upgrades';
 	import { formatNumber } from '$lib/utils';
 	import type { Upgrade } from '$lib/types';
@@ -10,6 +10,9 @@
 
 	let availableUpgrades: Upgrade[] = [];
 	let selectedCurrency: CurrencyName = CurrenciesTypes.ATOMS;
+
+	$: showProtons = $protons > 0 || $totalProtonises > 0;
+	$: showElectrons = $electrons > 0;
 
 	$: if ($currentState) {
 		availableUpgrades = Object.values(UPGRADES)
@@ -28,16 +31,33 @@
 <div class="upgrades">
 	<div class="header">
 		<h2>Upgrades</h2>
-		{#if $totalProtonises > 0}
+		<div class="currency-tabs">
 			<button
-				class="currency-toggle"
-				on:click={() => selectedCurrency = selectedCurrency === CurrenciesTypes.ATOMS ? CurrenciesTypes.PROTONS : CurrenciesTypes.ATOMS}
+				class="currency-tab"
+				class:active={selectedCurrency === CurrenciesTypes.ATOMS}
+				on:click={() => selectedCurrency = CurrenciesTypes.ATOMS}
 			>
-				{#key selectedCurrency}
-					<Currency name={selectedCurrency} />
-				{/key}
+				<Currency name={CurrenciesTypes.ATOMS} />
 			</button>
-		{/if}
+			{#if showProtons}
+				<button
+					class="currency-tab"
+					class:active={selectedCurrency === CurrenciesTypes.PROTONS}
+					on:click={() => selectedCurrency = CurrenciesTypes.PROTONS}
+				>
+					<Currency name={CurrenciesTypes.PROTONS} />
+				</button>
+			{/if}
+			{#if showElectrons}
+				<button
+					class="currency-tab"
+					class:active={selectedCurrency === CurrenciesTypes.ELECTRONS}
+					on:click={() => selectedCurrency = CurrenciesTypes.ELECTRONS}
+				>
+					<Currency name={CurrenciesTypes.ELECTRONS} />
+				</button>
+			{/if}
+		</div>
 	</div>
 	<div class="upgrade-grid">
 		{#each availableUpgrades.slice(0, 10) as upgrade (upgrade.id)}
@@ -109,11 +129,16 @@
 	.header {
 		align-items: center;
 		display: flex;
-		gap: 1rem;
+		gap: 0.5rem;
 		justify-content: space-between;
 	}
 
-	.currency-toggle {
+	.currency-tabs {
+		display: flex;
+		gap: 0.35rem;
+	}
+
+	.currency-tab {
 		align-items: center;
 		background: rgba(255, 255, 255, 0.05);
 		border: none;
@@ -122,9 +147,25 @@
 		display: flex;
 		padding: 0.5rem;
 		transition: all 0.2s;
+
+		& img {
+			width: 1rem;
+			height: 1rem;
+		}
 	}
 
-	.currency-toggle:hover {
+	@media (width <= 1538px) {
+		.currency-tab {
+			padding: 0.35rem;
+		}
+	}
+
+	.currency-tab:hover {
 		background: rgba(255, 255, 255, 0.1);
+	}
+
+	.currency-tab.active {
+		background: rgba(255, 255, 255, 0.15);
+		box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
 	}
 </style>

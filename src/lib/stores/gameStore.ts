@@ -3,8 +3,9 @@ import {type BuildingType} from '$data/buildings';
 import {POWER_UP_DEFAULT_INTERVAL} from '$data/powerUp';
 import {UPGRADES} from '$data/upgrades';
 import {SKILL_UPGRADES} from '$data/skillTree';
-import type {Building, Effect, PowerUp, Range, Upgrade, SkillUpgrade } from '../types';
+import type {Building, Effect, PowerUp, Range} from '../types';
 import { currentState } from '$lib/helpers/gameManager';
+import { calculateEffects, getUpgradesWithEffects } from '$lib/helpers/effects';
 
 // Individual stores
 export const achievements = writable<string[]>([]);
@@ -52,41 +53,6 @@ export const xpProgress = derived(
     ([$currentLevelXP, $nextLevelXP]) => ($currentLevelXP / $nextLevelXP) * 100
 );
 
-interface SearchEffectsOptions {
-	target?: Effect['target'];
-	type?: Effect['type'];
-}
-
-function getUpgradesWithEffects(upgrades: (Upgrade | SkillUpgrade)[], options: SearchEffectsOptions) {
-	return upgrades.filter((upgrade): upgrade is (Upgrade | SkillUpgrade) => {
-		if ('effects' in upgrade && Array.isArray(upgrade.effects)) {
-			const effects = upgrade.effects;
-			let isType = true;
-			let isTarget = true;
-
-			if (options.type) {
-				isType = effects.some(effect => effect.type === options.type);
-			}
-			if (options.target) {
-				isTarget = effects.some(effect => effect.target === options.target);
-			}
-			return isType && isTarget;
-		}
-
-		return false;
-	});
-}
-
-function calculateEffects(upgrades: (Upgrade | SkillUpgrade)[], defaultValue: number = 0): number {
-	const state = get(currentState);
-	return upgrades.reduce((currentValue, upgrade) => {
-		if ('effects' in upgrade && Array.isArray(upgrade.effects)) {
-			return upgrade.effects.reduce((value, effect) => effect.apply(value, state), currentValue);
-		}
-		return currentValue;
-	}, defaultValue);
-}
-
 // Derived stores
 export const currentUpgradesBought = derived(
 	[upgrades, skillUpgrades],
@@ -102,7 +68,7 @@ export const autoClicksPerSecond = derived(
 	[currentUpgradesBought],
 	([$currentUpgradesBought]) => {
 		const autoClickUpgrades = getUpgradesWithEffects($currentUpgradesBought, { type: 'auto_click' });
-		return calculateEffects(autoClickUpgrades, 0);
+		return calculateEffects(autoClickUpgrades, get(currentState), 0);
 	}
 );
 
@@ -117,7 +83,7 @@ export const protonMultiplier = derived(
             .filter(upgrade => upgrade.id.startsWith('proton_') || upgrade.id.startsWith('protonise_'));
 
         // Calculate base multiplier from proton upgrades
-        const baseMultiplier = calculateEffects(protonUpgrades, 1);
+        const baseMultiplier = calculateEffects(protonUpgrades, get(currentState), 1);
 
         // Add multiplier from total protonises if any protonise boost upgrades are active
         const hasProtoniseBoost = protonUpgrades.some(upgrade => upgrade.id.startsWith('protonise_boost_'));
@@ -134,7 +100,7 @@ export const globalMultiplier = derived(
 	([$currentUpgradesBought, $protonMultiplier]) => {
 		const globalUpgrades = getUpgradesWithEffects($currentUpgradesBought, { type: 'global' })
 			.filter(upgrade => !upgrade.id.startsWith('proton_') && !upgrade.id.startsWith('protonise_'));
-		return calculateEffects(globalUpgrades, 1) * $protonMultiplier;
+		return calculateEffects(globalUpgrades, get(currentState), 1) * $protonMultiplier;
 	}
 );
 
@@ -152,7 +118,7 @@ export const buildingProductions = derived(
 			let production = 0;
 			if (building) {
 				const upgrades = getUpgradesWithEffects($currentUpgradesBought, { target: type, type: 'building' });
-				const multiplier = calculateEffects(upgrades, building.rate);
+				const multiplier = calculateEffects(upgrades, get(currentState), building.rate);
 				const oldMultiplier = Math.pow(building.count / 2, building.level + 1) / 5;
 				const linearMultiplier = (building.level + 1) * 100;
 				const levelMultiplier = building.level > 0 ? Math.sqrt(oldMultiplier * linearMultiplier) : 1;
@@ -187,31 +153,31 @@ export const clickPower = derived(
 		const regularClickUpgrades = clickUpgrades.filter(upgrade => !upgrade.id.startsWith('click_power_aps'));
 
 		// Calculate base click power with regular upgrades first
-		const baseClickPower = calculateEffects(regularClickUpgrades, 1) * $bonusMultiplier;
+		const baseClickPower = calculateEffects(regularClickUpgrades, get(currentState), 1) * $bonusMultiplier;
 
 		// Then apply APS-based upgrades after all other multipliers
-		return calculateEffects(apsUpgrades, baseClickPower);
+		return calculateEffects(apsUpgrades, get(currentState), baseClickPower);
 	}
 );
 
 export const powerUpInterval = derived(currentUpgradesBought, $currentUpgradeBought => {
 	const powerUpIntervalUpgrades = getUpgradesWithEffects($currentUpgradeBought, { type: 'power_up_interval' });
-	return POWER_UP_DEFAULT_INTERVAL.map(interval => calculateEffects(powerUpIntervalUpgrades, interval)) as Range;
+	return POWER_UP_DEFAULT_INTERVAL.map(interval => calculateEffects(powerUpIntervalUpgrades, get(currentState), interval)) as Range;
 });
 
 export const powerUpDurationMultiplier = derived(currentUpgradesBought, $currentUpgradesBought => {
 	const powerUpDurationUpgrades = getUpgradesWithEffects($currentUpgradesBought, { type: 'power_up_duration' });
-	return calculateEffects(powerUpDurationUpgrades, 1);
+	return calculateEffects(powerUpDurationUpgrades, get(currentState), 1);
 });
 
 export const powerUpEffectMultiplier = derived(currentUpgradesBought, $currentUpgradesBought => {
 	const powerUpMultiplierUpgrades = getUpgradesWithEffects($currentUpgradesBought, { type: 'power_up_multiplier' });
-	return calculateEffects(powerUpMultiplierUpgrades, 1);
+	return calculateEffects(powerUpMultiplierUpgrades, get(currentState), 1);
 });
 
 export const xpGainMultiplier = derived(currentUpgradesBought, $currentUpgradesBought => {
 	const xpGainUpgrades = getUpgradesWithEffects($currentUpgradesBought, { type: 'xp_gain' });
-	return calculateEffects(xpGainUpgrades, 1);
+	return calculateEffects(xpGainUpgrades, get(currentState), 1);
 });
 
 // Derived stores for protonise system
