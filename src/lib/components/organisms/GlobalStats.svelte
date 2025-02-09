@@ -9,6 +9,7 @@
 		globalMultiplier,
 		powerUpDurationMultiplier,
 		powerUpEffectMultiplier,
+		powerUpInterval,
 		xpGainMultiplier,
 		totalClicks,
 		totalXP,
@@ -16,8 +17,11 @@
 	} from '$stores/gameStore';
 	import { formatNumber } from '$lib/utils';
 	import StatItem from '$lib/components/atoms/StatItem.svelte';
+	import { POWER_UP_DEFAULT_INTERVAL } from '$data/powerUp';
 
 	export let onClose: () => void;
+
+	$: powerUpIntervalReduction = (1 - ($powerUpInterval[0] / POWER_UP_DEFAULT_INTERVAL[0])) * 100;
 
 	function onKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
@@ -58,6 +62,7 @@
 						<StatItem label="Bonus Multiplier" value={formatNumber($bonusMultiplier)} prefix="×" />
 						<StatItem label="Power-up Duration" value={formatNumber($powerUpDurationMultiplier)} prefix="×" />
 						<StatItem label="Power-up Effect" value={formatNumber($powerUpEffectMultiplier)} prefix="×" />
+						<StatItem label="Power-up Interval Reduction" value={formatNumber(100 - powerUpIntervalReduction, 1)} suffix="%" />
 						<StatItem label="XP Gain" value={formatNumber($xpGainMultiplier)} prefix="×" />
 					</div>
 				</div>
