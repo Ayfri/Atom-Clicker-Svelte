@@ -7,12 +7,14 @@
 	import Protonise from '$lib/components/organisms/Protonise.svelte';
 	import Electronize from '$lib/components/organisms/Electronize.svelte';
 	import Leaderboard from '$lib/components/organisms/Leaderboard.svelte';
-	import { ChartNoAxesColumn, Network, Info, Atom, Trophy, MessageSquare, Orbit } from 'lucide-svelte';
+	import { ChartNoAxesColumn, Network, Info, Atom, Trophy, MessageSquare, Orbit, FileText } from 'lucide-svelte';
 	import { onDestroy, onMount, type ComponentType } from 'svelte';
 	import { skillPointsAvailable, protons, atoms, electrons, skillPointsTotal } from '$lib/stores/gameStore';
 	import { protoniseProtonsGain, PROTONS_ATOMS_REQUIRED } from '$lib/stores/protons';
 	import { electronizeElectronsGain, ELECTRONS_PROTONS_REQUIRED } from '$lib/stores/electrons';
 	import FeedbackForm from '$lib/components/organisms/FeedbackForm.svelte';
+	import { changelog } from '$lib/stores/changelog';
+	import Changelog from '$lib/components/organisms/Changelog.svelte';
 
 	interface Link {
 		icon: ComponentType;
@@ -53,6 +55,12 @@
 			component: Electronize,
 			condition: () => $protons >= ELECTRONS_PROTONS_REQUIRED || $electrons > 0,
 			notification: () => $electronizeElectronsGain > 0,
+		},
+		{
+			icon: FileText,
+			label: 'Changelog',
+			component: Changelog,
+			notification: () => $changelog.hasUnread,
 		},
 		{
 			icon: Info,

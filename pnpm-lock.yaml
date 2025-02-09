@@ -20,6 +20,9 @@ importers:
       auth0:
         specifier: ^4.18.0
         version: 4.18.0
+      marked:
+        specifier: ^15.0.6
+        version: 15.0.6
       pixi.js:
         specifier: ^8.6.6
         version: 8.7.3
@@ -1195,6 +1198,11 @@ packages:
 
   magic-string@0.30.17:
     resolution: {integrity: sha512-sNPKHvyjVf7gyjwS4xGTaW/mCnF8wnjtifKBEhxfZ7E/S8tQ0rssrwGNn6q8JH/ohItJfSQp9mBtQYuTlH5QnA==}
+
+  marked@15.0.6:
+    resolution: {integrity: sha512-Y07CUOE+HQXbVDCGl3LXggqJDbXDP2pArc2C1N1RRMN0ONiShoSsIInMd5Gsxupe7fKLpgimTV+HOJ9r7bA+pg==}
+    engines: {node: '>= 18'}
+    hasBin: true
 
   mdn-data@2.0.30:
     resolution: {integrity: sha512-GaqWWShW4kv/G9IEucWScBx9G1/vsFZZJUO+tD26M8J8z3Kw5RDQjaoZe03YAClgeS/SWPOcb4nkFBTEi5DUEA==}
@@ -2645,6 +2653,8 @@ snapshots:
   magic-string@0.30.17:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.0
+
+  marked@15.0.6: {}
 
   mdn-data@2.0.30: {}
 
