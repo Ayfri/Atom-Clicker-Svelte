@@ -250,7 +250,7 @@ function createProtonUpgrades() {
 			description: '2x electrons gained from electronize',
 			condition: state => state.upgrades.includes('proton_electron_boost_1'),
 			cost: {
-				amount: 150_000_000_000,
+				amount: 300_000_000_000,
 				currency: CurrenciesTypes.PROTONS
 			},
 			effects: [{
@@ -264,7 +264,7 @@ function createProtonUpgrades() {
 			name: 'Triple Electrons',
 			description: '3x electrons gained from electronize',
 			cost: {
-				amount: 6_000_000_000_000,
+				amount: 15_000_000_000_000,
 				currency: CurrenciesTypes.PROTONS
 			},
 			effects: [{
