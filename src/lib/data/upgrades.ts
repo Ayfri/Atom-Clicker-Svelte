@@ -228,6 +228,53 @@ function createProtonUpgrades() {
 		}]
 	}));
 
+	// Electron gain multiplier upgrades
+	upgrades.push(
+		{
+			id: 'proton_electron_boost_1',
+			name: 'Double Electrons',
+			description: '2x electrons gained from electronize',
+			cost: {
+				amount: 7_500_000_000,
+				currency: CurrenciesTypes.PROTONS
+			},
+			effects: [{
+				type: 'electron_gain',
+				description: 'Double electrons gained from electronize',
+				apply: (currentValue) => currentValue * 2
+			}]
+		},
+		{
+			id: 'proton_electron_boost_2',
+			name: 'Double Electrons II',
+			description: '2x electrons gained from electronize',
+			condition: state => state.upgrades.includes('proton_electron_boost_1'),
+			cost: {
+				amount: 150_000_000_000,
+				currency: CurrenciesTypes.PROTONS
+			},
+			effects: [{
+				type: 'electron_gain',
+				description: 'Double electrons gained from electronize',
+				apply: (currentValue) => currentValue * 2
+			}]
+		},
+		{
+			id: 'proton_electron_boost_3',
+			name: 'Triple Electrons',
+			description: '3x electrons gained from electronize',
+			cost: {
+				amount: 6_000_000_000_000,
+				currency: CurrenciesTypes.PROTONS
+			},
+			effects: [{
+				type: 'electron_gain',
+				description: 'Triple electrons gained from electronize',
+				apply: (currentValue) => currentValue * 3
+			}]
+		}
+	);
+
 	// Proton boost based on total protonises
 	upgrades.push(...createUpgrades({
 		id: 'protonise_boost',
