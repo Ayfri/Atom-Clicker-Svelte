@@ -379,6 +379,39 @@ function createElectronUpgrades() {
 		} as Upgrade;
 	}));
 
+	// Auto-upgrade system
+	upgrades.push(
+		{
+			id: 'electron_auto_upgrade',
+			name: 'Auto Upgrade',
+			description: 'Automatically buys the cheapest available upgrade every 30 seconds',
+			cost: {
+				amount: 20,
+				currency: CurrenciesTypes.ELECTRONS
+			},
+			effects: [{
+				type: 'auto_upgrade',
+				description: 'Auto-buy upgrades every 30 seconds',
+				apply: (currentValue) => 30000 // 30 seconds in milliseconds
+			}]
+		},
+		{
+			id: 'electron_auto_upgrade_speed',
+			name: 'Faster Auto Upgrade',
+			description: 'Reduces auto-upgrade interval by 5 seconds',
+			condition: state => state.upgrades.includes('electron_auto_upgrade'),
+			cost: {
+				amount: 30,
+				currency: CurrenciesTypes.ELECTRONS
+			},
+			effects: [{
+				type: 'auto_upgrade',
+				description: 'Reduce auto-upgrade interval by 5 seconds',
+				apply: (currentValue) => Math.max(1000, currentValue - 5000) // Minimum 1 second
+			}]
+		}
+	);
+
 	return upgrades;
 }
 

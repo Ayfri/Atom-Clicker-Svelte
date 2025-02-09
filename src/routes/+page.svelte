@@ -20,6 +20,7 @@
 	import type {Ticker} from 'pixi.js';
 	import {onDestroy, onMount} from 'svelte';
 	import '$lib/stores/autoBuy';
+	import '$lib/stores/autoUpgrade';
 
 	const SAVE_INTERVAL = 1000;
 	let activeTab: 'achievements' | 'buildings' | 'upgrades' = 'upgrades';
