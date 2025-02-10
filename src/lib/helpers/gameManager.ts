@@ -147,7 +147,8 @@ export const gameManager = {
 			const deltaAtoms = currentAtoms - previousAtoms;
 			const xpPerAtom = 0.1;
 			const xp = deltaAtoms * xpPerAtom;
-			if (xp > 0) {
+			const state = this.getCurrentState();
+			if (xp > 0 && state.upgrades.includes('feature_levels')) {
 				totalXP.update(current => current + xp * get(xpGainMultiplier));
 			}
 			previousAtoms = currentAtoms;
