@@ -366,6 +366,7 @@ export const gameManager = {
 		activePowerUps.set(newState.activePowerUps);
 		atoms.set(newState.atoms);
 		buildings.set(newState.buildings);
+		electrons.set(newState.electrons);
 		lastSave.set(newState.lastSave);
 		protons.set(newState.protons);
 		skillUpgrades.set(newState.skillUpgrades);
