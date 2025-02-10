@@ -67,7 +67,7 @@
   }}
 />
 
-<main>
+<main class="relative py-12 lg:pb-4">
 	<button
 		class="fixed right-4 top-4 z-40 flex gap-2 py-1.5 px-3 items-center justify-center rounded-lg bg-red-900/30 text-white transition-colors hover:bg-red-900/50"
 		on:click={() => showHardReset = true}
@@ -123,15 +123,6 @@
 </main>
 
 <style>
-	main {
-		margin-bottom: 3rem;
-		margin-top: 3rem;
-
-		@media screen and (width <= 900px) {
-			margin: 2rem 0 0;
-		}
-	}
-
 	.game-container {
 		display: grid;
 		gap: 2rem;
