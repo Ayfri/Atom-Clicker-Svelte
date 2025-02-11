@@ -4,6 +4,7 @@ import { ManagementClient } from 'auth0';
 import { AUTH0_MGMT_CLIENT_SECRET, AUTH0_MGMT_CLIENT_ID } from '$env/static/private';
 import { PUBLIC_AUTH0_DOMAIN } from '$env/static/public';
 import type { LeaderboardEntry } from '$lib/types/leaderboard';
+import { encryptLeaderboardData, decryptLeaderboardData, verifyAndDecryptClientData } from './obfuscation.server';
 
 interface Auth0User {
     user_id: string;
@@ -66,7 +67,9 @@ export const GET: RequestHandler = async ({ platform }) => {
     }
 
     try {
-        const leaderboard: LeaderboardEntry[] = await platform.env.ATOM_CLICKER_LEADERBOARD.get(LEADERBOARD_KEY, 'json') || [];
+        const encryptedLeaderboard: string = await platform.env.ATOM_CLICKER_LEADERBOARD.get(LEADERBOARD_KEY, 'text') || '[]';
+        const leaderboard: LeaderboardEntry[] = decryptLeaderboardData(encryptedLeaderboard);
+        
         // Fetch user metadata for all users in the leaderboard
         const userIds = leaderboard.map((entry) => entry.userId).filter(Boolean);
         if (userIds.length === 0) {
@@ -106,8 +109,17 @@ export const POST: RequestHandler = async ({ request, platform }) => {
     }
 
     try {
-        const { username, atoms, level, userId, picture } = await request.json();
+        const { data: encryptedData, signature, timestamp } = await request.json();
 
+        // Verify and decrypt the client data
+        const data = verifyAndDecryptClientData(encryptedData, signature, timestamp);
+        if (!data) {
+            return json({ error: 'Invalid or expired data' }, { status: 400 });
+        }
+
+        const { username, atoms, level, userId, picture } = data;
+
+        // Basic validation
         if (!username || typeof atoms !== 'number' || typeof level !== 'number' || !userId) {
             return json({ error: 'Invalid data' }, { status: 400 });
         }
@@ -123,7 +135,8 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
         // Initialize cache if empty
         if (cachedLeaderboard.length === 0) {
-            cachedLeaderboard = await platform.env.ATOM_CLICKER_LEADERBOARD.get(LEADERBOARD_KEY, 'json') || [];
+            const encryptedLeaderboard: string = await platform.env.ATOM_CLICKER_LEADERBOARD.get(LEADERBOARD_KEY, 'text') || '[]';
+            cachedLeaderboard = decryptLeaderboardData(encryptedLeaderboard);
         }
 
         // Update cache
@@ -146,7 +159,8 @@ export const POST: RequestHandler = async ({ request, platform }) => {
         // Update Cloudflare KV only if enough time has passed
         const now = Date.now();
         if (now - lastCloudflareUpdate >= CLOUDFLARE_UPDATE_INTERVAL) {
-            await platform.env.ATOM_CLICKER_LEADERBOARD.put(LEADERBOARD_KEY, JSON.stringify(cachedLeaderboard));
+            const encryptedData = encryptLeaderboardData(cachedLeaderboard);
+            await platform.env.ATOM_CLICKER_LEADERBOARD.put(LEADERBOARD_KEY, encryptedData);
             lastCloudflareUpdate = now;
         }
 

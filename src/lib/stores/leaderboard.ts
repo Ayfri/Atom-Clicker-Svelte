@@ -3,6 +3,7 @@ import { atoms, playerLevel } from './gameStore';
 import { browser } from '$app/environment';
 import { auth } from './auth';
 import type { LeaderboardEntry } from '$lib/types/leaderboard';
+import { obfuscateClientData } from '$lib/utils/obfuscation';
 
 // Constantes de temps (en millisecondes)
 const REFRESH_INTERVAL = 1 * 60_000; // 1 minute entre chaque rafraîchissement du leaderboard
@@ -43,16 +44,20 @@ function createLeaderboardStore() {
 				authState.user.email?.split('@')[0] ??
 				'Anonymous';
 
+			const data = {
+				username,
+				atoms,
+				level,
+				userId: authState.user.sub,
+				picture: authState.user.picture
+			};
+
+			const obfuscatedData = obfuscateClientData(data);
+
 			const response = await fetch('/api/leaderboard', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					username,
-					atoms,
-					level,
-					userId: authState.user.sub,
-					picture: authState.user.picture
-				})
+				body: JSON.stringify(obfuscatedData)
 			});
 
 			if (!response.ok) throw new Error('Failed to update leaderboard');
@@ -99,6 +104,7 @@ if (browser) {
 				lastAtoms === 0 || // Première mise à jour
 				atomsChange > MIN_ATOMS_CHANGE_PERCENT || // Changement significatif dans les atoms
 				level !== lastLevel; // Changement de niveau
+			
 
 			if (shouldUpdate) {
 				lastAtoms = atoms;
