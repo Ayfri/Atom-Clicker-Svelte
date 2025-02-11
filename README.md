@@ -1,38 +1,77 @@
-# sv
+# 🌟 Atom Clicker
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Welcome to Atom Clicker, an engaging incremental game where you'll build your own atomic empire! Start small with individual atoms and work your way up to cosmic structures.
 
-## Creating a project
+[![GitHub](https://img.shields.io/github/stars/Ayfri/Atom-Clicker-Svelte?style=social)](https://github.com/Ayfri/Atom-Clicker-Svelte)
+[![Discord](https://img.shields.io/discord/YOUR_SERVER_ID?style=flat&logo=discord&logoColor=white&label=discord&color=5865F2)](https://discord.gg/BySjRNQ9Je)
 
-If you're seeing this, you've probably already done this step. Congrats!
+🎮 [Play Now](https://atom-clicker.ayfri.com) | 💬 [Discord](https://discord.gg/BySjRNQ9Je)
 
+## ⚛️ Features
+
+### Core Mechanics
+- 🖱️ Click to generate atoms
+- 🏗️ Build and manage various structures:
+  - From tiny molecules to massive cosmic entities
+  - Each structure with unique production rates
+  - Level up your buildings to increase their efficiency
+
+### Progression Systems
+- 🌳 Extensive Skill Tree
+  - Unlock powerful multipliers
+  - Enhance your clicking power
+  - Boost your production capabilities
+  - Unlock automation features
+
+- 🎮 Multiple Reset Layers
+  - Each layer provides powerful bonuses
+  - Strategic decisions on when to reset
+  - Permanent progression rewards
+
+### Advanced Features
+- ⚡ Power-up System
+  - Random power-ups appear during gameplay
+  - Stack multiple effects
+  - Upgrade their duration and effectiveness
+
+- 🤖 Automation
+  - Auto-buy buildings
+  - Auto-upgrade systems
+  - Optimize your production
+
+### Social Features
+- 📊 Global Leaderboard
+- 🏆 Achievement System
+- 🔒 Secure Authentication
+
+## 🚀 Getting Started
+
+1. Install dependencies:
 ```bash
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
+pnpm install
 ```
 
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
+2. Start the development server:
 ```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+pnpm dev
 ```
 
-## Building
-
-To create a production version of your app:
-
+3. Build for production:
 ```bash
-npm run build
+pnpm build
 ```
 
-You can preview the production build with `npm run preview`.
+## 🛠️ Built With
+- [SvelteKit](https://kit.svelte.dev/) - Web framework
+- [TypeScript](https://www.typescriptlang.org/) - Language
+- [TailwindCSS](https://tailwindcss.com/) - Styling
+- [Pixi.js](https://pixijs.com/) - Graphics
+- [Auth0](https://auth0.com/) - Authentication
+- [Lucide Icons](https://lucide.dev) - Beautiful icons
+- [Svelte Flow](https://svelteflow.dev) - Flow diagrams
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+## 📝 License
+This project is open source and available under the [GNU GPLv3 License](LICENSE).
+
+## 🤝 Contributing
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/Ayfri/Atom-Clicker-Svelte/issues).
