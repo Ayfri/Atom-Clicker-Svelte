@@ -277,13 +277,14 @@ export const gameManager = {
 		const protonGain = get(protoniseProtonsGain);
 
 		if (currentState.atoms >= PROTONS_ATOMS_REQUIRED || protonGain > 0) {
-			// Keep protons and increment them
+			// Keep protons, and electrons upgrades
 			const newState = {
 				...resetGameState(),
 				achievements: currentState.achievements,
+				electrons: currentState.electrons,
 				protons: currentState.protons + protonGain,
 				totalProtonises: currentState.totalProtonises + 1,
-				upgrades: currentState.upgrades.filter(id => id.startsWith('proton')),
+				upgrades: currentState.upgrades.filter(id => id.startsWith('proton') || id.startsWith('electron')),
 			};
 
 			// Apply quick start upgrades if any
@@ -304,6 +305,7 @@ export const gameManager = {
 			activePowerUps.set(newState.activePowerUps);
 			atoms.set(newState.atoms);
 			protons.set(newState.protons);
+			electrons.set(newState.electrons);
 			buildings.set(newState.buildings);
 			lastSave.set(newState.lastSave);
 			skillUpgrades.set(newState.skillUpgrades);
@@ -322,12 +324,13 @@ export const gameManager = {
 		const electronGain = get(electronizeElectronsGain);
 
 		if (currentState.protons >= ELECTRONS_PROTONS_REQUIRED || electronGain > 0) {
-			// Keep electrons and increment them, reset protons
+			// Keep electrons, and protons upgrades
 			const newState = {
 				...resetGameState(),
 				achievements: currentState.achievements,
 				electrons: currentState.electrons + electronGain,
-				upgrades: currentState.upgrades.filter(id => id.startsWith('electron')),
+				protons: 0, // Reset protons but keep upgrades
+				upgrades: currentState.upgrades.filter(id => id.startsWith('electron') || id.startsWith('proton')),
 			};
 
 			// Update all stores except startDate
