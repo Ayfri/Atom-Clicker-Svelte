@@ -4,7 +4,7 @@ import { ManagementClient } from 'auth0';
 import { AUTH0_MGMT_CLIENT_SECRET, AUTH0_MGMT_CLIENT_ID } from '$env/static/private';
 import { PUBLIC_AUTH0_DOMAIN } from '$env/static/public';
 import type { LeaderboardEntry } from '$lib/types/leaderboard';
-import { encryptLeaderboardData, decryptLeaderboardData, verifyAndDecryptClientData } from './obfuscation.server';
+import { verifyAndDecryptClientData } from './obfuscation.server';
 
 interface Auth0User {
     user_id: string;
@@ -31,7 +31,7 @@ function getAuth0Client() {
             domain: PUBLIC_AUTH0_DOMAIN,
             clientId: AUTH0_MGMT_CLIENT_ID,
             clientSecret: AUTH0_MGMT_CLIENT_SECRET,
-            telemetry: false // Désactive la télémétrie qui cause l'erreur process.env
+            telemetry: false
         });
     }
     return auth0Management;
@@ -67,11 +67,11 @@ export const GET: RequestHandler = async ({ platform, url }) => {
     }
 
     try {
-        const encryptedLeaderboard: string = await platform.env.ATOM_CLICKER_LEADERBOARD.get(LEADERBOARD_KEY, 'text') || '[]';
-        const leaderboard: LeaderboardEntry[] = decryptLeaderboardData(encryptedLeaderboard);
-        
         // Get current user ID from URL params
         const currentUserId = url.searchParams.get('userId') || '';
+        
+        // Get leaderboard data
+        const leaderboard: LeaderboardEntry[] = await platform.env.ATOM_CLICKER_LEADERBOARD.get(LEADERBOARD_KEY, 'json') || [];
         
         // Fetch user metadata for all users in the leaderboard
         const userIds = leaderboard.map((entry) => entry.userId).filter(Boolean);
@@ -105,7 +105,6 @@ export const GET: RequestHandler = async ({ platform, url }) => {
         } catch (authError) {
             console.error('Failed to fetch user metadata:', authError);
             // En cas d'erreur d'Auth0, on retourne quand même le leaderboard sans les métadonnées
-            // et on masque les IDs
             return json(leaderboard.map(entry => ({
                 username: entry.username,
                 atoms: entry.atoms,
@@ -129,7 +128,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
     try {
         const { data: encryptedData, signature, timestamp } = await request.json();
 
-        // Verify and decrypt the client data
+        // Normal case: verify and decrypt the client data
         const data = verifyAndDecryptClientData(encryptedData, signature, timestamp);
         if (!data) {
             return json({ error: 'Invalid or expired data' }, { status: 400 });
@@ -153,8 +152,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
         // Initialize cache if empty
         if (cachedLeaderboard.length === 0) {
-            const encryptedLeaderboard: string = await platform.env.ATOM_CLICKER_LEADERBOARD.get(LEADERBOARD_KEY, 'text') || '[]';
-            cachedLeaderboard = decryptLeaderboardData(encryptedLeaderboard);
+            cachedLeaderboard = await platform.env.ATOM_CLICKER_LEADERBOARD.get(LEADERBOARD_KEY, 'json') || [];
         }
 
         // Update cache
@@ -177,8 +175,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
         // Update Cloudflare KV only if enough time has passed
         const now = Date.now();
         if (now - lastCloudflareUpdate >= CLOUDFLARE_UPDATE_INTERVAL) {
-            const encryptedData = encryptLeaderboardData(cachedLeaderboard);
-            await platform.env.ATOM_CLICKER_LEADERBOARD.put(LEADERBOARD_KEY, encryptedData);
+            await platform.env.ATOM_CLICKER_LEADERBOARD.put(LEADERBOARD_KEY, JSON.stringify(cachedLeaderboard));
             lastCloudflareUpdate = now;
         }
 
