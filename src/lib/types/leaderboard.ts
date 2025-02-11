@@ -5,6 +5,7 @@ export interface LeaderboardEntry {
     lastUpdated: number;
     userId: string;
     picture?: string;
+    self?: boolean;
     user_metadata?: {
         username?: string;
     };

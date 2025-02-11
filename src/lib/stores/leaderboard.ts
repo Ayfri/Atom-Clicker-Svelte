@@ -21,7 +21,9 @@ function createLeaderboardStore() {
 	async function fetchLeaderboard() {
 		if (!browser) return;
 		try {
-			const response = await fetch('/api/leaderboard');
+			const authState = get(auth);
+			const userId = authState.isAuthenticated ? authState.user?.sub : '';
+			const response = await fetch(`/api/leaderboard?userId=${userId}`);
 			if (!response.ok) throw new Error('Failed to fetch leaderboard');
 			const data = await response.json();
 			set(data);
@@ -104,7 +106,6 @@ if (browser) {
 				lastAtoms === 0 || // Première mise à jour
 				atomsChange > MIN_ATOMS_CHANGE_PERCENT || // Changement significatif dans les atoms
 				level !== lastLevel; // Changement de niveau
-			
 
 			if (shouldUpdate) {
 				lastAtoms = atoms;

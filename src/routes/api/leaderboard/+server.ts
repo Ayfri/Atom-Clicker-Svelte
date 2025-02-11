@@ -61,7 +61,7 @@ async function getUserMetadata(userId: string): Promise<Auth0User | null> {
     }
 }
 
-export const GET: RequestHandler = async ({ platform }) => {
+export const GET: RequestHandler = async ({ platform, url }) => {
     if (!platform?.env?.ATOM_CLICKER_LEADERBOARD) {
         return json({ error: 'Leaderboard not configured' }, { status: 500 });
     }
@@ -70,10 +70,13 @@ export const GET: RequestHandler = async ({ platform }) => {
         const encryptedLeaderboard: string = await platform.env.ATOM_CLICKER_LEADERBOARD.get(LEADERBOARD_KEY, 'text') || '[]';
         const leaderboard: LeaderboardEntry[] = decryptLeaderboardData(encryptedLeaderboard);
         
+        // Get current user ID from URL params
+        const currentUserId = url.searchParams.get('userId') || '';
+        
         // Fetch user metadata for all users in the leaderboard
         const userIds = leaderboard.map((entry) => entry.userId).filter(Boolean);
         if (userIds.length === 0) {
-            return json(leaderboard);
+            return json([]);
         }
 
         try {
@@ -81,21 +84,36 @@ export const GET: RequestHandler = async ({ platform }) => {
             const usersPromises = userIds.map((userId: string) => getUserMetadata(userId));
             const users = await Promise.all(usersPromises);
 
-            // Map user metadata to leaderboard entries
+            // Map user metadata to leaderboard entries and remove sensitive data
             const enrichedLeaderboard = leaderboard.map((entry) => {
                 const user = users.find((u: Auth0User | null) => u?.user_id === entry.userId);
+                const isSelf = entry.userId === currentUserId;
+                
                 return {
-                    ...entry,
-                    user_metadata: user?.user_metadata
+                    username: entry.username,
+                    atoms: entry.atoms,
+                    level: entry.level,
+                    picture: entry.picture,
+                    user_metadata: user?.user_metadata,
+                    self: isSelf,
+                    lastUpdated: entry.lastUpdated
                 };
             });
 
-            cachedLeaderboard = enrichedLeaderboard;
+            cachedLeaderboard = leaderboard; // Keep the full data in cache
             return json(enrichedLeaderboard);
         } catch (authError) {
             console.error('Failed to fetch user metadata:', authError);
             // En cas d'erreur d'Auth0, on retourne quand même le leaderboard sans les métadonnées
-            return json(leaderboard);
+            // et on masque les IDs
+            return json(leaderboard.map(entry => ({
+                username: entry.username,
+                atoms: entry.atoms,
+                level: entry.level,
+                picture: entry.picture,
+                self: entry.userId === currentUserId,
+                lastUpdated: entry.lastUpdated
+            })));
         }
     } catch (error) {
         console.error('Failed to fetch leaderboard:', error);

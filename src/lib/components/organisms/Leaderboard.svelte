@@ -235,7 +235,7 @@
 
 			<div class="flex flex-col gap-4">
 				{#each $leaderboard as entry, i}
-					{@const isCurrentUser = entry.userId === currentUserId && $auth.isAuthenticated}
+					{@const isCurrentUser = entry.self === true}
 					<div
 						class="flex items-center gap-3 rounded-lg bg-black/20 p-4 transition-colors"
 						class:ring-2={isCurrentUser}
