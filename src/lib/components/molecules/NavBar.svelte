@@ -93,7 +93,7 @@
 
 {#if $mobile}
 	<div
-		class="absolute top-1/3 -translate-y-1/2 z-10 grid gap-3.5 w-full justify-between pointer-events-none"
+		class="absolute top-[33vh] -translate-y-1/2 z-10 grid gap-3.5 w-full justify-between pointer-events-none"
 		class:grid-cols-2={visibleComponents.length > 5}
 		class:px-2={visibleComponents.length > 5}
 		class:left-4={visibleComponents.length < 5}
