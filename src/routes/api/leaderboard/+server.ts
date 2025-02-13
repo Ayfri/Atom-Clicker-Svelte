@@ -1,10 +1,8 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { ManagementClient } from 'auth0';
-import { AUTH0_MGMT_CLIENT_SECRET, AUTH0_MGMT_CLIENT_ID } from '$env/static/private';
-import { PUBLIC_AUTH0_DOMAIN } from '$env/static/public';
 import type { LeaderboardEntry } from '$lib/types/leaderboard';
 import { verifyAndDecryptClientData } from '$lib/server/obfuscation.server';
+import { getUserMetadata } from '$lib/server/auth0.server';
 
 interface Auth0User {
     user_id: string;
@@ -17,49 +15,9 @@ const LEADERBOARD_KEY = 'global_leaderboard';
 const MAX_ENTRIES = 100;
 const UPDATE_INTERVAL = 60 * 1000; // 1 minute for local updates
 const CLOUDFLARE_UPDATE_INTERVAL = 10 * 60 * 1000; // 10 minutes for Cloudflare KV updates
-const USER_METADATA_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache for user metadata
 
 let cachedLeaderboard: LeaderboardEntry[] = [];
 let lastCloudflareUpdate = 0;
-let userMetadataCache: Map<string, { data: Auth0User; timestamp: number }> = new Map();
-
-let auth0Management: ManagementClient;
-
-function getAuth0Client() {
-    if (!auth0Management) {
-        auth0Management = new ManagementClient({
-            domain: PUBLIC_AUTH0_DOMAIN,
-            clientId: AUTH0_MGMT_CLIENT_ID,
-            clientSecret: AUTH0_MGMT_CLIENT_SECRET,
-            telemetry: false
-        });
-    }
-    return auth0Management;
-}
-
-async function getUserMetadata(userId: string): Promise<Auth0User | null> {
-    const now = Date.now();
-    const cached = userMetadataCache.get(userId);
-
-    if (cached && now - cached.timestamp < USER_METADATA_CACHE_DURATION) {
-        return cached.data;
-    }
-
-    try {
-        const client = getAuth0Client();
-        const response = await client.users.get({ id: userId });
-        const userData = response.data;
-        const user: Auth0User = {
-            user_id: userId,
-            user_metadata: userData.user_metadata
-        };
-        userMetadataCache.set(userId, { data: user, timestamp: now });
-        return user;
-    } catch (error) {
-        console.error(`Failed to fetch metadata for user ${userId}:`, error);
-        return null;
-    }
-}
 
 export const GET: RequestHandler = async ({ platform, url }) => {
     if (!platform?.env?.ATOM_CLICKER_LEADERBOARD) {

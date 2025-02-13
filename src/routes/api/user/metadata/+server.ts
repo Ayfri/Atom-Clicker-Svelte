@@ -1,25 +1,10 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { ManagementClient } from 'auth0';
-import { AUTH0_MGMT_CLIENT_SECRET, AUTH0_MGMT_CLIENT_ID } from '$env/static/private';
-import { PUBLIC_AUTH0_DOMAIN } from '$env/static/public';
 import { encryptData, decryptData, verifyAndDecryptClientData } from '$lib/server/obfuscation.server';
+import { getAuth0Client } from '$lib/server/auth0.server';
 
-let auth0Management: ManagementClient;
 const SAVE_COOLDOWN = 30000; // 30 seconds
 const lastSavesByUser = new Map<string, number>();
-
-function getAuth0Client() {
-    if (!auth0Management) {
-        auth0Management = new ManagementClient({
-            domain: PUBLIC_AUTH0_DOMAIN,
-            clientId: AUTH0_MGMT_CLIENT_ID,
-            clientSecret: AUTH0_MGMT_CLIENT_SECRET,
-            telemetry: false
-        });
-    }
-    return auth0Management;
-}
 
 export const GET: RequestHandler = async ({ url }) => {
     try {
@@ -77,7 +62,6 @@ export const PATCH: RequestHandler = async ({ request }) => {
         // Verify and decrypt client data
         const saveData = verifyAndDecryptClientData(data, signature, timestamp);
         if (!saveData) {
-            console.error('Invalid or expired data:', data, signature, timestamp, saveData);
             return json({ error: 'Invalid or expired data' }, { status: 400 });
         }
 
