@@ -1,36 +1,56 @@
 import { ManagementClient } from 'auth0';
-import { AUTH0_MGMT_CLIENT_SECRET, AUTH0_MGMT_CLIENT_ID } from '$env/static/private';
+import { AUTH0_MGMT_CLIENT_ID, AUTH0_MGMT_CLIENT_SECRET } from '$env/static/private';
 import { PUBLIC_AUTH0_DOMAIN } from '$env/static/public';
 import type { Auth0User } from '$lib/types/auth';
 
-let auth0Management: ManagementClient;
+let auth0Management: ManagementClient | null = null;
+let initializationPromise: Promise<ManagementClient> | null = null;
 let lastInitTime = 0;
-const REINIT_INTERVAL = 300000; // 5 minutes instead of 1 hour
+const REINIT_INTERVAL = 300000; // 5 minutes
 
-export async function getAuth0Client() {
+async function initializeAuth0Client(): Promise<ManagementClient> {
+    try {
+        // Check that the credentials are present
+        if (!AUTH0_MGMT_CLIENT_ID || !AUTH0_MGMT_CLIENT_SECRET || !PUBLIC_AUTH0_DOMAIN) {
+            throw new Error('Missing Auth0 credentials');
+        }
+
+        const client = new ManagementClient({
+            domain: PUBLIC_AUTH0_DOMAIN,
+            clientId: AUTH0_MGMT_CLIENT_ID,
+            clientSecret: AUTH0_MGMT_CLIENT_SECRET,
+            telemetry: false
+        });
+
+        // Test the client by making a simple API call
+        await client.users.getAll({ per_page: 1, page: 0 });
+
+        auth0Management = client;
+        lastInitTime = Date.now();
+        console.log('Auth0 client initialized successfully');
+
+        return client;
+    } catch (error) {
+        console.error('Failed to initialize Auth0 client:', error);
+        auth0Management = null;
+        throw new Error('Auth0 client initialization failed');
+    } finally {
+        initializationPromise = null;
+    }
+}
+
+export async function getAuth0Client(): Promise<ManagementClient> {
     const now = Date.now();
+
+    // If there's an ongoing initialization, wait for it
+    if (initializationPromise) {
+        return initializationPromise;
+    }
 
     // Reset the client every 5 minutes or if it doesn't exist
     if (!auth0Management || now - lastInitTime > REINIT_INTERVAL) {
-        try {
-            // Check that the credentials are present
-            if (!AUTH0_MGMT_CLIENT_ID || !AUTH0_MGMT_CLIENT_SECRET || !PUBLIC_AUTH0_DOMAIN) {
-                throw new Error('Missing Auth0 credentials');
-            }
-
-            auth0Management = new ManagementClient({
-                domain: PUBLIC_AUTH0_DOMAIN,
-                clientId: AUTH0_MGMT_CLIENT_ID,
-                clientSecret: AUTH0_MGMT_CLIENT_SECRET,
-                telemetry: false
-            });
-
-            lastInitTime = now;
-            console.log('Auth0 client initialized successfully');
-        } catch (error) {
-            console.error('Failed to initialize Auth0 client:', error);
-            throw new Error('Auth0 client initialization failed');
-        }
+        initializationPromise = initializeAuth0Client();
+        return initializationPromise;
     }
 
     return auth0Management;
@@ -77,6 +97,12 @@ export async function updateUserMetadata(userId: string, metadata: Record<string
     while (retryCount < maxRetries) {
         try {
             const client = await getAuth0Client();
+
+            // Verify that we have a valid client
+            if (!client || !client.users) {
+                throw new Error('Auth0 client not properly initialized');
+            }
+
             const response = await client.users.update({ id: userId }, { user_metadata: metadata });
 
             if (!response?.data) {
@@ -98,8 +124,15 @@ export async function updateUserMetadata(userId: string, metadata: Record<string
                 error: error.message,
                 code: error.statusCode,
                 userId,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                stack: error.stack
             });
+
+            if (error.message.includes('not properly initialized')) {
+                // Force client reinitialization on next attempt
+                auth0Management = null;
+                lastInitTime = 0;
+            }
 
             if (retryCount === maxRetries) {
                 throw error;
