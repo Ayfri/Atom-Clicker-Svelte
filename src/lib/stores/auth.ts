@@ -78,7 +78,8 @@ function createAuthStore() {
                     redirect_uri: requiredEnvVars!.callbackUrl,
                     scope: commonScopes,
                     audience: `https://${requiredEnvVars!.domain}/api/v2/`,
-                    response_type: 'code'
+                    response_type: 'code',
+                    prompt: 'consent'
                 },
                 cacheLocation: 'localstorage',
                 useRefreshTokens: true,
@@ -151,7 +152,8 @@ function createAuthStore() {
                     connection: connection.connection,
                     scope: connection.scope,
                     audience: `https://${requiredEnvVars!.domain}/api/v2/`,
-                    response_type: 'code'
+                    response_type: 'code',
+                    prompt: 'consent'
                 }
             });
         } catch (error) {
@@ -184,6 +186,7 @@ function createAuthStore() {
             const token = await auth0.getTokenSilently({
                 authorizationParams: {
                     audience: `https://${requiredEnvVars!.domain}/api/v2/`,
+                    scope: commonScopes
                 }
             });
             const userId = (await auth0.getUser())?.sub;
