@@ -1,5 +1,7 @@
+import {get} from 'svelte/store';
 import type {SkillUpgrade} from '$lib/types';
 import {BUILDINGS, type BuildingData, type BuildingType, BUILDING_TYPES} from '$data/buildings';
+import {playerLevel} from '$stores/gameStore';
 
 // Update constants for positioning
 export const GRID_SIZE = {
@@ -160,7 +162,7 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 			type: 'global',
 			description: 'Add 1% production per level',
 			apply: (currentValue, state) => {
-				const level = Math.floor(Math.sqrt(state.totalXP / 100));
+				const level = get(playerLevel);
 				return currentValue * (1 + level * 0.01);
 			}
 		}],
