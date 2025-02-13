@@ -11,31 +11,29 @@ function simpleHash(str: string): number {
     return Math.abs(hash);
 }
 
-function generateClientSignature(data: Record<string, any>, timestamp: number): string {
-    const sortedKeys = Object.keys(data).sort();
-    const values = sortedKeys.map(key => data[key]).join('|');
-    const signatureData = `${values}|${timestamp}`;
+function generateClientSignature(data: string, timestamp: number): string {
+    const signatureData = `${data}|${timestamp}`;
     return simpleHash(signatureData).toString(36);
 }
 
-export function obfuscateClientData(data: Record<string, any>): {
-    data: string;
-    signature: string;
-    timestamp: number;
-} {
-    const timestamp = Date.now();
-    const dataStr = JSON.stringify(data);
-    
-    // Simple obfuscation using base64 and reversing
-    const reversed = dataStr.split('').reverse().join('');
-    const encoder = new TextEncoder();
-    const bytes = encoder.encode(reversed);
-    const obfuscated = btoa(String.fromCharCode(...bytes));
-    const signature = generateClientSignature(data, timestamp);
+export function obfuscateClientData(data: Record<string, any>) {
+    try {
+        const timestamp = Date.now();
+        const dataStr = JSON.stringify(data);
 
-    return {
-        data: obfuscated,
-        signature,
-        timestamp
-    };
-} 
+        // Encode the data in base64
+        const encodedData = btoa(unescape(encodeURIComponent(dataStr)));
+
+        // Generate a signature to prevent tampering
+        const signature = generateClientSignature(encodedData, timestamp);
+
+        return {
+            data: encodedData,
+            signature,
+            timestamp
+        };
+    } catch (error) {
+        console.error('Error in obfuscateClientData:', error);
+        throw error;
+    }
+}

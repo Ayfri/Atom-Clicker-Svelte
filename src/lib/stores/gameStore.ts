@@ -29,16 +29,18 @@ export function getXPForLevel(level: number) {
 	return Math.floor(base * Math.pow(1 + taux, level - 1));
 }
 
-// Derived stores for level system
-export const playerLevel = derived(totalXP, $totalXP => {
+export function getLevelFromTotalXP(totalXP: number) {
     let level = 0;
-	let remainingXP = $totalXP;
-	while (remainingXP >= getXPForLevel(level + 1)) {
-		remainingXP -= getXPForLevel(level + 1);
-		level++;
-	}
-	return level;
-});
+    let remainingXP = totalXP;
+    while (remainingXP >= getXPForLevel(level + 1)) {
+        remainingXP -= getXPForLevel(level + 1);
+        level++;
+    }
+    return level;
+}
+
+// Derived stores for level system
+export const playerLevel = derived(totalXP, $totalXP => getLevelFromTotalXP($totalXP));
 
 export const currentLevelXP = derived([totalXP, playerLevel], ([$totalXP, $playerLevel]) => {
     if ($playerLevel === 0) return $totalXP;

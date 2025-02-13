@@ -21,7 +21,7 @@ export function loadSavedState(): GameState | null {
 	return null;
 }
 
-function isValidGameState(state: any): state is GameState {
+export function isValidGameState(state: any): state is GameState {
 	if (!state) return false;
 
 	const checks = [

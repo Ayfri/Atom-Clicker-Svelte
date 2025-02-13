@@ -4,7 +4,7 @@ import { ManagementClient } from 'auth0';
 import { AUTH0_MGMT_CLIENT_SECRET, AUTH0_MGMT_CLIENT_ID } from '$env/static/private';
 import { PUBLIC_AUTH0_DOMAIN } from '$env/static/public';
 import type { LeaderboardEntry } from '$lib/types/leaderboard';
-import { verifyAndDecryptClientData } from './obfuscation.server';
+import { verifyAndDecryptClientData } from '$lib/server/obfuscation.server';
 
 interface Auth0User {
     user_id: string;
@@ -69,10 +69,10 @@ export const GET: RequestHandler = async ({ platform, url }) => {
     try {
         // Get current user ID from URL params
         const currentUserId = url.searchParams.get('userId') || '';
-        
+
         // Get leaderboard data
         const leaderboard: LeaderboardEntry[] = await platform.env.ATOM_CLICKER_LEADERBOARD.get(LEADERBOARD_KEY, 'json') || [];
-        
+
         // Fetch user metadata for all users in the leaderboard
         const userIds = leaderboard.map((entry) => entry.userId).filter(Boolean);
         if (userIds.length === 0) {
@@ -88,7 +88,7 @@ export const GET: RequestHandler = async ({ platform, url }) => {
             const enrichedLeaderboard = leaderboard.map((entry) => {
                 const user = users.find((u: Auth0User | null) => u?.user_id === entry.userId);
                 const isSelf = entry.userId === currentUserId;
-                
+
                 return {
                     username: entry.username,
                     atoms: entry.atoms,

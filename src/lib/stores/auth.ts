@@ -2,7 +2,10 @@ import { createAuth0Client, type Auth0Client, type Auth0ClientOptions } from '@a
 import { browser } from '$app/environment';
 import {writable, derived, get} from 'svelte/store';
 import { PUBLIC_AUTH0_CALLBACK_URL, PUBLIC_AUTH0_CLIENT_ID, PUBLIC_AUTH0_DOMAIN } from '$env/static/public';
-import type { AuthProvider, AuthStore } from '$lib/types/auth';
+import type { AuthProvider, AuthStore, Auth0User } from '$lib/types/auth';
+import { gameManager } from '$lib/helpers/gameManager';
+import { isValidGameState, SAVE_VERSION } from '$lib/helpers/saves';
+import { obfuscateClientData } from '$lib/utils/obfuscation';
 
 const isAuthConfigured = PUBLIC_AUTH0_DOMAIN && PUBLIC_AUTH0_CLIENT_ID && PUBLIC_AUTH0_CALLBACK_URL;
 
@@ -60,6 +63,7 @@ function createAuthStore() {
     });
 
     let auth0: Auth0Client;
+    let cachedUserInfo: { data: Auth0User | null; timestamp: number } | null = null;
 
     async function init() {
         if (!browser || !isAuthConfigured) {
@@ -179,28 +183,52 @@ function createAuthStore() {
         }
     }
 
-    async function updateUserMetadata(metadata: Record<string, any>) {
+    async function getCachedUser(forceRefresh = false) {
+        if (!browser || !auth0) return null;
+
+        const now = Date.now();
+        if (!forceRefresh && cachedUserInfo && now - cachedUserInfo.timestamp < FETCH_COOLDOWN) {
+            return cachedUserInfo.data;
+        }
+
+        try {
+            const basicUser = await auth0.getUser();
+            if (!basicUser?.sub) return null;
+
+            const response = await fetch(`/api/user/metadata?userId=${encodeURIComponent(basicUser.sub)}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch user data');
+            }
+
+            const { user_metadata } = await response.json();
+            const user = {
+                ...basicUser,
+                user_metadata: user_metadata || {}
+            } as Auth0User;
+
+            cachedUserInfo = { data: user, timestamp: now };
+            return user;
+        } catch (error) {
+            console.error('Error fetching user data:', error);
+            return null;
+        }
+    }
+
+    async function updateUserMetadata(data: { metadata?: Record<string, any>; data?: string; signature?: string; timestamp?: number }) {
         if (!browser || !auth0) return;
 
         try {
-            const token = await auth0.getTokenSilently({
-                authorizationParams: {
-                    audience: `https://${requiredEnvVars!.domain}/api/v2/`,
-                    scope: commonScopes
-                }
-            });
             const userId = (await auth0.getUser())?.sub;
-
             if (!userId) throw new Error('No user ID found');
 
-            const response = await fetch(`https://${requiredEnvVars!.domain}/api/v2/users/${userId}`, {
+            const response = await fetch('/api/user/metadata', {
                 method: 'PATCH',
                 headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    user_metadata: metadata
+                    userId,
+                    ...data
                 })
             });
 
@@ -210,19 +238,81 @@ function createAuthStore() {
                 throw new Error('Failed to update user metadata');
             }
 
-            // Update the local user state
-            update(state => ({
-	            ...state,
-	            user: state.user ? {
-		            ...state.user,
-		            user_metadata: {
-			            ...state.user.user_metadata,
-			            ...metadata,
-		            },
-	            } : null,
-            }));
+            // Update the local user state if we have metadata
+            if (data.metadata) {
+                update(state => ({
+                    ...state,
+                    user: state.user ? {
+                        ...state.user,
+                        user_metadata: {
+                            ...state.user.user_metadata,
+                            ...data.metadata,
+                        },
+                    } : null,
+                }));
+            }
         } catch (error) {
             console.error('Error updating user metadata:', error);
+            throw error;
+        }
+    }
+
+    async function saveGameToCloud() {
+        if (!browser || !auth0) return;
+        try {
+            const currentState = gameManager.getCurrentState();
+            const saveData = {
+                ...currentState,
+                version: SAVE_VERSION
+            };
+
+            const obfuscated = obfuscateClientData(saveData);
+            await updateUserMetadata({
+                data: obfuscated.data,
+                signature: obfuscated.signature,
+                timestamp: obfuscated.timestamp,
+                metadata: {
+                    lastCloudSave: Date.now()
+                }
+            });
+            cachedUserInfo = null; // Invalidate cache
+        } catch (error) {
+            console.error('Error saving game to cloud:', error);
+            throw error;
+        }
+    }
+
+    const FETCH_COOLDOWN = 30000; // 30 seconds
+
+    async function getCloudSaveInfo() {
+        if (!browser || !auth0) return null;
+        try {
+            const user = await getCachedUser();
+            const metadata = user?.user_metadata;
+            if (!metadata?.cloudSaveInfo) return null;
+
+            return {
+                lastSaveDate: metadata.lastCloudSave || null,
+                ...metadata.cloudSaveInfo
+            };
+        } catch (error) {
+            console.error('Error getting cloud save info:', error);
+            return null;
+        }
+    }
+
+    async function loadGameFromCloud() {
+        if (!browser || !auth0) return;
+        try {
+            const user = await getCachedUser(true) as Auth0User | null; // Force refresh when loading
+            const savedState = user?.user_metadata?.cloudSaveInfo;
+            if (savedState && isValidGameState(savedState)) {
+                gameManager.load(savedState);
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Error loading game from cloud:', error);
             throw error;
         }
     }
@@ -232,7 +322,10 @@ function createAuthStore() {
         init,
         loginWithProvider,
         logout,
-        updateUserMetadata
+        updateUserMetadata,
+        saveGameToCloud,
+        loadGameFromCloud,
+        getCloudSaveInfo
     };
 }
 
