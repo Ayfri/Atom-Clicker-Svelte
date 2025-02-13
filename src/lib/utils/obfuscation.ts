@@ -3,7 +3,8 @@
 
 function simpleHash(str: string): number {
     let hash = 0;
-    for (let i = 0; i < str.length; i++) {
+    const strLength = str.length;
+    for (let i = 0; i < strLength; i++) {
         const char = str.charCodeAt(i);
         hash = ((hash << 5) - hash) + char;
         hash = hash & hash;
@@ -12,7 +13,9 @@ function simpleHash(str: string): number {
 }
 
 function generateClientSignature(data: string, timestamp: number): string {
-    const signatureData = `${data}|${timestamp}`;
+    // Use a 5-second time window for the signature
+    const timeWindow = Math.floor(timestamp / 5000);
+    const signatureData = `${data}|${timeWindow}`;
     return simpleHash(signatureData).toString(36);
 }
 

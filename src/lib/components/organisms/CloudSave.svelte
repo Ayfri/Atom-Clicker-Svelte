@@ -96,17 +96,45 @@
 
         loading = true;
         error = null;
-        try {
-            await auth.saveGameToCloud();
-            await refreshCloudSaveInfo();
-            info('Success', 'Game saved to cloud');
-            startCooldown();
-        } catch (e) {
-            error = e instanceof Error ? e.message : 'Failed to save game to cloud';
-            errorToast('Error', error);
-        } finally {
-            loading = false;
+        let retryCount = 0;
+        const maxRetries = 3;
+
+        while (retryCount < maxRetries) {
+            try {
+                await auth.saveGameToCloud();
+                await refreshCloudSaveInfo();
+                info('Success', 'Game saved to cloud');
+                startCooldown();
+                break;
+            } catch (e) {
+                retryCount++;
+                const isLastAttempt = retryCount === maxRetries;
+
+                if (e instanceof Error) {
+                    if (e.message.includes('Invalid or expired data') || e.message.includes('Invalid signature')) {
+                        // Si c'est une erreur de signature, on réessaie immédiatement
+                        if (!isLastAttempt) {
+                            console.log(`Retrying save after signature error (attempt ${retryCount}/${maxRetries})`);
+                            continue;
+                        }
+                        error = 'Failed to verify save data. Please try again.';
+                    } else {
+                        error = isLastAttempt ? e.message : 'Retrying save...';
+                    }
+                } else {
+                    error = 'Failed to save game to cloud';
+                }
+
+                if (isLastAttempt) {
+                    errorToast('Error', error);
+                } else {
+                    // Wait before retrying
+                    await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+                }
+            }
         }
+
+        loading = false;
     }
 
     async function handleLoadFromCloud() {
