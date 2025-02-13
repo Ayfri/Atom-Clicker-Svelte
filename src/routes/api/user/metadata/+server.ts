@@ -60,62 +60,133 @@ export const PATCH: RequestHandler = async ({ request }) => {
         // Verify and decrypt client data
         const saveData = verifyAndDecryptClientData(data, signature, timestamp);
         if (!saveData) {
-            return json({ error: 'Invalid or expired data' }, { status: 400 });
+            return json({
+                error: 'Invalid or expired data',
+                message: 'Please try saving again'
+            }, { status: 400 });
         }
 
         // Encrypt save data for storage
         const encryptedSave = encryptData(saveData);
+        console.log('Save data encrypted successfully:', {
+            userId,
+            timestamp: now,
+            dataSize: encryptedSave.length
+        });
 
         const client = getAuth0Client();
-        try {
-            const response = await client.users.update({ id: userId }, {
-                user_metadata: {
-                    lastCloudSave: now,
-                    cloudSaveInfo: encryptedSave
+        const maxRetries = 3;
+        let lastError = null;
+
+        // Retry loop for Auth0 API calls
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                // Vérifier que le client est bien initialisé
+                if (!client) {
+                    throw new Error('Auth0 client not initialized');
                 }
-            });
-            console.log('Auth0 update response:', response);
 
-            // Update last save time
-            lastSavesByUser.set(userId, now);
+                console.log(`Attempting to update user metadata (attempt ${attempt}/${maxRetries})`, {
+                    userId,
+                    timestamp: now
+                });
 
-            // Clean up old entries every hour
-            if (lastSavesByUser.size > 1000) {
-                const oneHourAgo = now - 3600000;
-                for (const [id, time] of lastSavesByUser.entries()) {
-                    if (time < oneHourAgo) {
-                        lastSavesByUser.delete(id);
+                const response = await client.users.update({ id: userId }, {
+                    user_metadata: {
+                        lastCloudSave: now,
+                        cloudSaveInfo: encryptedSave
+                    }
+                });
+
+                if (!response?.data) {
+                    throw new Error('No response data from Auth0');
+                }
+
+                console.log('Auth0 update successful:', {
+                    statusCode: response?.status,
+                    userId,
+                    attempt,
+                    timestamp: now
+                });
+
+                // Update last save time
+                lastSavesByUser.set(userId, now);
+
+                // Clean up old entries every hour
+                if (lastSavesByUser.size > 1000) {
+                    const oneHourAgo = now - 3600000;
+                    for (const [id, time] of lastSavesByUser.entries()) {
+                        if (time < oneHourAgo) {
+                            lastSavesByUser.delete(id);
+                        }
                     }
                 }
-            }
 
-            return json({ success: true });
-        } catch (auth0Error: any) {
-            console.error('Auth0 API error details:', {
-                error: auth0Error.message,
-                statusCode: auth0Error.statusCode,
-                name: auth0Error.name,
-                code: auth0Error.code
-            });
+                return json({
+                    success: true,
+                    attempt,
+                    timestamp: now
+                });
+            } catch (auth0Error: any) {
+                lastError = auth0Error;
+                console.error(`Auth0 API error (attempt ${attempt}/${maxRetries}):`, {
+                    error: auth0Error.message,
+                    statusCode: auth0Error.statusCode,
+                    name: auth0Error.name,
+                    code: auth0Error.code,
+                    stack: auth0Error.stack,
+                    userId,
+                    timestamp: now
+                });
 
-            // Handle specific Auth0 error cases
-            if (auth0Error.statusCode === 429) {
-                return json({ error: 'Rate limit exceeded', message: 'Too many requests to Auth0 API' }, { status: 429 });
-            }
-            if (auth0Error.statusCode === 401 || auth0Error.statusCode === 403) {
-                return json({ error: 'Authentication error', message: 'Invalid Auth0 credentials' }, { status: 401 });
-            }
+                // Don't retry on these errors
+                if (auth0Error.statusCode === 401 || auth0Error.statusCode === 403) {
+                    return json({
+                        error: 'Authentication error',
+                        message: 'Invalid Auth0 credentials'
+                    }, { status: 401 });
+                }
 
-            return json({
-                error: 'Failed to update user metadata',
-                message: auth0Error.message || 'Unknown Auth0 error'
-            }, { status: 500 });
+                // For rate limiting, wait before retrying
+                if (auth0Error.statusCode === 429) {
+                    const retryAfter = auth0Error.headers?.['retry-after'] || 5;
+                    console.log(`Rate limited, waiting ${retryAfter} seconds before retry`);
+                    await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+                    continue;
+                }
+
+                // If this is not the last attempt, wait a bit before retrying
+                if (attempt < maxRetries) {
+                    const waitTime = attempt * 2000; // 2 seconds, 4 seconds, 6 seconds
+                    console.log(`Waiting ${waitTime}ms before retry ${attempt + 1}`);
+                    await new Promise(resolve => setTimeout(resolve, waitTime));
+                    continue;
+                }
+            }
         }
+
+        // If we get here, all retries failed
+        console.error('All Auth0 API retries failed:', {
+            error: lastError?.message,
+            stack: lastError?.stack,
+            userId,
+            timestamp: now
+        });
+
+        return json({
+            error: 'Failed to update user metadata',
+            message: 'Please try again later',
+            details: lastError?.message || 'Unknown Auth0 error'
+        }, { status: 500 });
     } catch (error: any) {
-        console.error('Failed to process save request:', error);
+        console.error('Failed to process save request:', {
+            error: error.message,
+            stack: error.stack,
+            timestamp: Date.now()
+        });
         return json({
             error: 'Failed to process save request',
-            message: error.message || 'Unknown error'
+            message: 'An unexpected error occurred'
         }, { status: 500 });
     }
 };

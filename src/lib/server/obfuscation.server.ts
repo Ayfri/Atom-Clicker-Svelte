@@ -23,23 +23,43 @@ export function verifyAndDecryptClientData(
 ): Record<string, any> | null {
     try {
         // Check if the data is too old
-        if (Date.now() - timestamp > maxAge) {
-            console.error('Data is too old');
+        const age = Date.now() - timestamp;
+        if (age > maxAge) {
+            console.error('Data is too old:', { age, maxAge, timestamp, now: Date.now() });
             return null;
         }
 
-        // Verify signature
+        // Verify signature with detailed logging
         const expectedSignature = generateClientSignature(encodedData, timestamp);
         if (signature !== expectedSignature) {
-            console.error('Invalid signature');
+            console.error('Invalid signature:', {
+                provided: signature,
+                expected: expectedSignature,
+                timestamp,
+                dataLength: encodedData.length
+            });
             return null;
         }
 
         // Decode the base64 data
         const decodedStr = decodeURIComponent(escape(atob(encodedData)));
-        return JSON.parse(decodedStr);
+        const parsedData = JSON.parse(decodedStr);
+
+        // Log successful parsing
+        console.log('Successfully parsed save data:', {
+            timestamp,
+            dataSize: encodedData.length,
+            parsedKeys: Object.keys(parsedData)
+        });
+
+        return parsedData;
     } catch (error) {
-        console.error('Error in verifyAndDecryptClientData:', error);
+        console.error('Error in verifyAndDecryptClientData:', {
+            error,
+            dataLength: encodedData?.length,
+            timestamp,
+            signature
+        });
         return null;
     }
 }
