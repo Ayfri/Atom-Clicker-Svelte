@@ -11,7 +11,9 @@ function simpleHash(str: string): number {
 }
 
 function generateClientSignature(data: string, timestamp: number): string {
-    const signatureData = `${data}|${timestamp}`;
+    // Utiliser une fenêtre de temps de 5 secondes pour la signature
+    const timeWindow = Math.floor(timestamp / 5000);
+    const signatureData = `${data}|${timeWindow}`;
     return simpleHash(signatureData).toString(36);
 }
 
@@ -29,12 +31,20 @@ export function verifyAndDecryptClientData(
             return null;
         }
 
-        // Verify signature with detailed logging
+        // Verify signature with a 5-second window
         const expectedSignature = generateClientSignature(encodedData, timestamp);
-        if (signature !== expectedSignature) {
+        // Also check the signature for ±1 time window to handle edge cases
+        const prevSignature = generateClientSignature(encodedData, timestamp - 5000);
+        const nextSignature = generateClientSignature(encodedData, timestamp + 5000);
+
+        if (signature !== expectedSignature &&
+            signature !== prevSignature &&
+            signature !== nextSignature) {
             console.error('Invalid signature:', {
                 provided: signature,
                 expected: expectedSignature,
+                prev: prevSignature,
+                next: nextSignature,
                 timestamp,
                 dataLength: encodedData.length
             });
