@@ -53,11 +53,11 @@
     }
 
     :global(.prose h1) {
-        @apply mb-8 text-3xl font-bold text-white border-b border-white/10 pb-4;
+        @apply mb-4 text-3xl font-bold text-white border-b border-white/10 pb-4;
     }
 
     :global(.prose ul) {
-        @apply space-y-2 pl-5 list-disc;
+        @apply space-y-2 pl-5 pb-8 list-disc;
     }
 
     :global(.prose li) {
