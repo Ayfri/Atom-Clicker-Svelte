@@ -27,26 +27,32 @@ export const GET: RequestHandler = async ({ url }) => {
                 } else {
                     delete metadata.cloudSaveInfo;
                 }
-            } catch (error) {
-                console.error('Error decrypting save data:', error);
+            } catch {
                 delete metadata.cloudSaveInfo;
             }
         }
 
         return json({ user_metadata: metadata });
-    } catch (error) {
-        console.error('Failed to fetch user metadata:', error);
+    } catch {
         return json({ error: 'Failed to fetch user metadata' }, { status: 500 });
     }
 };
 
 export const PATCH: RequestHandler = async ({ request }) => {
     try {
-        const { userId, data, signature, timestamp } = await request.json();
+        const { userId, metadata, data, signature, timestamp } = await request.json();
         if (!userId) {
             return json({ error: 'User ID is required' }, { status: 400 });
         }
 
+        // Si nous avons des métadonnées directes, les mettre à jour
+        if (metadata) {
+            const client = getAuth0Client();
+            await client.users.update({ id: userId }, { user_metadata: metadata });
+            return json({ success: true });
+        }
+
+        // Sinon, traiter comme une sauvegarde de jeu
         // Check if the user has saved recently
         const lastSave = lastSavesByUser.get(userId);
         const now = Date.now();
@@ -90,8 +96,7 @@ export const PATCH: RequestHandler = async ({ request }) => {
         }
 
         return json({ success: true });
-    } catch (error) {
-        console.error('Failed to update user metadata:', error);
+    } catch {
         return json({ error: 'Failed to update user metadata' }, { status: 500 });
     }
 };

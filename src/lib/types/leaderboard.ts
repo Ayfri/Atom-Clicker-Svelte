@@ -3,10 +3,10 @@ export interface LeaderboardEntry {
     atoms: number;
     level: number;
     lastUpdated: number;
-    userId: string;
+    userId?: string;
     picture?: string;
     self?: boolean;
     user_metadata?: {
         username?: string;
     };
-} 
+}

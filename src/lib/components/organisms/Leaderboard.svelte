@@ -10,9 +10,9 @@
 	import type { LeaderboardEntry } from '$lib/types/leaderboard';
 
 	function getDisplayUsername(user: LeaderboardEntry | undefined): string {
-		return user?.user_metadata?.username ??
-			user?.username ??
-			'Anonymous';
+		console.log(user);
+		if (!user) return 'Anonymous';
+		return user.user_metadata?.username || user.username || 'Anonymous';
 	}
 
 	export let onClose: () => void;
@@ -48,7 +48,7 @@
 	});
 
 	$: currentUserId = $auth.user?.sub;
-	$: currentUserEntry = $leaderboard.find(entry => entry.userId === currentUserId);
+	$: currentUserEntry = $leaderboard.find(entry => entry.self);
 	$: username = getDisplayUsername(currentUserEntry);
 	$: userRank = $leaderboard.findIndex(entry => entry.userId === currentUserId) + 1;
 
@@ -57,7 +57,9 @@
 
 		try {
 			await auth.updateUserMetadata({
-				username: newUsername
+				metadata: {
+					username: newUsername
+				}
 			});
 
 			isEditingUsername = false;
@@ -66,7 +68,6 @@
 			await leaderboard.fetchLeaderboard();
 		} catch (error) {
 			editError = 'Failed to update username. Please try again.';
-			console.error('Error updating username:', error);
 		}
 	}
 

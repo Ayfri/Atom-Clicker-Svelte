@@ -1,6 +1,7 @@
 # What's new 12-02-2025
 
 - Adjusted mobile navbar positioning for better display on smaller screens.
+- Fix changing username not working for some users.
 - Implemented cloud save functionality with authentication and data obfuscation.
 
 # What's new 11-02-2025
