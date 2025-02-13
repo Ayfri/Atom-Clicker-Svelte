@@ -3,7 +3,7 @@ import type { RequestHandler } from './$types';
 import { encryptData, decryptData, verifyAndDecryptClientData } from '$lib/server/obfuscation.server';
 import { getAuth0Client } from '$lib/server/auth0.server';
 
-const SAVE_COOLDOWN = 30000; // 30 seconds
+const SAVE_COOLDOWN = 30_000; // 30 seconds
 const lastSavesByUser = new Map<string, number>();
 
 export const GET: RequestHandler = async ({ url }) => {
@@ -45,14 +45,6 @@ export const PATCH: RequestHandler = async ({ request }) => {
             return json({ error: 'User ID is required' }, { status: 400 });
         }
 
-        // Si nous avons des métadonnées directes, les mettre à jour
-        if (metadata) {
-            const client = getAuth0Client();
-            await client.users.update({ id: userId }, { user_metadata: metadata });
-            return json({ success: true });
-        }
-
-        // Sinon, traiter comme une sauvegarde de jeu
         // Check if the user has saved recently
         const lastSave = lastSavesByUser.get(userId);
         const now = Date.now();
@@ -75,12 +67,13 @@ export const PATCH: RequestHandler = async ({ request }) => {
         const encryptedSave = encryptData(saveData);
 
         const client = getAuth0Client();
-        await client.users.update({ id: userId }, {
+        const response = await client.users.update({ id: userId }, {
             user_metadata: {
                 lastCloudSave: now,
                 cloudSaveInfo: encryptedSave
             }
         });
+        console.log(response);
 
         // Update last save time
         lastSavesByUser.set(userId, now);
@@ -96,7 +89,8 @@ export const PATCH: RequestHandler = async ({ request }) => {
         }
 
         return json({ success: true });
-    } catch {
+    } catch (error) {
+        console.error('Failed to update user metadata:', error);
         return json({ error: 'Failed to update user metadata' }, { status: 500 });
     }
 };

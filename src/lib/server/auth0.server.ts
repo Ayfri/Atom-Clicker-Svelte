@@ -34,7 +34,7 @@ export async function getUserMetadata(userId: string): Promise<Auth0User | null>
         const response = await client.users.get({ id: userId });
         const userData = response.data;
         const user: Auth0User = {
-            ...userData,
+            user_id: userData.user_id,
             user_metadata: userData.user_metadata || {}
         };
         userMetadataCache.set(userId, { data: user, timestamp: now });

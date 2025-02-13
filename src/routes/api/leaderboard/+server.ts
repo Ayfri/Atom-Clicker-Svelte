@@ -32,19 +32,19 @@ export const GET: RequestHandler = async ({ platform, url }) => {
         const leaderboard: LeaderboardEntry[] = await platform.env.ATOM_CLICKER_LEADERBOARD.get(LEADERBOARD_KEY, 'json') || [];
 
         // Fetch user metadata for all users in the leaderboard
-        const userIds = leaderboard.map((entry) => entry.userId).filter(Boolean);
+        const userIds = leaderboard.map((entry) => entry.userId).filter((userId) => userId !== undefined);
         if (userIds.length === 0) {
             return json([]);
         }
 
         try {
             // Récupérer les métadonnées des utilisateurs avec cache
-            const usersPromises = userIds.map((userId: string) => getUserMetadata(userId));
+            const usersPromises = userIds.map((userId) => getUserMetadata(userId));
             const users = await Promise.all(usersPromises);
 
             // Map user metadata to leaderboard entries and remove sensitive data
             const enrichedLeaderboard = leaderboard.map((entry) => {
-                const user = users.find((u: Auth0User | null) => u?.user_id === entry.userId);
+                const user = users.find((u) => u?.user_id === entry.userId);
                 const isSelf = entry.userId === currentUserId;
 
                 return {
