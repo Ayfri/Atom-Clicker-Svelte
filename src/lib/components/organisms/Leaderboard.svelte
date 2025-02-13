@@ -10,7 +10,6 @@
 	import type { LeaderboardEntry } from '$lib/types/leaderboard';
 
 	function getDisplayUsername(user: LeaderboardEntry | undefined): string {
-		console.log(user);
 		if (!user) return 'Anonymous';
 		return user.user_metadata?.username || user.username || 'Anonymous';
 	}
