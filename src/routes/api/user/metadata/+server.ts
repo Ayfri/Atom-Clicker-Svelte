@@ -67,30 +67,55 @@ export const PATCH: RequestHandler = async ({ request }) => {
         const encryptedSave = encryptData(saveData);
 
         const client = getAuth0Client();
-        const response = await client.users.update({ id: userId }, {
-            user_metadata: {
-                lastCloudSave: now,
-                cloudSaveInfo: encryptedSave
-            }
-        });
-        console.log(response);
+        try {
+            const response = await client.users.update({ id: userId }, {
+                user_metadata: {
+                    lastCloudSave: now,
+                    cloudSaveInfo: encryptedSave
+                }
+            });
+            console.log('Auth0 update response:', response);
 
-        // Update last save time
-        lastSavesByUser.set(userId, now);
+            // Update last save time
+            lastSavesByUser.set(userId, now);
 
-        // Clean up old entries every hour
-        if (lastSavesByUser.size > 1000) {
-            const oneHourAgo = now - 3600000;
-            for (const [id, time] of lastSavesByUser.entries()) {
-                if (time < oneHourAgo) {
-                    lastSavesByUser.delete(id);
+            // Clean up old entries every hour
+            if (lastSavesByUser.size > 1000) {
+                const oneHourAgo = now - 3600000;
+                for (const [id, time] of lastSavesByUser.entries()) {
+                    if (time < oneHourAgo) {
+                        lastSavesByUser.delete(id);
+                    }
                 }
             }
-        }
 
-        return json({ success: true });
-    } catch (error) {
-        console.error('Failed to update user metadata:', error);
-        return json({ error: 'Failed to update user metadata' }, { status: 500 });
+            return json({ success: true });
+        } catch (auth0Error: any) {
+            console.error('Auth0 API error details:', {
+                error: auth0Error.message,
+                statusCode: auth0Error.statusCode,
+                name: auth0Error.name,
+                code: auth0Error.code
+            });
+
+            // Handle specific Auth0 error cases
+            if (auth0Error.statusCode === 429) {
+                return json({ error: 'Rate limit exceeded', message: 'Too many requests to Auth0 API' }, { status: 429 });
+            }
+            if (auth0Error.statusCode === 401 || auth0Error.statusCode === 403) {
+                return json({ error: 'Authentication error', message: 'Invalid Auth0 credentials' }, { status: 401 });
+            }
+
+            return json({
+                error: 'Failed to update user metadata',
+                message: auth0Error.message || 'Unknown Auth0 error'
+            }, { status: 500 });
+        }
+    } catch (error: any) {
+        console.error('Failed to process save request:', error);
+        return json({
+            error: 'Failed to process save request',
+            message: error.message || 'Unknown error'
+        }, { status: 500 });
     }
 };
