@@ -46,35 +46,39 @@ export const PATCH: RequestHandler = async ({ request }) => {
             return json({ error: 'User ID is required' }, { status: 400 });
         }
 
-        // Check if the user has saved recently
-        const lastSave = lastSavesByUser.get(userId);
-        const now = Date.now();
-        if (lastSave && now - lastSave < SAVE_COOLDOWN) {
-            const remainingTime = Math.ceil((SAVE_COOLDOWN - (now - lastSave)) / 1000);
-            return json({
-                error: 'Too many requests',
-                message: `Please wait ${remainingTime} seconds before saving again`,
-                remainingTime
-            }, { status: 429 });
+        // If this is a game save update
+        if (data && signature && timestamp) {
+            // Check if the user has saved recently
+            const lastSave = lastSavesByUser.get(userId);
+            const now = Date.now();
+            if (lastSave && now - lastSave < SAVE_COOLDOWN) {
+                const remainingTime = Math.ceil((SAVE_COOLDOWN - (now - lastSave)) / 1000);
+                return json({
+                    error: 'Too many requests',
+                    message: `Please wait ${remainingTime} seconds before saving again`,
+                    remainingTime
+                }, { status: 429 });
+            }
+
+            // Verify and decrypt client data
+            const saveData = verifyAndDecryptClientData(data, signature, timestamp);
+            if (!saveData) {
+                return json({
+                    error: 'Invalid or expired data',
+                    message: 'Please try saving again'
+                }, { status: 400 });
+            }
+
+            // Encrypt save data for storage
+            const encryptedSave = encryptData(saveData);
+            console.log('Save data encrypted successfully:', {
+                userId,
+                timestamp: now,
+                dataSize: encryptedSave.length
+            });
         }
 
-        // Verify and decrypt client data
-        const saveData = verifyAndDecryptClientData(data, signature, timestamp);
-        if (!saveData) {
-            return json({
-                error: 'Invalid or expired data',
-                message: 'Please try saving again'
-            }, { status: 400 });
-        }
-
-        // Encrypt save data for storage
-        const encryptedSave = encryptData(saveData);
-        console.log('Save data encrypted successfully:', {
-            userId,
-            timestamp: now,
-            dataSize: encryptedSave.length
-        });
-
+        // Handle both game saves and simple metadata updates
         const client = await getAuth0Client();
         const maxRetries = 3;
         let lastError = null;
@@ -82,21 +86,17 @@ export const PATCH: RequestHandler = async ({ request }) => {
         // Retry loop for Auth0 API calls
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                // Vérifier que le client est bien initialisé
                 if (!client) {
                     throw new Error('Auth0 client not initialized');
                 }
 
                 console.log(`Attempting to update user metadata (attempt ${attempt}/${maxRetries})`, {
                     userId,
-                    timestamp: now
+                    timestamp: Date.now()
                 });
 
                 const response = await client.users.update({ id: userId }, {
-                    user_metadata: {
-                        lastCloudSave: now,
-                        cloudSaveInfo: encryptedSave
-                    }
+                    user_metadata: metadata
                 });
 
                 if (!response?.data) {
@@ -107,18 +107,20 @@ export const PATCH: RequestHandler = async ({ request }) => {
                     statusCode: response?.status,
                     userId,
                     attempt,
-                    timestamp: now
+                    timestamp: Date.now()
                 });
 
-                // Update last save time
-                lastSavesByUser.set(userId, now);
+                // Update last save time if this was a game save
+                if (data && signature && timestamp) {
+                    lastSavesByUser.set(userId, Date.now());
 
-                // Clean up old entries every hour
-                if (lastSavesByUser.size > 1000) {
-                    const oneHourAgo = now - 3600000;
-                    for (const [id, time] of lastSavesByUser.entries()) {
-                        if (time < oneHourAgo) {
-                            lastSavesByUser.delete(id);
+                    // Clean up old entries every hour
+                    if (lastSavesByUser.size > 1000) {
+                        const oneHourAgo = Date.now() - 3600000;
+                        for (const [id, time] of lastSavesByUser.entries()) {
+                            if (time < oneHourAgo) {
+                                lastSavesByUser.delete(id);
+                            }
                         }
                     }
                 }
@@ -126,7 +128,7 @@ export const PATCH: RequestHandler = async ({ request }) => {
                 return json({
                     success: true,
                     attempt,
-                    timestamp: now
+                    timestamp: Date.now()
                 });
             } catch (auth0Error: any) {
                 lastError = auth0Error;
@@ -137,7 +139,7 @@ export const PATCH: RequestHandler = async ({ request }) => {
                     code: auth0Error.code,
                     stack: auth0Error.stack,
                     userId,
-                    timestamp: now
+                    timestamp: Date.now()
                 });
 
                 // Don't retry on these errors
@@ -171,7 +173,7 @@ export const PATCH: RequestHandler = async ({ request }) => {
             error: lastError?.message,
             stack: lastError?.stack,
             userId,
-            timestamp: now
+            timestamp: Date.now()
         });
 
         return json({
