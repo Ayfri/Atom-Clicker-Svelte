@@ -13,7 +13,7 @@ export const GET: RequestHandler = async ({ url }) => {
             return json({ error: 'User ID is required' }, { status: 400 });
         }
 
-        const client = getAuth0Client();
+        const client = await getAuth0Client();
         const response = await client.users.get({ id: userId });
         const userData = response.data;
         const metadata = userData.user_metadata || {};
@@ -33,7 +33,8 @@ export const GET: RequestHandler = async ({ url }) => {
         }
 
         return json({ user_metadata: metadata });
-    } catch {
+    } catch(error) {
+        console.error('Failed to fetch user metadata:', error);
         return json({ error: 'Failed to fetch user metadata' }, { status: 500 });
     }
 };
@@ -74,7 +75,7 @@ export const PATCH: RequestHandler = async ({ request }) => {
             dataSize: encryptedSave.length
         });
 
-        const client = getAuth0Client();
+        const client = await getAuth0Client();
         const maxRetries = 3;
         let lastError = null;
 
