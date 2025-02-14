@@ -1,9 +1,9 @@
 import { derived } from "svelte/store";
-import { currentUpgradesBought } from "$stores/gameStore";
-import { getUpgradesWithEffects } from "$lib/helpers/effects";
+import { currentUpgradesBought, settings } from "$stores/gameStore";
 import { gameManager } from "$lib/helpers/gameManager";
-import { browser } from "$app/environment";
 import { UPGRADES } from "$data/upgrades";
+import { browser } from "$app/environment";
+import { getUpgradesWithEffects } from "$lib/helpers/effects";
 
 // Set up auto-upgrade intervals
 export const autoUpgradeInterval = derived(currentUpgradesBought, ($currentUpgradesBought) => {
@@ -24,25 +24,26 @@ export const autoUpgradeInterval = derived(currentUpgradesBought, ($currentUpgra
 
 // Set up auto-upgrade timer
 if (browser) {
-    let timer: ReturnType<typeof setInterval>;
+    const UPGRADE_CHECK_INTERVAL = 1000; // Check every second
 
-    autoUpgradeInterval.subscribe(interval => {
-        if (timer) clearInterval(timer);
-        if (interval > 0) {
-            timer = setInterval(() => {
-                const state = gameManager.getCurrentState();
-                const availableUpgrades = Object.values(UPGRADES)
-                    .filter(upgrade => {
-                        const condition = upgrade.condition?.(state) ?? true;
-                        const notPurchased = !state.upgrades.includes(upgrade.id);
-                        return condition && notPurchased && gameManager.canAfford(upgrade.cost);
-                    })
-                    .sort((a, b) => a.cost.amount - b.cost.amount);
+    setInterval(() => {
+        const state = gameManager.getCurrentState();
+        if (!state.settings.automation.upgrades) return;
 
-                if (availableUpgrades.length > 0) {
-                    gameManager.purchaseUpgrade(availableUpgrades[0].id);
+        // Get all available upgrades that we can afford
+        Object.values(UPGRADES)
+            .filter(upgrade => {
+                const condition = upgrade.condition?.(state) ?? true;
+                const notPurchased = !state.upgrades.includes(upgrade.id);
+                return condition && notPurchased && gameManager.canAfford(upgrade.cost);
+            })
+            .sort((a, b) => a.cost.amount - b.cost.amount)
+            .forEach(upgrade => {
+                try {
+                    gameManager.purchaseUpgrade(upgrade.id);
+                } catch (error) {
+                    console.error(`Error auto-buying upgrade ${upgrade.id}:`, error);
                 }
-            }, interval);
-        }
-    });
+            });
+    }, UPGRADE_CHECK_INTERVAL);
 }

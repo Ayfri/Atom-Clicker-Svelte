@@ -1,13 +1,13 @@
 <script lang="ts">
 	import {CURRENCIES, CurrenciesTypes, type CurrencyName} from '$data/currencies';
 	import { currentState, gameManager } from '$helpers/gameManager';
-	import { atoms, protons, electrons, upgrades, buildings, achievements, totalProtonises } from '$stores/gameStore';
+	import { currentUpgradesBought, protons, electrons, upgrades, totalProtonises, settings } from '$stores/gameStore';
 	import { UPGRADES } from '$data/upgrades';
-	import { formatNumber } from '$lib/utils';
 	import type { Upgrade } from '$lib/types';
-	import Value from '@components/atoms/Value.svelte';
+	import AutoButton from '@components/atoms/AutoButton.svelte';
 	import Currency from '@components/atoms/Currency.svelte';
-
+	import Value from '@components/atoms/Value.svelte';
+	import { getUpgradesWithEffects } from '$lib/helpers/effects';
 	let availableUpgrades: Upgrade[] = [];
 	let selectedCurrency: CurrencyName = CurrenciesTypes.ATOMS;
 
@@ -26,52 +26,62 @@
 	}
 
 	$: affordableUpgrades = availableUpgrades.filter((upgrade) => gameManager.canAfford(upgrade.cost));
+	$: hasAutomation = getUpgradesWithEffects($currentUpgradesBought, { type: 'auto_upgrade' }).length > 0;
 </script>
 
-<div class="upgrades">
-	<div class="header">
-		<h2>Upgrades</h2>
-		<div class="currency-tabs">
-			<button
-				class="currency-tab"
-				class:active={selectedCurrency === CurrenciesTypes.ATOMS}
-				on:click={() => selectedCurrency = CurrenciesTypes.ATOMS}
-			>
-				<Currency name={CurrenciesTypes.ATOMS} />
-			</button>
-			{#if showProtons}
-				<button
-					class="currency-tab"
-					class:active={selectedCurrency === CurrenciesTypes.PROTONS}
-					on:click={() => selectedCurrency = CurrenciesTypes.PROTONS}
-				>
-					<Currency name={CurrenciesTypes.PROTONS} />
-				</button>
-			{/if}
-			{#if showElectrons}
-				<button
-					class="currency-tab"
-					class:active={selectedCurrency === CurrenciesTypes.ELECTRONS}
-					on:click={() => selectedCurrency = CurrenciesTypes.ELECTRONS}
-				>
-					<Currency name={CurrenciesTypes.ELECTRONS} />
-				</button>
+<div id="upgrades" class="bg-black/10 backdrop-blur-sm rounded-lg p-4 flex flex-col gap-4">
+	<div class="header flex justify-between items-center gap-2">
+		<div class="flex items-center gap-2 justify-between w-full">
+			<h2>Upgrades</h2>
+			{#if hasAutomation}
+				<AutoButton
+					onClick={() => gameManager.toggleUpgradeAutomation()}
+					toggled={$settings.automation.upgrades}
+				/>
 			{/if}
 		</div>
 	</div>
-	<div class="upgrade-grid">
+
+	<div class="currency-tabs flex gap-[0.35rem]">
+		<button
+			class="currency-tab"
+			class:active={selectedCurrency === CurrenciesTypes.ATOMS}
+			on:click={() => selectedCurrency = CurrenciesTypes.ATOMS}
+		>
+			<Currency name={CurrenciesTypes.ATOMS} />
+		</button>
+		{#if showProtons}
+			<button
+				class="currency-tab"
+				class:active={selectedCurrency === CurrenciesTypes.PROTONS}
+				on:click={() => selectedCurrency = CurrenciesTypes.PROTONS}
+			>
+				<Currency name={CurrenciesTypes.PROTONS} />
+			</button>
+		{/if}
+		{#if showElectrons}
+			<button
+				class="currency-tab"
+				class:active={selectedCurrency === CurrenciesTypes.ELECTRONS}
+				on:click={() => selectedCurrency = CurrenciesTypes.ELECTRONS}
+			>
+				<Currency name={CurrenciesTypes.ELECTRONS} />
+			</button>
+		{/if}
+	</div>
+
+	<div class="grid gap-4">
 		{#each availableUpgrades.slice(0, 10) as upgrade (upgrade.id)}
 			{@const affordable = affordableUpgrades.includes(upgrade)}
 			<div
-				class="upgrade"
-				class:disabled={!affordable}
+				class="upgrade bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer p-3 transition-all duration-200 {affordable ? '' : 'opacity-50 cursor-not-allowed'}"
 				on:click={() => {
 					if (affordable) gameManager.purchaseUpgrade(upgrade.id);
 				}}
 			>
-				<h3>{upgrade.name}</h3>
-				<p>{upgrade.description}</p>
-				<div class="cost" style="color: {CURRENCIES[upgrade.cost.currency].color}">
+				<h3 class="text-blue-500">{upgrade.name}</h3>
+				<p class="text-xs my-1">{upgrade.description}</p>
+				<div class="text-sm mt-2" style="color: {CURRENCIES[upgrade.cost.currency].color}">
 					Cost: <Value value={upgrade.cost.amount} currency={upgrade.cost.currency}/>
 				</div>
 			</div>
@@ -80,64 +90,6 @@
 </div>
 
 <style>
-	.upgrades {
-		background: rgba(0, 0, 0, 0.1);
-		backdrop-filter: blur(3px);
-		border-radius: 8px;
-		padding: 1rem;
-	}
-
-	.upgrade-grid {
-		display: grid;
-		gap: 1rem;
-		margin-top: 1rem;
-	}
-
-	.upgrade {
-		background: rgba(255, 255, 255, 0.05);
-		border-radius: 8px;
-		cursor: pointer;
-		padding: 0.75rem;
-		transition: all 0.2s;
-	}
-
-	.upgrade:hover:not(.disabled) {
-		background: rgba(255, 255, 255, 0.1);
-	}
-
-	.upgrade.disabled {
-		cursor: not-allowed;
-		opacity: 0.5;
-	}
-
-	.upgrade h3 {
-		color: #4a90e2;
-		font-size: 1rem;
-		margin: 0;
-	}
-
-	.upgrade p {
-		font-size: 0.8rem;
-		margin: 0.25rem 0;
-	}
-
-	.cost {
-		font-size: 0.9rem;
-		margin-top: 0.5rem;
-	}
-
-	.header {
-		align-items: center;
-		display: flex;
-		gap: 0.5rem;
-		justify-content: space-between;
-	}
-
-	.currency-tabs {
-		display: flex;
-		gap: 0.35rem;
-	}
-
 	.currency-tab {
 		align-items: center;
 		background: rgba(255, 255, 255, 0.05);

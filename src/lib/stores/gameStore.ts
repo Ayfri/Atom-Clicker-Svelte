@@ -3,7 +3,7 @@ import {type BuildingType} from '$data/buildings';
 import {POWER_UP_DEFAULT_INTERVAL} from '$data/powerUp';
 import {UPGRADES} from '$data/upgrades';
 import {SKILL_UPGRADES} from '$data/skillTree';
-import type {Building, Effect, PowerUp, Range} from '../types';
+import type {Building, Effect, PowerUp, Range, Settings} from '../types';
 import { currentState } from '$lib/helpers/gameManager';
 import { calculateEffects, getUpgradesWithEffects } from '$lib/helpers/effects';
 
@@ -15,6 +15,12 @@ export const electrons = writable<number>(0);
 export const buildings = writable<Partial<Record<BuildingType, Building>>>({});
 export const lastSave = writable<number>(Date.now());
 export const protons = writable<number>(0);
+export const settings = writable<Settings>({ 
+	automation: {
+		buildings: [],
+		upgrades: false
+	}
+});
 export const skillUpgrades = writable<string[]>([]);
 export const startDate = writable<number>(Date.now());
 export const totalClicks = writable<number>(0);

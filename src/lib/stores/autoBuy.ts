@@ -1,12 +1,12 @@
 import { derived } from "svelte/store";
-import { currentUpgradesBought } from "$stores/gameStore";
+import { currentUpgradesBought, settings } from "$stores/gameStore";
 import { getUpgradesWithEffects } from "$lib/helpers/effects";
 import { gameManager } from "$lib/helpers/gameManager";
 import type { BuildingType } from "$data/buildings";
 import { browser } from "$app/environment";
 
 // Set up auto-buy intervals for each building
-export const autoBuyIntervals = derived(currentUpgradesBought, ($currentUpgradesBought) => {
+export const autoBuyIntervals = derived([currentUpgradesBought, settings], ([$currentUpgradesBought, $settings]) => {
     const autoBuyUpgrades = getUpgradesWithEffects($currentUpgradesBought, { type: 'auto_buy' });
     const intervals: Partial<Record<BuildingType, number>> = {};
 
@@ -16,7 +16,10 @@ export const autoBuyIntervals = derived(currentUpgradesBought, ($currentUpgrades
         upgrade.effects.forEach(effect => {
             if (effect.type === 'auto_buy' && effect.target) {
                 const buildingType = effect.target as BuildingType;
-                intervals[buildingType] = effect.apply(intervals[buildingType] || 30000, gameManager.getCurrentState());
+                // Only set up interval if automation is enabled for this building
+                if ($settings.automation.buildings.includes(buildingType)) {
+                    intervals[buildingType] = effect.apply(intervals[buildingType] || 30000, gameManager.getCurrentState());
+                }
             }
         });
     });

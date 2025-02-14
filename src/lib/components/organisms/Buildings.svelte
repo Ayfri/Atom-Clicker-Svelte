@@ -1,14 +1,13 @@
 <script lang="ts">
 	import { currentState, gameManager } from '$helpers/gameManager';
 	import { BUILDING_COLORS, type BuildingData, BUILDINGS, type BuildingType } from '$data/buildings';
-	import { buildingProductions, buildings, globalMultiplier, bonusMultiplier } from '$stores/gameStore';
+	import { buildingProductions, buildings, currentUpgradesBought, globalMultiplier, bonusMultiplier, settings } from '$stores/gameStore';
 	import type { Building, Price } from '$lib/types';
-	import { formatNumber } from '$lib/utils';
-	import Currency from '@components/atoms/Currency.svelte';
+	import AutoButton from '@components/atoms/AutoButton.svelte';
 	import Value from '@components/atoms/Value.svelte';
 	import { fade } from 'svelte/transition';
 	import { BUILDING_COST_MULTIPLIER } from '@/lib/constants';
-
+	import { getUpgradesWithEffects } from '$lib/helpers/effects';
 	const buildingsEntries = Object.entries(BUILDINGS) as [BuildingType, BuildingData][];
 	let unaffordableRootBuildings: [BuildingType, BuildingData][] = [];
 	let affordableBuildings: [BuildingType, Building][] = [];
@@ -137,6 +136,8 @@
 		{@const color = BUILDING_COLORS[level]}
 		{@const purchaseAmount = purchaseAmounts[type]}
 		{@const totalCost = getBulkBuyCost(type, purchaseAmount)}
+		{@const isAutomated = $settings.automation.buildings.includes(type)}
+		{@const hasAutomation = getUpgradesWithEffects($currentUpgradesBought, { type: 'auto_buy', target: type }).length > 0}
 
 		<div
 			class="bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer mt-2 p-3 transition-all duration-200 {unaffordable ? 'opacity-50 cursor-not-allowed' : ''}"
@@ -164,10 +165,18 @@
 					{/if}
 				</p>
 			</div>
-			<div class="text-sm mt-2" style="color: var(--color);">
-				Cost: <Value value={totalCost} currency={saveData?.cost?.currency ?? building.cost.currency} />
-				{#if selectedPurchaseMode === 'max' && purchaseAmount > 0}
-					<span class="opacity-60 text-[0.7rem] leading-3 ml-1">(×{purchaseAmount})</span>
+			<div class="text-sm mt-2 flex justify-between items-center" style="color: var(--color);">
+				<div>
+					Cost: <Value value={totalCost} currency={saveData?.cost?.currency ?? building.cost.currency} />
+					{#if selectedPurchaseMode === 'max' && purchaseAmount > 0}
+						<span class="opacity-60 text-[0.7rem] leading-3 ml-1">(×{purchaseAmount})</span>
+					{/if}
+				</div>
+				{#if hasAutomation}
+					<AutoButton
+						onClick={() => gameManager.toggleAutomation(type)}
+						toggled={isAutomated}
+					/>
 				{/if}
 			</div>
 		</div>

@@ -20,6 +20,7 @@ import {
 	totalXP,
 	upgrades,
 	xpGainMultiplier,
+	settings,
 } from '$stores/gameStore';
 import {info} from '$stores/toasts';
 import {derived, get} from 'svelte/store';
@@ -38,6 +39,7 @@ export const currentState = derived(
 		protons,
 		buildings,
 		lastSave,
+		settings,
 		skillUpgrades,
 		startDate,
 		totalClicks,
@@ -53,6 +55,7 @@ export const currentState = derived(
 		protons,
 		buildings,
 		lastSave,
+		settings,
 		skillUpgrades,
 		startDate,
 		totalClicks,
@@ -68,6 +71,7 @@ export const currentState = derived(
 			protons,
 			buildings,
 			lastSave,
+			settings,
 			skillUpgrades,
 			startDate,
 			totalClicks,
@@ -87,6 +91,12 @@ export function resetGameState(): GameState {
 		electrons: 0,
 		lastSave: Date.now(),
 		protons: 0,
+		settings: {
+			automation: {
+				buildings: [],
+				upgrades: false
+			}
+		},
 		skillUpgrades: [],
 		startDate: Date.now(),
 		totalClicks: 0,
@@ -108,6 +118,7 @@ export const gameManager = {
 			electrons.set(savedState.electrons || 0);
 			lastSave.set(savedState.lastSave);
 			protons.set(savedState.protons || 0);
+			settings.set(savedState.settings || { automation: { buildings: [], upgrades: false } });
 			skillUpgrades.set(savedState.skillUpgrades || []);
 			startDate.set(savedState.startDate);
 			totalClicks.set(savedState.totalClicks);
@@ -394,13 +405,40 @@ export const gameManager = {
 		activePowerUps.set(saveData.activePowerUps);
 		atoms.set(saveData.atoms);
 		buildings.set(saveData.buildings);
+		electrons.set(saveData.electrons || 0);
 		lastSave.set(saveData.lastSave);
 		protons.set(saveData.protons || 0);
-		totalClicks.set(saveData.totalClicks);
-		totalProtonises.set(saveData.totalProtonises || 0);
+		settings.set(saveData.settings || { automation: { buildings: [], upgrades: false } });
 		skillUpgrades.set(saveData.skillUpgrades);
 		startDate.set(saveData.startDate);
-		totalXP.set(saveData.totalXP);
+		totalClicks.set(saveData.totalClicks);
+		totalProtonises.set(saveData.totalProtonises || 0);
+		totalXP.set(saveData.totalXP || 0);
 		upgrades.set(saveData.upgrades.filter(u => u in UPGRADES));
+	},
+
+	toggleAutomation(type: BuildingType) {
+		settings.update(current => {
+			const buildings = current.automation.buildings;
+			const index = buildings.indexOf(type);
+			
+			return {
+				...current,
+				automation: {
+					...current.automation,
+					buildings: index === -1 ? [...buildings, type] : buildings.filter(b => b !== type)
+				}
+			};
+		});
+	},
+
+	toggleUpgradeAutomation() {
+		settings.update(current => ({
+			...current,
+			automation: {
+				...current.automation,
+				upgrades: !current.automation.upgrades
+			}
+		}));
 	},
 };

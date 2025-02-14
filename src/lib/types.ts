@@ -43,6 +43,13 @@ export interface PowerUp {
 	startTime: number;
 }
 
+export interface Settings {
+	automation: {
+		buildings: BuildingType[];
+		upgrades: boolean;
+	};
+}
+
 export interface GameState {
 	achievements: string[];
 	activePowerUps: PowerUp[];
@@ -51,6 +58,7 @@ export interface GameState {
 	electrons: number;
 	lastSave: number;
 	protons: number;
+	settings: Settings;
 	skillUpgrades: string[];
 	startDate: number;
 	totalClicks: number;
