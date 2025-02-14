@@ -3,6 +3,10 @@ import { AUTH0_MGMT_CLIENT_ID, AUTH0_MGMT_CLIENT_SECRET } from '$env/static/priv
 import { PUBLIC_AUTH0_DOMAIN } from '$env/static/public';
 import type { Auth0User } from '$lib/types/auth';
 
+// Cloudflare constant to force using nodejs runtime
+export const runtime = "nodejs";
+
+
 let auth0Management: ManagementClient | null = null;
 let initializationPromise: Promise<ManagementClient> | null = null;
 let lastInitTime = 0;
