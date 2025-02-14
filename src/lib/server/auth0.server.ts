@@ -10,10 +10,26 @@ const REINIT_INTERVAL = 300000; // 5 minutes
 
 async function initializeAuth0Client(): Promise<ManagementClient> {
     try {
-        // Check that the credentials are present
-        if (!AUTH0_MGMT_CLIENT_ID || !AUTH0_MGMT_CLIENT_SECRET || !PUBLIC_AUTH0_DOMAIN) {
-            throw new Error('Missing Auth0 credentials');
+        // Check that the credentials are present and log their status
+        const credentials = {
+            domain: PUBLIC_AUTH0_DOMAIN,
+            clientId: AUTH0_MGMT_CLIENT_ID,
+            clientSecret: AUTH0_MGMT_CLIENT_SECRET
+        };
+
+        const missingCredentials = Object.entries(credentials)
+            .filter(([_, value]) => !value)
+            .map(([key]) => key);
+
+        if (missingCredentials.length > 0) {
+            console.error('Missing Auth0 credentials:', {
+                missingFields: missingCredentials,
+                domain: PUBLIC_AUTH0_DOMAIN ? 'present' : 'missing'
+            });
+            throw new Error(`Missing Auth0 credentials: ${missingCredentials.join(', ')}`);
         }
+
+        console.log('Initializing Auth0 client with domain:', PUBLIC_AUTH0_DOMAIN);
 
         const client = new ManagementClient({
             domain: PUBLIC_AUTH0_DOMAIN,
@@ -23,17 +39,34 @@ async function initializeAuth0Client(): Promise<ManagementClient> {
         });
 
         // Test the client by making a simple API call
-        await client.users.getAll({ per_page: 1, page: 0 });
+        try {
+            console.log('Testing Auth0 client with a simple API call...');
+            await client.users.getAll({ per_page: 1, page: 0 });
+            console.log('Auth0 test API call successful');
+        } catch (apiError: any) {
+            console.error('Auth0 test API call failed:', {
+                error: apiError.message,
+                code: apiError.statusCode,
+                name: apiError.name,
+                stack: apiError.stack
+            });
+            throw apiError;
+        }
 
         auth0Management = client;
         lastInitTime = Date.now();
         console.log('Auth0 client initialized successfully');
 
         return client;
-    } catch (error) {
-        console.error('Failed to initialize Auth0 client:', error);
+    } catch (error: any) {
+        console.error('Failed to initialize Auth0 client:', {
+            error: error.message,
+            code: error.statusCode,
+            name: error.name,
+            stack: error.stack
+        });
         auth0Management = null;
-        throw new Error('Auth0 client initialization failed');
+        throw new Error(`Auth0 client initialization failed: ${error.message}`);
     } finally {
         initializationPromise = null;
     }
