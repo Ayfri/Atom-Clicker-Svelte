@@ -1,98 +1,105 @@
 <script lang="ts">
-    import Modal from '$lib/components/atoms/Modal.svelte';
-    import { onMount } from 'svelte';
-    import { changelog } from '$lib/stores/changelog';
-    import { marked } from 'marked';
+	import Modal from '$lib/components/atoms/Modal.svelte';
+	import { onMount } from 'svelte';
+	import { changelog } from '$lib/stores/changelog';
+	import { marked } from 'marked';
 
-    export let onClose: () => void;
+	export let onClose: () => void;
 
-    let changelogContent = '';
+	let changelogContent = '';
 
-    function parseChangelogDate(title: string): Date | null {
-        const dateMatch = title.match(/(\d{2})-(\d{2})-(\d{4})/);
-        if (!dateMatch) return null;
+	function parseChangelogDate(title: string): Date | null {
+		const dateMatch = title.match(/(\d{2})-(\d{2})-(\d{4})/);
+		if (!dateMatch) return null;
 
-        const [_, day, month, year] = dateMatch;
-        return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    }
+		const [_, day, month, year] = dateMatch;
+		return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+	}
 
-    onMount(async () => {
-        try {
-            const response = await fetch('/Changelog.md');
-            changelogContent = await response.text();
+	onMount(async () => {
+		try {
+			const response = await fetch('/Changelog.md');
+			changelogContent = await response.text();
 
-            // Get the first date from the changelog
-            const firstDateMatch = changelogContent.match(/# What's new (\d{2}-\d{2}-\d{4})/);
-            if (firstDateMatch) {
-                const lastChangelogDate = parseChangelogDate(firstDateMatch[0]);
-                if (lastChangelogDate) {
-                    changelog.checkForUpdates(lastChangelogDate);
-                }
-            }
-        } catch (error) {
-            console.error('Failed to load changelog:', error);
-        }
+			// Get the first date from the changelog
+			const firstDateMatch = changelogContent.match(/# What's new (\d{2}-\d{2}-\d{4})/);
+			if (firstDateMatch) {
+				const lastChangelogDate = parseChangelogDate(firstDateMatch[0]);
+				if (lastChangelogDate) {
+					changelog.checkForUpdates(lastChangelogDate);
+				}
+			}
+		} catch (error) {
+			console.error('Failed to load changelog:', error);
+		}
 
-        changelog.markAsRead();
-    });
+		changelog.markAsRead();
+	});
 </script>
 
-<Modal title="Changelog" {onClose}>
-    {#if changelogContent}
-        <div class="prose prose-invert max-w-none">
-            {@html marked(changelogContent)}
-        </div>
-    {:else}
-        <p class="text-center text-white/60">Loading changelog...</p>
-    {/if}
+<Modal
+	title="Changelog"
+	{onClose}
+>
+	{#if changelogContent}
+		<div class="prose prose-invert max-w-none">
+			{@html marked(changelogContent)}
+		</div>
+	{:else}
+		<p class="text-center text-white/60">Loading changelog...</p>
+	{/if}
 </Modal>
 
 <style lang="postcss">
-    :global(.prose) {
-        @apply text-white/90;
-    }
+	:global(.prose) {
+		@apply text-white/90;
+	}
 
-    :global(.prose h1) {
-        @apply mb-4 text-3xl font-bold text-white border-b border-white/10 pb-4;
-    }
+	:global(.prose *) {
+		user-select: text;
+	}
 
-    :global(.prose ul) {
-        @apply space-y-2 pl-5 pb-8 list-disc;
-    }
+	:global(.prose h1) {
+		@apply mb-4 text-3xl font-bold text-white border-b border-white/10 pb-4;
+	}
 
-    :global(.prose li) {
-        @apply leading-relaxed;
-    }
+	:global(.prose ul) {
+		@apply space-y-2 pl-5 pb-8 list-disc;
+	}
 
-    :global(.prose li::marker) {
-        @apply text-accent-200;
-    }
+	:global(.prose li) {
+		@apply leading-relaxed;
+	}
 
-    :global(.prose p) {
-        @apply leading-relaxed;
-    }
+	:global(.prose li::marker) {
+		@apply text-accent-200;
+	}
 
-    :global(.prose a) {
-        @apply text-accent-500 hover:text-accent-400 transition-colors;
-    }
+	:global(.prose p) {
+		@apply leading-relaxed;
+	}
 
-    :global(.prose strong) {
-        @apply text-white font-bold;
-    }
+	:global(.prose a) {
+		@apply text-accent-500 hover:text-accent-400 transition-colors;
+	}
 
-    :global(.prose em) {
-        @apply text-white/80 italic;
-    }
+	:global(.prose strong) {
+		@apply text-white font-bold;
+	}
 
-    :global(.prose code) {
-        @apply bg-black/20 px-1.5 py-0.5 rounded text-sm font-mono text-white;
-    }
+	:global(.prose em) {
+		@apply text-white/80 italic;
+	}
 
-    :global(.prose pre) {
-        @apply bg-black/20 p-4 rounded-lg overflow-x-auto;
-    }
+	:global(.prose code) {
+		@apply bg-black/20 px-1.5 py-0.5 rounded text-sm font-mono text-white;
+	}
 
-    :global(.prose pre code) {
-        @apply bg-transparent p-0 text-base;
-    }
+	:global(.prose pre) {
+		@apply bg-black/20 p-4 rounded-lg overflow-x-auto;
+	}
+
+	:global(.prose pre code) {
+		@apply bg-transparent p-0 text-base;
+	}
 </style>
