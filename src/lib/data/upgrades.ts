@@ -136,13 +136,19 @@ function createClickPowerUpgrades() {
 function createGlobalUpgrades() {
 	const upgrades = createUpgrades({
 		id: 'global_boost',
+		count: 50,
 		name: i => `Global Boost ${i}`,
 		description: i => `${formatNumber(1 + i / 100)}x all production`,
 		cost: i => {
 			const baseCost = 10 ** i;
+			if (i > 40) {
+				return baseCost * i ** 8;
+			}
+			if (i > 30) {
+				return baseCost * i ** 6;
+			}
 			return i > 20 ? baseCost * i ** 4 : baseCost;
 		},
-		count: 50,
 		effects: i => [
 			{
 				type: 'global',
