@@ -1,3 +1,14 @@
+# What's new 17-02-2025
+
+- Added more upgrades related to electrons and protons.
+- Increased the prices of upgrades.
+- Added upgrades for click power, click value, and global click power based on achievements and atoms per second.
+- Added upgrades for power-up interval reduction and level boosts.
+- Added upgrades for protons, including production boost and electron gain multipliers.
+- Added upgrades for auto-clicking and starting atoms after protonise.
+- Added upgrades for auto-buying buildings and auto-upgrading system for electrons.
+- Reduced power-up spawn interval through upgrades for electrons.
+
 # What's new 12-02-2025
 
 - Adjusted mobile navbar positioning for better display on smaller screens.
