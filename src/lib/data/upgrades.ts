@@ -2,7 +2,7 @@ import { BUILDING_TYPES, BUILDINGS, type BuildingType } from '$data/buildings';
 import { CurrenciesTypes, type CurrencyName } from '$data/currencies';
 import type { Effect, GameState, Upgrade } from '$lib/types';
 import { capitalize, formatNumber, shortNumberText } from '$lib/utils';
-import { atomsPerSecond, playerLevel } from '$stores/gameStore';
+import { atomsPerSecond, playerLevel, totalProtonises } from '$stores/gameStore';
 import { get } from 'svelte/store';
 
 export const SPECIAL_UPGRADES: Upgrade[] = [
@@ -305,6 +305,22 @@ function createProtonUpgrades() {
 				},
 			],
 		},
+		{
+			id: 'proton_electron_boost_total_protonises',
+			name: 'Total Protonises',
+			description: '+1 electron per protonise',
+			cost: {
+				amount: 100_000_000_000_000,
+				currency: CurrenciesTypes.PROTONS,
+			},
+			effects: [
+				{
+					type: 'electron_gain',
+					description: '+1 electron per protonise',
+					apply: currentValue => currentValue + get(totalProtonises),
+				},
+			],
+		},
 	);
 
 	// Proton boost based on total protonises
@@ -433,76 +449,45 @@ function createElectronUpgrades() {
 
 	// Auto-upgrade system
 	upgrades.push(
-		{
+		...createUpgrades({
 			id: 'electron_auto_upgrade',
-			name: 'Auto Upgrade',
-			description: 'Automatically buys the cheapest available upgrade every 30 seconds',
-			cost: {
-				amount: 20,
-				currency: CurrenciesTypes.ELECTRONS,
-			},
-			effects: [
+			count: 4,
+			currency: CurrenciesTypes.ELECTRONS,
+			name: i => `${i === 1 ? 'Auto' : 'Faster Auto'} Upgrade ${i > 1 ? i : ''}`,
+			description: i =>
+				`${i === 1 ? 'Automatically buys' : 'Reduces auto-upgrade interval by'} ${
+					i === 1 ? 'the cheapest available upgrade every 30 seconds' : '5 seconds'
+				}`,
+			condition: (i, state) => i === 1 || state.upgrades.includes(`electron_auto_upgrade_${i - 1}`),
+			cost: i => 20 + (i - 1) * 10,
+			effects: i => [
 				{
 					type: 'auto_upgrade',
-					description: 'Auto-buy upgrades every 30 seconds',
-					apply: currentValue => 30000, // 30 seconds in milliseconds
+					description: i === 1 ? 'Auto-buy upgrades every 30 seconds' : 'Reduce auto-upgrade interval by 5 seconds',
+					apply: currentValue => (i === 1 ? 30000 : Math.max(1000, currentValue - 5000)),
 				},
 			],
-		},
-		{
-			id: 'electron_auto_upgrade_speed',
-			name: 'Faster Auto Upgrade',
-			description: 'Reduces auto-upgrade interval by 5 seconds',
-			condition: state => state.upgrades.includes('electron_auto_upgrade'),
-			cost: {
-				amount: 30,
-				currency: CurrenciesTypes.ELECTRONS,
-			},
-			effects: [
-				{
-					type: 'auto_upgrade',
-					description: 'Reduce auto-upgrade interval by 5 seconds',
-					apply: currentValue => Math.max(1000, currentValue - 5000), // Minimum 1 second
-				},
-			],
-		},
+		}),
 	);
 
 	// Power-up interval reduction
 	upgrades.push(
-		{
-			id: 'electron_power_up_interval_1',
-			name: 'Faster Power-ups',
-			description: 'Reduces power-up spawn interval by 10%',
-			cost: {
-				amount: 5,
-				currency: CurrenciesTypes.ELECTRONS,
-			},
-			effects: [
+		...createUpgrades({
+			id: 'electron_power_up_interval',
+			count: 4,
+			currency: CurrenciesTypes.ELECTRONS,
+			name: i => `${i === 1 ? 'Faster' : 'Even Faster'} Power-ups ${i > 1 ? i : ''}`,
+			description: i => `Reduces power-up spawn interval by ${i * 10}%`,
+			condition: (i, state) => i === 1 || state.upgrades.includes(`electron_power_up_interval_${i - 1}`),
+			cost: i => 5 * i,
+			effects: i => [
 				{
 					type: 'power_up_interval',
-					description: 'Multiply power-up interval by 0.9',
-					apply: currentValue => currentValue * 0.9,
+					description: `Multiply power-up interval by ${1 - i * 0.1}`,
+					apply: currentValue => currentValue * (1 - i * 0.1),
 				},
 			],
-		},
-		{
-			id: 'electron_power_up_interval_2',
-			name: 'Even Faster Power-ups',
-			description: 'Reduces power-up spawn interval by another 10%',
-			condition: state => state.upgrades.includes('electron_power_up_interval_1'),
-			cost: {
-				amount: 10,
-				currency: CurrenciesTypes.ELECTRONS,
-			},
-			effects: [
-				{
-					type: 'power_up_interval',
-					description: 'Multiply power-up interval by 0.9',
-					apply: currentValue => currentValue * 0.9,
-				},
-			],
-		},
+		}),
 	);
 
 	return upgrades;
