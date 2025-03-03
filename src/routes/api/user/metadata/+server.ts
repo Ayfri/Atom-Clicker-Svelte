@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { encryptData, decryptData, verifyAndDecryptClientData } from '$lib/server/obfuscation.server';
-import { getAuth0Client } from '$lib/server/auth0.server';
+import { getUserMetadata, updateUserMetadata } from '$lib/server/auth0.server';
 
 const SAVE_COOLDOWN = 30_000; // 30 seconds
 const lastSavesByUser = new Map<string, number>();
@@ -13,9 +13,11 @@ export const GET: RequestHandler = async ({ url }) => {
             return json({ error: 'User ID is required' }, { status: 400 });
         }
 
-        const client = await getAuth0Client();
-        const response = await client.users.get({ id: userId });
-        const userData = response.data;
+        const userData = await getUserMetadata(userId);
+        if (!userData) {
+            return json({ error: 'Failed to retrieve user data' }, { status: 500 });
+        }
+
         const metadata = userData.user_metadata || {};
 
         // Decrypt save data if it exists
@@ -45,6 +47,8 @@ export const PATCH: RequestHandler = async ({ request }) => {
         if (!userId) {
             return json({ error: 'User ID is required' }, { status: 400 });
         }
+
+        let updatedMetadata = {...metadata};
 
         // If this is a game save update
         if (data && signature && timestamp) {
@@ -76,35 +80,28 @@ export const PATCH: RequestHandler = async ({ request }) => {
                 timestamp: now,
                 dataSize: encryptedSave.length
             });
+
+            // Add the encrypted save to the metadata
+            if (metadata.cloudSaveInfo) {
+                updatedMetadata.cloudSaveInfo = encryptedSave;
+            }
         }
 
         // Handle both game saves and simple metadata updates
-        const client = await getAuth0Client();
         const maxRetries = 3;
         let lastError = null;
 
         // Retry loop for Auth0 API calls
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                if (!client) {
-                    throw new Error('Auth0 client not initialized');
-                }
-
                 console.log(`Attempting to update user metadata (attempt ${attempt}/${maxRetries})`, {
                     userId,
                     timestamp: Date.now()
                 });
 
-                const response = await client.users.update({ id: userId }, {
-                    user_metadata: metadata
-                });
-
-                if (!response?.data) {
-                    throw new Error('No response data from Auth0');
-                }
+                await updateUserMetadata(userId, updatedMetadata);
 
                 console.log('Auth0 update successful:', {
-                    statusCode: response?.status,
                     userId,
                     attempt,
                     timestamp: Date.now()
@@ -134,27 +131,17 @@ export const PATCH: RequestHandler = async ({ request }) => {
                 lastError = auth0Error;
                 console.error(`Auth0 API error (attempt ${attempt}/${maxRetries}):`, {
                     error: auth0Error.message,
-                    statusCode: auth0Error.statusCode,
                     name: auth0Error.name,
-                    code: auth0Error.code,
                     stack: auth0Error.stack,
                     userId,
                     timestamp: Date.now()
                 });
 
-                // Don't retry on these errors
-                if (auth0Error.statusCode === 401 || auth0Error.statusCode === 403) {
-                    return json({
-                        error: 'Authentication error',
-                        message: 'Invalid Auth0 credentials'
-                    }, { status: 401 });
-                }
-
                 // For rate limiting, wait before retrying
-                if (auth0Error.statusCode === 429) {
-                    const retryAfter = auth0Error.headers?.['retry-after'] || 5;
-                    console.log(`Rate limited, waiting ${retryAfter} seconds before retry`);
-                    await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+                if (auth0Error.message.includes('429') || auth0Error.message.includes('Too Many Requests')) {
+                    const waitTime = attempt * 2000; // 2 seconds, 4 seconds, 6 seconds
+                    console.log(`Rate limited, waiting ${waitTime}ms before retry`);
+                    await new Promise(resolve => setTimeout(resolve, waitTime));
                     continue;
                 }
 
