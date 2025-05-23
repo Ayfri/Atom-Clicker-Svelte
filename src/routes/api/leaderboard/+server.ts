@@ -1,145 +1,89 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import type { LeaderboardEntry } from '$lib/types/leaderboard';
+import { leaderboardService } from '$lib/server/supabase.server';
 import { verifyAndDecryptClientData } from '$lib/server/obfuscation.server';
-import { getUserMetadata } from '$lib/server/auth0.server';
+import { addRankToLeaderboard } from '$lib/utils/number-parser';
 
-interface Auth0User {
-    user_id: string;
-    user_metadata?: {
-        username?: string;
-    };
-}
+const UPDATE_INTERVAL = 60 * 1000; // 1 minute minimum between updates
 
-const LEADERBOARD_KEY = 'global_leaderboard';
-const MAX_ENTRIES = 100;
-const UPDATE_INTERVAL = 60 * 1000; // 1 minute for local updates
-const CLOUDFLARE_UPDATE_INTERVAL = 10 * 60 * 1000; // 10 minutes for Cloudflare KV updates
+// Cache for rate limiting
+const userLastUpdate = new Map<string, number>();
 
-let cachedLeaderboard: LeaderboardEntry[] = [];
-let lastCloudflareUpdate = 0;
+export const GET: RequestHandler = async ({ url }) => {
+	try {
+		// Get current user ID from URL params
+		const userIdParam = url.searchParams.get('userId');
+		// Only pass userId if it's not empty, otherwise pass undefined
+		const currentUserId = userIdParam && userIdParam.trim().length > 0 ? userIdParam : undefined;
 
-export const GET: RequestHandler = async ({ platform, url }) => {
-    if (!platform?.env?.ATOM_CLICKER_LEADERBOARD) {
-        return json({ error: 'Leaderboard not configured' }, { status: 500 });
-    }
+		// Get leaderboard data from Supabase (unsorted, get more entries)
+		const rawLeaderboard = await leaderboardService.getLeaderboard(300, currentUserId);
 
-    try {
-        // Get current user ID from URL params
-        const currentUserId = url.searchParams.get('userId') || '';
+		// Sort and rank the entries by atoms value using JavaScript
+		const sortedWithRank = addRankToLeaderboard(rawLeaderboard);
 
-        // Get leaderboard data
-        const leaderboard: LeaderboardEntry[] = await platform.env.ATOM_CLICKER_LEADERBOARD.get(LEADERBOARD_KEY, 'json') || [];
+		// Take only the top 100 for the final leaderboard
+		const topLeaderboard = sortedWithRank.slice(0, 100);
 
-        // Fetch user metadata for all users in the leaderboard
-        const userIds = leaderboard.map((entry) => entry.userId).filter((userId) => userId !== undefined);
-        if (userIds.length === 0) {
-            return json([]);
-        }
+		// Format response for frontend compatibility
+		const formattedLeaderboard = topLeaderboard.map((entry) => ({
+			username: entry.username || 'Anonymous',
+			atoms: parseFloat(entry.atoms), // Use parseFloat instead of parseInt
+			level: entry.level,
+			picture: entry.picture || '',
+			self: entry.is_current_user,
+			lastUpdated: new Date(entry.last_updated).getTime(),
+			rank: entry.rank,
+			userId: entry.id
+		}));
 
-        try {
-            // Récupérer les métadonnées des utilisateurs avec cache
-            const usersPromises = userIds.map((userId) => getUserMetadata(userId));
-            const users = await Promise.all(usersPromises);
-
-            // Map user metadata to leaderboard entries and remove sensitive data
-            const enrichedLeaderboard = leaderboard.map((entry) => {
-                const user = users.find((u) => u?.user_id === entry.userId);
-                const isSelf = entry.userId === currentUserId;
-
-                return {
-                    username: entry.username,
-                    atoms: entry.atoms,
-                    level: entry.level,
-                    picture: entry.picture,
-                    user_metadata: user?.user_metadata,
-                    self: isSelf,
-                    lastUpdated: entry.lastUpdated
-                };
-            });
-
-            cachedLeaderboard = leaderboard; // Keep the full data in cache
-            return json(enrichedLeaderboard);
-        } catch (authError) {
-            console.error('Failed to fetch user metadata:', authError);
-            // En cas d'erreur d'Auth0, on retourne quand même le leaderboard sans les métadonnées
-            return json(leaderboard.map(entry => ({
-                username: entry.username,
-                atoms: entry.atoms,
-                level: entry.level,
-                picture: entry.picture,
-                self: entry.userId === currentUserId,
-                lastUpdated: entry.lastUpdated
-            })));
-        }
-    } catch (error) {
-        console.error('Failed to fetch leaderboard:', error);
-        return json({ error: 'Failed to fetch leaderboard' }, { status: 500 });
-    }
+		return json(formattedLeaderboard);
+	} catch (error) {
+		console.error('Failed to fetch leaderboard:', error);
+		return json({ error: 'Failed to fetch leaderboard' }, { status: 500 });
+	}
 };
 
-export const POST: RequestHandler = async ({ request, platform }) => {
-    if (!platform?.env?.ATOM_CLICKER_LEADERBOARD) {
-        return json({ error: 'Leaderboard not configured' }, { status: 500 });
-    }
+export const POST: RequestHandler = async ({ request }) => {
+	try {
+		const { data: encryptedData, signature, timestamp } = await request.json();
 
-    try {
-        const { data: encryptedData, signature, timestamp } = await request.json();
+		// Verify and decrypt the client data
+		const data = verifyAndDecryptClientData(encryptedData, signature, timestamp);
+		if (!data) {
+			console.log('Failed to verify/decrypt client data');
+			return json({ error: 'Invalid or expired data' }, { status: 400 });
+		}
 
-        // Normal case: verify and decrypt the client data
-        const data = verifyAndDecryptClientData(encryptedData, signature, timestamp);
-        if (!data) {
-            return json({ error: 'Invalid or expired data' }, { status: 400 });
-        }
+		const { username, atoms, level, userId, picture } = data;
 
-        const { username, atoms, level, userId, picture } = data;
+		// Basic validation
+		if (!username || typeof atoms !== 'number' || typeof level !== 'number' || !userId) {
+			console.log('Data validation failed:', { username: !!username, atomsType: typeof atoms, levelType: typeof level, userId: !!userId });
+			return json({ error: 'Invalid data' }, { status: 400 });
+		}
 
-        // Basic validation
-        if (!username || typeof atoms !== 'number' || typeof level !== 'number' || !userId) {
-            return json({ error: 'Invalid data' }, { status: 400 });
-        }
+		// Rate limiting check
+		const lastUpdate = userLastUpdate.get(userId) || 0;
+		const timeSinceLastUpdate = Date.now() - lastUpdate;
 
-        const entry: LeaderboardEntry = {
-            username,
-            atoms,
-            level,
-            userId,
-            picture,
-            lastUpdated: Date.now()
-        };
+		if (timeSinceLastUpdate < UPDATE_INTERVAL) {
+			console.log('Rate limit hit for user:', userId, 'time since last update:', timeSinceLastUpdate);
+			return json({
+				error: 'Update too frequent',
+				nextUpdateIn: Math.ceil((UPDATE_INTERVAL - timeSinceLastUpdate) / 1000)
+			}, { status: 429 });
+		}
 
-        // Initialize cache if empty
-        if (cachedLeaderboard.length === 0) {
-            cachedLeaderboard = await platform.env.ATOM_CLICKER_LEADERBOARD.get(LEADERBOARD_KEY, 'json') || [];
-        }
+		// Update profile stats in Supabase
+		await leaderboardService.updateProfileStats(userId, atoms, level, username, picture);
 
-        // Update cache
-        const existingIndex = cachedLeaderboard.findIndex(e => e.userId === userId);
-        if (existingIndex !== -1) {
-            // Only update if the new score is higher and enough time has passed
-            const timeSinceLastUpdate = Date.now() - cachedLeaderboard[existingIndex].lastUpdated;
-            if (atoms > cachedLeaderboard[existingIndex].atoms && timeSinceLastUpdate >= UPDATE_INTERVAL) {
-                cachedLeaderboard[existingIndex] = entry;
-            }
-        } else {
-            cachedLeaderboard.push(entry);
-        }
+		// Update rate limiting cache
+		userLastUpdate.set(userId, Date.now());
 
-        // Sort and limit entries
-        cachedLeaderboard = cachedLeaderboard
-            .sort((a, b) => b.atoms - a.atoms)
-            .slice(0, MAX_ENTRIES);
-
-        // Update Cloudflare KV only if enough time has passed
-        const now = Date.now();
-        if (now - lastCloudflareUpdate >= CLOUDFLARE_UPDATE_INTERVAL) {
-            await platform.env.ATOM_CLICKER_LEADERBOARD.put(LEADERBOARD_KEY, JSON.stringify(cachedLeaderboard));
-            lastCloudflareUpdate = now;
-        }
-
-        return json({ success: true });
-    } catch (error) {
-        console.error('Failed to update leaderboard:', error);
-        return json({ error: 'Failed to update leaderboard' }, { status: 500 });
-    }
+		return json({ success: true });
+	} catch (error) {
+		console.error('Failed to update leaderboard:', error);
+		return json({ error: 'Failed to update leaderboard' }, { status: 500 });
+	}
 };

@@ -14,8 +14,6 @@ export const supabaseAdmin = createClient<Database>(PUBLIC_SUPABASE_URL, SUPABAS
 // Helper functions for leaderboard operations
 export const leaderboardService = {
 	async getLeaderboard(limit: number = 100, currentUserId?: string) {
-		console.log('Calling get_leaderboard RPC with:', { p_limit: limit, p_current_user_id: currentUserId });
-
 		const { data, error } = await supabaseAdmin.rpc('get_leaderboard', {
 			p_limit: limit,
 			p_current_user_id: currentUserId
@@ -26,7 +24,6 @@ export const leaderboardService = {
 			throw error;
 		}
 
-		console.log('Leaderboard RPC returned:', data);
 		return data;
 	},
 
@@ -38,13 +35,6 @@ export const leaderboardService = {
 		picture?: string
 	) {
 		const atomsString = atoms.toString();
-		console.log('Calling update_profile_stats RPC with:', {
-			p_user_id: userId,
-			p_atoms: atomsString,
-			p_level: level,
-			p_username: username,
-			p_picture: picture
-		});
 
 		const { error } = await supabaseAdmin.rpc('update_profile_stats', {
 			p_user_id: userId,
@@ -58,8 +48,6 @@ export const leaderboardService = {
 			console.error('Error updating profile stats:', error);
 			throw error;
 		}
-
-		console.log('Successfully updated profile stats for user:', userId);
 	},
 
 	async getProfile(userId: string) {

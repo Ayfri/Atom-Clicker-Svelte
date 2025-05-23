@@ -10,9 +10,6 @@ declare global {
 			session: import('@auth/core/types').Session | null;
 		}
 		interface Platform {
-			env?: {
-				ATOM_CLICKER_LEADERBOARD: KVNamespace;
-			};
 			context: {
 				waitUntil(promise: Promise<any>): void;
 			};

@@ -14,7 +14,7 @@ const MIN_ATOMS_CHANGE_PERCENT = 0.05; // 5% de changement minimum dans les atom
 
 function createLeaderboardStore() {
 	const { subscribe, set } = writable<LeaderboardEntry[]>([]);
-	
+
 	// Variables de contrôle des mises à jour
 	let isUpdating = false;
 
@@ -34,7 +34,7 @@ function createLeaderboardStore() {
 
 	async function updateScore(atoms: number, level: number) {
 		if (!browser || isUpdating) return;
-		
+
 		try {
 			isUpdating = true;
 			const authState = get(auth);
@@ -62,9 +62,15 @@ function createLeaderboardStore() {
 				body: JSON.stringify(obfuscatedData)
 			});
 
-			if (!response.ok) throw new Error('Failed to update leaderboard');
-			
-			// Rafraîchir le leaderboard après la mise à jour
+			if (!response.ok) {
+				const errorData = await response.json();
+				if (response.status === 429) {
+					console.log(`Rate limited. Next update in ${errorData.nextUpdateIn} seconds`);
+					return;
+				}
+				throw new Error('Failed to update leaderboard');
+			}
+
 			await fetchLeaderboard();
 		} catch (error) {
 			console.error('Error updating leaderboard:', error);
@@ -73,7 +79,6 @@ function createLeaderboardStore() {
 		}
 	}
 
-	// Rafraîchir le leaderboard périodiquement
 	if (browser) {
 		setInterval(fetchLeaderboard, REFRESH_INTERVAL);
 	}
@@ -87,7 +92,6 @@ function createLeaderboardStore() {
 
 export const leaderboard = createLeaderboardStore();
 
-// Subscribe to atoms and level changes to update leaderboard
 if (browser) {
 	let lastAtoms = 0;
 	let lastLevel = 0;
@@ -100,12 +104,11 @@ if (browser) {
 			const now = Date.now();
 			if (now - lastUpdate < MIN_UPDATE_INTERVAL) return;
 
-			// Vérifier si la mise à jour est nécessaire
 			const atomsChange = Math.abs(atoms - lastAtoms) / Math.max(lastAtoms, 1);
-			const shouldUpdate = 
-				lastAtoms === 0 || // Première mise à jour
-				atomsChange > MIN_ATOMS_CHANGE_PERCENT || // Changement significatif dans les atoms
-				level !== lastLevel; // Changement de niveau
+			const shouldUpdate =
+				lastAtoms === 0 ||
+				atomsChange > MIN_ATOMS_CHANGE_PERCENT ||
+				level !== lastLevel;
 
 			if (shouldUpdate) {
 				lastAtoms = atoms;
