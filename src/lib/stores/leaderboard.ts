@@ -71,6 +71,7 @@ function createLeaderboardStore() {
 				throw new Error('Failed to update leaderboard');
 			}
 
+			// Rafraîchir le leaderboard après la mise à jour
 			await fetchLeaderboard();
 		} catch (error) {
 			console.error('Error updating leaderboard:', error);
@@ -106,9 +107,9 @@ if (browser) {
 
 			const atomsChange = Math.abs(atoms - lastAtoms) / Math.max(lastAtoms, 1);
 			const shouldUpdate =
-				lastAtoms === 0 ||
-				atomsChange > MIN_ATOMS_CHANGE_PERCENT ||
-				level !== lastLevel;
+				lastAtoms === 0 || // Première mise à jour
+				atomsChange > MIN_ATOMS_CHANGE_PERCENT || // Changement significatif dans les atoms
+				level !== lastLevel; // Changement de niveau
 
 			if (shouldUpdate) {
 				lastAtoms = atoms;
