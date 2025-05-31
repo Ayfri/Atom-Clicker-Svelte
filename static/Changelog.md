@@ -1,3 +1,9 @@
+# What's new 31-05-2025
+
+- Migrated to Supabase for authentication and database, lost a few hours of progress for everyone sorry :(
+- Made editing username work.
+- Made cloud saves work.
+
 # What's new 17-02-2025
 
 - Added more upgrades related to electrons and protons.
