@@ -37,18 +37,14 @@
 		},
 	];
 
-	export function getAuthConnection(provider: AuthProvider | null) {
+	export function getAuthConnection(provider: string | undefined) {
 		return AUTH_CONNECTIONS.find(c => c.provider === provider);
 	}
 </script>
 
 <script lang="ts">
-	import {
-		PUBLIC_AUTH0_CALLBACK_URL,
-		PUBLIC_AUTH0_CLIENT_ID,
-		PUBLIC_AUTH0_DOMAIN,
-	} from '$env/static/public';
-	import {auth} from '$stores/auth';
+	import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+	import {supabaseAuth} from '$lib/stores/supabaseAuth';
 	import {X} from 'lucide-svelte';
 	import {fade, fly} from 'svelte/transition';
 
@@ -64,20 +60,39 @@
 	async function handleLogin(connection: AuthConnection) {
 		error = null;
 		try {
-			if (
-				!PUBLIC_AUTH0_DOMAIN ||
-				!PUBLIC_AUTH0_CLIENT_ID ||
-				!PUBLIC_AUTH0_CALLBACK_URL
-			) {
-				error =
-					'Auth0 configuration is missing. Please check your environment variables.';
+			// Check Supabase configuration
+			if (!PUBLIC_SUPABASE_URL || !PUBLIC_SUPABASE_ANON_KEY) {
+				error = 'Supabase configuration is missing. Please check your environment variables.';
 				return;
 			}
 
-			await auth.loginWithProvider(connection.id);
+			// Map provider names to Supabase format
+			let provider: 'google' | 'discord' | 'twitter';
+			switch (connection.id) {
+				case 'google':
+					provider = 'google';
+					break;
+				case 'discord':
+					provider = 'discord';
+					break;
+				case 'x':
+					provider = 'twitter';
+					break;
+				default:
+					error = `Provider ${connection.id} is not supported yet`;
+					return;
+			}
+
+			await supabaseAuth.signInWithProvider(provider);
 		} catch (e) {
 			if (e instanceof Error) {
-				error = e.message;
+				if (e.message.includes('connection is not enabled') || e.message.includes('not configured')) {
+					error = 'Social login provider is not properly configured. Please contact the administrator.';
+				} else if (e.message.includes('Unauthorized')) {
+					error = 'Authentication failed. Please check the configuration.';
+				} else {
+					error = e.message;
+				}
 			} else {
 				error = 'Failed to initialize login. Please try again.';
 			}

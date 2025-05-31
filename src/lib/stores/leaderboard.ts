@@ -1,7 +1,7 @@
 import { writable, derived, get } from 'svelte/store';
 import { atoms, playerLevel } from './gameStore';
 import { browser } from '$app/environment';
-import { auth } from './auth';
+import { supabaseAuth } from './supabaseAuth';
 import type { LeaderboardEntry } from '$lib/types/leaderboard';
 import { obfuscateClientData } from '$lib/utils/obfuscation';
 
@@ -14,15 +14,15 @@ const MIN_ATOMS_CHANGE_PERCENT = 0.05; // 5% de changement minimum dans les atom
 
 function createLeaderboardStore() {
 	const { subscribe, set } = writable<LeaderboardEntry[]>([]);
-	
+
 	// Variables de contrôle des mises à jour
 	let isUpdating = false;
 
 	async function fetchLeaderboard() {
 		if (!browser) return;
 		try {
-			const authState = get(auth);
-			const userId = authState.isAuthenticated ? authState.user?.sub : '';
+			const authState = get(supabaseAuth);
+			const userId = authState.isAuthenticated ? authState.user?.id : '';
 			const response = await fetch(`/api/leaderboard?userId=${userId}`);
 			if (!response.ok) throw new Error('Failed to fetch leaderboard');
 			const data = await response.json();
@@ -34,15 +34,15 @@ function createLeaderboardStore() {
 
 	async function updateScore(atoms: number, level: number) {
 		if (!browser || isUpdating) return;
-		
+
 		try {
 			isUpdating = true;
-			const authState = get(auth);
+			const authState = get(supabaseAuth);
 			if (!authState.isAuthenticated || !authState.user) return;
 
-			const username = authState.user.user_metadata?.username ??
-				authState.user.preferred_username ??
-				authState.user.name ??
+			const username = authState.profile?.username ??
+				authState.user.user_metadata?.username ??
+				authState.user.user_metadata?.full_name ??
 				authState.user.email?.split('@')[0] ??
 				'Anonymous';
 
@@ -50,8 +50,8 @@ function createLeaderboardStore() {
 				username,
 				atoms,
 				level,
-				userId: authState.user.sub,
-				picture: authState.user.picture
+				userId: authState.user.id,
+				picture: authState.profile?.picture ?? authState.user.user_metadata?.avatar_url ?? authState.user.user_metadata?.picture
 			};
 
 			const obfuscatedData = obfuscateClientData(data);
@@ -62,8 +62,15 @@ function createLeaderboardStore() {
 				body: JSON.stringify(obfuscatedData)
 			});
 
-			if (!response.ok) throw new Error('Failed to update leaderboard');
-			
+			if (!response.ok) {
+				const errorData = await response.json();
+				if (response.status === 429) {
+					console.log(`Rate limited. Next update in ${errorData.nextUpdateIn} seconds`);
+					return;
+				}
+				throw new Error('Failed to update leaderboard');
+			}
+
 			// Rafraîchir le leaderboard après la mise à jour
 			await fetchLeaderboard();
 		} catch (error) {
@@ -73,7 +80,6 @@ function createLeaderboardStore() {
 		}
 	}
 
-	// Rafraîchir le leaderboard périodiquement
 	if (browser) {
 		setInterval(fetchLeaderboard, REFRESH_INTERVAL);
 	}
@@ -87,22 +93,20 @@ function createLeaderboardStore() {
 
 export const leaderboard = createLeaderboardStore();
 
-// Subscribe to atoms and level changes to update leaderboard
 if (browser) {
 	let lastAtoms = 0;
 	let lastLevel = 0;
 	let lastUpdate = 0;
 
-	derived([atoms, playerLevel, auth], ([$atoms, $level, $auth]) => ({ atoms: $atoms, level: $level, auth: $auth }))
+	derived([atoms, playerLevel, supabaseAuth], ([$atoms, $level, $auth]) => ({ atoms: $atoms, level: $level, auth: $auth }))
 		.subscribe(({ atoms, level, auth }) => {
 			if (!auth.isAuthenticated) return;
 
 			const now = Date.now();
 			if (now - lastUpdate < MIN_UPDATE_INTERVAL) return;
 
-			// Vérifier si la mise à jour est nécessaire
 			const atomsChange = Math.abs(atoms - lastAtoms) / Math.max(lastAtoms, 1);
-			const shouldUpdate = 
+			const shouldUpdate =
 				lastAtoms === 0 || // Première mise à jour
 				atomsChange > MIN_ATOMS_CHANGE_PERCENT || // Changement significatif dans les atoms
 				level !== lastLevel; // Changement de niveau

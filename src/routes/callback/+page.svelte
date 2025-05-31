@@ -1,59 +1,61 @@
 <script lang="ts">
-	import {goto} from '$app/navigation';
-    import { PUBLIC_AUTH0_CALLBACK_URL, PUBLIC_AUTH0_CLIENT_ID, PUBLIC_AUTH0_DOMAIN } from '$env/static/public';
-	import {auth} from '$stores/auth';
-	import {LoaderCircle} from 'lucide-svelte';
-	import {onMount} from 'svelte';
+	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { supabaseAuth } from '$lib/stores/supabaseAuth';
 
+	let isLoading = true;
 	let error: string | null = null;
-	let loading = true;
 
 	onMount(async () => {
 		try {
-			const envVars = {
-				domain: PUBLIC_AUTH0_DOMAIN,
-				clientId: PUBLIC_AUTH0_CLIENT_ID,
-				callbackUrl: PUBLIC_AUTH0_CALLBACK_URL
-			};
-
-			if (!envVars.domain || !envVars.clientId || !envVars.callbackUrl) {
-				error = 'Authentication is not configured. Please set up Auth0 environment variables or continue without authentication.';
-				return;
-			}
-
-			await auth.init();
-			if (!error) await goto('/');
-		} catch (e) {
-			console.error('Callback error:', e);
-			if (e instanceof Error) {
-				if (e.message.includes('connection is not enabled')) {
-					error = 'Social login is not properly configured. Please contact the administrator.';
-				} else {
-					error = e.message;
-				}
-			} else {
-				error = 'An unexpected error occurred during login.';
-			}
+			// Handle Supabase auth callback
+			await supabaseAuth.init();
+			// Supabase handles the callback automatically via onAuthStateChange
+			await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for auth state to settle
+			goto('/');
+		} catch (err: any) {
+			console.error('Authentication callback error:', err);
+			error = err.message;
 		} finally {
-			loading = false;
+			isLoading = false;
 		}
 	});
 </script>
 
-<div class="flex h-screen w-screen items-center justify-center gap-4 flex-col">
-	{#if error}
-		<div class="max-w-md p-6 rounded-lg bg-red-500/20">
-			<h1 class="text-2xl font-bold text-red-200 mb-2">Login Error</h1>
-			<p class="text-red-100">{error}</p>
+<div class="flex min-h-screen items-center justify-center bg-gray-900">
+	<div class="rounded-lg bg-gray-800 p-8 text-center shadow-xl">
+		{#if isLoading}
+			<div class="mb-4">
+				<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+			</div>
+			<h2 class="text-xl font-semibold text-white mb-2">Completing sign in...</h2>
+			<p class="text-gray-400">Please wait while we redirect you.</p>
+		{:else if error}
+			<div class="mb-4">
+				<div class="rounded-full bg-red-100 p-3 mx-auto w-16 h-16 flex items-center justify-center">
+					<svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+					</svg>
+				</div>
+			</div>
+			<h2 class="text-xl font-semibold text-white mb-2">Authentication failed</h2>
+			<p class="text-gray-400 mb-4">{error}</p>
 			<button
-				class="mt-4 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+				class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
 				on:click={() => goto('/')}
 			>
-				Return to Home
+				Return home
 			</button>
-		</div>
-	{:else if loading}
-		<h1 class="text-2xl font-bold animate-pulse">Logging you in...</h1>
-		<LoaderCircle size={64} class="loading-action rotate-[115deg]"/>
-	{/if}
+		{:else}
+			<div class="mb-4">
+				<div class="rounded-full bg-green-100 p-3 mx-auto w-16 h-16 flex items-center justify-center">
+					<svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+					</svg>
+				</div>
+			</div>
+			<h2 class="text-xl font-semibold text-white mb-2">Sign in successful!</h2>
+			<p class="text-gray-400">Redirecting...</p>
+		{/if}
+	</div>
 </div>
