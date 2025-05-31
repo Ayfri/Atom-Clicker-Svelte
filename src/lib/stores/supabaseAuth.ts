@@ -93,57 +93,6 @@ function createSupabaseAuthStore() {
 				if (directProfile) {
 					profile = directProfile;
 					console.log('Found direct profile:', profile.username);
-				} else {
-					// If not found, try to find by auth0_id in metadata
-					const auth0Id = user.user_metadata?.auth0_id;
-					console.log('Looking for Auth0 profile with ID:', auth0Id);
-
-					if (auth0Id) {
-						const { data: auth0Profile, error: auth0Error } = await supabase
-							.from('profiles')
-							.select('*')
-							.eq('id', auth0Id)
-							.single();
-
-						console.log('Auth0 profile lookup result:', { auth0Profile, error: auth0Error?.message });
-
-						if (auth0Profile) {
-							console.log('Found Auth0 profile, migrating to Supabase UUID...');
-
-							// Found profile with Auth0 ID, let's create/update a profile with Supabase UUID
-							// Only migrate basic profile data, preserve leaderboard data if it exists
-							const newProfileData = {
-								id: user.id,
-								username: auth0Profile.username || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Anonymous',
-								picture: user.user_metadata?.avatar_url || auth0Profile.picture,
-								save: null,
-								updated_at: new Date().toISOString(),
-								created_at: auth0Profile.created_at || new Date().toISOString()
-								// Don't include atoms, level, last_updated to preserve leaderboard data
-							};
-
-							console.log('Creating new profile with data:', newProfileData);
-
-							const { error: upsertError } = await supabase
-								.from('profiles')
-								.upsert(newProfileData, {
-									onConflict: 'id'
-								});
-
-							if (upsertError) {
-								console.error('Error upserting profile:', upsertError);
-							} else {
-								// Fetch the complete profile after upsert to get all fields
-								const { data: completeProfile } = await supabase
-									.from('profiles')
-									.select('*')
-									.eq('id', user.id)
-									.single();
-								profile = completeProfile;
-								console.log('Successfully created/updated profile for:', profile?.username);
-							}
-						}
-					}
 				}
 
 				// If still no profile, create a new one

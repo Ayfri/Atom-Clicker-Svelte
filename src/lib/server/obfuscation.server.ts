@@ -74,7 +74,7 @@ export function verifyAndDecryptClientData(
     }
 }
 
-// For storing in Auth0, we'll use a simple XOR encryption with the server key
+// For storing in Supabase, we'll use a simple XOR encryption with the server key
 function simpleEncrypt(text: string): string {
     try {
         const result = text.split('').map((char, i) => {
