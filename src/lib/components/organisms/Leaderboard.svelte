@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {capitalize, formatNumber} from '$lib/utils';
-	import {auth} from '$stores/auth';
+	import {supabaseAuth} from '$lib/stores/supabaseAuth';
 	import {leaderboard} from '$stores/leaderboard';
 	import {startDate} from '$stores/gameStore';
 	import Login, {getAuthConnection} from '@components/organisms/Login.svelte';
@@ -10,8 +10,7 @@
 	import type { LeaderboardEntry } from '$lib/types/leaderboard';
 
 	function getDisplayUsername(user: LeaderboardEntry | undefined): string {
-		if (!user) return 'Anonymous';
-		return user.user_metadata?.username || user.username || 'Anonymous';
+		return user?.username || 'Anonymous';
 	}
 
 	export let onClose: () => void;
@@ -46,19 +45,16 @@
 		if (refreshInterval) clearInterval(refreshInterval);
 	});
 
-	$: currentUserId = $auth.user?.sub;
-	$: currentUserEntry = $leaderboard.find(entry => entry.self);
-	$: username = getDisplayUsername(currentUserEntry);
+	$: currentUserId = $supabaseAuth.user?.id;
+	$: username = $supabaseAuth.profile?.username || $supabaseAuth.user?.user_metadata?.full_name || $supabaseAuth.user?.user_metadata?.username || $supabaseAuth.user?.email?.split('@')[0] || 'Anonymous';
 	$: userRank = $leaderboard.findIndex(entry => entry.userId === currentUserId) + 1;
 
 	async function handleUsernameUpdate() {
-		if (!$auth.auth0Client || !newUsername) return;
+		if (!$supabaseAuth.supabase || !newUsername) return;
 
 		try {
-			await auth.updateUserMetadata({
-				metadata: {
-					username: newUsername
-				}
+			await supabaseAuth.updateProfile({
+				username: newUsername
 			});
 
 			isEditingUsername = false;
@@ -71,7 +67,7 @@
 	}
 
 	function startEditing() {
-		newUsername = getDisplayUsername(currentUserEntry);
+		newUsername = username;
 		isEditingUsername = true;
 	}
 </script>
@@ -105,7 +101,7 @@
 		</div>
 
 		<div class="flex-1 overflow-y-auto p-4 sm:p-8">
-			{#if !$auth.isAuthenticated}
+			{#if !$supabaseAuth.isAuthenticated}
 				<div class="flex flex-col gap-4 text-center">
 					<h3 class="text-lg font-bold text-accent">Login Required</h3>
 					<p class="text-white/60">
@@ -119,14 +115,14 @@
 					</button>
 				</div>
 			{:else}
-				{@const authConnection = getAuthConnection($auth.provider)}
+				{@const authConnection = getAuthConnection($supabaseAuth.user?.identities?.[0]?.provider)}
 
 				<div class="mb-4 rounded-lg bg-black/20 p-6">
 					<div class="flex items-center gap-6">
 						<div class="relative">
-							{#if $auth.user?.picture}
+							{#if $supabaseAuth.profile?.picture || $supabaseAuth.user?.user_metadata?.avatar_url || $supabaseAuth.user?.user_metadata?.picture}
 								<img
-									src={$auth.user.picture}
+									src={$supabaseAuth.profile?.picture || $supabaseAuth.user?.user_metadata?.avatar_url || $supabaseAuth.user?.user_metadata?.picture}
 									alt={username}
 									class="size-16 rounded-full object-cover ring-2 ring-accent ring-offset-2 ring-offset-accent-900"
 								/>
@@ -202,7 +198,7 @@
 									{/if}
 								</div>
 								<button
-									on:click={() => auth.logout()}
+									on:click={() => supabaseAuth.signOut()}
 									class="flex items-center gap-2 text-sm text-red-500 hover:text-red-400 transition-colors"
 									title="Log out"
 								>

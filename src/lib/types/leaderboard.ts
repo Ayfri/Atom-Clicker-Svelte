@@ -1,12 +1,9 @@
 export interface LeaderboardEntry {
-    username: string;
     atoms: number;
-    level: number;
     lastUpdated: number;
-    userId?: string;
+    level: number;
     picture?: string;
     self?: boolean;
-    user_metadata?: {
-        username?: string;
-    };
+    userId?: string;
+    username: string;
 }

@@ -1,7 +1,7 @@
 import { writable, derived, get } from 'svelte/store';
 import { atoms, playerLevel } from './gameStore';
 import { browser } from '$app/environment';
-import { auth } from './auth';
+import { supabaseAuth } from './supabaseAuth';
 import type { LeaderboardEntry } from '$lib/types/leaderboard';
 import { obfuscateClientData } from '$lib/utils/obfuscation';
 
@@ -21,8 +21,8 @@ function createLeaderboardStore() {
 	async function fetchLeaderboard() {
 		if (!browser) return;
 		try {
-			const authState = get(auth);
-			const userId = authState.isAuthenticated ? authState.user?.sub : '';
+			const authState = get(supabaseAuth);
+			const userId = authState.isAuthenticated ? authState.user?.id : '';
 			const response = await fetch(`/api/leaderboard?userId=${userId}`);
 			if (!response.ok) throw new Error('Failed to fetch leaderboard');
 			const data = await response.json();
@@ -37,12 +37,12 @@ function createLeaderboardStore() {
 
 		try {
 			isUpdating = true;
-			const authState = get(auth);
+			const authState = get(supabaseAuth);
 			if (!authState.isAuthenticated || !authState.user) return;
 
-			const username = authState.user.user_metadata?.username ??
-				authState.user.preferred_username ??
-				authState.user.name ??
+			const username = authState.profile?.username ??
+				authState.user.user_metadata?.username ??
+				authState.user.user_metadata?.full_name ??
 				authState.user.email?.split('@')[0] ??
 				'Anonymous';
 
@@ -50,8 +50,8 @@ function createLeaderboardStore() {
 				username,
 				atoms,
 				level,
-				userId: authState.user.sub,
-				picture: authState.user.picture
+				userId: authState.user.id,
+				picture: authState.profile?.picture ?? authState.user.user_metadata?.avatar_url ?? authState.user.user_metadata?.picture
 			};
 
 			const obfuscatedData = obfuscateClientData(data);
@@ -97,7 +97,7 @@ if (browser) {
 	let lastLevel = 0;
 	let lastUpdate = 0;
 
-	derived([atoms, playerLevel, auth], ([$atoms, $level, $auth]) => ({ atoms: $atoms, level: $level, auth: $auth }))
+	derived([atoms, playerLevel, supabaseAuth], ([$atoms, $level, $auth]) => ({ atoms: $atoms, level: $level, auth: $auth }))
 		.subscribe(({ atoms, level, auth }) => {
 			if (!auth.isAuthenticated) return;
 

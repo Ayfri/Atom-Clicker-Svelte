@@ -13,25 +13,22 @@ export const GET: RequestHandler = async ({ url }) => {
 	try {
 		// Get current user ID from URL params
 		const userIdParam = url.searchParams.get('userId');
-		// Only pass userId if it's not empty, otherwise pass undefined
+		// Only use userId if it's not empty, otherwise set to undefined
 		const currentUserId = userIdParam && userIdParam.trim().length > 0 ? userIdParam : undefined;
 
-		// Get leaderboard data from Supabase (unsorted, get more entries)
-		const rawLeaderboard = await leaderboardService.getLeaderboard(300, currentUserId);
+		// Get leaderboard data from Supabase (simplified function)
+		const rawLeaderboard = await leaderboardService.getLeaderboard(1000);
 
 		// Sort and rank the entries by atoms value using JavaScript
 		const sortedWithRank = addRankToLeaderboard(rawLeaderboard);
 
-		// Take only the top 100 for the final leaderboard
-		const topLeaderboard = sortedWithRank.slice(0, 100);
-
 		// Format response for frontend compatibility
-		const formattedLeaderboard = topLeaderboard.map((entry) => ({
+		const formattedLeaderboard = sortedWithRank.map((entry) => ({
 			username: entry.username || 'Anonymous',
 			atoms: parseFloat(entry.atoms), // Use parseFloat instead of parseInt
 			level: entry.level,
 			picture: entry.picture || '',
-			self: entry.is_current_user,
+			self: currentUserId ? entry.id === currentUserId : false, // Simple JavaScript check
 			lastUpdated: new Date(entry.last_updated).getTime(),
 			rank: entry.rank,
 			userId: entry.id

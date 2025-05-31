@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { auth } from '$stores/auth';
+    import { supabaseAuth } from '$lib/stores/supabaseAuth';
     import { fade, fly } from 'svelte/transition';
     import { X, CloudUpload, CloudDownload, AlertCircle, Clock } from 'lucide-svelte';
     import { info, error as errorToast } from '$stores/toasts';
@@ -70,8 +70,8 @@
     }
 
     async function refreshCloudSaveInfo() {
-        if (!$auth.isAuthenticated) return;
-        cloudSaveInfo = await auth.getCloudSaveInfo();
+        if (!$supabaseAuth.isAuthenticated) return;
+        cloudSaveInfo = await supabaseAuth.getCloudSaveInfo();
     }
 
     onMount(refreshCloudSaveInfo);
@@ -83,7 +83,7 @@
     }
 
     async function handleSaveToCloud() {
-        if (!$auth.isAuthenticated) {
+        if (!$supabaseAuth.isAuthenticated) {
             error = 'Please log in to use cloud saves';
             return;
         }
@@ -96,49 +96,22 @@
 
         loading = true;
         error = null;
-        let retryCount = 0;
-        const maxRetries = 3;
 
-        while (retryCount < maxRetries) {
-            try {
-                await auth.saveGameToCloud();
-                await refreshCloudSaveInfo();
-                info('Success', 'Game saved to cloud');
-                startCooldown();
-                break;
-            } catch (e) {
-                retryCount++;
-                const isLastAttempt = retryCount === maxRetries;
-
-                if (e instanceof Error) {
-                    if (e.message.includes('Invalid or expired data') || e.message.includes('Invalid signature')) {
-                        // Si c'est une erreur de signature, on réessaie immédiatement
-                        if (!isLastAttempt) {
-                            console.log(`Retrying save after signature error (attempt ${retryCount}/${maxRetries})`);
-                            continue;
-                        }
-                        error = 'Failed to verify save data. Please try again.';
-                    } else {
-                        error = isLastAttempt ? e.message : 'Retrying save...';
-                    }
-                } else {
-                    error = 'Failed to save game to cloud';
-                }
-
-                if (isLastAttempt) {
-                    errorToast('Error', error);
-                } else {
-                    // Wait before retrying
-                    await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-                }
-            }
+        try {
+            await supabaseAuth.saveGameToCloud();
+            await refreshCloudSaveInfo();
+            info('Success', 'Game saved to cloud');
+            startCooldown();
+        } catch (e) {
+            error = e instanceof Error ? e.message : 'Failed to save game to cloud';
+            errorToast('Error', error);
+        } finally {
+            loading = false;
         }
-
-        loading = false;
     }
 
     async function handleLoadFromCloud() {
-        if (!$auth.isAuthenticated) {
+        if (!$supabaseAuth.isAuthenticated) {
             error = 'Please log in to use cloud saves';
             return;
         }
@@ -146,7 +119,7 @@
         loading = true;
         error = null;
         try {
-            const loaded = await auth.loadGameFromCloud();
+            const loaded = await supabaseAuth.loadGameFromCloud();
             if (loaded) {
                 info('Success', 'Game loaded from cloud');
                 onClose();
@@ -182,7 +155,7 @@
         </div>
 
         <div class="flex-1 p-8">
-            {#if !$auth.isAuthenticated}
+            {#if !$supabaseAuth.isAuthenticated}
                 <div class="flex flex-col items-center gap-4 text-center">
                     <AlertCircle class="text-red-500" size={48} />
                     <p class="text-lg font-semibold text-white">Please log in to use cloud saves</p>

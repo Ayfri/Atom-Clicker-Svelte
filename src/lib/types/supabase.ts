@@ -12,32 +12,35 @@ export type Database = {
 			profiles: {
 				Row: {
 					atoms: string
-					created_at: string
+					created_at: string | null
 					id: string
-					last_updated: string
+					last_updated: string | null
 					level: number
 					picture: string | null
-					updated_at: string
+					save: Json | null
+					updated_at: string | null
 					username: string | null
 				}
 				Insert: {
 					atoms?: string
-					created_at?: string
+					created_at?: string | null
 					id: string
-					last_updated?: string
+					last_updated?: string | null
 					level?: number
 					picture?: string | null
-					updated_at?: string
+					save?: Json | null
+					updated_at?: string | null
 					username?: string | null
 				}
 				Update: {
 					atoms?: string
-					created_at?: string
+					created_at?: string | null
 					id?: string
-					last_updated?: string
+					last_updated?: string | null
 					level?: number
 					picture?: string | null
-					updated_at?: string
+					save?: Json | null
+					updated_at?: string | null
 					username?: string | null
 				}
 				Relationships: []
@@ -48,7 +51,7 @@ export type Database = {
 		}
 		Functions: {
 			get_leaderboard: {
-				Args: { p_limit?: number; p_current_user_id?: string }
+				Args: { p_limit?: number }
 				Returns: {
 					id: string
 					username: string
@@ -56,8 +59,6 @@ export type Database = {
 					level: number
 					picture: string
 					last_updated: string
-					is_current_user: boolean
-					rank: number
 				}[]
 			}
 			update_profile_stats: {
@@ -185,18 +186,13 @@ export type CompositeTypes<
 		? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
 		: never
 
+export const Constants = {
+	public: {
+		Enums: {},
+	},
+} as const
+
 // Helper types
 export type Profile = Tables<'profiles'>
 export type ProfileInsert = TablesInsert<'profiles'>
 export type ProfileUpdate = TablesUpdate<'profiles'>
-
-export type LeaderboardEntry = {
-	id: string
-	username: string
-	atoms: string
-	level: number
-	picture: string
-	last_updated: string
-	is_current_user: boolean
-	rank: number
-}

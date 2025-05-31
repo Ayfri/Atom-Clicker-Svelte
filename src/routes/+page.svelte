@@ -1,7 +1,7 @@
 <script lang="ts">
 	import {gameManager} from '$helpers/gameManager';
 	import {setGlobals} from '$lib/globals';
-	import {auth} from '$stores/auth';
+	import {supabaseAuth} from '$lib/stores/supabaseAuth';
 	import {atomsPerSecond, upgrades} from '$stores/gameStore';
 	import {app} from '$stores/pixi';
 	import {mobile} from '$stores/window';
@@ -34,7 +34,7 @@
 	onMount(async () => {
 		$mobile = window.innerWidth <= 900;
 		gameManager.initialize();
-		await auth.init();
+		await supabaseAuth.init();
 
 		while (!$app || !$app?.ticker) {
 			await new Promise(resolve => setTimeout(resolve, 100));

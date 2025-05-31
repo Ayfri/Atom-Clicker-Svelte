@@ -13,10 +13,9 @@ export const supabaseAdmin = createClient<Database>(PUBLIC_SUPABASE_URL, SUPABAS
 
 // Helper functions for leaderboard operations
 export const leaderboardService = {
-	async getLeaderboard(limit: number = 100, currentUserId?: string) {
+	async getLeaderboard(limit: number = 1000) {
 		const { data, error } = await supabaseAdmin.rpc('get_leaderboard', {
-			p_limit: limit,
-			p_current_user_id: currentUserId
+			p_limit: limit
 		});
 
 		if (error) {
