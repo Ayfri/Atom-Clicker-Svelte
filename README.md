@@ -66,8 +66,7 @@ pnpm build
 - [TypeScript](https://www.typescriptlang.org/) - Language
 - [TailwindCSS](https://tailwindcss.com/) - Styling
 - [Pixi.js](https://pixijs.com/) - Graphics
-- [Supabase](https://supabase.com/) - Database and backend services
-- [Auth0](https://auth0.com/) - Authentication
+- [Supabase](https://supabase.com/) - Authentication and Database
 - [Lucide Icons](https://lucide.dev) - Beautiful icons
 - [Svelte Flow](https://svelteflow.dev) - Flow diagrams
 
