@@ -188,50 +188,6 @@
 											</button>
 										</div>
 									{/if}
-									{#if isEditingUsername}
-										<form
-											on:submit|preventDefault={handleUsernameUpdate}
-											class="flex items-center gap-2"
-										>
-											<input
-												type="text"
-												bind:value={newUsername}
-												class="bg-black/20 rounded px-2 py-1 text-white border border-accent/50 focus:border-accent outline-none"
-												placeholder="Enter new username"
-												maxlength="30"
-												minlength="3"
-											/>
-											<button
-												type="submit"
-												class="text-accent hover:text-accent-400 transition-colors"
-												title="Save username"
-											>
-												<Save class="size-4" />
-											</button>
-											<button
-												type="button"
-												on:click={() => {
-													isEditingUsername = false;
-													editError = null;
-												}}
-												class="text-white/60 hover:text-white transition-colors"
-												title="Cancel"
-											>
-												Cancel
-											</button>
-										</form>
-									{:else}
-										<div class="font-bold text-white text-lg capitalize">
-											{username}
-											<button
-												on:click={startEditing}
-												class="ml-2 text-accent/60 hover:text-accent inline-flex items-center transition-colors"
-												title="Edit username"
-											>
-												<Edit2 class="size-4" />
-											</button>
-										</div>
-									{/if}
 									{#if authConnection}
 										<img
 											class="size-4 align-middle"
