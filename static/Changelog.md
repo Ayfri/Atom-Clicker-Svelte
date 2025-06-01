@@ -3,6 +3,7 @@
 - Added a lot of new skill tree upgrades.
 - Added 2 new secret achievements.
 - Added new colors for buildings.
+- Added a new tooltip for the counter.
 - Fixed a bug where total protonizing achievements were not detecting the correct value.
 - Tweak achievements milestones to be more realistic.
 
