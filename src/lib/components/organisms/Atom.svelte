@@ -7,7 +7,6 @@
 	import {formatNumber} from '$lib/utils';
 	import {particles} from '$stores/canvas';
 
-	let spawnInterval: number;
 	let atomElement: HTMLDivElement;
 
 	export function simulateClick() {
@@ -48,7 +47,7 @@
 		particles.update(current => [...current,...newParticles]);
 	}
 
-	onDestroy(() => clearInterval(spawnInterval));
+	onDestroy(() => clearInterval(interval));
 </script>
 
 <div
