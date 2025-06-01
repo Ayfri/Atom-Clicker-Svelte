@@ -141,7 +141,7 @@ function createTotalLevelsAchievements(): Achievement[] {
 		};
 	}
 
-	return [1, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10_000, 25_000, 50_000, 100_000, 250_000, 500_000, 1_000_000].map(createTotalLevelsAchievement);
+	return [1, 10, 25, 50, 100, 250, 500, 727, 1000, 2500, 5000, 10_000].map(createTotalLevelsAchievement);
 }
 
 function createProtonisesAchievements(): Achievement[] {
