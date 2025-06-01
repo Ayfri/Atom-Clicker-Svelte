@@ -9,7 +9,7 @@
 	import Leaderboard from '$lib/components/organisms/Leaderboard.svelte';
 	import { ChartNoAxesColumn, Network, Info, Atom, Trophy, MessageSquare, Orbit, FileText, Cloud } from 'lucide-svelte';
 	import { onDestroy, onMount, type ComponentType } from 'svelte';
-	import { skillPointsAvailable, protons, atoms, electrons, skillPointsTotal } from '$lib/stores/gameStore';
+	import { skillPointsAvailable, protons, atoms, electrons, skillPointsTotal, hasAvailableSkillUpgrades } from '$lib/stores/gameStore';
 	import { protoniseProtonsGain, PROTONS_ATOMS_REQUIRED } from '$lib/stores/protons';
 	import { electronizeElectronsGain, ELECTRONS_PROTONS_REQUIRED } from '$lib/stores/electrons';
 	import FeedbackForm from '$lib/components/organisms/FeedbackForm.svelte';
@@ -41,7 +41,7 @@
 			label: 'Skill Tree',
 			component: SkillTree,
 			condition: () => $skillPointsTotal > 0,
-			notification: () => $skillPointsAvailable > 0,
+			notification: () => $hasAvailableSkillUpgrades,
 		},
 		{
 			icon: Atom,

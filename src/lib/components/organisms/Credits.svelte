@@ -3,8 +3,22 @@
 	import Discord from '@components/icons/Discord.svelte';
 	import { ArrowRight, SquareArrowOutUpRight, X } from 'lucide-svelte';
 	import { fade, fly } from 'svelte/transition';
+	import { gameManager } from '$helpers/gameManager';
+	import { achievements } from '$stores/gameStore';
 
 	export let onClose: () => void;
+
+	let hiddenAtomClicked = false;
+
+	// Check if achievement is already unlocked
+	$: isAlreadyUnlocked = $achievements.includes('hidden_atom_clicked');
+
+	function handleHiddenAtomClick() {
+		if (!hiddenAtomClicked && !isAlreadyUnlocked) {
+			hiddenAtomClicked = true;
+			gameManager.unlockAchievement('hidden_atom_clicked');
+		}
+	}
 
 	const creator = {
 		name: 'Ayfri',
@@ -58,7 +72,20 @@
 <div class="overlay" on:click={onClose} transition:fade={{ duration: 200 }}>
 	<div class="modal bg-gradient-to-br from-accent-900 to-accent-800" on:click|stopPropagation transition:fly={{ y: -100, duration: 300 }}>
 		<div class="flex items-center justify-between gap-4 border-b border-white/10 bg-black/40 p-6 sm:px-8">
-			<h2 class="flex-1 text-2xl font-bold text-white">Credits</h2>
+			<div class="flex items-center gap-3 flex-1">
+				<h2 class="text-2xl font-bold text-white">Credits</h2>
+				{#if !hiddenAtomClicked && !isAlreadyUnlocked}
+					<button
+						class="opacity-10 hover:opacity-50 transition-opacity duration-1000"
+						on:click={handleHiddenAtomClick}
+						transition:fade={{ duration: 1000 }}
+						aria-label="Hidden secret"
+						title="?"
+					>
+						<img src="/atom.png" alt="Hidden atom" class="size-5" />
+					</button>
+				{/if}
+			</div>
 			<button class="flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:*:stroke-[3]" on:click={onClose}>
 				<X class="transition-all duration-300" />
 			</button>

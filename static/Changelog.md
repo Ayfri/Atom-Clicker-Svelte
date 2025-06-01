@@ -1,3 +1,11 @@
+# What's new 01-06-2025
+
+- Added a lot of new skill tree upgrades.
+- Added 2 new secret achievements.
+- Added new colors for buildings.
+- Fixed a bug where total protonizing achievements were not detecting the correct value.
+- Tweak achievements milestones to be more realistic.
+
 # What's new 31-05-2025
 
 - Migrated to Supabase for authentication and database, lost a few hours of progress for everyone sorry :(

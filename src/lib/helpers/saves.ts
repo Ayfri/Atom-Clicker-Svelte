@@ -3,7 +3,7 @@ import {CurrenciesTypes} from '$data/currencies';
 import type {Building, GameState} from '../types';
 
 export const SAVE_KEY = 'atomic-clicker-save';
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 
 // Helper functions for state management
 export function loadSavedState(): GameState | null {
@@ -57,8 +57,8 @@ export function isValidGameState(state: any): state is GameState {
 		],
 		[
 			'settings',
-			(v: any) => typeof v === 'object' && 
-				typeof v.automation === 'object' && 
+			(v: any) => typeof v === 'object' &&
+				typeof v.automation === 'object' &&
 				Array.isArray(v.automation.buildings) &&
 				typeof v.automation.upgrades === 'boolean'
 		],
@@ -72,6 +72,10 @@ export function isValidGameState(state: any): state is GameState {
 		],
 		[
 			'totalClicks',
+			(v: any) => typeof v === 'number',
+		],
+		[
+			'totalElectronizes',
 			(v: any) => typeof v === 'number',
 		],
 		[
@@ -163,6 +167,14 @@ function migrateSavedState(savedState: any): GameState | undefined {
 			}
 		};
 		savedState.version = 8;
+	}
+	if (savedState.version === 8) {
+		// Add totalElectronizes
+		savedState.totalElectronizes = 0;
+		if (savedState.electrons > 0) {
+			savedState.totalElectronizes = 1;
+		}
+		savedState.version = 9;
 	}
 
 	return savedState;

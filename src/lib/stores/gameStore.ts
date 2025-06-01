@@ -15,7 +15,7 @@ export const electrons = writable<number>(0);
 export const buildings = writable<Partial<Record<BuildingType, Building>>>({});
 export const lastSave = writable<number>(Date.now());
 export const protons = writable<number>(0);
-export const settings = writable<Settings>({ 
+export const settings = writable<Settings>({
 	automation: {
 		buildings: [],
 		upgrades: false
@@ -24,6 +24,7 @@ export const settings = writable<Settings>({
 export const skillUpgrades = writable<string[]>([]);
 export const startDate = writable<number>(Date.now());
 export const totalClicks = writable<number>(0);
+export const totalElectronizes = writable<number>(0);
 export const totalProtonises = writable<number>(0);
 export const totalXP = writable<number>(0);
 export const upgrades = writable<string[]>([]);
@@ -149,6 +150,30 @@ export const atomsPerSecond = derived(
 
 export const skillPointsTotal = derived([buildings], ([$buildings]) => Object.values($buildings).reduce((sum, building) => sum + building.level, 0));
 export const skillPointsAvailable = derived([skillPointsTotal, skillUpgrades], ([$skillPointsTotal, $skillUpgrades]) => $skillPointsTotal - $skillUpgrades.length);
+
+// Check if any skill upgrades are available for purchase
+export const hasAvailableSkillUpgrades = derived(
+	[skillPointsAvailable, skillUpgrades, buildings],
+	([$skillPointsAvailable, $skillUpgrades, $buildings]) => {
+		if ($skillPointsAvailable <= 0) return false;
+
+		// Check if there are any skills that can be unlocked
+		const currentState = { buildings: $buildings, skillUpgrades: $skillUpgrades } as any;
+
+		return Object.values(SKILL_UPGRADES).some(skill => {
+			// Skip if already purchased
+			if ($skillUpgrades.includes(skill.id)) return false;
+
+			// Check if conditions are met
+			if (skill.condition && !skill.condition(currentState)) return false;
+
+			// Check if requirements are met
+			if (skill.requires && !skill.requires.every(req => $skillUpgrades.includes(req))) return false;
+
+			return true;
+		});
+	}
+);
 
 export const clickPower = derived(
 	[currentUpgradesBought, bonusMultiplier, buildingProductions],

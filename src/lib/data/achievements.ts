@@ -1,8 +1,9 @@
 import {get} from 'svelte/store';
-import {atomsPerSecond, playerLevel, totalProtonises} from '$stores/gameStore';
+import {atomsPerSecond, playerLevel} from '$stores/gameStore';
 import type {Achievement, GameState} from '$lib/types';
 import {formatNumber} from '$lib/utils';
 import {BUILDING_TYPES, BUILDINGS, type BuildingType} from '$data/buildings';
+import {SKILL_UPGRADES} from '$data/skillTree';
 
 export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
 	{
@@ -22,6 +23,23 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
 		condition: (state: GameState) => {
 			const totalBuildings = Object.values(state.buildings).reduce((sum, b) => sum + b.count, 0);
 			return totalBuildings >= 100;
+		},
+	},
+	{
+		id: 'hidden_atom_clicked',
+		name: 'Atomic Discoverer',
+		description: 'Found the hidden atom in the credits',
+		hiddenCondition: (state: GameState) => !state.achievements.includes('hidden_atom_clicked'),
+		condition: (state: GameState) => state.achievements.includes('hidden_atom_clicked'),
+	},
+	{
+		id: 'skill_tree_master',
+		name: 'Skill Tree Master',
+		description: 'Master of the atomic realm',
+		hiddenCondition: (state: GameState) => state.skillUpgrades.length === 0,
+		condition: (state: GameState) => {
+			const totalSkillUpgrades = Object.keys(SKILL_UPGRADES).length;
+			return state.skillUpgrades.length >= totalSkillUpgrades;
 		},
 	},
 ];
@@ -47,6 +65,8 @@ function createBuildingAchievements(buildingId: BuildingType): Achievement[] {
 		createBuildingCountAchievement('Two hundred', 200),
 		createBuildingCountAchievement('Three hundred', 300),
 		createBuildingCountAchievement('Five hundred', 500),
+		createBuildingCountAchievement('One thousand', 1000),
+		createBuildingCountAchievement('Two thousand', 2000),
 	];
 }
 
@@ -123,7 +143,7 @@ function createTotalLevelsAchievements(): Achievement[] {
 		};
 	}
 
-	return [1, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10_000, 25_000, 50_000, 100_000, 250_000, 500_000, 1_000_000].map(createTotalLevelsAchievement);
+	return [1, 10, 25, 50, 100, 250, 500, 727, 1000, 2500, 5000, 10_000].map(createTotalLevelsAchievement);
 }
 
 function createProtonisesAchievements(): Achievement[] {
@@ -132,7 +152,7 @@ function createProtonisesAchievements(): Achievement[] {
 			id: `protonises_${count}`,
 			name: `${count} Protonises`,
 			description: `Protonise ${count} times`,
-			condition: () => get(totalProtonises) >= count,
+			condition: (state: GameState) => state.totalProtonises >= count,
 			hiddenCondition: (state: GameState) => state.totalProtonises === 0,
 		};
 	}
@@ -146,8 +166,8 @@ function createElectronizesAchievements(): Achievement[] {
 			id: `electronizes_${count}`,
 			name: `${count} Electronizes`,
 			description: `Electronize ${count} times`,
-			condition: (state: GameState) => state.electrons >= count,
-			hiddenCondition: (state: GameState) => state.electrons === 0,
+			condition: (state: GameState) => state.totalElectronizes >= count,
+			hiddenCondition: (state: GameState) => state.totalElectronizes === 0,
 		};
 	}
 
