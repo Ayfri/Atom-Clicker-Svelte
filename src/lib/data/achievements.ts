@@ -3,6 +3,7 @@ import {atomsPerSecond, playerLevel} from '$stores/gameStore';
 import type {Achievement, GameState} from '$lib/types';
 import {formatNumber} from '$lib/utils';
 import {BUILDING_TYPES, BUILDINGS, type BuildingType} from '$data/buildings';
+import {SKILL_UPGRADES} from '$data/skillTree';
 
 export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
 	{
@@ -22,6 +23,16 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
 		condition: (state: GameState) => {
 			const totalBuildings = Object.values(state.buildings).reduce((sum, b) => sum + b.count, 0);
 			return totalBuildings >= 100;
+		},
+	},
+	{
+		id: 'skill_tree_master',
+		name: 'Skill Tree Master',
+		description: 'Master of the atomic realm',
+		hiddenCondition: (state: GameState) => state.skillUpgrades.length === 0,
+		condition: (state: GameState) => {
+			const totalSkillUpgrades = Object.keys(SKILL_UPGRADES).length;
+			return state.skillUpgrades.length >= totalSkillUpgrades;
 		},
 	},
 ];
