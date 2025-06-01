@@ -26,6 +26,13 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
 		},
 	},
 	{
+		id: 'hidden_atom_clicked',
+		name: 'Atomic Discoverer',
+		description: 'Found the hidden atom in the credits',
+		hiddenCondition: (state: GameState) => !state.achievements.includes('hidden_atom_clicked'),
+		condition: (state: GameState) => state.achievements.includes('hidden_atom_clicked'),
+	},
+	{
 		id: 'skill_tree_master',
 		name: 'Skill Tree Master',
 		description: 'Master of the atomic realm',

@@ -451,4 +451,16 @@ export const gameManager = {
 			}
 		}));
 	},
+
+	unlockAchievement(achievementId: string) {
+		const currentState = this.getCurrentState();
+		if (!currentState.achievements.includes(achievementId) && achievementId in ACHIEVEMENTS) {
+			achievements.update(current => [
+				...current,
+				achievementId,
+			]);
+			const achievement = ACHIEVEMENTS[achievementId];
+			info("Achievement unlocked", achievement.name);
+		}
+	},
 };
