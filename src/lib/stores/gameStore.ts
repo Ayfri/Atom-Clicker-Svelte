@@ -151,6 +151,30 @@ export const atomsPerSecond = derived(
 export const skillPointsTotal = derived([buildings], ([$buildings]) => Object.values($buildings).reduce((sum, building) => sum + building.level, 0));
 export const skillPointsAvailable = derived([skillPointsTotal, skillUpgrades], ([$skillPointsTotal, $skillUpgrades]) => $skillPointsTotal - $skillUpgrades.length);
 
+// Check if any skill upgrades are available for purchase
+export const hasAvailableSkillUpgrades = derived(
+	[skillPointsAvailable, skillUpgrades, buildings],
+	([$skillPointsAvailable, $skillUpgrades, $buildings]) => {
+		if ($skillPointsAvailable <= 0) return false;
+
+		// Check if there are any skills that can be unlocked
+		const currentState = { buildings: $buildings, skillUpgrades: $skillUpgrades } as any;
+
+		return Object.values(SKILL_UPGRADES).some(skill => {
+			// Skip if already purchased
+			if ($skillUpgrades.includes(skill.id)) return false;
+
+			// Check if conditions are met
+			if (skill.condition && !skill.condition(currentState)) return false;
+
+			// Check if requirements are met
+			if (skill.requires && !skill.requires.every(req => $skillUpgrades.includes(req))) return false;
+
+			return true;
+		});
+	}
+);
+
 export const clickPower = derived(
 	[currentUpgradesBought, bonusMultiplier, buildingProductions],
 	([$currentUpgradesBought, $bonusMultiplier, $buildingProductions]) => {
