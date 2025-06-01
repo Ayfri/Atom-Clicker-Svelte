@@ -3,23 +3,50 @@
 	export let position: 'top' | 'bottom' | 'left' | 'right' = 'top';
 	export let size: 'sm' | 'md' | 'lg' = 'md';
 
-	let showTooltip = false;
-	let tooltipElement: HTMLDivElement;
+	let tooltipId = `tooltip-${Math.random().toString(36).substr(2, 9)}`;
+	let triggerElement: HTMLButtonElement;
+	let popoverElement: HTMLDivElement;
 
-	function toggleTooltip() {
-		showTooltip = !showTooltip;
-	}
+	function positionPopover() {
+		if (!triggerElement || !popoverElement) return;
 
-	function handleClickOutside(event: MouseEvent) {
-		if (tooltipElement && !tooltipElement.contains(event.target as Node)) {
-			showTooltip = false;
+		const triggerRect = triggerElement.getBoundingClientRect();
+		const popoverRect = popoverElement.getBoundingClientRect();
+
+		let top: number, left: number;
+
+		switch (position) {
+			case 'top':
+				top = triggerRect.top - popoverRect.height - 8;
+				left = triggerRect.left + triggerRect.width / 2 - popoverRect.width / 2;
+				break;
+			case 'bottom':
+				top = triggerRect.bottom + 8;
+				left = triggerRect.left + triggerRect.width / 2 - popoverRect.width / 2;
+				break;
+			case 'left':
+				top = triggerRect.top + triggerRect.height / 2 - popoverRect.height / 2;
+				left = triggerRect.left - popoverRect.width - 8;
+				break;
+			case 'right':
+				top = triggerRect.top + triggerRect.height / 2 - popoverRect.height / 2;
+				left = triggerRect.right + 8;
+				break;
 		}
+
+		// Keep popover within viewport
+		top = Math.max(8, Math.min(top, window.innerHeight - popoverRect.height - 8));
+		left = Math.max(8, Math.min(left, window.innerWidth - popoverRect.width - 8));
+
+		popoverElement.style.top = `${top}px`;
+		popoverElement.style.left = `${left}px`;
 	}
 
-	$: if (showTooltip && typeof document !== 'undefined') {
-		document.addEventListener('click', handleClickOutside);
-	} else if (typeof document !== 'undefined') {
-		document.removeEventListener('click', handleClickOutside);
+	function handleToggle(event: Event) {
+		if ((event.target as HTMLElement).matches(':popover-open')) {
+			// Popover just opened, position it
+			requestAnimationFrame(positionPopover);
+		}
 	}
 
 	$: positionClasses = {
@@ -43,13 +70,13 @@
 	}[position];
 </script>
 
-<div class="relative inline-block" bind:this={tooltipElement}>
+<div class="relative inline-block">
 	<!-- Desktop: hover trigger -->
 	<div class="hidden sm:block tooltip-trigger">
 		<slot />
 
 		<!-- Desktop tooltip (hover) -->
-		<div class="tooltip absolute left-1/2 transform -translate-x-1/2 {positionClasses} bg-black/95 backdrop-blur-sm rounded-lg {sizeClasses} opacity-0 pointer-events-none transition-all duration-200 z-[100]">
+		<div class="tooltip absolute left-1/2 transform -translate-x-1/2 {positionClasses} bg-black/95 backdrop-blur-sm rounded-lg {sizeClasses} opacity-0 pointer-events-none transition-all duration-200">
 			<div class="text-white/90">
 				<slot name="content">{content}</slot>
 			</div>
@@ -58,34 +85,36 @@
 		</div>
 	</div>
 
-	<!-- Mobile: click trigger -->
+	<!-- Mobile: popover trigger -->
 	<div class="sm:hidden">
-		<button on:click={toggleTooltip} class="p-1">
+		<button bind:this={triggerElement} popovertarget={tooltipId} class="flex items-center justify-center">
 			<slot />
 		</button>
-
-		<!-- Mobile tooltip (click) -->
-		{#if showTooltip}
-			<div class="fixed left-1/2 transform -translate-x-1/2 top-1/2 -translate-y-1/2 bg-black/95 backdrop-blur-sm rounded-lg {sizeClasses} max-w-[90vw] z-50 border border-white/20">
-				<div class="flex justify-between items-center mb-2">
-					<div class="text-white/90">
-						<slot name="content">{content}</slot>
-					</div>
-					<button
-						on:click={toggleTooltip}
-						class="text-white/60 hover:text-white/80 transition-colors ml-3"
-					>
-						×
-					</button>
-				</div>
-			</div>
-		{/if}
 	</div>
+</div>
+
+<!-- Popover tooltip for mobile -->
+<div
+	bind:this={popoverElement}
+	id={tooltipId}
+	popover="auto"
+	on:toggle={handleToggle}
+	class="fixed bg-black/95 backdrop-blur-sm rounded-lg p-3 border border-white/20 max-w-[90vw] min-w-[200px] text-white/90 text-sm"
+>
+	<slot name="content">{content}</slot>
+	<!-- Arrow positioned dynamically via JS -->
+	<div class="popover-arrow absolute w-0 h-0 {arrowClasses}"></div>
 </div>
 
 <style>
 	.tooltip-trigger:hover .tooltip {
 		opacity: 1;
 		pointer-events: auto;
+	}
+
+		/* Popover styles */
+	[popover] {
+		margin: 0;
+		inset: unset;
 	}
 </style>
