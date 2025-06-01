@@ -5,17 +5,15 @@ import { supabaseAuth } from './supabaseAuth';
 import type { LeaderboardEntry } from '$lib/types/leaderboard';
 import { obfuscateClientData } from '$lib/utils/obfuscation';
 
-// Constantes de temps (en millisecondes)
-const REFRESH_INTERVAL = 1 * 60_000; // 1 minute entre chaque rafraîchissement du leaderboard
-const MIN_UPDATE_INTERVAL = 10_000; // 10 secondes minimum entre les mises à jour
+const REFRESH_INTERVAL = 1 * 60_000; // 1 minute between leaderboard refreshes
+const MIN_UPDATE_INTERVAL = 30_000; // 30 seconds minimum between updates
 
-// Seuils de mise à jour
-const MIN_ATOMS_CHANGE_PERCENT = 0.05; // 5% de changement minimum dans les atoms
+const MIN_ATOMS_CHANGE_PERCENT = 0.05; // 5% minimum change in atoms
 
 function createLeaderboardStore() {
 	const { subscribe, set } = writable<LeaderboardEntry[]>([]);
 
-	// Variables de contrôle des mises à jour
+	// Update control variables
 	let isUpdating = false;
 
 	async function fetchLeaderboard() {
@@ -71,7 +69,7 @@ function createLeaderboardStore() {
 				throw new Error('Failed to update leaderboard');
 			}
 
-			// Rafraîchir le leaderboard après la mise à jour
+			// Refresh leaderboard after update
 			await fetchLeaderboard();
 		} catch (error) {
 			console.error('Error updating leaderboard:', error);
@@ -107,9 +105,9 @@ if (browser) {
 
 			const atomsChange = Math.abs(atoms - lastAtoms) / Math.max(lastAtoms, 1);
 			const shouldUpdate =
-				lastAtoms === 0 || // Première mise à jour
-				atomsChange > MIN_ATOMS_CHANGE_PERCENT || // Changement significatif dans les atoms
-				level !== lastLevel; // Changement de niveau
+				lastAtoms === 0 || // First update
+				atomsChange > MIN_ATOMS_CHANGE_PERCENT || // Significant change in atoms
+				level !== lastLevel; // Level change
 
 			if (shouldUpdate) {
 				lastAtoms = atoms;

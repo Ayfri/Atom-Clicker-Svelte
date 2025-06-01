@@ -55,13 +55,6 @@ export function verifyAndDecryptClientData(
         const decodedStr = decodeURIComponent(escape(atob(encodedData)));
         const parsedData = JSON.parse(decodedStr);
 
-        // Log successful parsing
-        console.log('Successfully parsed save data:', {
-            timestamp,
-            dataSize: encodedData.length,
-            parsedKeys: Object.keys(parsedData)
-        });
-
         return parsedData;
     } catch (error) {
         console.error('Error in verifyAndDecryptClientData:', {
