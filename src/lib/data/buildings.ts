@@ -109,15 +109,27 @@ export const BUILDINGS: Record<BuildingType, BuildingData> = {
 export const BUILDING_LEVEL_UP_COST = 100;
 
 export const BUILDING_COLORS = [
-	"#4a90e2",
-	"#e34b4b",
-	"#f9c80e",
-	"#6b4ae2",
-	"#45d945",
-	"#4ae2c6",
-	"#b441ae",
-	"#4a4ae2",
-	"#e36d31",
+	"#4a90e2", // Blue
+	"#e34b4b", // Red
+	"#f9c80e", // Yellow
+	"#6b4ae2", // Purple
+	"#45d945", // Green
+	"#4ae2c6", // Teal
+	"#b441ae", // Magenta
+	"#4a4ae2", // Blue Purple
+	"#e36d31", // Orange
+	"#ff6b9d", // Pink
+	"#00d4aa", // Turquoise
+	"#ff8c42", // Orange Red
+	"#8e44ad", // Dark Purple
+	"#2ecc71", // Emerald Green
+	"#e74c3c", // Crimson Red
+	"#3498db", // Sky Blue
+	"#f39c12", // Golden Orange
+	"#9b59b6", // Amethyst Purple
+	"#1abc9c", // Mint Green
+	"#e67e22", // Carrot Orange
+	"#34495e", // Dark Gray Blue
 ] as const;
 
 export const BUILDING_TYPES = Object.keys(BUILDINGS) as BuildingType[];
