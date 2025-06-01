@@ -1,5 +1,5 @@
 import {get} from 'svelte/store';
-import {atomsPerSecond, playerLevel, totalProtonises} from '$stores/gameStore';
+import {atomsPerSecond, playerLevel} from '$stores/gameStore';
 import type {Achievement, GameState} from '$lib/types';
 import {formatNumber} from '$lib/utils';
 import {BUILDING_TYPES, BUILDINGS, type BuildingType} from '$data/buildings';
@@ -132,7 +132,7 @@ function createProtonisesAchievements(): Achievement[] {
 			id: `protonises_${count}`,
 			name: `${count} Protonises`,
 			description: `Protonise ${count} times`,
-			condition: () => get(totalProtonises) >= count,
+			condition: (state: GameState) => state.totalProtonises >= count,
 			hiddenCondition: (state: GameState) => state.totalProtonises === 0,
 		};
 	}
@@ -146,8 +146,8 @@ function createElectronizesAchievements(): Achievement[] {
 			id: `electronizes_${count}`,
 			name: `${count} Electronizes`,
 			description: `Electronize ${count} times`,
-			condition: (state: GameState) => state.electrons >= count,
-			hiddenCondition: (state: GameState) => state.electrons === 0,
+			condition: (state: GameState) => state.totalElectronizes >= count,
+			hiddenCondition: (state: GameState) => state.totalElectronizes === 0,
 		};
 	}
 
