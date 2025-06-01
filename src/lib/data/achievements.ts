@@ -65,6 +65,8 @@ function createBuildingAchievements(buildingId: BuildingType): Achievement[] {
 		createBuildingCountAchievement('Two hundred', 200),
 		createBuildingCountAchievement('Three hundred', 300),
 		createBuildingCountAchievement('Five hundred', 500),
+		createBuildingCountAchievement('One thousand', 1000),
+		createBuildingCountAchievement('Two thousand', 2000),
 	];
 }
 
