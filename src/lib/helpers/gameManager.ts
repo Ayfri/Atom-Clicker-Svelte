@@ -16,6 +16,7 @@ import {
 	skillUpgrades,
 	startDate,
 	totalClicks,
+	totalElectronizes,
 	totalProtonises,
 	totalXP,
 	upgrades,
@@ -43,6 +44,7 @@ export const currentState = derived(
 		skillUpgrades,
 		startDate,
 		totalClicks,
+		totalElectronizes,
 		totalXP,
 		upgrades,
 		totalProtonises
@@ -59,6 +61,7 @@ export const currentState = derived(
 		skillUpgrades,
 		startDate,
 		totalClicks,
+		totalElectronizes,
 		totalXP,
 		upgrades,
 		totalProtonises
@@ -75,6 +78,7 @@ export const currentState = derived(
 			skillUpgrades,
 			startDate,
 			totalClicks,
+			totalElectronizes,
 			totalXP,
 			upgrades,
 			totalProtonises,
@@ -100,6 +104,7 @@ export function resetGameState(): GameState {
 		skillUpgrades: [],
 		startDate: Date.now(),
 		totalClicks: 0,
+		totalElectronizes: 0,
 		totalProtonises: 0,
 		totalXP: 0,
 		upgrades: [],
@@ -122,6 +127,7 @@ export const gameManager = {
 			skillUpgrades.set(savedState.skillUpgrades || []);
 			startDate.set(savedState.startDate);
 			totalClicks.set(savedState.totalClicks);
+			totalElectronizes.set(savedState.totalElectronizes || 0);
 			totalProtonises.set(savedState.totalProtonises || 0);
 			totalXP.set(savedState.totalXP || 0);
 			upgrades.set(savedState.upgrades.filter(u => u in UPGRADES));
@@ -341,6 +347,7 @@ export const gameManager = {
 				achievements: currentState.achievements,
 				electrons: currentState.electrons + electronGain,
 				protons: 0, // Reset protons but keep upgrades
+				totalElectronizes: currentState.totalElectronizes + 1,
 				upgrades: currentState.upgrades.filter(id => id.startsWith('electron') || id.startsWith('proton')),
 			};
 
@@ -354,6 +361,7 @@ export const gameManager = {
 			lastSave.set(newState.lastSave);
 			skillUpgrades.set(newState.skillUpgrades);
 			totalClicks.set(newState.totalClicks);
+			totalElectronizes.set(newState.totalElectronizes);
 			totalXP.set(newState.totalXP);
 			upgrades.set(newState.upgrades);
 			totalProtonises.set(0); // Reset protonises count
@@ -386,6 +394,7 @@ export const gameManager = {
 		skillUpgrades.set(newState.skillUpgrades);
 		startDate.set(newState.startDate);
 		totalClicks.set(newState.totalClicks);
+		totalElectronizes.set(newState.totalElectronizes);
 		totalProtonises.set(newState.totalProtonises);
 		totalXP.set(newState.totalXP);
 		upgrades.set(newState.upgrades);
@@ -412,6 +421,7 @@ export const gameManager = {
 		skillUpgrades.set(saveData.skillUpgrades);
 		startDate.set(saveData.startDate);
 		totalClicks.set(saveData.totalClicks);
+		totalElectronizes.set(saveData.totalElectronizes || 0);
 		totalProtonises.set(saveData.totalProtonises || 0);
 		totalXP.set(saveData.totalXP || 0);
 		upgrades.set(saveData.upgrades.filter(u => u in UPGRADES));
@@ -421,7 +431,7 @@ export const gameManager = {
 		settings.update(current => {
 			const buildings = current.automation.buildings;
 			const index = buildings.indexOf(type);
-			
+
 			return {
 				...current,
 				automation: {

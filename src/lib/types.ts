@@ -62,6 +62,7 @@ export interface GameState {
 	skillUpgrades: string[];
 	startDate: number;
 	totalClicks: number;
+	totalElectronizes: number;
 	totalProtonises: number;
 	totalXP: number;
 	upgrades: string[];
