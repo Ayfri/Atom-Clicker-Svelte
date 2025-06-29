@@ -15,6 +15,7 @@ import {
 	protons,
 	skillUpgrades,
 	startDate,
+	totalBonusPhotonsClicked,
 	totalClicks,
 	totalElectronizes,
 	totalProtonises,
@@ -43,6 +44,7 @@ export const currentState = derived(
 		settings,
 		skillUpgrades,
 		startDate,
+		totalBonusPhotonsClicked,
 		totalClicks,
 		totalElectronizes,
 		totalXP,
@@ -60,6 +62,7 @@ export const currentState = derived(
 		settings,
 		skillUpgrades,
 		startDate,
+		totalBonusPhotonsClicked,
 		totalClicks,
 		totalElectronizes,
 		totalXP,
@@ -77,6 +80,7 @@ export const currentState = derived(
 			settings,
 			skillUpgrades,
 			startDate,
+			totalBonusPhotonsClicked,
 			totalClicks,
 			totalElectronizes,
 			totalXP,
@@ -103,6 +107,7 @@ export function resetGameState(): GameState {
 		},
 		skillUpgrades: [],
 		startDate: Date.now(),
+		totalBonusPhotonsClicked: 0,
 		totalClicks: 0,
 		totalElectronizes: 0,
 		totalProtonises: 0,
@@ -126,6 +131,7 @@ export const gameManager = {
 			settings.set(savedState.settings || { automation: { buildings: [], upgrades: false } });
 			skillUpgrades.set(savedState.skillUpgrades || []);
 			startDate.set(savedState.startDate);
+			totalBonusPhotonsClicked.set(savedState.totalBonusPhotonsClicked || 0);
 			totalClicks.set(savedState.totalClicks);
 			totalElectronizes.set(savedState.totalElectronizes || 0);
 			totalProtonises.set(savedState.totalProtonises || 0);
@@ -178,6 +184,10 @@ export const gameManager = {
 
 	addAtoms(amount: number) {
 		atoms.update(current => current + amount);
+	},
+
+	incrementBonusPhotonClicks() {
+		totalBonusPhotonsClicked.update(current => current + 1);
 	},
 
 	addCurrency(price: Price) {
@@ -326,6 +336,7 @@ export const gameManager = {
 			buildings.set(newState.buildings);
 			lastSave.set(newState.lastSave);
 			skillUpgrades.set(newState.skillUpgrades);
+			totalBonusPhotonsClicked.set(newState.totalBonusPhotonsClicked);
 			totalClicks.set(newState.totalClicks);
 			totalXP.set(newState.totalXP);
 			upgrades.set(newState.upgrades);
@@ -360,6 +371,7 @@ export const gameManager = {
 			buildings.set(newState.buildings);
 			lastSave.set(newState.lastSave);
 			skillUpgrades.set(newState.skillUpgrades);
+			totalBonusPhotonsClicked.set(newState.totalBonusPhotonsClicked);
 			totalClicks.set(newState.totalClicks);
 			totalElectronizes.set(newState.totalElectronizes);
 			totalXP.set(newState.totalXP);
@@ -393,6 +405,7 @@ export const gameManager = {
 		protons.set(newState.protons);
 		skillUpgrades.set(newState.skillUpgrades);
 		startDate.set(newState.startDate);
+		totalBonusPhotonsClicked.set(newState.totalBonusPhotonsClicked);
 		totalClicks.set(newState.totalClicks);
 		totalElectronizes.set(newState.totalElectronizes);
 		totalProtonises.set(newState.totalProtonises);
@@ -420,6 +433,7 @@ export const gameManager = {
 		settings.set(saveData.settings || { automation: { buildings: [], upgrades: false } });
 		skillUpgrades.set(saveData.skillUpgrades);
 		startDate.set(saveData.startDate);
+		totalBonusPhotonsClicked.set(saveData.totalBonusPhotonsClicked || 0);
 		totalClicks.set(saveData.totalClicks);
 		totalElectronizes.set(saveData.totalElectronizes || 0);
 		totalProtonises.set(saveData.totalProtonises || 0);
