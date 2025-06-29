@@ -63,6 +63,7 @@
 		messageShown = true;
 		powerUp.startTime = Date.now();
 		gameManager.addPowerUp(powerUp);
+		gameManager.incrementBonusPhotonClicks();
 		const id = powerUp.id;
 		setTimeout(() => gameManager.removePowerUp(id), powerUp.duration);
 		setTimeout(() => (messageShown = false), 3_000);
@@ -78,7 +79,7 @@
 		);
 	}
 
-	let timeout: number;
+	let timeout: ReturnType<typeof setTimeout>;
 	onMount(setRandomInterval);
 
 	onDestroy(() => clearTimeout(timeout));

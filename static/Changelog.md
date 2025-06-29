@@ -1,3 +1,8 @@
+# What's new 30-06-2025
+
+- Added a new stat for the total number of bonus photons clicked.
+- Added new achievements for bonus photons clicked.
+
 # What's new 01-06-2025
 
 - Added a lot of new skill tree upgrades.

@@ -23,6 +23,7 @@ export const settings = writable<Settings>({
 });
 export const skillUpgrades = writable<string[]>([]);
 export const startDate = writable<number>(Date.now());
+export const totalBonusPhotonsClicked = writable<number>(0);
 export const totalClicks = writable<number>(0);
 export const totalElectronizes = writable<number>(0);
 export const totalProtonises = writable<number>(0);

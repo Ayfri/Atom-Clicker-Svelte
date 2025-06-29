@@ -174,6 +174,28 @@ function createElectronizesAchievements(): Achievement[] {
 	return [1, 2, 3, 5, 10, 20, 50, 100, 250, 500, 1000].map(createElectronizesAchievement);
 }
 
+function createBonusPhotonClicksAchievements(): Achievement[] {
+	function createBonusPhotonClicksAchievement(count: number): Achievement {
+		const countNames: Record<number, string> = {
+			1: 'First',
+			10: 'Ten',
+			64: 'Sixty-Four',
+			512: 'Five Hundred Twelve',
+			4000: 'Four Thousand'
+		};
+
+		return {
+			id: `bonus_photons_clicked_${count}`,
+			name: `${countNames[count]} Bonus Photon`,
+			description: `Click ${formatNumber(count, 0)} bonus photon${count === 1 ? '' : 's'}`,
+			condition: (state: GameState) => state.totalBonusPhotonsClicked >= count,
+			hiddenCondition: (state: GameState) => state.totalBonusPhotonsClicked === 0,
+		};
+	}
+
+	return [1, 10, 64, 512, 4096].map(createBonusPhotonClicksAchievement);
+}
+
 const achievementsArray: Achievement[] = [
 	...BUILDING_TYPES.map(createBuildingAchievements).flat(),
 	...createBuildingTotalAchievements(),
@@ -183,6 +205,7 @@ const achievementsArray: Achievement[] = [
 	...createTotalLevelsAchievements(),
 	...createProtonisesAchievements(),
 	...createElectronizesAchievements(),
+	...createBonusPhotonClicksAchievements(),
 	...SPECIAL_ACHIEVEMENTS,
 ];
 
