@@ -1,5 +1,5 @@
 import { writable, derived, get } from 'svelte/store';
-import { atoms, playerLevel } from './gameStore';
+import { atoms, playerLevel } from '$stores/gameStore';
 import { browser } from '$app/environment';
 import { supabaseAuth } from './supabaseAuth';
 import type { LeaderboardEntry } from '$lib/types/leaderboard';

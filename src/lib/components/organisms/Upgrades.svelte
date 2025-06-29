@@ -1,6 +1,7 @@
 <script lang="ts">
 	import {CURRENCIES, CurrenciesTypes, type CurrencyName} from '$data/currencies';
-	import { currentState, gameManager } from '$helpers/gameManager';
+	import { gameManager } from '$helpers/gameManager';
+	import { getCurrentState } from '$stores/gameStore';
 	import { currentUpgradesBought, protons, electrons, upgrades, totalProtonises, settings } from '$stores/gameStore';
 	import { UPGRADES } from '$data/upgrades';
 	import type { Upgrade } from '$lib/types';
@@ -14,10 +15,11 @@
 	$: showProtons = $protons > 0 || $totalProtonises > 0;
 	$: showElectrons = $electrons > 0;
 
-	$: if ($currentState) {
+	$: if ($upgrades) {
+		const currentState = getCurrentState();
 		availableUpgrades = Object.values(UPGRADES)
 			.filter((upgrade) => {
-				const condition = upgrade.condition?.($currentState) ?? true;
+				const condition = upgrade.condition?.(currentState) ?? true;
 				const notPurchased = !$upgrades.includes(upgrade.id);
 				const matchesCurrency = upgrade.cost.currency === selectedCurrency;
 				return condition && notPurchased && matchesCurrency;

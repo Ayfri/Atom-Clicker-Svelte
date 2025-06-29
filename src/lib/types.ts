@@ -67,7 +67,7 @@ export interface GameState {
 	totalProtonises: number;
 	totalXP: number;
 	upgrades: string[];
-	version: typeof SAVE_VERSION;
+	version: number;
 }
 
 export type Range = [number, number];

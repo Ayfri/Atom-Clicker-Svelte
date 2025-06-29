@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { currentState, gameManager } from '$helpers/gameManager';
+	import { gameManager } from '$helpers/gameManager';
+	import { getCurrentState } from '$stores/gameStore';
 	import { BUILDING_COLORS, type BuildingData, BUILDINGS, type BuildingType } from '$data/buildings';
 	import { buildingProductions, buildings, currentUpgradesBought, globalMultiplier, bonusMultiplier, settings } from '$stores/gameStore';
 	import type { Building, Price } from '$lib/types';
@@ -36,7 +37,7 @@
 		}
 	}
 
-	$: if ($currentState) {
+	$: if ($buildings) {
 		unaffordableRootBuildings = buildingsEntries.filter(([type, building]) => gameManager.canAfford(building.cost) === false);
 		unlockedBuildings = Object.entries($buildings).filter(([, { unlocked }]) => unlocked) as [BuildingType, Building][];
 		hiddenBuildings = buildingsEntries.filter(
@@ -95,7 +96,7 @@
 		return getMaxAffordable(baseCost, type);
 	}
 
-	$: if (selectedPurchaseMode && $currentState) {
+	$: if (selectedPurchaseMode && $buildings) {
 		purchaseAmounts = Object.fromEntries(
 			buildingsEntries.map(([type]) => [type, getPurchaseAmount(type)])
 		) as Record<BuildingType, number>;

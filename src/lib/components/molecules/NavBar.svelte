@@ -10,8 +10,9 @@
 	import { ChartNoAxesColumn, Network, Info, Atom, Trophy, MessageSquare, Orbit, FileText, Cloud } from 'lucide-svelte';
 	import { onDestroy, onMount, type ComponentType } from 'svelte';
 	import { skillPointsAvailable, protons, atoms, electrons, skillPointsTotal, hasAvailableSkillUpgrades } from '$lib/stores/gameStore';
-	import { protoniseProtonsGain, PROTONS_ATOMS_REQUIRED } from '$lib/stores/protons';
-	import { electronizeElectronsGain, ELECTRONS_PROTONS_REQUIRED } from '$lib/stores/electrons';
+	import { protoniseProtonsGain } from '$lib/stores/protons';
+	import { electronizeElectronsGain } from '$lib/stores/electrons';
+	import { PROTONS_ATOMS_REQUIRED, ELECTRONS_PROTONS_REQUIRED } from '$lib/constants';
 	import FeedbackForm from '$lib/components/organisms/FeedbackForm.svelte';
 	import { changelog } from '$lib/stores/changelog';
 	import Changelog from '$lib/components/organisms/Changelog.svelte';

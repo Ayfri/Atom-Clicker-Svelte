@@ -1,6 +1,6 @@
 import { derived } from "svelte/store";
 import { currentUpgradesBought, settings } from "$stores/gameStore";
-import { gameManager } from "$lib/helpers/gameManager";
+import { gameManager } from "$helpers/gameManager";
 import { UPGRADES } from "$data/upgrades";
 import { browser } from "$app/environment";
 import { getUpgradesWithEffects } from "$lib/helpers/effects";

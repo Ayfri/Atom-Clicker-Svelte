@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { gameManager } from '$lib/helpers/gameManager';
+	import { gameManager } from '$helpers/gameManager';
 	import { formatNumber } from '$lib/utils';
 	import Modal from '@components/atoms/Modal.svelte';
-	import { protons, electrons } from '$lib/stores/gameStore';
-	import { electronizeElectronsGain, ELECTRONS_PROTONS_REQUIRED } from '$lib/stores/electrons';
+	import { electrons, protons } from '$stores/gameStore';
+	import { electronizeElectronsGain } from '$stores/electrons';
+	import { ELECTRONS_PROTONS_REQUIRED } from '$lib/constants';
 
 	export let onClose: () => void;
 

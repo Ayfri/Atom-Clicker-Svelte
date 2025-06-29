@@ -36,7 +36,7 @@
 <div class="overlay" on:click={onClose} transition:fade={{ duration: 200 }}>
 	<div class="modal bg-gradient-to-br from-accent-900 to-accent-800" on:click|stopPropagation transition:fly={{ y: -100, duration: 300 }}>
 		<div class="flex items-center justify-between gap-4 border-b border-white/10 bg-black/40 p-6 sm:px-8">
-			<h2 class="flex-1 text-2xl font-bold text-white">Global Statistics</h2>
+			<h2 class="flex-1 text-2xl font-bold text-white">Global Statistics (New System)</h2>
 			<button class="flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:*:stroke-[3]" on:click={onClose}>
 				<X class="transition-all duration-300" />
 			</button>
@@ -79,8 +79,7 @@
 	}
 
 	.modal {
-		@apply flex h-[85vh] w-[85vw] max-w-3xl flex-col overflow-hidden rounded-2xl shadow-2xl;
-
+		@apply flex h-[85vh] w-[85vw] max-w-4xl flex-col overflow-hidden rounded-2xl shadow-2xl;
 	}
 
 	@media (width <= 768px) {
