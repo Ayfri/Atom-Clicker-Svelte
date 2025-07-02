@@ -1,34 +1,49 @@
 import {writable} from 'svelte/store';
 import type {Particle} from '$helpers/particles';
 
-export let particles = writable<Particle[]>([]);
+export const particles = writable<Particle[]>([]);
 
-export const isPixiAvailable = writable<boolean>(true);
+// Enhanced environment detection - be very conservative
+function isEnvironmentSuitable(): boolean {
+	// Server-side rendering
+	if (typeof window === 'undefined') return false;
 
-// Helper function to safely add particles only if PixiJS is available
-export function addParticle(particle: Particle) {
-	particles.update(current => {
-		// Only add if we're in browser
-		if (typeof window !== 'undefined' && window.document) {
-			return [...current, particle];
-		}
-		return current;
-	});
+	// Linux detection - PixiJS v8 has known issues on Linux without proper GPU
+	const userAgent = navigator.userAgent.toLowerCase();
+	if (userAgent.includes('linux') && !userAgent.includes('android')) {
+		console.info('Linux environment detected - PixiJS particles disabled for compatibility');
+		return false;
+	}
+
+	// Headless environments
+	if (userAgent.includes('headless') ||
+		userAgent.includes('phantom') ||
+		userAgent.includes('selenium')) {
+		return false;
+	}
+
+	// CI/testing environments
+	if (typeof process !== 'undefined' && (
+		process.env?.CI ||
+		process.env?.NODE_ENV === 'test' ||
+		process.env?.JEST_WORKER_ID
+	)) {
+		return false;
+	}
+
+	return true;
 }
 
-// Helper function to safely add multiple particles
-export function addParticles(newParticles: Particle[]) {
-	particles.update(current => {
-		// Only add if we're in browser
-		if (typeof window !== 'undefined' && window.document) {
-			return [...current, ...newParticles];
-		}
-		return current;
-	});
-}
-
-// Simplified function - just check if we're in browser
-// The real compatibility test is done by PixiJS autoDetectRenderer itself
 export function shouldCreateParticles(): boolean {
-	return typeof window !== 'undefined' && !!window.document;
+	return isEnvironmentSuitable();
+}
+
+export function addParticle(particle: Particle) {
+	if (!shouldCreateParticles()) return;
+	particles.update(current => [...current, particle]);
+}
+
+export function addParticles(newParticles: Particle[]) {
+	if (!shouldCreateParticles()) return;
+	particles.update(current => [...current, ...newParticles]);
 }

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
-	import { particles } from '$stores/canvas';
+	import { particles, shouldCreateParticles } from '$stores/canvas';
 	import { app } from '$stores/pixi';
 
 	let particlesContainer: any;
@@ -41,6 +41,13 @@
 	};
 
 	onMount(async () => {
+		// Check environment compatibility BEFORE attempting PixiJS import
+		if (!shouldCreateParticles()) {
+			console.info('PixiJS particles disabled - environment not suitable');
+			$app = null;
+			return;
+		}
+
 		try {
 			// Dynamically import PixiJS to avoid blocking the app if it fails to load
 			const PIXI = await import('pixi.js');
