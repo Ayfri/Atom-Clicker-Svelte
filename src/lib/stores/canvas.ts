@@ -5,6 +5,11 @@ export let particles = writable<Particle[]>([]);
 
 export const isPixiAvailable = writable<boolean>(true);
 
+// Cache for graphics support detection to avoid creating multiple WebGL contexts
+let cachedGraphicsSupport: boolean | null = null;
+let testCanvas: HTMLCanvasElement | null = null;
+let testContext: WebGLRenderingContext | null = null;
+
 // Helper function to safely add particles only if PixiJS is available
 export function addParticle(particle: Particle) {
 	particles.update(current => {
@@ -27,25 +32,38 @@ export function addParticles(newParticles: Particle[]) {
 	});
 }
 
-// Helper function to check if particles should be created
-export function shouldCreateParticles(): boolean {
-	return typeof window !== 'undefined' &&
-		   window.document &&
-		   (isWebGLSupported() || isWebGPUSupported());
-}
-
-// Check if WebGL is supported
+// Check if WebGL is supported (cached result)
 function isWebGLSupported(): boolean {
 	try {
-		const canvas = document.createElement('canvas');
-		const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-		return !!(gl && (gl as WebGLRenderingContext).getExtension);
+		// Reuse the same canvas and context for testing
+		if (!testCanvas) {
+			testCanvas = document.createElement('canvas');
+		}
+		if (!testContext) {
+			testContext = (testCanvas.getContext('webgl') || testCanvas.getContext('experimental-webgl')) as WebGLRenderingContext;
+		}
+		return !!(testContext && testContext.getExtension);
 	} catch (e) {
 		return false;
 	}
 }
 
-// Check if WebGPU is supported
+// Check if WebGPU is supported (cached result)
 function isWebGPUSupported(): boolean {
 	return 'gpu' in navigator;
+}
+
+// Helper function to check if particles should be created (cached result)
+export function shouldCreateParticles(): boolean {
+	// Return cached result if available
+	if (cachedGraphicsSupport !== null) {
+		return cachedGraphicsSupport;
+	}
+
+	// Test once and cache the result
+	cachedGraphicsSupport = typeof window !== 'undefined' &&
+		   window.document &&
+		   (isWebGLSupported() || isWebGPUSupported());
+
+	return cachedGraphicsSupport;
 }
