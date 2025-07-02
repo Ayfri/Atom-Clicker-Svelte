@@ -3,23 +3,19 @@ import type {Particle} from '$helpers/particles';
 
 export const particles = writable<Particle[]>([]);
 
-// Enhanced environment detection - be very conservative
+// Simplified environment detection
 function isEnvironmentSuitable(): boolean {
 	// Server-side rendering
 	if (typeof window === 'undefined') return false;
 
-	// Linux detection - PixiJS v8 has known issues on Linux without proper GPU
-	const userAgent = navigator.userAgent.toLowerCase();
-	if (userAgent.includes('linux') && !userAgent.includes('android')) {
-		console.info('Linux environment detected - PixiJS particles disabled for compatibility');
-		return false;
-	}
-
 	// Headless environments
-	if (userAgent.includes('headless') ||
-		userAgent.includes('phantom') ||
-		userAgent.includes('selenium')) {
-		return false;
+	if (typeof navigator !== 'undefined') {
+		const userAgent = navigator.userAgent.toLowerCase();
+		if (userAgent.includes('headless') ||
+			userAgent.includes('phantom') ||
+			userAgent.includes('selenium')) {
+			return false;
+		}
 	}
 
 	// CI/testing environments

@@ -35,11 +35,20 @@
 		gameManager.initialize();
 		await supabaseAuth.init();
 
-		while (!$app || !$app?.ticker) {
+		// Wait for app to be initialized, but only if particles are supported
+		while (!$app) {
 			await new Promise(resolve => setTimeout(resolve, 100));
 		}
 
-		$app.ticker.add(update);
+		// Only add ticker update if ticker exists (when particles are supported)
+		if ($app.ticker?.add) {
+			$app.ticker.add(update);
+		} else {
+			// Fallback: use setInterval for game updates when no PixiJS ticker
+			setInterval(() => {
+				update({ deltaMS: 16.67 }); // Assume 60fps
+			}, 16.67);
+		}
 
 		setGlobals();
 
@@ -57,7 +66,7 @@
 		if (saveLoop) clearInterval(saveLoop);
 	});
 
-	$: $mobile && activeTab && $app?.stage && $app?.queueResize();
+	$: $mobile && activeTab && $app?.queueResize?.();
 </script>
 
 <svelte:window
@@ -82,39 +91,37 @@
 		<Levels/>
 	{/if}
 	<Canvas/>
-	{#if $app !== null}
-		<Toaster/>
-		<BonusPhoton/>
-		<div class="game-container">
-			<div class="left-panel">
-				<div class="tabs">
-					<button class:active={activeTab === 'upgrades'} on:click={() => activeTab = 'upgrades'}> Upgrades</button>
-					{#if $mobile}
-						<button class:active={activeTab === 'buildings'} on:click={() => activeTab = 'buildings'}> Buildings</button>
-					{/if}
-					<button class:active={activeTab === 'achievements'} on:click={() => activeTab = 'achievements'}>
-						Achievements
-					</button>
-				</div>
-				<div class="tab-content">
-					{#if activeTab === 'upgrades'}
-						<Upgrades/>
-					{:else if activeTab === 'achievements'}
-						<Achievements/>
-					{:else if activeTab === 'buildings'}
-						<Buildings/>
-					{/if}
-				</div>
+	<Toaster/>
+	<BonusPhoton/>
+	<div class="game-container">
+		<div class="left-panel">
+			<div class="tabs">
+				<button class:active={activeTab === 'upgrades'} on:click={() => activeTab = 'upgrades'}> Upgrades</button>
+				{#if $mobile}
+					<button class:active={activeTab === 'buildings'} on:click={() => activeTab = 'buildings'}> Buildings</button>
+				{/if}
+				<button class:active={activeTab === 'achievements'} on:click={() => activeTab = 'achievements'}>
+					Achievements
+				</button>
 			</div>
-			<div class="central-area">
-				<Counter/>
-				<Atom/>
+			<div class="tab-content">
+				{#if activeTab === 'upgrades'}
+					<Upgrades/>
+				{:else if activeTab === 'achievements'}
+					<Achievements/>
+				{:else if activeTab === 'buildings'}
+					<Buildings/>
+				{/if}
 			</div>
-			{#if !$mobile}
-				<Buildings/>
-			{/if}
 		</div>
-	{/if}
+		<div class="central-area">
+			<Counter/>
+			<Atom/>
+		</div>
+		{#if !$mobile}
+			<Buildings/>
+		{/if}
+	</div>
 
 	{#if showHardReset}
 		<HardReset onClose={() => showHardReset = false} />

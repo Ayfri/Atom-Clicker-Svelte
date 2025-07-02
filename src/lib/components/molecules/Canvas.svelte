@@ -41,14 +41,14 @@
 	};
 
 	onMount(async () => {
-		// Check environment compatibility BEFORE attempting PixiJS import
-		if (!shouldCreateParticles()) {
-			console.info('PixiJS particles disabled - environment not suitable');
-			$app = null;
-			return;
-		}
-
 		try {
+			// Only skip in obvious non-browser environments
+			if (!shouldCreateParticles()) {
+				console.info('PixiJS particles disabled - environment not suitable');
+				$app = null;
+				return;
+			}
+
 			// Dynamically import PixiJS to avoid blocking the app if it fails to load
 			const PIXI = await import('pixi.js');
 
@@ -131,19 +131,10 @@
 			} as any;
 
 		} catch (error) {
-			// PixiJS couldn't be imported or initialized - this is the most reliable test
+			// PixiJS couldn't be imported or initialized
 			const errorMessage = error instanceof Error ? error.message : String(error);
 
-			console.warn('PixiJS particles disabled - import or initialization failed:', errorMessage);
-
-			// Provide helpful information for common issues
-			if (errorMessage.includes('CanvasRenderer is not yet implemented')) {
-				console.info('💡 Tip: For headless environments, consider using pixi.js-legacy or @pixi/node instead.');
-			} else if (errorMessage.includes('WebGPU')) {
-				console.info('💡 Tip: WebGPU experimental on this platform, falling back gracefully.');
-			} else if (errorMessage.includes('import')) {
-				console.info('💡 Tip: PixiJS module could not be loaded, continuing without particles.');
-			}
+			console.warn('PixiJS particles disabled - initialization failed:', errorMessage);
 
 			// Clean failure - no particles, but game continues
 			$app = null;
