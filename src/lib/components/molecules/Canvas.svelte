@@ -39,7 +39,7 @@
 		try {
 			const canvas = document.createElement('canvas');
 			const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-			return !!(gl && gl.getExtension);
+			return !!(gl && (gl as WebGLRenderingContext).getExtension);
 		} catch (e) {
 			return false;
 		}
@@ -50,13 +50,111 @@
 		return 'gpu' in navigator;
 	}
 
-	onMount(async () => {
-		// Check for any graphics support before trying PixiJS
+
+
+	// Enhanced graphics support detection
+	function hasGraphicsSupport(): { supported: boolean; reason?: string } {
+		// Basic checks first
 		const hasWebGPU = isWebGPUSupported();
 		const hasWebGL = isWebGLSupported();
 
 		if (!hasWebGPU && !hasWebGL) {
-			console.warn('Neither WebGPU nor WebGL are supported, particles disabled');
+			return { supported: false, reason: 'Neither WebGPU nor WebGL are supported' };
+		}
+
+		// If we only have WebGL, check if it's actually hardware accelerated
+		if (!hasWebGPU && hasWebGL) {
+			try {
+				const canvas = document.createElement('canvas');
+				const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+
+				if (gl) {
+					const webgl = gl as WebGLRenderingContext;
+					// Check renderer info
+					const renderer = webgl.getParameter(webgl.RENDERER);
+					const vendor = webgl.getParameter(webgl.VENDOR);
+
+					// Detect software rendering (common indicators)
+					const softwareIndicators = [
+						'software', 'Software', 'SOFTWARE',
+						'mesa', 'Mesa', 'MESA',
+						'llvmpipe', 'LLVMpipe', 'LLVMPIPE',
+						'swrast', 'SwiftShader'
+					];
+
+					const rendererString = String(renderer || '');
+					const vendorString = String(vendor || '');
+
+					const isSoftwareRenderer = softwareIndicators.some(indicator =>
+						rendererString.includes(indicator) || vendorString.includes(indicator)
+					);
+
+					if (isSoftwareRenderer) {
+						return {
+							supported: false,
+							reason: `Software-only WebGL detected (${rendererString})`
+						};
+					}
+
+					// Additional check: try to detect very limited WebGL support
+					const debugInfo = webgl.getExtension('WEBGL_debug_renderer_info');
+					if (debugInfo) {
+						const unmaskedRenderer = webgl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+						const unmaskedVendor = webgl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+
+						const unmaskedRendererString = String(unmaskedRenderer || '');
+						const unmaskedVendorString = String(unmaskedVendor || '');
+
+						const isUnmaskedSoftware = softwareIndicators.some(indicator =>
+							unmaskedRendererString.includes(indicator) || unmaskedVendorString.includes(indicator)
+						);
+
+						if (isUnmaskedSoftware) {
+							return {
+								supported: false,
+								reason: `Software-only WebGL detected (${unmaskedRendererString})`
+							};
+						}
+					}
+
+					// Test WebGL performance - if it's too slow, it's probably software rendering
+					try {
+						const start = performance.now();
+
+						// Create a simple test
+						const buffer = webgl.createBuffer();
+						webgl.bindBuffer(webgl.ARRAY_BUFFER, buffer);
+						webgl.bufferData(webgl.ARRAY_BUFFER, new Float32Array([0, 0, 1, 0, 0, 1]), webgl.STATIC_DRAW);
+
+						const end = performance.now();
+
+						// If basic operations are extremely slow, probably software rendering
+						if (end - start > 50) {
+							return {
+								supported: false,
+								reason: `WebGL operations too slow (${Math.round(end - start)}ms)`
+							};
+						}
+
+						webgl.deleteBuffer(buffer);
+					} catch (perfError) {
+						console.warn('WebGL performance test failed:', perfError);
+					}
+				}
+			} catch (e) {
+				console.warn('Could not detect GPU acceleration details:', e);
+			}
+		}
+
+		return { supported: true };
+	}
+
+	onMount(async () => {
+		// Enhanced pre-check for graphics support
+		const graphicsCheck = hasGraphicsSupport();
+
+		if (!graphicsCheck.supported) {
+			console.warn(`PixiJS particles disabled: ${graphicsCheck.reason}`);
 			isPixiSupported = false;
 			$app = null;
 			return;
@@ -67,7 +165,8 @@
 			const renderer = await autoDetectRenderer({
 				backgroundAlpha: 0,
 				antialias: true,
-				resizeTo: document.body,
+				width: window.innerWidth,
+				height: window.innerHeight,
 				// Force fallback options
 				preference: 'webgpu', // Will fallback to webgl automatically
 			});
@@ -137,7 +236,15 @@
 
 			console.log(`PixiJS initialized successfully with ${renderer.type} renderer`);
 		} catch (error) {
-			console.warn('Failed to initialize PixiJS, particles disabled. Error:', error);
+			const errorMessage = error instanceof Error ? error.message : String(error);
+
+			// Provide helpful information for common issues
+			if (errorMessage.includes('CanvasRenderer is not yet implemented')) {
+				console.warn('PixiJS v8 CanvasRenderer not available. For headless environments, consider using pixi.js-legacy or @pixi/node instead.');
+			} else {
+				console.warn('Failed to initialize PixiJS, particles disabled. Error:', error);
+			}
+
 			isPixiSupported = false;
 			$app = null;
 
