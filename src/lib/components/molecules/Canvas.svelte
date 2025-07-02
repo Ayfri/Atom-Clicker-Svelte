@@ -120,6 +120,14 @@
 				stage: pixiApp.stage,
 				renderer: pixiApp.renderer,
 				destroy: pixiApp.destroy,
+				queueResize: () => {
+					// Resize the renderer to match current window size
+					try {
+						renderer.resize(window.innerWidth, window.innerHeight);
+					} catch (error) {
+						console.warn('Error during resize:', error);
+					}
+				}
 			} as any;
 
 		} catch (error) {
