@@ -17,7 +17,6 @@
 	import Levels from '@components/organisms/Levels.svelte';
 	import Upgrades from '@components/organisms/Upgrades.svelte';
 	import {RotateCcw} from 'lucide-svelte';
-	import type {Ticker} from 'pixi.js';
 	import {onDestroy, onMount} from 'svelte';
 	import '$lib/stores/autoBuy';
 	import '$lib/stores/autoUpgrade';
@@ -27,7 +26,7 @@
 	let saveLoop: ReturnType<typeof setInterval>;
 	let showHardReset = false;
 
-	function update(ticker: Ticker) {
+	function update(ticker: any) {
 		gameManager.addAtoms(($atomsPerSecond * ticker.deltaMS) / 1000);
 	}
 

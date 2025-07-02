@@ -1,14 +1,13 @@
 <script lang="ts">
-	import { autoDetectRenderer, Container, type Renderer, Ticker } from 'pixi.js';
 	import { onDestroy, onMount } from 'svelte';
 	import { particles } from '$stores/canvas';
 	import { app } from '$stores/pixi';
 
-	let particlesContainer: Container;
+	let particlesContainer: any;
 	let pixiApp: {
-		renderer: Renderer;
-		stage: Container;
-		ticker: Ticker;
+		renderer: any;
+		stage: any;
+		ticker: any;
 		canvas: HTMLCanvasElement;
 		destroy: () => void;
 	} | null = null;
@@ -20,8 +19,16 @@
 			let newParticles = [...current];
 
 			newParticles = newParticles.filter(particle => {
+				// Safety check for particle sprite properties
+				if (!particle?.sprite) return false;
+
 				if (!particle.sprite.parent && particlesContainer) {
-					particlesContainer.addChild(particle.sprite);
+					try {
+						particlesContainer.addChild(particle.sprite);
+					} catch (error) {
+						// If addChild fails, skip this particle
+						return false;
+					}
 				}
 
 				particle.update?.(particle, deltaTime);
@@ -35,8 +42,11 @@
 
 	onMount(async () => {
 		try {
+			// Dynamically import PixiJS to avoid blocking the app if it fails to load
+			const PIXI = await import('pixi.js');
+
 			// Let PixiJS test itself - if autoDetectRenderer works, we're good to go!
-			const renderer = await autoDetectRenderer({
+			const renderer = await PIXI.autoDetectRenderer({
 				backgroundAlpha: 0,
 				antialias: true,
 				width: window.innerWidth,
@@ -48,8 +58,8 @@
 			console.log(`PixiJS initialized successfully with ${renderer.type} renderer`);
 
 			// Create a minimal PixiJS app structure
-			const stage = new Container();
-			const ticker = new Ticker();
+			const stage = new PIXI.Container();
+			const ticker = new PIXI.Ticker();
 
 			pixiApp = {
 				renderer,
@@ -77,7 +87,7 @@
 
 			const fps = await getFps();
 
-			ticker.add((ticker) => {
+			ticker.add((ticker: any) => {
 				animate(ticker.deltaTime);
 				// Safely render the stage
 				try {
@@ -90,7 +100,7 @@
 			ticker.minFPS = Math.round(fps);
 			ticker.start();
 
-			particlesContainer = new Container({
+			particlesContainer = new PIXI.Container({
 				isRenderGroup: true,
 			});
 
@@ -106,16 +116,18 @@
 			} as any;
 
 		} catch (error) {
-			// PixiJS itself couldn't initialize - this is the most reliable test
+			// PixiJS couldn't be imported or initialized - this is the most reliable test
 			const errorMessage = error instanceof Error ? error.message : String(error);
 
-			console.warn('PixiJS particles disabled - renderer initialization failed:', errorMessage);
+			console.warn('PixiJS particles disabled - import or initialization failed:', errorMessage);
 
 			// Provide helpful information for common issues
 			if (errorMessage.includes('CanvasRenderer is not yet implemented')) {
 				console.info('💡 Tip: For headless environments, consider using pixi.js-legacy or @pixi/node instead.');
 			} else if (errorMessage.includes('WebGPU')) {
 				console.info('💡 Tip: WebGPU experimental on this platform, falling back gracefully.');
+			} else if (errorMessage.includes('import')) {
+				console.info('💡 Tip: PixiJS module could not be loaded, continuing without particles.');
 			}
 
 			// Clean failure - no particles, but game continues
@@ -127,7 +139,7 @@
 	onDestroy(() => {
 		if (pixiApp) {
 			try {
-				pixiApp.ticker.remove((ticker) => animate(ticker.deltaTime));
+				pixiApp.ticker.remove((ticker: any) => animate(ticker.deltaTime));
 				if (pixiApp.canvas && pixiApp.canvas.parentNode) {
 					document.body.removeChild(pixiApp.canvas);
 				}

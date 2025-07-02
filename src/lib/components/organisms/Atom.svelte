@@ -43,7 +43,7 @@
 		if (shouldCreateParticles() && $app && $app.canvas) {
 			try {
 				const newParticles: Particle[] = [];
-				newParticles.push(createClickTextParticle(event.clientX + Math.random() * 10, event.clientY + Math.random() * 10, `+${formatNumber($clickPower)}`));
+				newParticles.push(await createClickTextParticle(event.clientX + Math.random() * 10, event.clientY + Math.random() * 10, `+${formatNumber($clickPower)}`));
 
 				for (let i = 0; i < 5; i++) {
 					newParticles.push(await createClickParticle(event.clientX + Math.random() * 10, event.clientY + Math.random() * 10));
