@@ -9,6 +9,7 @@ import { calculateEffects, getUpgradesWithEffects } from '$helpers/effects';
 import { SAVE_VERSION } from '$helpers/saves';
 import { LAYERS, STATS } from '$helpers/statConstants';
 import { ELECTRONS_PROTONS_REQUIRED } from '../constants';
+import { browser } from '$app/environment';
 
 // Create the stat manager instance
 export const statManager = new StatManager();
@@ -302,6 +303,9 @@ export const xpGainMultiplier = derived(currentUpgradesBought, $currentUpgradesB
 
 export const hasBonus = derived(activePowerUps, $activePowerUps => $activePowerUps.length > 0);
 
+// Add memoization helper at the top
+let buildingProductionsCache: { hash: string; result: Record<BuildingType, number> } | null = null;
+
 export const buildingProductions = derived(
 	[
 		buildings,
@@ -310,7 +314,15 @@ export const buildingProductions = derived(
 		bonusMultiplier
 	],
 	([$buildings, $currentUpgradesBought, $globalMultiplier, $bonusMultiplier]) => {
-		return Object.entries($buildings).reduce((acc, [type, building]) => {
+		// Create a hash for memoization
+		const hash = JSON.stringify([$buildings, $currentUpgradesBought.length, $globalMultiplier, $bonusMultiplier]);
+
+		// Return cached result if hash matches
+		if (buildingProductionsCache && buildingProductionsCache.hash === hash) {
+			return buildingProductionsCache.result;
+		}
+
+		const result = Object.entries($buildings).reduce((acc, [type, building]) => {
 			let production = 0;
 			if (building) {
 				const upgrades = getUpgradesWithEffects($currentUpgradesBought, { target: type, type: 'building' });
@@ -325,6 +337,10 @@ export const buildingProductions = derived(
 				[type]: production,
 			};
 		}, {} as Record<BuildingType, number>);
+
+		// Cache the result
+		buildingProductionsCache = { hash, result };
+		return result;
 	}
 );
 

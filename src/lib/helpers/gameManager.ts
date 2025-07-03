@@ -24,6 +24,10 @@ import {
 	settings
 } from '$stores/gameStore';
 
+// Store interval references outside the object to avoid TypeScript issues
+let achievementInterval: ReturnType<typeof setInterval> | null = null;
+let xpInterval: ReturnType<typeof setInterval> | null = null;
+
 export const gameManager = {
 	initialize() {
 		this.loadGame();
@@ -48,7 +52,12 @@ export const gameManager = {
 	},
 
 	setupAchievementChecking() {
-		setInterval(() => {
+		// Clear existing interval if any
+		if (achievementInterval) {
+			clearInterval(achievementInterval);
+		}
+
+		achievementInterval = setInterval(() => {
 			const state = getCurrentState();
 			const currentAchievements = achievements.get();
 
@@ -62,8 +71,13 @@ export const gameManager = {
 	},
 
 	setupXPGeneration() {
+		// Clear existing interval if any
+		if (xpInterval) {
+			clearInterval(xpInterval);
+		}
+
 		let previousAtoms = atoms.get();
-		setInterval(() => {
+		xpInterval = setInterval(() => {
 			const currentAtoms = atoms.get();
 			const deltaAtoms = currentAtoms - previousAtoms;
 			const xpPerAtom = 0.1;
@@ -299,6 +313,18 @@ export const gameManager = {
 		const currentAchievements = achievements.get();
 		if (!currentAchievements.includes(achievementId)) {
 			achievements.push(achievementId);
+		}
+	},
+
+	// Add cleanup method
+	cleanup() {
+		if (achievementInterval) {
+			clearInterval(achievementInterval);
+			achievementInterval = null;
+		}
+		if (xpInterval) {
+			clearInterval(xpInterval);
+			xpInterval = null;
 		}
 	}
 };

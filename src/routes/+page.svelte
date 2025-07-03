@@ -24,6 +24,7 @@
 	const SAVE_INTERVAL = 1000;
 	let activeTab: 'achievements' | 'buildings' | 'upgrades' = 'upgrades';
 	let saveLoop: ReturnType<typeof setInterval>;
+	let gameUpdateInterval: ReturnType<typeof setInterval> | null = null;
 	let showHardReset = false;
 
 	function update(ticker: any) {
@@ -45,7 +46,7 @@
 			$app.ticker.add(update);
 		} else {
 			// Fallback: use setInterval for game updates when no PixiJS ticker
-			setInterval(() => {
+			gameUpdateInterval = setInterval(() => {
 				update({ deltaMS: 16.67 }); // Assume 60fps
 			}, 16.67);
 		}
@@ -64,6 +65,8 @@
 
 	onDestroy(() => {
 		if (saveLoop) clearInterval(saveLoop);
+		if (gameUpdateInterval) clearInterval(gameUpdateInterval);
+		gameManager.cleanup();
 	});
 
 	$: $mobile && activeTab && $app?.queueResize?.();
