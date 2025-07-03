@@ -1,7 +1,7 @@
 <script lang="ts">
 	import {gameManager} from '$helpers/gameManager';
 	import {setGlobals} from '$lib/globals';
-	import {supabaseAuth} from '$lib/stores/supabaseAuth';
+	import {supabaseAuth} from '$stores/supabaseAuth';
 	import {atomsPerSecond, upgrades} from '$stores/gameStore';
 	import {app} from '$stores/pixi';
 	import {mobile} from '$stores/window';
@@ -18,8 +18,8 @@
 	import Upgrades from '@components/organisms/Upgrades.svelte';
 	import {RotateCcw} from 'lucide-svelte';
 	import {onDestroy, onMount} from 'svelte';
-	import '$lib/stores/autoBuy';
-	import '$lib/stores/autoUpgrade';
+	import '$stores/autoBuy';
+	import '$stores/autoUpgrade';
 
 	const SAVE_INTERVAL = 1000;
 	let activeTab: 'achievements' | 'buildings' | 'upgrades' = 'upgrades';

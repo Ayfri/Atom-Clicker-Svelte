@@ -1,6 +1,6 @@
 import {BUILDING_LEVEL_UP_COST, type BuildingType} from '$data/buildings';
 import {CurrenciesTypes} from '$data/currencies';
-import type {Building, GameState} from '../types';
+import type {Building, GameState} from '$lib/types';
 
 export const SAVE_KEY = 'atomic-clicker-save';
 export const SAVE_VERSION = 10;

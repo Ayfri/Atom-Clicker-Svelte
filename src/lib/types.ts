@@ -1,6 +1,5 @@
 import type {BuildingType} from '$data/buildings';
 import type {CurrencyName} from '$data/currencies';
-import type {SAVE_VERSION} from '$helpers/saves';
 
 export interface Building {
 	count: number;

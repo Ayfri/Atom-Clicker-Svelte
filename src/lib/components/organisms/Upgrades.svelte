@@ -8,7 +8,8 @@
 	import AutoButton from '@components/atoms/AutoButton.svelte';
 	import Currency from '@components/atoms/Currency.svelte';
 	import Value from '@components/atoms/Value.svelte';
-	import { getUpgradesWithEffects } from '$lib/helpers/effects';
+	import { getUpgradesWithEffects } from '$helpers/effects';
+
 	let availableUpgrades: Upgrade[] = [];
 	let selectedCurrency: CurrencyName = CurrenciesTypes.ATOMS;
 

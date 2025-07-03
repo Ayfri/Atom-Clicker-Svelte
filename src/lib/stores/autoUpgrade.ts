@@ -1,9 +1,9 @@
 import { derived } from "svelte/store";
-import { currentUpgradesBought, settings } from "$stores/gameStore";
+import { currentUpgradesBought } from "$stores/gameStore";
 import { gameManager } from "$helpers/gameManager";
 import { UPGRADES } from "$data/upgrades";
 import { browser } from "$app/environment";
-import { getUpgradesWithEffects } from "$lib/helpers/effects";
+import { getUpgradesWithEffects } from "$helpers/effects";
 
 // Set up auto-upgrade intervals
 export const autoUpgradeInterval = derived(currentUpgradesBought, ($currentUpgradesBought) => {

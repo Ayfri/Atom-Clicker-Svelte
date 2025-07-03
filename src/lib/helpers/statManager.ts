@@ -1,7 +1,7 @@
 import { writable, type Invalidator, type Subscriber, type Unsubscriber, type Writable } from 'svelte/store';
 import type { Updater } from 'svelte/store';
-import { SAVE_VERSION } from './saves';
-import { type NumberStatName, type ArrayStatName, type LayerType } from './statConstants';
+import { SAVE_VERSION } from '$helpers/saves';
+import { type NumberStatName, type ArrayStatName, type LayerType } from '$helpers/statConstants';
 
 export interface StatConfig<T> {
 	id: string;

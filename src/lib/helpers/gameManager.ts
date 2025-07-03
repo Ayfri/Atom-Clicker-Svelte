@@ -4,13 +4,12 @@ import { CurrenciesTypes } from '$data/currencies';
 import { UPGRADES } from '$data/upgrades';
 import { protoniseProtonsGain } from '$stores/protons';
 import { electronizeElectronsGain } from '$stores/electrons';
-import { PROTONS_ATOMS_REQUIRED, ELECTRONS_PROTONS_REQUIRED } from '../constants';
+import { BUILDING_COST_MULTIPLIER, PROTONS_ATOMS_REQUIRED, ELECTRONS_PROTONS_REQUIRED } from '$lib/constants';
+import { SAVE_KEY } from '$helpers/saves';
+import { LAYERS, STATS, type NumberStatName } from '$helpers/statConstants';
 import { info } from '$stores/toasts';
 import { get } from 'svelte/store';
-import { BUILDING_COST_MULTIPLIER } from '../constants';
-import type { Building, PowerUp, Price } from '../types';
-import { SAVE_KEY } from './saves';
-import { LAYERS, STATS, type NumberStatName, type ArrayStatName } from './statConstants';
+import type { Building, PowerUp, Price } from '$lib/types';
 import {
 	statManager,
 	achievements,

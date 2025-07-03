@@ -1,15 +1,14 @@
-import { derived, get } from 'svelte/store';
+import { derived } from 'svelte/store';
 import { StatManager } from '$helpers/statManager';
 import { type BuildingType } from '$data/buildings';
 import { POWER_UP_DEFAULT_INTERVAL } from '$data/powerUp';
 import { UPGRADES } from '$data/upgrades';
 import { SKILL_UPGRADES } from '$data/skillTree';
-import type { Building, PowerUp, Settings } from '../types';
+import type { Building, PowerUp, Settings } from '$lib/types';
 import { calculateEffects, getUpgradesWithEffects } from '$helpers/effects';
 import { SAVE_VERSION } from '$helpers/saves';
 import { LAYERS, STATS } from '$helpers/statConstants';
-import { ELECTRONS_PROTONS_REQUIRED } from '../constants';
-import { browser } from '$app/environment';
+import { ELECTRONS_PROTONS_REQUIRED } from '$lib/constants';
 
 // Create the stat manager instance
 export const statManager = new StatManager();

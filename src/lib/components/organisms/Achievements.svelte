@@ -61,17 +61,6 @@
 		}
 	}
 
-	.icon {
-		align-items: center;
-		background: rgba(0, 0, 0, 0.2);
-		border-radius: 8px;
-		display: flex;
-		font-size: 2rem;
-		height: 3rem;
-		justify-content: center;
-		width: 3rem;
-	}
-
 	.info h3 {
 		font-size: 1rem;
 		margin: 0;

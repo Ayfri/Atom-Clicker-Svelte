@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { gameManager } from '$helpers/gameManager';
-	import { getCurrentState } from '$stores/gameStore';
 	import { BUILDING_COLORS, type BuildingData, BUILDINGS, type BuildingType } from '$data/buildings';
 	import { buildingProductions, buildings, currentUpgradesBought, globalMultiplier, bonusMultiplier, settings } from '$stores/gameStore';
 	import type { Building, Price } from '$lib/types';
 	import AutoButton from '@components/atoms/AutoButton.svelte';
 	import Value from '@components/atoms/Value.svelte';
 	import { fade } from 'svelte/transition';
-	import { BUILDING_COST_MULTIPLIER } from '@/lib/constants';
+	import { BUILDING_COST_MULTIPLIER } from '$lib/constants';
 	import { getUpgradesWithEffects } from '$lib/helpers/effects';
+
 	const buildingsEntries = Object.entries(BUILDINGS) as [BuildingType, BuildingData][];
 	let unaffordableRootBuildings: [BuildingType, BuildingData][] = [];
 	let affordableBuildings: [BuildingType, Building][] = [];

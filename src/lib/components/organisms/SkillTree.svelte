@@ -10,7 +10,7 @@
 	import { fade, fly } from 'svelte/transition';
 	import { SvelteFlow, Background, Controls, type Node, type Edge, Position } from '@xyflow/svelte';
 	import { writable } from 'svelte/store';
-	import SkillNode from './SkillNode.svelte';
+	import SkillNode from '@components/organisms/SkillNode.svelte';
 
 	export let onClose: () => void;
 
@@ -42,7 +42,7 @@
 		skillUpgrades.update((skills) => [...(skills ?? []), skill.id]);
 	}
 
-	let interval: number;
+	let interval: ReturnType<typeof setInterval>;
 	onMount(() => {
 		updateTree();
 		interval = setInterval(() => updateTree(), 300);

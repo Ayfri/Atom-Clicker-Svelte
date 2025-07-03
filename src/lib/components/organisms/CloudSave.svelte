@@ -1,12 +1,11 @@
 <script lang="ts">
-    import { supabaseAuth } from '$lib/stores/supabaseAuth';
+    import { supabaseAuth } from '$stores/supabaseAuth';
     import { fade, fly } from 'svelte/transition';
     import { X, CloudUpload, CloudDownload, AlertCircle, Clock } from 'lucide-svelte';
     import { info, error as errorToast } from '$stores/toasts';
-    import { formatNumber } from '$lib/utils';
     import { onMount } from 'svelte';
     import type { GameState } from '$lib/types';
-    import { getLevelFromTotalXP, getXPForLevel, playerLevel } from '$stores/gameStore';
+    import { getLevelFromTotalXP } from '$stores/gameStore';
     import Value from '@components/atoms/Value.svelte';
     import { CurrenciesTypes } from '$data/currencies';
 

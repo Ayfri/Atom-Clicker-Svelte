@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { supabaseAuth } from '$lib/stores/supabaseAuth';
+	import { supabaseAuth } from '$stores/supabaseAuth';
 
 	let isLoading = true;
 	let error: string | null = null;

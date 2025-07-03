@@ -3,9 +3,9 @@
 	import {BUILDING_TYPES, BUILDING_COLORS, BUILDING_LEVEL_UP_COST} from '$data/buildings';
 	import {onDestroy} from 'svelte';
 	import {createClickParticle, createClickTextParticle, type Particle} from '$helpers/particles';
-	import {autoClicksPerSecond, buildings, clickPower, currentUpgradesBought, hasBonus, totalClicks} from '$stores/gameStore';
+	import {autoClicksPerSecond, buildings, clickPower, hasBonus, totalClicks} from '$stores/gameStore';
 	import {formatNumber} from '$lib/utils';
-	import {particles, shouldCreateParticles, addParticles} from '$stores/canvas';
+	import {shouldCreateParticles, addParticles} from '$stores/canvas';
 	import {app} from '$stores/pixi';
 
 	let atomElement: HTMLDivElement;

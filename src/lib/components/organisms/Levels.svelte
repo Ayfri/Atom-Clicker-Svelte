@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { playerLevel, currentLevelXP, nextLevelXP, xpProgress } from '$lib/stores/gameStore';
+	import { playerLevel, currentLevelXP, nextLevelXP, xpProgress } from '$stores/gameStore';
 	import { formatNumber } from '$lib/utils';
 </script>
 

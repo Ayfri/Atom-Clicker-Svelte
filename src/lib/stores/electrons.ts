@@ -2,7 +2,7 @@ import { derived } from "svelte/store";
 import { protons, currentUpgradesBought } from "$stores/gameStore";
 import { calculateEffects, getUpgradesWithEffects } from "$helpers/effects";
 import { gameManager } from "$helpers/gameManager";
-import { ELECTRONS_PROTONS_REQUIRED } from "../constants";
+import { ELECTRONS_PROTONS_REQUIRED } from "$lib/constants";
 
 export const electronizeElectronsGain = derived([protons, currentUpgradesBought], ([$protons, $currentUpgradesBought]) => {
     if ($protons < ELECTRONS_PROTONS_REQUIRED) return 0;
