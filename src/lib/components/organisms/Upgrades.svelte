@@ -2,7 +2,7 @@
 	import {CURRENCIES, CurrenciesTypes, type CurrencyName} from '$data/currencies';
 	import { gameManager } from '$helpers/gameManager';
 	import { getCurrentState } from '$stores/gameStore';
-	import { currentUpgradesBought, protons, electrons, upgrades, totalProtonises, settings } from '$stores/gameStore';
+	import { currentUpgradesBought, protons, electrons, upgrades, totalProtonises, settings, atoms } from '$stores/gameStore';
 	import { UPGRADES } from '$data/upgrades';
 	import type { Upgrade } from '$lib/types';
 	import AutoButton from '@components/atoms/AutoButton.svelte';
@@ -16,7 +16,7 @@
 	$: showProtons = $protons > 0 || $totalProtonises > 0;
 	$: showElectrons = $electrons > 0;
 
-	$: if ($upgrades) {
+	$: if ($upgrades && ($atoms || $electrons || $protons || true)) {
 		const currentState = getCurrentState();
 		availableUpgrades = Object.values(UPGRADES)
 			.filter((upgrade) => {

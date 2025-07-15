@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { gameManager } from '$helpers/gameManager';
 	import { BUILDING_COLORS, type BuildingData, BUILDINGS, type BuildingType } from '$data/buildings';
-	import { buildingProductions, buildings, currentUpgradesBought, globalMultiplier, bonusMultiplier, settings } from '$stores/gameStore';
+	import { buildingProductions, buildings, currentUpgradesBought, globalMultiplier, bonusMultiplier, settings, atoms, electrons, protons } from '$stores/gameStore';
 	import type { Building, Price } from '$lib/types';
 	import AutoButton from '@components/atoms/AutoButton.svelte';
 	import Value from '@components/atoms/Value.svelte';
@@ -37,7 +37,7 @@
 		}
 	}
 
-	$: if ($buildings) {
+	$: if ($buildings && ($atoms || $electrons || $protons || true)) {
 		unaffordableRootBuildings = buildingsEntries.filter(([type, building]) => gameManager.canAfford(building.cost) === false);
 		unlockedBuildings = Object.entries($buildings).filter(([, { unlocked }]) => unlocked) as [BuildingType, Building][];
 		hiddenBuildings = buildingsEntries.filter(
@@ -96,7 +96,7 @@
 		return getMaxAffordable(baseCost, type);
 	}
 
-	$: if (selectedPurchaseMode && $buildings) {
+	$: if (selectedPurchaseMode && $buildings && ($atoms || $electrons || $protons || true)) {
 		purchaseAmounts = Object.fromEntries(
 			buildingsEntries.map(([type]) => [type, getPurchaseAmount(type)])
 		) as Record<BuildingType, number>;
