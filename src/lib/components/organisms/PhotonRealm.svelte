@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { gameManager } from '$helpers/gameManager';
+	import { createClickParticle, type Particle } from '$helpers/particles';
 	import { STATS } from '$helpers/statConstants';
-	import { formatNumber } from '$lib/utils';
 	import { onDestroy, onMount } from 'svelte';
 	import PhotonCounter from '@components/molecules/PhotonCounter.svelte';
+	import { particles } from '$stores/canvas';
+	import { CurrenciesTypes } from '$data/currencies';
 
 	interface Circle {
 		id: number;
@@ -47,9 +49,17 @@
 		circles = [...circles, circle];
 	}
 
-	function clickCircle(circle: Circle) {
+	async function clickCircle(circle: Circle, event: MouseEvent) {
 		gameManager.addStat(STATS.PHOTONS, circle.photons);
 		circles = circles.filter((c) => c.id !== circle.id);
+
+		const particleCount = Math.floor(circle.photons / 2) + 1;
+		const addedParticles: Particle[] = [];
+		for (let i = 0; i < particleCount; i++) {
+			const particle = await createClickParticle(event.clientX, event.clientY, CurrenciesTypes.PHOTONS);
+			addedParticles.push(particle);
+		}
+		particles.update((p) => [...p, ...addedParticles]);
 	}
 
 	function updateCircles() {
@@ -101,7 +111,7 @@
 
 					{#each circles as circle (circle.id)}
 						<button
-							class="absolute rounded-full cursor-pointer flex items-center justify-center transition-all duration-100 hover:scale-110 active:scale-95 bg-gradient-to-br from-realm-400 to-realm-600 border-2 border-realm-300 shadow-[0_0_15px_rgba(153,102,204,0.4)] hover:shadow-[0_0_25px_rgba(153,102,204,0.6)] select-none"
+							class="absolute rounded-full cursor-pointer flex items-center justify-center transition-all duration-100 hover:scale-110 active:scale-95"
 							style="
 								left: {circle.x}px;
 								top: {circle.y}px;
@@ -110,12 +120,18 @@
 								opacity: {opacity(circle)};
 								transform: translate(-50%, -50%);
 							"
-							on:click={() => clickCircle(circle)}
+							on:click={(event) => clickCircle(circle, event)}
 						>
+							<img
+								src="/currencies/photon.png"
+								alt="Photon"
+								class="w-full h-full object-contain"
+								style="filter: drop-shadow(0 0 10px rgba(153, 102, 204, 0.8));"
+							/>
 							<span
-								class="text-white font-bold text-xs pointer-events-none drop-shadow-[0_0_5px_rgba(0,0,0,0.5)]"
+								class="absolute text-white font-bold text-xs pointer-events-none drop-shadow-[0_0_5px_rgba(0,0,0,0.8)]"
 							>
-								+{formatNumber(circle.photons)}
+								+{circle.photons}
 							</span>
 						</button>
 					{/each}

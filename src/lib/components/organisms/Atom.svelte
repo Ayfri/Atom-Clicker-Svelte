@@ -7,6 +7,7 @@
 	import {formatNumber} from '$lib/utils';
 	import {shouldCreateParticles, addParticles} from '$stores/canvas';
 	import {app} from '$stores/pixi';
+	import { CurrenciesTypes } from '$data/currencies';
 
 	let atomElement: HTMLDivElement;
 
@@ -46,7 +47,7 @@
 				newParticles.push(await createClickTextParticle(event.clientX + Math.random() * 10, event.clientY + Math.random() * 10, `+${formatNumber($clickPower)}`));
 
 				for (let i = 0; i < 5; i++) {
-					newParticles.push(await createClickParticle(event.clientX + Math.random() * 10, event.clientY + Math.random() * 10));
+					newParticles.push(await createClickParticle(event.clientX + Math.random() * 10, event.clientY + Math.random() * 10, CurrenciesTypes.ATOMS));
 				}
 				addParticles(newParticles);
 			} catch (error) {

@@ -1,3 +1,5 @@
+import { CURRENCIES, type CurrencyName } from "$data/currencies";
+
 export interface Particle {
 	sprite: any;
 	speedX?: number;
@@ -5,12 +7,30 @@ export interface Particle {
 	update?: (particle: this, deltaTime: number) => void;
 }
 
-export const createClickParticle = async (x: number, y: number): Promise<Particle> => {
+export const loadParticleAssets = async (): Promise<void> => {
+	try {
+		const PIXI = await import('pixi.js');
+		const currenciesIcons = Object.values(CURRENCIES).map(currency => currency.icon);
+		await PIXI.Assets.load(currenciesIcons.map(icon => ({
+			alias: icon,
+			src: `currencies/${icon}.png`
+		})));
+		console.log('Particle assets loaded');
+	} catch (error) {
+		console.warn('Failed to load particle assets:', error);
+	}
+};
+
+export const createClickParticle = async (
+	x: number,
+	y: number,
+	currency: CurrencyName
+): Promise<Particle> => {
 	try {
 		// Dynamically import PixiJS to avoid blocking the app
 		const PIXI = await import('pixi.js');
 
-		const texture = await PIXI.Assets.load('atom.png');
+		const texture = PIXI.Assets.get(CURRENCIES[currency].icon);
 		const sprite = new PIXI.Sprite({
 			texture,
 			anchor: 0.5,
@@ -59,7 +79,11 @@ export const createClickParticle = async (x: number, y: number): Promise<Particl
 	}
 };
 
-export const createClickTextParticle = async (x: number, y: number, text: string): Promise<Particle> => {
+export const createClickTextParticle = async (
+	x: number,
+	y: number,
+	text: string
+): Promise<Particle> => {
 	try {
 		// Dynamically import PixiJS to avoid blocking the app
 		const PIXI = await import('pixi.js');

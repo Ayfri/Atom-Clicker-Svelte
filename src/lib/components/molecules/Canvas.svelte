@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { loadParticleAssets } from '$helpers/particles';
 	import { onDestroy, onMount } from 'svelte';
 	import { particles, shouldCreateParticles } from '$stores/canvas';
 	import { app } from '$stores/pixi';
@@ -51,6 +52,7 @@
 
 			// Dynamically import PixiJS to avoid blocking the app if it fails to load
 			const PIXI = await import('pixi.js');
+			await loadParticleAssets();
 
 			// Let PixiJS test itself - if autoDetectRenderer works, we're good to go!
 			const renderer = await PIXI.autoDetectRenderer({
