@@ -10,8 +10,9 @@
 	import { photonUpgrades } from '$stores/gameStore';
 	import { PHOTON_UPGRADES } from '$data/photonUpgrades';
 	import { derived } from 'svelte/store';
+	import { mobile } from '$stores/window';
 
-		export function simulateClick() {
+	export function simulateClick() {
 		if (!container || circles.length === 0) return;
 
 		// Get a random circle from our circles array
@@ -243,16 +244,16 @@
 </script>
 
 <div
-	class="absolute inset-0 pt-12 lg:pt-4 transition-all duration-1000 ease-in-out"
+	class="fixed inset-0 pt-12 lg:pt-4 transition-all duration-1000 ease-in-out {$mobile ? 'overflow-y-auto' : ''}"
 	style="background: linear-gradient(135deg, rgba(139, 69, 191, 0.1) 0%, rgba(75, 0, 130, 0.1) 50%, rgba(139, 69, 191, 0.1) 100%);"
 >
-	<div class="h-full flex flex-col lg:flex-row px-4 pt-12 pb-6 max-w-7xl mx-auto gap-4">
+	<div class="h-full flex flex-col lg:flex-row px-4 pt-12 pb-6 max-w-7xl mx-auto gap-4 {$mobile ? 'min-h-screen' : ''}">
 		<!-- Game Area - Left side (2/3 on desktop, full width on mobile) -->
 		<div class="flex-1 lg:w-2/3 flex flex-col items-center">
 			<PhotonCounter />
 
 			<div
-				class="relative w-full h-[350px] lg:h-[650px] overflow-hidden"
+				class="relative w-full {$mobile ? 'h-[40vh] min-h-[300px]' : 'h-[350px] lg:h-[650px]'} overflow-hidden"
 				data-photon-realm
 				bind:this={container}
 			>
@@ -286,7 +287,7 @@
 		</div>
 
 		<!-- Upgrades Area - Right side (1/3 on desktop, full width on mobile) -->
-		<div class="w-full lg:w-1/3 lg:max-w-xs">
+		<div class="w-full lg:w-1/3 lg:max-w-xs {$mobile ? 'max-h-[50vh] overflow-y-auto' : ''}">
 			<PhotonUpgrades />
 		</div>
 	</div>

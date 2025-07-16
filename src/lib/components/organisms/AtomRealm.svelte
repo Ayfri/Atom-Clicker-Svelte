@@ -14,7 +14,7 @@
 	$: $mobile && activeTab && $app?.queueResize?.();
 </script>
 
-<div class="relative pt-12 lg:pt-4 transition-all duration-1000 ease-in-out">
+<div class="relative pt-12 lg:pt-4 transition-all duration-1000 ease-in-out {$mobile ? 'min-h-screen pb-8' : ''}">
 	<Canvas />
 	<BonusPhoton />
 
@@ -47,7 +47,7 @@
 					Achievements
 				</button>
 			</div>
-			<div class="flex-1 overflow-y-auto">
+			<div class="flex-1 {$mobile ? 'max-h-[60vh]' : ''} overflow-y-auto">
 				{#if activeTab === 'upgrades'}
 					<Upgrades />
 				{:else if activeTab === 'achievements'}
@@ -87,11 +87,9 @@
 
 	@media screen and (width <= 900px) {
 		.game-container {
-			gap: 0;
-			grid-template-areas:
-				'upgrades atom'
-				'buildings atom';
-			grid-template-columns: 1fr 1fr;
+			gap: 1rem;
+			grid-template-areas: 'atom' 'upgrades' 'buildings';
+			grid-template-columns: 1fr;
 			max-width: 100vw;
 			overflow-x: hidden;
 		}
@@ -102,6 +100,7 @@
 			gap: 1rem;
 			grid-template-areas: 'atom' 'upgrades' 'buildings';
 			grid-template-columns: 1fr;
+			overflow-x: hidden;
 		}
 	}
 

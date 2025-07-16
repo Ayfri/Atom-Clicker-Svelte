@@ -68,7 +68,7 @@
   }}
 />
 
-<main class="relative py-12 lg:pb-4 min-h-screen overflow-hidden">
+<main class="relative py-12 lg:pb-4 min-h-screen {$mobile ? 'overflow-y-auto' : 'overflow-hidden'}">
 	<button
 		class="fixed right-4 top-4 z-40 flex gap-2 py-1.5 px-3 items-center justify-center rounded-lg bg-red-900/30 text-white transition-colors hover:bg-red-900/50"
 		on:click={() => showHardReset = true}
@@ -105,7 +105,7 @@
 	<!-- Use transform and opacity for virtual desktop swipe effect -->
 	{#each $realmManager.availableRealms as realm, i (realm.id)}
 		<div
-			class="absolute inset-0 transition-all duration-500 ease-in-out"
+			class="absolute inset-0 transition-all duration-300 ease-in-out {$mobile ? 'overflow-y-auto' : ''}"
 			class:opacity-100={$realmManager.selectedRealm === realm.id}
 			class:translate-x-0={$realmManager.selectedRealm === realm.id}
 			class:opacity-0={$realmManager.selectedRealm !== realm.id}
