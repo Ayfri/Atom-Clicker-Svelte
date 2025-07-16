@@ -16,6 +16,16 @@ export const SPECIAL_UPGRADES: Upgrade[] = [
 		},
 		effects: [],
 	},
+	{
+		id: 'feature_purple_realm',
+		name: 'Purple Realm',
+		description: 'Unlock the mysterious purple realm',
+		cost: {
+			amount: 1_000_000_000,
+			currency: CurrenciesTypes.ATOMS,
+		},
+		effects: [],
+	},
 ];
 
 interface CreateUpgradesOptions {

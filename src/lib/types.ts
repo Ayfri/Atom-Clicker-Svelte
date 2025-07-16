@@ -56,6 +56,7 @@ export interface GameState {
 	buildings: Partial<Record<BuildingType, Building>>;
 	electrons: number;
 	lastSave: number;
+	photons: number;
 	protons: number;
 	settings: Settings;
 	skillUpgrades: string[];

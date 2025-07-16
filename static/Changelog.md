@@ -1,3 +1,25 @@
+# What's new 16-07-2025
+
+### New Features
+- **Purple Realm**: Unlock a mysterious new gameplay dimension with the "Purple Realm" upgrade
+  - New violet-themed interface with dynamic color switching
+  - Interactive violet circles spawn randomly across the screen
+  - Click circles to collect **Photons**, a new currency
+  - Circles fade over time, adding urgency to the gameplay
+  - Complete visual transformation when the realm is unlocked
+
+### Technical Improvements
+- Added new Photons currency system with violet (#9966cc) theming
+- Implemented dynamic accent color switching between blue and violet themes
+- Extended save system to version 11 with automatic migration
+- New PurpleRealm component with real-time circle spawning and lifecycle management
+
+### Balance Changes
+- Purple Realm upgrade costs 1,000,000,000 Atoms to unlock
+- Photon circles award 1-10 Photons each
+- Circle spawn rate: every 2 seconds
+- Circle lifetime: 5 seconds before disappearing
+
 # What's new 30-06-2025
 
 - Added a new stat for the total number of bonus photons clicked.

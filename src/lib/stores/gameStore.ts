@@ -63,6 +63,14 @@ export const lastSave = statManager.register({
 	description: 'Last save timestamp'
 });
 
+export const photons = statManager.register({
+	id: STATS.PHOTONS,
+	defaultValue: 0,
+	layer: LAYERS.SPECIAL,
+	minVersion: 11,
+	description: 'Purple realm currency from violet circles'
+});
+
 export const protons = statManager.register({
 	id: STATS.PROTONS,
 	defaultValue: 0,
@@ -190,6 +198,7 @@ export function getCurrentState() {
 		buildings: buildings.get(),
 		electrons: electrons.get(),
 		lastSave: lastSave.get(),
+		photons: photons.get(),
 		protons: protons.get(),
 		settings: settings.get(),
 		skillUpgrades: skillUpgrades.get(),

@@ -5,24 +5,18 @@
 	import {atomsPerSecond, upgrades} from '$stores/gameStore';
 	import {app} from '$stores/pixi';
 	import {mobile} from '$stores/window';
-	import BonusPhoton from '@components/molecules/BonusPhoton.svelte';
-	import Canvas from '@components/molecules/Canvas.svelte';
-	import Counter from '@components/molecules/Counter.svelte';
-	import NavBar from '@components/molecules/NavBar.svelte';
-	import Toaster from '@components/molecules/Toaster.svelte';
-	import Achievements from '@components/organisms/Achievements.svelte';
-	import Atom from '@components/organisms/Atom.svelte';
-	import Buildings from '@components/organisms/Buildings.svelte';
 	import HardReset from '@components/organisms/HardReset.svelte';
 	import Levels from '@components/organisms/Levels.svelte';
-	import Upgrades from '@components/organisms/Upgrades.svelte';
+	import NavBar from '@components/molecules/NavBar.svelte';
+	import Toaster from '@components/molecules/Toaster.svelte';
 	import {RotateCcw} from 'lucide-svelte';
 	import {onDestroy, onMount} from 'svelte';
+	import { realmManager } from '$helpers/realmManager';
+	import { formatNumber } from '$lib/utils';
 	import '$stores/autoBuy';
 	import '$stores/autoUpgrade';
 
 	const SAVE_INTERVAL = 1000;
-	let activeTab: 'achievements' | 'buildings' | 'upgrades' = 'upgrades';
 	let saveLoop: ReturnType<typeof setInterval>;
 	let gameUpdateInterval: ReturnType<typeof setInterval> | null = null;
 	let showHardReset = false;
@@ -36,24 +30,20 @@
 		gameManager.initialize();
 		await supabaseAuth.init();
 
-		// Wait for app to be initialized, but only if particles are supported
 		while (!$app) {
 			await new Promise(resolve => setTimeout(resolve, 100));
 		}
 
-		// Only add ticker update if ticker exists (when particles are supported)
 		if ($app.ticker?.add) {
 			$app.ticker.add(update);
 		} else {
-			// Fallback: use setInterval for game updates when no PixiJS ticker
 			gameUpdateInterval = setInterval(() => {
-				update({ deltaMS: 16.67 }); // Assume 60fps
+				update({ deltaMS: 16.67 });
 			}, 16.67);
 		}
 
 		setGlobals();
 
-		// Save game state periodically
 		saveLoop = setInterval(() => {
 			try {
 				gameManager.save();
@@ -69,7 +59,7 @@
 		gameManager.cleanup();
 	});
 
-	$: $mobile && activeTab && $app?.queueResize?.();
+	$: $mobile && $app?.queueResize?.();
 </script>
 
 <svelte:window
@@ -78,7 +68,7 @@
   }}
 />
 
-<main class="relative py-12 lg:pb-4">
+<main class="relative py-12 lg:pb-4 min-h-screen overflow-hidden">
 	<button
 		class="fixed right-4 top-4 z-40 flex gap-2 py-1.5 px-3 items-center justify-center rounded-lg bg-red-900/30 text-white transition-colors hover:bg-red-900/50"
 		on:click={() => showHardReset = true}
@@ -89,129 +79,44 @@
 	</button>
 
 	<NavBar/>
+	<Toaster/>
+
+	{#if $realmManager.availableRealms.length > 1}
+		<div class="fixed right-4 top-20 z-30 bg-black/10 backdrop-blur-sm border border-white/10 rounded-lg p-1">
+			<div class="flex flex-col gap-1">
+				{#each $realmManager.availableRealms as realm (realm.id)}
+					<button
+						class="flex items-center gap-2 px-2 py-1.5 rounded transition-all duration-200 hover:scale-105 {$realmManager.selectedRealm === realm.id ? realm.activeClasses : 'bg-white/5 hover:bg-white/10'}"
+						on:click={() => realmManager.selectRealm(realm.id)}
+						title="{realm.title} - {formatNumber($realmManager.realmValues[realm.id] ?? 0)} {realm.currency.name.toLowerCase()}"
+					>
+						<img src="/currencies/{realm.currency.icon}.png" alt={realm.currency.name} class="w-4 h-4" />
+						<div class="text-xs text-white/80">{formatNumber($realmManager.realmValues[realm.id] ?? 0, 1)}</div>
+					</button>
+				{/each}
+			</div>
+		</div>
+	{/if}
 
 	{#if $upgrades.includes('feature_levels')}
 		<Levels/>
 	{/if}
-	<Canvas/>
-	<Toaster/>
-	<BonusPhoton/>
-	<div class="game-container">
-		<div class="left-panel">
-			<div class="tabs">
-				<button class:active={activeTab === 'upgrades'} on:click={() => activeTab = 'upgrades'}> Upgrades</button>
-				{#if $mobile}
-					<button class:active={activeTab === 'buildings'} on:click={() => activeTab = 'buildings'}> Buildings</button>
-				{/if}
-				<button class:active={activeTab === 'achievements'} on:click={() => activeTab = 'achievements'}>
-					Achievements
-				</button>
-			</div>
-			<div class="tab-content">
-				{#if activeTab === 'upgrades'}
-					<Upgrades/>
-				{:else if activeTab === 'achievements'}
-					<Achievements/>
-				{:else if activeTab === 'buildings'}
-					<Buildings/>
-				{/if}
-			</div>
+
+	<!-- Use transform and opacity for virtual desktop swipe effect -->
+	{#each $realmManager.availableRealms as realm, i (realm.id)}
+		<div
+			class="absolute inset-0 transition-all duration-500 ease-in-out"
+			class:opacity-100={$realmManager.selectedRealm === realm.id}
+			class:translate-x-0={$realmManager.selectedRealm === realm.id}
+			class:opacity-0={$realmManager.selectedRealm !== realm.id}
+			class:pointer-events-none={$realmManager.selectedRealm !== realm.id}
+			style="transform: translateX({$realmManager.selectedRealm === realm.id ? '0' : (i > $realmManager.availableRealms.findIndex(r => r.id === $realmManager.selectedRealm) ? '100%' : '-100%')});"
+		>
+			<svelte:component this={realm.component} />
 		</div>
-		<div class="central-area">
-			<Counter/>
-			<Atom/>
-		</div>
-		{#if !$mobile}
-			<Buildings/>
-		{/if}
-	</div>
+	{/each}
 
 	{#if showHardReset}
 		<HardReset onClose={() => showHardReset = false} />
 	{/if}
 </main>
-
-<style>
-	.game-container {
-		display: grid;
-		gap: 2rem;
-		grid-template-areas: 'upgrades atom buildings';
-		grid-template-columns: 250px 1fr 250px;
-		margin: 0 auto;
-		max-width: 1400px;
-		padding: 1rem;
-
-		@media screen and (900px <= width <= 1536px) {
-			grid-template-columns: 200px 300px 200px;
-			margin: 0 minmax(5rem, auto);
-			max-width: 900px;
-			padding-left: 4rem;
-		}
-
-		@media screen and (width <= 900px) {
-			gap: 0;
-			grid-template-areas:
-		        'upgrades atom'
-		        'buildings atom';
-			grid-template-columns: 1fr 1fr;
-			max-width: 100vw;
-			overflow-x: hidden;
-		}
-
-		@media screen and (width <= 700px) {
-			gap: 1rem;
-			grid-template-areas: 'atom' 'upgrades' 'buildings';
-			grid-template-columns: 1fr;
-		}
-	}
-
-	.left-panel {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-		grid-area: upgrades;
-		z-index: 1;
-	}
-
-	.tabs {
-		display: grid;
-		gap: 0.5rem;
-		grid-auto-flow: column;
-	}
-
-	.tabs button {
-		background: rgba(255, 255, 255, 0.05);
-		backdrop-filter: blur(3px);
-		border: none;
-		border-radius: 8px;
-		color: inherit;
-		cursor: pointer;
-		padding: 0.5rem;
-		transition: all 0.2s;
-		white-space: nowrap;
-		width: 100%;
-	}
-
-	.tabs button:hover {
-		background: rgba(255, 255, 255, 0.1);
-	}
-
-	.tabs button.active {
-		background: var(--accent-color);
-		color: white;
-	}
-
-	.central-area {
-		align-items: center;
-		display: flex;
-		flex-direction: column;
-		grid-area: atom;
-		justify-content: start;
-		position: relative;
-	}
-
-	.tab-content {
-		flex: 1;
-		overflow-y: auto;
-	}
-</style>
