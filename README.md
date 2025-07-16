@@ -39,6 +39,9 @@ Welcome to Atom Clicker, an engaging incremental game where you'll build your ow
   - Auto-upgrade systems
   - Optimize your production
 
+- 🟣 Purple Realm
+  - Unlock a mysterious gameplay dimension with interactive violet circles
+
 ### Social Features
 - 📊 Global Leaderboard
 - 🏆 Achievement System
