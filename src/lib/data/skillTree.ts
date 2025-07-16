@@ -474,4 +474,35 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		}],
 		requires: ['stellarCore'],
 	},
+	photonEfficiency: {
+		id: 'photonEfficiency',
+		name: 'Photon Efficiency',
+		description: '+1% all production per photon upgrade owned',
+		position: gridPos(5.5, 1),
+		effects: [{
+			type: 'global',
+			description: 'Add 1% production per photon upgrade owned',
+			apply: (currentValue, state) => {
+				const photonUpgradeCount = Object.values(state.photonUpgrades || {}).reduce((sum, level) => sum + level, 0);
+				return currentValue * (1 + photonUpgradeCount * 0.01);
+			}
+		}],
+		condition: state => Object.keys(state.photonUpgrades || {}).length >= 3,
+		requires: ['cosmicSynergy'],
+	},
+	photonProtonBoost: {
+		id: 'photonProtonBoost',
+		name: 'Photon Proton Boost',
+		description: 'Add 1% protons per photon upgrade owned',
+		position: gridPos(5.5, 2),
+		effects: [{
+			type: 'global',
+			description: 'Add 1% protons per photon upgrade owned',
+			apply: (currentValue, state) => {
+				const photonUpgradeCount = Object.values(state.photonUpgrades || {}).reduce((sum, level) => sum + level, 0);
+				return currentValue * (1 + photonUpgradeCount * 0.01);
+			}
+		}],
+		requires: ['photonEfficiency'],
+	},
 };
