@@ -104,6 +104,70 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 			},
 		],
 	},
+	electron_boost: {
+		id: 'electron_boost',
+		name: 'Electron Amplifier',
+		description: (level: number) => `${formatNumber(25 * level)}% more electrons from electronize`,
+		baseCost: 2500,
+		costMultiplier: 4,
+		maxLevel: 8,
+		effects: (level: number) => [
+			{
+				type: 'electron_gain',
+				description: `Multiply electron gain by ${1 + (0.25 * level)}`,
+				apply: (currentValue) => currentValue * (1 + (0.25 * level)),
+			},
+		],
+		condition: (state: GameState) => state.electrons > 0,
+	},
+	proton_boost: {
+		id: 'proton_boost',
+		name: 'Proton Multiplier',
+		description: (level: number) => `${formatNumber(15 * level)}% more protons from protonise`,
+		baseCost: 5000,
+		costMultiplier: 5,
+		maxLevel: 6,
+		effects: (level: number) => [
+			{
+				type: 'proton_gain',
+				description: `Multiply proton gain by ${1 + (0.15 * level)}`,
+				apply: (currentValue) => currentValue * (1 + (0.15 * level)),
+			},
+		],
+		condition: (state: GameState) => state.protons > 0,
+	},
+	electron_super_boost: {
+		id: 'electron_super_boost',
+		name: 'Electron Overdrive',
+		description: (level: number) => `${formatNumber(50 * level)}% more electrons from electronize`,
+		baseCost: 25000,
+		costMultiplier: 6,
+		maxLevel: 5,
+		effects: (level: number) => [
+			{
+				type: 'electron_gain',
+				description: `Multiply electron gain by ${1 + (0.5 * level)}`,
+				apply: (currentValue) => currentValue * (1 + (0.5 * level)),
+			},
+		],
+		condition: (state: GameState) => state.electrons >= 10,
+	},
+	proton_super_boost: {
+		id: 'proton_super_boost',
+		name: 'Proton Overdrive',
+		description: (level: number) => `${formatNumber(40 * level)}% more protons from protonise`,
+		baseCost: 50000,
+		costMultiplier: 7,
+		maxLevel: 4,
+		effects: (level: number) => [
+			{
+				type: 'proton_gain',
+				description: `Multiply proton gain by ${1 + (0.4 * level)}`,
+				apply: (currentValue) => currentValue * (1 + (0.4 * level)),
+			},
+		],
+		condition: (state: GameState) => state.protons >= 5,
+	},
 };
 
 export function getPhotonUpgradeCost(upgrade: PhotonUpgrade, level: number): number {

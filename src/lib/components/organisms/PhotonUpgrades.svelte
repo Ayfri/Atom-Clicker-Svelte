@@ -1,13 +1,16 @@
 <script lang="ts">
 	import { PHOTON_UPGRADES, getPhotonUpgradeCost, canAffordPhotonUpgrade } from '$data/photonUpgrades';
 	import { gameManager } from '$helpers/gameManager';
-	import { photons, photonUpgrades } from '$stores/gameStore';
+	import { photons, photonUpgrades, getCurrentState } from '$stores/gameStore';
 	import Value from '@components/atoms/Value.svelte';
 	import { CurrenciesTypes } from '$data/currencies';
 
+	$: currentState = getCurrentState();
 	$: availableUpgrades = Object.values(PHOTON_UPGRADES).filter(upgrade => {
 		const currentLevel = $photonUpgrades[upgrade.id] || 0;
-		return currentLevel < upgrade.maxLevel;
+		const hasLevelsRemaining = currentLevel < upgrade.maxLevel;
+		const meetsCondition = !upgrade.condition || upgrade.condition(currentState);
+		return hasLevelsRemaining && meetsCondition;
 	});
 
 	$: affordableUpgrades = availableUpgrades.filter(upgrade => {
