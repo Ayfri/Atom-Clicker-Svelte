@@ -59,6 +59,7 @@ export interface GameState {
 	photons: number;
 	photonUpgrades: Record<string, number>;
 	protons: number;
+	purpleRealmUnlocked: boolean;
 	settings: Settings;
 	skillUpgrades: string[];
 	startDate: number;

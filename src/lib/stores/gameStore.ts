@@ -66,7 +66,7 @@ export const lastSave = statManager.register({
 export const photons = statManager.register({
 	id: STATS.PHOTONS,
 	defaultValue: 0,
-	layer: LAYERS.SPECIAL,
+	layer: LAYERS.PHOTON_REALM,
 	minVersion: 11,
 	description: 'Purple realm currency from violet circles'
 });
@@ -74,7 +74,7 @@ export const photons = statManager.register({
 export const photonUpgrades = statManager.register({
 	id: STATS.PHOTON_UPGRADES,
 	defaultValue: {} as Record<string, number>,
-	layer: LAYERS.SPECIAL,
+	layer: LAYERS.PHOTON_REALM,
 	minVersion: 12,
 	description: 'Photon upgrade levels'
 });
@@ -164,6 +164,14 @@ export const upgrades = statManager.register({
 	description: 'Purchased upgrades'
 });
 
+export const purpleRealmUnlocked = statManager.register({
+	id: 'purpleRealmUnlocked',
+	defaultValue: false,
+	layer: LAYERS.PHOTON_REALM,
+	minVersion: 13,
+	description: 'Whether the purple realm has been unlocked'
+});
+
 // XP and leveling system
 export function getXPForLevel(level: number) {
 	const base = 100;
@@ -209,6 +217,7 @@ export function getCurrentState() {
 		photons: photons.get(),
 		photonUpgrades: photonUpgrades.get(),
 		protons: protons.get(),
+		purpleRealmUnlocked: purpleRealmUnlocked.get(),
 		settings: settings.get(),
 		skillUpgrades: skillUpgrades.get(),
 		startDate: startDate.get(),

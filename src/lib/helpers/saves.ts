@@ -3,7 +3,7 @@ import {CurrenciesTypes} from '$data/currencies';
 import type {Building, GameState} from '$lib/types';
 
 export const SAVE_KEY = 'atomic-clicker-save';
-export const SAVE_VERSION = 12;
+export const SAVE_VERSION = 13;
 
 // Helper functions for state management
 export function loadSavedState(): GameState | null {
@@ -202,6 +202,11 @@ function migrateSavedState(savedState: any): GameState | undefined {
 		// Add photonUpgrades
 		savedState.photonUpgrades = {};
 		savedState.version = 12;
+	}
+	if (savedState.version === 12) {
+		// Add purpleRealmUnlocked
+		savedState.purpleRealmUnlocked = false;
+		savedState.version = 13;
 	}
 
 	return savedState;

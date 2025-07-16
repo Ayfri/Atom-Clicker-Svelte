@@ -1,7 +1,14 @@
+// Layer types
+// 0 = never reset
+// 1 = reset all stats at layer
+// 2 = reset all stats at layer and layer 1
+// 3 = reset all stats at layer and layer 1 and layer 2 etc...
+
 export const LAYERS = {
 	NEVER: 0,
 	PROTONIZER: 1,
 	ELECTRONIZE: 2,
+	PHOTON_REALM: 3,
 	SPECIAL: -1
 } as const;
 
@@ -15,6 +22,7 @@ export const STATS = {
 	PHOTONS: 'photons',
 	PHOTON_UPGRADES: 'photonUpgrades',
 	PROTONS: 'protons',
+	PURPLE_REALM_UNLOCKED: 'purpleRealmUnlocked',
 	SETTINGS: 'settings',
 	SKILL_UPGRADES: 'skillUpgrades',
 	START_DATE: 'startDate',

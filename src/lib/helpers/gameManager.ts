@@ -20,6 +20,7 @@ import {
 	photons,
 	photonUpgrades,
 	protons,
+	purpleRealmUnlocked,
 	upgrades,
 	xpGainMultiplier,
 	getCurrentState,
@@ -189,6 +190,12 @@ export const gameManager = {
 
 		if (!purchased && this.spendCurrency(upgrade.cost)) {
 			statManager.getArray<string>(STATS.UPGRADES)?.push(id);
+
+			// Special handling for purple realm unlock
+			if (id === 'feature_purple_realm') {
+				purpleRealmUnlocked.set(true);
+			}
+
 			return true;
 		}
 		return false;
@@ -226,7 +233,7 @@ export const gameManager = {
 		if (currentAtoms >= PROTONS_ATOMS_REQUIRED || protonGain > 0) {
 			const currentUpgrades = upgrades.get();
 			const persistentUpgrades = currentUpgrades.filter(id =>
-				id.startsWith('proton') || id.startsWith('electron')
+				id.startsWith('proton') || id.startsWith('electron') || id === 'feature_purple_realm'
 			);
 
 			// Increment protonise counter before reset
@@ -250,7 +257,7 @@ export const gameManager = {
 		if (currentProtons >= ELECTRONS_PROTONS_REQUIRED || electronGain > 0) {
 			const currentUpgrades = upgrades.get();
 			const persistentUpgrades = currentUpgrades.filter(id =>
-				id.startsWith('electron') || id.startsWith('proton')
+				id.startsWith('electron') || id.startsWith('proton') || id === 'feature_purple_realm'
 			);
 
 			// Increment electronize counter before reset

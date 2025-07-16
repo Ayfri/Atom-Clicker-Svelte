@@ -1,5 +1,5 @@
 import { derived, writable, type Readable, type Writable } from 'svelte/store';
-import { statManager, upgrades } from '$stores/gameStore';
+import { statManager, purpleRealmUnlocked } from '$stores/gameStore';
 import { CURRENCIES, CurrenciesTypes } from '$data/currencies';
 import { STATS } from '$helpers/statConstants';
 import type { Currency } from '$lib/types';
@@ -13,7 +13,7 @@ export interface RealmConfig {
 	store: Writable<number>;
 	title: string;
 	activeClasses: string;
-	isUnlocked: (upgrades: string[]) => boolean;
+	isUnlocked: () => boolean;
 	component: ComponentType;
 	props?: Record<string, unknown>;
 }
@@ -52,15 +52,15 @@ class RealmManager implements Readable<RealmManagerStore> {
 				store: statManager.getNumber(STATS.PHOTONS)!.store,
 				title: 'Purple Realm',
 				activeClasses: 'bg-realm-500/60 border-realm-400/50',
-				isUnlocked: (upgrades) => upgrades.includes('feature_purple_realm'),
+				isUnlocked: () => purpleRealmUnlocked.get(),
 				component: PhotonRealm
 			}
 		];
 
 		this._selectedRealm = writable(this.realms[0].id);
 
-		this._availableRealms = derived(upgrades, ($upgrades) => {
-			return this.realms.filter((r) => r.isUnlocked($upgrades));
+		this._availableRealms = derived(purpleRealmUnlocked, ($purpleRealmUnlocked) => {
+			return this.realms.filter((r) => r.isUnlocked());
 		});
 
 		const storesToWatch = this.realms.map((r) => r.store);
