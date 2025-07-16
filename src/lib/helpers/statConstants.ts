@@ -13,6 +13,7 @@ export const STATS = {
 	ELECTRONS: 'electrons',
 	LAST_SAVE: 'lastSave',
 	PHOTONS: 'photons',
+	PHOTON_UPGRADES: 'photonUpgrades',
 	PROTONS: 'protons',
 	SETTINGS: 'settings',
 	SKILL_UPGRADES: 'skillUpgrades',

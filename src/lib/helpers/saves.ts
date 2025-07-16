@@ -3,7 +3,7 @@ import {CurrenciesTypes} from '$data/currencies';
 import type {Building, GameState} from '$lib/types';
 
 export const SAVE_KEY = 'atomic-clicker-save';
-export const SAVE_VERSION = 11;
+export const SAVE_VERSION = 12;
 
 // Helper functions for state management
 export function loadSavedState(): GameState | null {
@@ -54,6 +54,10 @@ export function isValidGameState(state: any): state is GameState {
 		[
 			'photons',
 			(v: any) => typeof v === 'number',
+		],
+		[
+			'photonUpgrades',
+			(v: any) => typeof v === 'object',
 		],
 		[
 			'protons',
@@ -193,6 +197,11 @@ function migrateSavedState(savedState: any): GameState | undefined {
 		// Add photons
 		savedState.photons = 0;
 		savedState.version = 11;
+	}
+	if (savedState.version === 11) {
+		// Add photonUpgrades
+		savedState.photonUpgrades = {};
+		savedState.version = 12;
 	}
 
 	return savedState;

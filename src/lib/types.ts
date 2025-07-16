@@ -57,6 +57,7 @@ export interface GameState {
 	electrons: number;
 	lastSave: number;
 	photons: number;
+	photonUpgrades: Record<string, number>;
 	protons: number;
 	settings: Settings;
 	skillUpgrades: string[];

@@ -2,6 +2,7 @@ import { ACHIEVEMENTS } from '$data/achievements';
 import { BUILDING_LEVEL_UP_COST, BUILDINGS, type BuildingType } from '$data/buildings';
 import { CurrenciesTypes } from '$data/currencies';
 import { UPGRADES } from '$data/upgrades';
+import { PHOTON_UPGRADES, getPhotonUpgradeCost } from '$data/photonUpgrades';
 import { protoniseProtonsGain } from '$stores/protons';
 import { electronizeElectronsGain } from '$stores/electrons';
 import { BUILDING_COST_MULTIPLIER, PROTONS_ATOMS_REQUIRED, ELECTRONS_PROTONS_REQUIRED } from '$lib/constants';
@@ -16,6 +17,8 @@ import {
 	atoms,
 	buildings,
 	electrons,
+	photons,
+	photonUpgrades,
 	protons,
 	upgrades,
 	xpGainMultiplier,
@@ -98,6 +101,8 @@ export const gameManager = {
 			return atoms.get();
 		} else if (price.currency === CurrenciesTypes.ELECTRONS) {
 			return electrons.get();
+		} else if (price.currency === CurrenciesTypes.PHOTONS) {
+			return photons.get();
 		} else if (price.currency === CurrenciesTypes.PROTONS) {
 			return protons.get();
 		}
@@ -111,6 +116,8 @@ export const gameManager = {
 			this.addStat(STATS.ATOMS, -price.amount);
 		} else if (price.currency === CurrenciesTypes.ELECTRONS) {
 			this.addStat(STATS.ELECTRONS, -price.amount);
+		} else if (price.currency === CurrenciesTypes.PHOTONS) {
+			this.addStat(STATS.PHOTONS, -price.amount);
 		} else if (price.currency === CurrenciesTypes.PROTONS) {
 			this.addStat(STATS.PROTONS, -price.amount);
 		}
@@ -182,6 +189,31 @@ export const gameManager = {
 
 		if (!purchased && this.spendCurrency(upgrade.cost)) {
 			statManager.getArray<string>(STATS.UPGRADES)?.push(id);
+			return true;
+		}
+		return false;
+	},
+
+	purchasePhotonUpgrade(upgradeId: string) {
+		const currentUpgrades = photonUpgrades.get();
+		const currentLevel = currentUpgrades[upgradeId] || 0;
+
+		const upgrade = PHOTON_UPGRADES[upgradeId];
+
+		if (!upgrade || currentLevel >= upgrade.maxLevel) {
+			return false;
+		}
+
+		const cost = {
+			amount: getPhotonUpgradeCost(upgrade, currentLevel),
+			currency: CurrenciesTypes.PHOTONS
+		};
+
+		if (this.spendCurrency(cost)) {
+			photonUpgrades.update(current => ({
+				...current,
+				[upgradeId]: currentLevel + 1
+			}));
 			return true;
 		}
 		return false;
@@ -274,6 +306,7 @@ export const gameManager = {
 	},
 
 	addAtoms: (amount: number) => gameManager.addStat(STATS.ATOMS, amount),
+	addPhotons: (amount: number) => gameManager.addStat(STATS.PHOTONS, amount),
 	incrementClicks: () => gameManager.addStat(STATS.TOTAL_CLICKS, 1),
 	incrementBonusPhotonClicks: () => gameManager.addStat(STATS.TOTAL_BONUS_PHOTONS_CLICKED, 1),
 

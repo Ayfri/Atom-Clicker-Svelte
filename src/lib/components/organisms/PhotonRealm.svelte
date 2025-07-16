@@ -4,8 +4,34 @@
 	import { STATS } from '$helpers/statConstants';
 	import { onDestroy, onMount } from 'svelte';
 	import PhotonCounter from '@components/molecules/PhotonCounter.svelte';
+	import PhotonUpgrades from '@components/organisms/PhotonUpgrades.svelte';
 	import { particles } from '$stores/canvas';
 	import { CurrenciesTypes } from '$data/currencies';
+	import { photonUpgrades } from '$stores/gameStore';
+	import { PHOTON_UPGRADES } from '$data/photonUpgrades';
+	import { derived } from 'svelte/store';
+
+		export function simulateClick() {
+		if (!container || circles.length === 0) return;
+
+		// Get a random circle from our circles array
+		const randomCircle = circles[Math.floor(Math.random() * circles.length)];
+
+		// Get the container's position to calculate absolute coordinates
+		const containerRect = container.getBoundingClientRect();
+		const absoluteX = containerRect.left + randomCircle.x;
+		const absoluteY = containerRect.top + randomCircle.y;
+
+		// Create a synthetic mouse event with the circle's coordinates
+		const event = new MouseEvent('click', {
+			clientX: absoluteX,
+			clientY: absoluteY,
+			bubbles: true
+		});
+
+		// Trigger the click directly on the circle
+		clickCircle(randomCircle, event);
+	}
 
 	interface Circle {
 		id: number;
@@ -22,13 +48,87 @@
 	let container: HTMLDivElement;
 	let spawnInterval: ReturnType<typeof setInterval>;
 	let updateInterval: ReturnType<typeof setInterval>;
+	let autoClickInterval: ReturnType<typeof setInterval>;
+	let lastUpdateTime = Date.now();
 
-	const SPAWN_RATE = 2000; // milliseconds between spawns
-	const CIRCLE_LIFETIME = 5000; // 5 seconds before circle disappears
+	// Base values - will be modified by upgrades
+	let baseSpawnRate = 2000;
+	let baseCircleLifetime = 5000;
+	let baseSizeMultiplier = 1;
+
 	const MIN_SIZE = 30;
 	const MAX_SIZE = 80;
 	const MIN_PHOTONS = 1;
 	const MAX_PHOTONS = 10;
+
+	// Helper functions to get upgrade bonuses
+	function getSpawnRate() {
+		const level = $photonUpgrades['photon_spawn_rate'] || 0;
+		if (level === 0) return baseSpawnRate;
+
+		const upgrade = PHOTON_UPGRADES['photon_spawn_rate'];
+		const effects = upgrade.effects(level);
+
+		return effects.reduce((rate, effect) => {
+			if (effect.type === 'power_up_interval') {
+				return effect.apply(rate, gameManager.getCurrentState());
+			}
+			return rate;
+		}, baseSpawnRate);
+	}
+
+	function getSizeMultiplier() {
+		const level = $photonUpgrades['circle_size'] || 0;
+		if (level === 0) return baseSizeMultiplier;
+
+		const upgrade = PHOTON_UPGRADES['circle_size'];
+		const effects = upgrade.effects(level);
+
+		return effects.reduce((multiplier, effect) => {
+			if (effect.type === 'global') {
+				return effect.apply(multiplier, gameManager.getCurrentState());
+			}
+			return multiplier;
+		}, baseSizeMultiplier);
+	}
+
+	function getPhotonValueBonus() {
+		const level = $photonUpgrades['photon_value'] || 0;
+		if (level === 0) return 0;
+
+		const upgrade = PHOTON_UPGRADES['photon_value'];
+		const effects = upgrade.effects(level);
+
+		return effects.reduce((bonus, effect) => {
+			if (effect.type === 'click') {
+				return effect.apply(bonus, gameManager.getCurrentState());
+			}
+			return bonus;
+		}, 0);
+	}
+
+	function getLifetimeBonus() {
+		const level = $photonUpgrades['circle_lifetime'] || 0;
+		if (level === 0) return 0;
+
+		const upgrade = PHOTON_UPGRADES['circle_lifetime'];
+		const effects = upgrade.effects(level);
+
+		return effects.reduce((bonus, effect) => {
+			if (effect.type === 'power_up_duration') {
+				return effect.apply(bonus, gameManager.getCurrentState());
+			}
+			return bonus;
+		}, 0);
+	}
+
+	function getDoubleChance() {
+		const level = $photonUpgrades['double_chance'] || 0;
+		if (level === 0) return 0;
+
+		// Simple calculation: 2% per level
+		return (level * 2) / 100;
+	}
 
 	function spawnCircle() {
 		if (!container) return;
@@ -36,14 +136,26 @@
 		const rect = container.getBoundingClientRect();
 		const margin = MAX_SIZE;
 
+		// Apply upgrades
+		const sizeMultiplier = getSizeMultiplier();
+		const photonValueBonus = getPhotonValueBonus();
+		const lifetimeBonus = getLifetimeBonus();
+		const doubleChance = getDoubleChance();
+
+		const baseSize = Math.random() * (MAX_SIZE - MIN_SIZE) + MIN_SIZE;
+		const basePhotons = Math.floor(Math.random() * (MAX_PHOTONS - MIN_PHOTONS + 1)) + MIN_PHOTONS;
+
+		// Apply double chance
+		const finalPhotons = Math.random() < doubleChance ? (basePhotons + photonValueBonus) * 2 : basePhotons + photonValueBonus;
+
 		const circle: Circle = {
 			id: nextId++,
 			x: Math.random() * (rect.width - margin * 2) + margin,
 			y: Math.random() * (rect.height - margin * 2) + margin,
-			size: Math.random() * (MAX_SIZE - MIN_SIZE) + MIN_SIZE,
-			photons: Math.floor(Math.random() * (MAX_PHOTONS - MIN_PHOTONS + 1)) + MIN_PHOTONS,
+			size: baseSize * sizeMultiplier,
+			photons: Math.floor(finalPhotons),
 			lifetime: 0,
-			maxLifetime: CIRCLE_LIFETIME
+			maxLifetime: baseCircleLifetime + lifetimeBonus
 		};
 
 		circles = [...circles, circle];
@@ -63,7 +175,10 @@
 	}
 
 	function updateCircles() {
-		const deltaTime = 16; // ~60fps
+		const currentTime = Date.now();
+		const deltaTime = currentTime - lastUpdateTime;
+		lastUpdateTime = currentTime;
+
 		circles = circles
 			.map((circle) => ({
 				...circle,
@@ -72,83 +187,107 @@
 			.filter((circle) => circle.lifetime < circle.maxLifetime);
 	}
 
-	onMount(() => {
-		spawnInterval = setInterval(spawnCircle, SPAWN_RATE);
+	// Calculate auto-clicks per second from photon upgrades
+	const photonAutoClicksPerSecond = derived(photonUpgrades, ($photonUpgrades) => {
+		const autoClickerLevel = $photonUpgrades['auto_clicker'] || 0;
+		if (autoClickerLevel === 0) return 0;
+
+		const upgrade = PHOTON_UPGRADES['auto_clicker'];
+		const effects = upgrade.effects(autoClickerLevel);
+
+		// Apply the effect to get clicks per second
+		return effects.reduce((total, effect) => {
+			if (effect.type === 'auto_click') {
+				return effect.apply(total, gameManager.getCurrentState());
+			}
+			return total;
+		}, 0);
+	});
+
+	// Set up auto-clicker subscription like in Atom.svelte
+	photonAutoClicksPerSecond.subscribe(clicksPerSecond => {
+		if (autoClickInterval) clearInterval(autoClickInterval);
+		if (clicksPerSecond > 0) {
+			autoClickInterval = setInterval(() => simulateClick(), 5000 / clicksPerSecond);
+		}
+	});
+
+	// Update spawn rate when upgrades change
+	$: {
+		if (spawnInterval) {
+			clearInterval(spawnInterval);
+			spawnInterval = setInterval(spawnCircle, getSpawnRate());
+		}
+	}
+
+		onMount(() => {
+		lastUpdateTime = Date.now();
+		spawnInterval = setInterval(spawnCircle, getSpawnRate());
 		updateInterval = setInterval(updateCircles, 16);
 	});
 
 	onDestroy(() => {
 		if (spawnInterval) clearInterval(spawnInterval);
 		if (updateInterval) clearInterval(updateInterval);
+		if (autoClickInterval) clearInterval(autoClickInterval);
 	});
 
 	$: opacity = (circle: Circle) => Math.max(0, 1 - circle.lifetime / circle.maxLifetime);
+	$: scale = (circle: Circle) => {
+		const fadeInDuration = 150; // 0.15s
+		if (circle.lifetime < fadeInDuration) {
+			return circle.lifetime / fadeInDuration;
+		}
+		return 1;
+	};
 </script>
 
 <div
 	class="absolute inset-0 pt-12 lg:pt-4 transition-all duration-1000 ease-in-out"
 	style="background: linear-gradient(135deg, rgba(139, 69, 191, 0.1) 0%, rgba(75, 0, 130, 0.1) 50%, rgba(139, 69, 191, 0.1) 100%);"
 >
-	<div class="h-full flex flex-col items-center justify-center px-4 max-w-6xl mx-auto">
-		<div class="w-full max-w-4xl">
-			<div class="flex flex-col items-center justify-start h-full w-full">
-				<PhotonCounter />
+	<div class="h-full flex flex-col lg:flex-row px-4 pt-12 pb-6 max-w-7xl mx-auto gap-4">
+		<!-- Game Area - Left side (2/3 on desktop, full width on mobile) -->
+		<div class="flex-1 lg:w-2/3 flex flex-col items-center">
+			<PhotonCounter />
 
-				<div
-					class="relative w-full h-96 sm:h-80 bg-gradient-to-br from-realm-900/20 via-realm-800/10 to-realm-900/20 border-2 border-realm-500/30 rounded-xl overflow-hidden"
-					bind:this={container}
-				>
-					<div
-						class="absolute top-5 left-1/2 transform -translate-x-1/2 text-center z-10 pointer-events-none"
+			<div
+				class="relative w-full h-[350px] lg:h-[650px] overflow-hidden"
+				data-photon-realm
+				bind:this={container}
+			>
+				{#each circles as circle (circle.id)}
+					<button
+						class="absolute rounded-full cursor-pointer flex items-center justify-center transition-all duration-100 hover:scale-110 active:scale-95"
+						style="
+							left: {circle.x}px;
+							top: {circle.y}px;
+							width: {circle.size}px;
+							height: {circle.size}px;
+							opacity: {opacity(circle)};
+							transform: translate(-50%, -50%) scale({scale(circle)});
+						"
+						on:click={(event) => clickCircle(circle, event)}
 					>
-						<h2
-							class="text-realm-400 text-2xl font-bold mb-2 drop-shadow-[0_0_10px_rgba(153,102,204,0.5)]"
+						<img
+							src="/currencies/photon.png"
+							alt="Photon"
+							class="w-full h-full object-contain"
+							style="filter: drop-shadow(0 0 10px rgba(153, 102, 204, 0.8));"
+						/>
+						<span
+							class="absolute text-white font-bold text-xs pointer-events-none drop-shadow-[0_0_5px_rgba(0,0,0,0.8)]"
 						>
-							Purple Realm
-						</h2>
-						<p class="text-white/70 text-sm">Click the violet circles to collect photons!</p>
-					</div>
-
-					{#each circles as circle (circle.id)}
-						<button
-							class="absolute rounded-full cursor-pointer flex items-center justify-center transition-all duration-100 hover:scale-110 active:scale-95"
-							style="
-								left: {circle.x}px;
-								top: {circle.y}px;
-								width: {circle.size}px;
-								height: {circle.size}px;
-								opacity: {opacity(circle)};
-								transform: translate(-50%, -50%);
-							"
-							on:click={(event) => clickCircle(circle, event)}
-						>
-							<img
-								src="/currencies/photon.png"
-								alt="Photon"
-								class="w-full h-full object-contain"
-								style="filter: drop-shadow(0 0 10px rgba(153, 102, 204, 0.8));"
-							/>
-							<span
-								class="absolute text-white font-bold text-xs pointer-events-none drop-shadow-[0_0_5px_rgba(0,0,0,0.8)]"
-							>
-								+{circle.photons}
-							</span>
-						</button>
-					{/each}
-				</div>
+							+{circle.photons}
+						</span>
+					</button>
+				{/each}
 			</div>
 		</div>
 
-		<!-- Purple Realm Navigation -->
-		<div class="mt-8 flex gap-4 flex-wrap justify-center">
-			<div
-				class="glass-panel p-4 rounded-lg border border-realm-500/30 bg-realm-900/20 backdrop-blur-sm"
-			>
-				<div class="text-center">
-					<h3 class="text-realm-300 font-bold text-lg mb-2">Upgrades Available</h3>
-					<div class="text-realm-400 text-sm">Use your photons to unlock powerful enhancements!</div>
-				</div>
-			</div>
+		<!-- Upgrades Area - Right side (1/3 on desktop, full width on mobile) -->
+		<div class="w-full lg:w-1/3 lg:max-w-xs">
+			<PhotonUpgrades />
 		</div>
 	</div>
 </div>

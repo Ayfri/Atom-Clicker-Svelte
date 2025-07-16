@@ -71,6 +71,14 @@ export const photons = statManager.register({
 	description: 'Purple realm currency from violet circles'
 });
 
+export const photonUpgrades = statManager.register({
+	id: STATS.PHOTON_UPGRADES,
+	defaultValue: {} as Record<string, number>,
+	layer: LAYERS.SPECIAL,
+	minVersion: 12,
+	description: 'Photon upgrade levels'
+});
+
 export const protons = statManager.register({
 	id: STATS.PROTONS,
 	defaultValue: 0,
@@ -199,6 +207,7 @@ export function getCurrentState() {
 		electrons: electrons.get(),
 		lastSave: lastSave.get(),
 		photons: photons.get(),
+		photonUpgrades: photonUpgrades.get(),
 		protons: protons.get(),
 		settings: settings.get(),
 		skillUpgrades: skillUpgrades.get(),
