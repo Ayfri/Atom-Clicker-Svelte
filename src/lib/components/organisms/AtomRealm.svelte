@@ -14,12 +14,13 @@
 	$: $mobile && activeTab && $app?.queueResize?.();
 </script>
 
-<div class="absolute inset-0 pt-12 lg:pt-4 transition-all duration-1000 ease-in-out">
+<div class="relative pt-12 lg:pt-4 transition-all duration-1000 ease-in-out">
 	<Canvas />
 	<BonusPhoton />
-	<div class="game-container">
-		<div class="left-panel">
-			<div class="tabs">
+
+	<div class="game-container grid gap-8 mx-auto p-8">
+		<div class="left-panel flex flex-col gap-4 z-10">
+			<div class="grid grid-flow-col gap-2">
 				<button
 					class="backdrop-blur-sm rounded-lg p-2 transition-all duration-200 whitespace-nowrap w-full border-none text-inherit cursor-pointer {activeTab ===
 					'upgrades'
@@ -46,7 +47,7 @@
 					Achievements
 				</button>
 			</div>
-			<div class="tab-content">
+			<div class="flex-1 overflow-y-auto">
 				{#if activeTab === 'upgrades'}
 					<Upgrades />
 				{:else if activeTab === 'achievements'}
@@ -56,7 +57,7 @@
 				{/if}
 			</div>
 		</div>
-		<div class="central-area">
+		<div class="central-area relative z-0 flex flex-col items-center justify-start">
 			<Counter />
 			<Atom />
 		</div>
@@ -70,20 +71,16 @@
 
 <style lang="postcss">
 	.game-container {
-		display: grid;
-		gap: 2rem;
 		grid-template-areas: 'upgrades atom buildings';
-		grid-template-columns: 250px 1fr 250px;
-		margin: 0 auto;
+		grid-template-columns: 300px 1fr 300px;
 		max-width: 1400px;
-		padding: 1rem;
 	}
 
 	@media screen and (900px <= width <= 1536px) {
 		.game-container {
-			grid-template-columns: 200px 300px 200px;
+			grid-template-columns: 250px 300px 250px;
 			margin: 0 minmax(5rem, auto);
-			max-width: 900px;
+			max-width: 1000px;
 			padding-left: 4rem;
 		}
 	}
@@ -109,35 +106,14 @@
 	}
 
 	.left-panel {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
 		grid-area: upgrades;
-		z-index: 10;
 	}
 
 	.right-panel {
 		grid-area: buildings;
 	}
 
-	.tabs {
-		display: grid;
-		gap: 0.5rem;
-		grid-auto-flow: column;
-	}
-
 	.central-area {
-		align-items: center;
-		display: flex;
-		flex-direction: column;
 		grid-area: atom;
-		justify-content: start;
-		position: relative;
-		z-index: 0;
-	}
-
-	.tab-content {
-		flex: 1;
-		overflow-y: auto;
 	}
 </style>

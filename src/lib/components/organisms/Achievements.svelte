@@ -5,20 +5,30 @@
 
 	$: unlockedAchievements = Object.entries(ACHIEVEMENTS).map(([name, achievement]) => ({
 		...achievement,
-		unlocked: $achievements.includes(name),
+		unlocked: $achievements.includes(name)
 	}));
 </script>
 
-<div class="achievements">
-	<h2>Achievements ({$achievements.length}/{Object.keys(ACHIEVEMENTS).length})</h2>
-	<div class="achievement-grid">
+<div class="backdrop-blur-sm bg-black/10 p-3 rounded-lg">
+	<h2 class="font-semibold text-lg">
+		Achievements ({$achievements.length}/{Object.keys(ACHIEVEMENTS).length})
+	</h2>
+	<div class="achievement-grid mt-2 grid max-h-[50rem] gap-1.5 overflow-y-auto">
 		{#each unlockedAchievements as achievement}
 			{@const hidden = achievement.hiddenCondition?.(gameManager.getCurrentState()) === true}
-			<div class="achievement" class:locked={!achievement.unlocked}>
+			<div
+				class="duration-200 flex items-center gap-2 rounded-lg p-2 transition-all {achievement.unlocked
+					? 'bg-[#486f9b]'
+					: 'cursor-not-allowed bg-white/5 opacity-50'}"
+			>
 				<!-- <div class="icon">{achievement.icon}</div> -->
-				<div class="info">
-					<h3>{hidden && !achievement.unlocked ? '???' : achievement.name}</h3>
-					<p>{hidden && !achievement.unlocked ? '???' : achievement.description}</p>
+				<div>
+					<h3 class="m-0 font-semibold text-sm">
+						{hidden && !achievement.unlocked ? '???' : achievement.name}
+					</h3>
+					<p class="m-0 mt-0.5 text-xs opacity-80">
+						{hidden && !achievement.unlocked ? '???' : achievement.description}
+					</p>
 				</div>
 			</div>
 		{/each}
@@ -26,49 +36,7 @@
 </div>
 
 <style>
-	.achievements {
-		background: rgba(0, 0, 0, 0.1);
-		backdrop-filter: blur(3px);
-		border-radius: 8px;
-		padding: 1rem;
-	}
-
 	.achievement-grid {
-		display: grid;
-		gap: 1rem;
-		margin-top: 1rem;
-		max-height: 50rem;
-		overflow-y: auto;
 		scrollbar-width: none;
-	}
-
-	.achievement {
-		align-items: center;
-		background: rgba(255, 255, 255, 0.05);
-		border-radius: 8px;
-		display: flex;
-		gap: 1rem;
-		padding: 0.75rem;
-		transition: all 0.2s;
-
-		&.locked {
-			cursor: not-allowed;
-			opacity: 0.5;
-		}
-
-		&:not(.locked) {
-			background: #486f9b;
-		}
-	}
-
-	.info h3 {
-		font-size: 1rem;
-		margin: 0;
-	}
-
-	.info p {
-		font-size: 0.8rem;
-		margin: 0.25rem 0 0;
-		opacity: 0.8;
 	}
 </style>

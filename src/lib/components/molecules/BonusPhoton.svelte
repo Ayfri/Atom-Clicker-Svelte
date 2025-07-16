@@ -86,11 +86,21 @@
 </script>
 
 {#if visible}
-	<div class="power-up bonus-atom" on:click|once={onClick} transition:fade={{ duration: 1000 }} style="left: {x}px; top: {y}px;" />
+	<div
+		class="power-up bonus-atom absolute z-20 size-10 cursor-pointer rounded-full"
+		on:click|once={onClick}
+		style="left: {x}px; top: {y}px;"
+		transition:fade={{ duration: 1000 }}
+	/>
 {/if}
 
 {#if messageShown}
-	<p class="bonus-message" in:fade={{ duration: 100 }} out:fade={{ duration: 400 }} style="left: {x}px; top: {y}px;">
+	<p
+		class="bonus-message absolute z-20 w-[300px] -translate-x-1/2 -translate-y-1/2 transform text-center font-bold text-white"
+		in:fade={{ duration: 100 }}
+		out:fade={{ duration: 400 }}
+		style="left: {x}px; top: {y}px;"
+	>
 		{powerUp.description}
 	</p>
 {/if}
@@ -99,31 +109,30 @@
 	.bonus-atom {
 		animation: pulse 1s ease-in-out infinite;
 		background: radial-gradient(circle at 30% 30%, #ffd700, #ff6b6b);
-		border-radius: 50%;
-		cursor: pointer;
-		height: 40px;
-		position: absolute;
-		width: 40px;
 		transition: filter 0.2s;
-		z-index: 10;
+	}
 
-		&:hover {
-			animation: none;
-			filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.75));
+	.bonus-atom:hover {
+		animation: none;
+		filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.75));
+	}
+
+	@keyframes pulse {
+		0%,
+		100% {
+			transform: scale(1);
+			opacity: 1;
+		}
+		50% {
+			transform: scale(1.1);
+			opacity: 0.7;
 		}
 	}
 
 	.bonus-message {
-		border-radius: 5px;
 		color: white;
 		filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
 		font-size: 1.1rem;
-		font-weight: bold;
-		position: absolute;
-		text-align: center;
 		pointer-events: none;
-		transform: translate(-50%, -50%);
-		width: 300px;
-		z-index: 10;
 	}
 </style>

@@ -32,10 +32,10 @@
 	$: hasAutomation = getUpgradesWithEffects($currentUpgradesBought, { type: 'auto_upgrade' }).length > 0;
 </script>
 
-<div id="upgrades" class="bg-black/10 backdrop-blur-sm rounded-lg p-4 flex flex-col gap-4">
+<div id="upgrades" class="bg-black/10 backdrop-blur-sm rounded-lg p-3 flex flex-col gap-2">
 	<div class="header flex justify-between items-center gap-2">
 		<div class="flex items-center gap-2 justify-between w-full">
-			<h2>Upgrades</h2>
+			<h2 class="text-lg">Upgrades</h2>
 			{#if hasAutomation}
 				<AutoButton
 					onClick={() => gameManager.toggleUpgradeAutomation()}
@@ -73,18 +73,18 @@
 		{/if}
 	</div>
 
-	<div class="grid gap-4">
+	<div class="grid gap-1.5">
 		{#each availableUpgrades.slice(0, 10) as upgrade (upgrade.id)}
 			{@const affordable = affordableUpgrades.includes(upgrade)}
 			<div
-				class="upgrade bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer p-3 transition-all duration-200 {affordable ? '' : 'opacity-50 cursor-not-allowed'}"
+				class="upgrade bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer p-2 transition-all duration-200 {affordable ? '' : 'opacity-50 cursor-not-allowed'}"
 				on:click={() => {
 					if (affordable) gameManager.purchaseUpgrade(upgrade.id);
 				}}
 			>
-				<h3 class="text-blue-500">{upgrade.name}</h3>
-				<p class="text-xs my-1">{upgrade.description}</p>
-				<div class="text-sm mt-2" style="color: {CURRENCIES[upgrade.cost.currency].color}">
+				<h3 class="text-blue-400 text-sm">{upgrade.name}</h3>
+				<p class="text-xs my-0.5">{upgrade.description}</p>
+				<div class="text-xs mt-1" style="color: {CURRENCIES[upgrade.cost.currency].color}">
 					Cost: <Value value={upgrade.cost.amount} currency={upgrade.cost.currency}/>
 				</div>
 			</div>

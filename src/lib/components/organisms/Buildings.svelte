@@ -115,12 +115,12 @@
 	}
 </script>
 
-<div class="bg-black/10 backdrop-blur-sm rounded-lg p-4 buildings">
-	<h2>Buildings</h2>
-	<div class="flex items-center gap-2 my-2">
+<div class="bg-black/10 backdrop-blur-sm rounded-lg p-3 buildings flex flex-col gap-2">
+	<h2 class="text-lg">Buildings</h2>
+	<div class="flex items-center gap-1 my-1">
 		{#each purchaseModes as mode}
 			<button
-				class="bg-white/5 hover:bg-white/10 rounded px-2 py-1 text-sm text-white transition-all duration-200 cursor-pointer {selectedPurchaseMode === mode ? '!bg-white/20' : ''}"
+				class="bg-white/5 hover:bg-white/10 rounded px-2 py-0.5 text-xs text-white transition-all duration-200 cursor-pointer {selectedPurchaseMode === mode ? '!bg-white/20' : ''}"
 				on:click={() => selectedPurchaseMode = mode}
 			>
 				{mode === 'max' ? 'Max' : mode}
@@ -128,60 +128,62 @@
 		{/each}
 	</div>
 
-	{#each buildingsEntries as [type, building], i}
-		{@const saveData = $buildings[type]}
-		{@const unaffordable = !affordableBuildings.some(([t]) => t === type)}
-		{@const obfuscated = hiddenBuildings.some(([t]) => t === type)}
-		{@const hidden = hiddenBuildings.slice(1).some(([t]) => t === type)}
-		{@const level = saveData?.level ?? 0}
-		{@const color = BUILDING_COLORS[level]}
-		{@const purchaseAmount = purchaseAmounts[type]}
-		{@const totalCost = getBulkBuyCost(type, purchaseAmount)}
-		{@const isAutomated = $settings.automation.buildings.includes(type)}
-		{@const hasAutomation = getUpgradesWithEffects($currentUpgradesBought, { type: 'auto_buy', target: type }).length > 0}
+	<div class="flex flex-col gap-1.5 overflow-y-auto">
+		{#each buildingsEntries as [type, building], i}
+			{@const saveData = $buildings[type]}
+			{@const unaffordable = !affordableBuildings.some(([t]) => t === type)}
+			{@const obfuscated = hiddenBuildings.some(([t]) => t === type)}
+			{@const hidden = hiddenBuildings.slice(1).some(([t]) => t === type)}
+			{@const level = saveData?.level ?? 0}
+			{@const color = BUILDING_COLORS[level]}
+			{@const purchaseAmount = purchaseAmounts[type]}
+			{@const totalCost = getBulkBuyCost(type, purchaseAmount)}
+			{@const isAutomated = $settings.automation.buildings.includes(type)}
+			{@const hasAutomation = getUpgradesWithEffects($currentUpgradesBought, { type: 'auto_buy', target: type }).length > 0}
 
-		<div
-			class="bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer mt-2 p-3 transition-all duration-200 {unaffordable ? 'opacity-50 cursor-not-allowed' : ''}"
-			style="--color: {color};"
-			on:click={() => handlePurchase(type)}
-			transition:fade
-			{hidden}
-		>
-			<div>
-				<h3 class="text-base m-0" style="color: var(--color);">
-					{obfuscated ? '???' : building.name}
-					{saveData?.count ? `(${saveData.count})` : ''}
-					{#if level > 0}
-						<span>⇮{level}</span>
-					{/if}
-				</h3>
-				<p class="text-sm my-1">
-					{saveData && saveData.count > 0 ? '' : 'Will produce'}
-					<Value value={$buildingProductions[type] || building.rate * $globalMultiplier * $bonusMultiplier} currency="Atoms" postfix="/s" class="text-accent-300"/>
-					{#if $buildingProductions[type]}
-						<span class="opacity-60 text-[0.7rem] leading-3">
-							<Value value={$buildingProductions[type] / (saveData?.count ?? 1)} prefix="(" />
-							× {saveData?.count ?? 1})
-						</span>
-					{/if}
-				</p>
-			</div>
-			<div class="text-sm mt-2 flex justify-between items-center" style="color: var(--color);">
+			<div
+				class="bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer p-2 transition-all duration-200 {unaffordable ? 'opacity-50 cursor-not-allowed' : ''}"
+				style="--color: {color};"
+				on:click={() => handlePurchase(type)}
+				transition:fade
+				{hidden}
+			>
 				<div>
-					Cost: <Value value={totalCost} currency={saveData?.cost?.currency ?? building.cost.currency} />
-					{#if selectedPurchaseMode === 'max' && purchaseAmount > 0}
-						<span class="opacity-60 text-[0.7rem] leading-3 ml-1">(×{purchaseAmount})</span>
+					<h3 class="text-sm m-0" style="color: var(--color);">
+						{obfuscated ? '???' : building.name}
+						{saveData?.count ? `(${saveData.count})` : ''}
+						{#if level > 0}
+							<span class="text-xs">⇮{level}</span>
+						{/if}
+					</h3>
+					<p class="text-xs my-0.5">
+						{saveData && saveData.count > 0 ? '' : 'Will produce'}
+						<Value value={$buildingProductions[type] || building.rate * $globalMultiplier * $bonusMultiplier} currency="Atoms" postfix="/s" class="text-accent-300"/>
+						{#if $buildingProductions[type]}
+							<span class="opacity-60 text-[0.6rem] leading-3">
+								<Value value={$buildingProductions[type] / (saveData?.count ?? 1)} prefix="(" />
+								× {saveData?.count ?? 1})
+							</span>
+						{/if}
+					</p>
+				</div>
+				<div class="text-xs mt-1 flex justify-between items-center" style="color: var(--color);">
+					<div>
+						Cost: <Value value={totalCost} currency={saveData?.cost?.currency ?? building.cost.currency} />
+						{#if selectedPurchaseMode === 'max' && purchaseAmount > 0}
+							<span class="opacity-60 text-[0.6rem] leading-3 ml-1">(×{purchaseAmount})</span>
+						{/if}
+					</div>
+					{#if hasAutomation}
+						<AutoButton
+							onClick={() => gameManager.toggleAutomation(type)}
+							toggled={isAutomated}
+						/>
 					{/if}
 				</div>
-				{#if hasAutomation}
-					<AutoButton
-						onClick={() => gameManager.toggleAutomation(type)}
-						toggled={isAutomated}
-					/>
-				{/if}
 			</div>
-		</div>
-	{/each}
+		{/each}
+	</div>
 </div>
 
 <style>
