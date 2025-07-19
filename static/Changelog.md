@@ -1,3 +1,10 @@
+# What's new 16-07-2025
+
+- **Purple Realm**: Unlock a mysterious new gameplay dimension with the "Purple Realm" upgrade
+- Brand new upgrades for the purple realm that affects other currencies
+- Click circles to collect **Photons**, a new currency
+- New achievements and skill tree upgrades
+
 # What's new 30-06-2025
 
 - Added a new stat for the total number of bonus photons clicked.

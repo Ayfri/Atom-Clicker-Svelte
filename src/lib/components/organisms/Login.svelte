@@ -1,5 +1,5 @@
 <script context="module" lang="ts">
-	import type {AuthConnection, AuthProvider} from '$lib/types/auth';
+	import type {AuthConnection} from '$lib/types/auth';
 
 	export const AUTH_CONNECTIONS: AuthConnection[] = [
 		{
@@ -44,7 +44,7 @@
 
 <script lang="ts">
 	import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
-	import {supabaseAuth} from '$lib/stores/supabaseAuth';
+	import {supabaseAuth} from '$stores/supabaseAuth';
 	import {X} from 'lucide-svelte';
 	import {fade, fly} from 'svelte/transition';
 

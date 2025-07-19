@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import { lastSave } from './gameStore';
+import { lastSave } from '$stores/gameStore';
 import { get } from 'svelte/store';
 
 function createChangelogStore() {

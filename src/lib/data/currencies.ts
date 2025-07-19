@@ -3,6 +3,7 @@ import type {Currency} from '$lib/types';
 export const CurrenciesTypes = {
 	ATOMS: 'Atoms',
 	ELECTRONS: 'Electrons',
+	PHOTONS: 'Photons',
 	PROTONS: 'Protons',
 } as const;
 
@@ -18,6 +19,11 @@ export const CURRENCIES = {
 		color: '#45d945',
 		name: 'Electrons',
 		icon: 'electron',
+	},
+	[CurrenciesTypes.PHOTONS]: {
+		color: '#9966cc',
+		name: 'Photons',
+		icon: 'photon',
 	},
 	[CurrenciesTypes.PROTONS]: {
 		color: '#ffd700',

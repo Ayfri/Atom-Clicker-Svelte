@@ -11,7 +11,17 @@ export const SPECIAL_UPGRADES: Upgrade[] = [
 		name: 'Unlock Levels',
 		description: 'Unlock the leveling system',
 		cost: {
-			amount: 10_000,
+			amount: 15_000,
+			currency: CurrenciesTypes.ATOMS,
+		},
+		effects: [],
+	},
+	{
+		id: 'feature_purple_realm',
+		name: 'Purple Realm',
+		description: 'Unlock the mysterious purple realm',
+		cost: {
+			amount: 1_500_000_000,
 			currency: CurrenciesTypes.ATOMS,
 		},
 		effects: [],
@@ -56,7 +66,7 @@ function createBuildingUpgrades(buildingType: BuildingType) {
 		id: buildingType.toLowerCase(),
 		name: i => `${building.name} Boost ${i}`,
 		description: i => `${capitalize(shortNumberText(1 + Math.ceil(i / 5)))} ${building.name} production`,
-		cost: i => building.cost.amount * 2.5 ** (i * 3) * (i > 10 ? i ** 3 : 1),
+		cost: i => building.cost.amount * 2.5 ** (i * 3.1) * (i > 10 ? i ** 3.1 : 1),
 		effects: i => [
 			{
 				type: 'building',
@@ -77,8 +87,8 @@ function createClickPowerUpgrades() {
 			name: i => `Click Power ${i}`,
 			description: i => `${i < 6 ? '1.5x' : '2x'} click power`,
 			cost: i => {
-				const baseCost = 10 * 2 ** (i * 5);
-				return i > 8 ? baseCost * i ** 4 : baseCost;
+				const baseCost = 15 * 2 ** (i * 5);
+				return i > 8 ? baseCost * i ** 4.1 : baseCost;
 			},
 			effects: i => [
 				{
@@ -97,8 +107,8 @@ function createClickPowerUpgrades() {
 			name: i => `Click Value ${i}`,
 			description: i => `+${formatNumber(Math.ceil(10 ** i / 10))} base value per click`,
 			cost: i => {
-				const baseCost = 5 ** (i * 2) * 10;
-				return i > 6 ? baseCost * i ** 3 * 1.1 : baseCost * 1.1;
+				const baseCost = 5 ** (i * 2) * 15;
+				return i > 6 ? baseCost * i ** 3.1 * 1.1 : baseCost * 1.1;
 			},
 			effects: i => [
 				{
@@ -117,8 +127,8 @@ function createClickPowerUpgrades() {
 			name: i => `Global Click Power ${Math.ceil(i / 2)}`,
 			description: i => `+${Math.ceil(i / 2)}% of your Atoms per second per click`,
 			cost: i => {
-				const baseCost = 20 * 2 ** (i * 8);
-				return i > 3 ? baseCost * i ** 5 * 1.1 : baseCost * 1.1;
+				const baseCost = 25 * 2 ** (i * 8);
+				return i > 3 ? baseCost * i ** 5.1 * 1.1 : baseCost * 1.1;
 			},
 			effects: i => [
 				{
@@ -140,7 +150,7 @@ function createGlobalUpgrades() {
 		name: i => `Global Boost ${i}`,
 		description: i => `${formatNumber(1 + i / 100)}x all production`,
 		cost: i => {
-			const baseCost = 10 ** i;
+			const baseCost = 1.2 * 10 ** i;
 			if (i > 40) {
 				return baseCost * i ** 8;
 			}
@@ -166,7 +176,7 @@ function createGlobalUpgrades() {
 			name: i => `Atom Soup ${i}`,
 			description: i => `+${Math.ceil(i / 5)}% production per achievement`,
 			cost: i => {
-				const baseCost = 1000 * 2 ** (i * 7);
+				const baseCost = 1500 * 2 ** (i * 7);
 				return i > 5 ? baseCost * i ** 4 : baseCost;
 			},
 			effects: i => [
@@ -194,7 +204,7 @@ function createPowerUpIntervalUpgrades() {
 		name: i => `Power Up Interval ${i + 1}`,
 		description: i => `${i > 5 ? '0.9x' : '0.8x'} power up interval`,
 		cost: i => {
-			const baseCost = 10_000 * 2 ** (i * 10);
+			const baseCost = 15_000 * 2 ** (i * 10);
 			return i > 5 ? baseCost * i ** 3 * 1.1 : baseCost * 1.1;
 		},
 		effects: i => [
@@ -216,7 +226,10 @@ function createLevelBoostUpgrades() {
 			name: `Level Boost ${i}`,
 			description: `+${1 + Math.ceil(i / 2)}% production per level`,
 			cost: {
-				amount: i === 1 ? Math.ceil(15000 * 1.1) : Math.ceil(5 ** (i * 4) * (i > 3 ? i ** 4 : 1) * 1.1),
+				amount:
+					i === 1
+						? Math.ceil(20000 * 1.1)
+						: Math.ceil(5 ** (i * 4) * (i > 3 ? i ** 4 : 1) * 1.1),
 				currency: 'Atoms',
 			},
 			condition: state => state.upgrades.includes('feature_levels') || i === 1,
@@ -247,8 +260,8 @@ function createProtonUpgrades() {
 			name: i => `Proton Boost ${i}`,
 			description: i => `${2 + i}x all production`,
 			cost: i => {
-				const baseCost = Math.ceil(2 ** (i * 2));
-				return i > 2 ? baseCost * i ** 4 : baseCost;
+				const baseCost = Math.ceil(2 ** (i * 2.1));
+				return i > 2 ? baseCost * i ** 4.1 : baseCost;
 			},
 			effects: i => [
 				{
@@ -267,7 +280,7 @@ function createProtonUpgrades() {
 			name: 'Double Electrons',
 			description: '2x electrons gained from electronize',
 			cost: {
-				amount: 7_500_000_000,
+				amount: 8_000_000_000,
 				currency: CurrenciesTypes.PROTONS,
 			},
 			effects: [
@@ -284,7 +297,7 @@ function createProtonUpgrades() {
 			description: '2x electrons gained from electronize',
 			condition: state => state.upgrades.includes('proton_electron_boost_1'),
 			cost: {
-				amount: 300_000_000_000,
+				amount: 350_000_000_000,
 				currency: CurrenciesTypes.PROTONS,
 			},
 			effects: [
@@ -300,7 +313,7 @@ function createProtonUpgrades() {
 			name: 'Triple Electrons',
 			description: '3x electrons gained from electronize',
 			cost: {
-				amount: 15_000_000_000_000,
+				amount: 20_000_000_000_000,
 				currency: CurrenciesTypes.PROTONS,
 			},
 			effects: [
@@ -316,7 +329,7 @@ function createProtonUpgrades() {
 			name: 'Total Protonises',
 			description: '+1 electron per protonise',
 			cost: {
-				amount: 100_000_000_000_000,
+				amount: 125_000_000_000_000,
 				currency: CurrenciesTypes.PROTONS,
 			},
 			effects: [
@@ -338,8 +351,8 @@ function createProtonUpgrades() {
 			name: i => `Protonise Master ${i}`,
 			description: i => `+${25 * i}% production per protonise`,
 			cost: i => {
-				const baseCost = Math.ceil(5 * 3 ** (i + 2));
-				return i > 3 ? baseCost * i ** 5 : baseCost;
+				const baseCost = Math.ceil(5 * 3 ** (i + 2.1));
+				return i > 3 ? baseCost * i ** 5.1 : baseCost;
 			},
 			effects: i => [
 				{
@@ -363,8 +376,8 @@ function createProtonUpgrades() {
 			name: i => `Quick Start ${i}`,
 			description: i => `Start with ${formatNumber(10 ** (3 + i))} atoms after protonising`,
 			cost: i => {
-				const baseCost = Math.ceil(3 * 2 ** (i + 1));
-				return i > 2 ? baseCost * i ** 3 : baseCost;
+				const baseCost = Math.ceil(3 * 2 ** (i + 1.1));
+				return i > 2 ? baseCost * i ** 3.1 : baseCost;
 			},
 			effects: i => [
 				{
@@ -385,8 +398,8 @@ function createProtonUpgrades() {
 			name: i => `Auto Clicker ${i}`,
 			description: i => `Automatically clicks ${Math.ceil(i / 2)} time${Math.ceil(i / 2) > 1 ? 's' : ''} per second`,
 			cost: i => {
-				const baseCost = Math.ceil(3 * 3 ** (i + 1));
-				return i > 1 ? baseCost * i ** 4 : baseCost;
+				const baseCost = Math.ceil(3 * 3 ** (i + 1.1));
+				return i > 1 ? baseCost * i ** 4.1 : baseCost;
 			},
 			effects: i => [
 				{
@@ -413,7 +426,7 @@ function createElectronUpgrades() {
 				name: `Auto ${building.name}`,
 				description: `Automatically buys 1 ${building.name} every 30 seconds`,
 				cost: {
-					amount: 1 + index,
+					amount: 2 + index,
 					currency: CurrenciesTypes.ELECTRONS,
 				},
 				effects: [
@@ -438,7 +451,7 @@ function createElectronUpgrades() {
 				description: `Reduces ${building.name} auto-buy interval by 5 seconds`,
 				condition: state => state.upgrades.includes(`electron_auto_buy_${buildingType}`),
 				cost: {
-					amount: 2 + index,
+					amount: 3 + index,
 					currency: CurrenciesTypes.ELECTRONS,
 				},
 				effects: [
@@ -465,7 +478,7 @@ function createElectronUpgrades() {
 					i === 1 ? 'the cheapest available upgrade every 30 seconds' : '5 seconds'
 				}`,
 			condition: (i, state) => i === 1 || state.upgrades.includes(`electron_auto_upgrade_${i - 1}`),
-			cost: i => 20 + (i - 1) * 10,
+			cost: i => 25 + (i - 1) * 15,
 			effects: i => [
 				{
 					type: 'auto_upgrade',
@@ -485,7 +498,7 @@ function createElectronUpgrades() {
 			name: i => `${i === 1 ? 'Faster' : 'Even Faster'} Power-ups ${i > 1 ? i : ''}`,
 			description: i => `Reduces power-up spawn interval by ${i * 10}%`,
 			condition: (i, state) => i === 1 || state.upgrades.includes(`electron_power_up_interval_${i - 1}`),
-			cost: i => 5 * i,
+			cost: i => 6 * i,
 			effects: i => [
 				{
 					type: 'power_up_interval',

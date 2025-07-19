@@ -3,9 +3,11 @@
 	import {BUILDING_TYPES, BUILDING_COLORS, BUILDING_LEVEL_UP_COST} from '$data/buildings';
 	import {onDestroy} from 'svelte';
 	import {createClickParticle, createClickTextParticle, type Particle} from '$helpers/particles';
-	import {autoClicksPerSecond, buildings, clickPower, currentUpgradesBought, hasBonus, totalClicks} from '$stores/gameStore';
+	import {autoClicksPerSecond, buildings, clickPower, hasBonus, totalClicks} from '$stores/gameStore';
 	import {formatNumber} from '$lib/utils';
-	import {particles} from '$stores/canvas';
+	import {shouldCreateParticles, addParticles} from '$stores/canvas';
+	import {app} from '$stores/pixi';
+	import { CurrenciesTypes } from '$data/currencies';
 
 	let atomElement: HTMLDivElement;
 
@@ -38,13 +40,20 @@
 
 		// TODO: Re-add main atom animation
 
-		const newParticles: Particle[]  = [];
-		newParticles.push(createClickTextParticle(event.clientX + Math.random() * 10, event.clientY + Math.random() * 10, `+${formatNumber($clickPower)}`));
+		// Only create particles if graphics support is available
+		if (shouldCreateParticles() && $app && $app.canvas) {
+			try {
+				const newParticles: Particle[] = [];
+				newParticles.push(await createClickTextParticle(event.clientX + Math.random() * 10, event.clientY + Math.random() * 10, `+${formatNumber($clickPower)}`));
 
-		for (let i = 0; i < 5; i++) {
-			newParticles.push(await createClickParticle(event.clientX + Math.random() * 10, event.clientY + Math.random() * 10));
+				for (let i = 0; i < 5; i++) {
+					newParticles.push(await createClickParticle(event.clientX + Math.random() * 10, event.clientY + Math.random() * 10, CurrenciesTypes.ATOMS));
+				}
+				addParticles(newParticles);
+			} catch (error) {
+				console.warn('Failed to create particles:', error);
+			}
 		}
-		particles.update(current => [...current,...newParticles]);
 	}
 
 	onDestroy(() => clearInterval(interval));

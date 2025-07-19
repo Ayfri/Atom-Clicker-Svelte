@@ -1,9 +1,9 @@
 import {BUILDING_LEVEL_UP_COST, type BuildingType} from '$data/buildings';
 import {CurrenciesTypes} from '$data/currencies';
-import type {Building, GameState} from '../types';
+import type {Building, GameState} from '$lib/types';
 
 export const SAVE_KEY = 'atomic-clicker-save';
-export const SAVE_VERSION = 10;
+export const SAVE_VERSION = 13;
 
 // Helper functions for state management
 export function loadSavedState(): GameState | null {
@@ -50,6 +50,14 @@ export function isValidGameState(state: any): state is GameState {
 		[
 			'lastSave',
 			(v: any) => typeof v === 'number',
+		],
+		[
+			'photons',
+			(v: any) => typeof v === 'number',
+		],
+		[
+			'photonUpgrades',
+			(v: any) => typeof v === 'object',
 		],
 		[
 			'protons',
@@ -184,6 +192,21 @@ function migrateSavedState(savedState: any): GameState | undefined {
 		// Add totalBonusPhotonsClicked
 		savedState.totalBonusPhotonsClicked = 0;
 		savedState.version = 10;
+	}
+	if (savedState.version === 10) {
+		// Add photons
+		savedState.photons = 0;
+		savedState.version = 11;
+	}
+	if (savedState.version === 11) {
+		// Add photonUpgrades
+		savedState.photonUpgrades = {};
+		savedState.version = 12;
+	}
+	if (savedState.version === 12) {
+		// Add purpleRealmUnlocked
+		savedState.purpleRealmUnlocked = false;
+		savedState.version = 13;
 	}
 
 	return savedState;

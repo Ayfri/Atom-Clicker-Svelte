@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {capitalize, formatNumber} from '$lib/utils';
-	import {supabaseAuth} from '$lib/stores/supabaseAuth';
+	import {supabaseAuth} from '$stores/supabaseAuth';
 	import {leaderboard} from '$stores/leaderboard';
 	import {startDate} from '$stores/gameStore';
 	import Login, {getAuthConnection} from '@components/organisms/Login.svelte';

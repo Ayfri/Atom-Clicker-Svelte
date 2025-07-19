@@ -1,6 +1,5 @@
 import type {BuildingType} from '$data/buildings';
 import type {CurrencyName} from '$data/currencies';
-import type {SAVE_VERSION} from '$helpers/saves';
 
 export interface Building {
 	count: number;
@@ -57,7 +56,10 @@ export interface GameState {
 	buildings: Partial<Record<BuildingType, Building>>;
 	electrons: number;
 	lastSave: number;
+	photons: number;
+	photonUpgrades: Record<string, number>;
 	protons: number;
+	purpleRealmUnlocked: boolean;
 	settings: Settings;
 	skillUpgrades: string[];
 	startDate: number;
@@ -67,7 +69,7 @@ export interface GameState {
 	totalProtonises: number;
 	totalXP: number;
 	upgrades: string[];
-	version: typeof SAVE_VERSION;
+	version: number;
 }
 
 export type Range = [number, number];

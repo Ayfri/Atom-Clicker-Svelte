@@ -1,217 +1,111 @@
-// Game store manager
-import {ACHIEVEMENTS} from '$data/achievements';
-import {BUILDING_LEVEL_UP_COST, BUILDINGS, type BuildingType} from '$data/buildings';
-import {CurrenciesTypes} from '$data/currencies';
-import {UPGRADES} from '$data/upgrades';
-import {protoniseProtonsGain, PROTONS_ATOMS_REQUIRED} from '$lib/stores/protons';
-import {electronizeElectronsGain, ELECTRONS_PROTONS_REQUIRED} from '$lib/stores/electrons';
+import { ACHIEVEMENTS } from '$data/achievements';
+import { BUILDING_LEVEL_UP_COST, BUILDINGS, type BuildingType } from '$data/buildings';
+import { CurrenciesTypes } from '$data/currencies';
+import { UPGRADES } from '$data/upgrades';
+import { PHOTON_UPGRADES, getPhotonUpgradeCost } from '$data/photonUpgrades';
+import { protoniseProtonsGain } from '$stores/protons';
+import { electronizeElectronsGain } from '$stores/electrons';
+import { BUILDING_COST_MULTIPLIER, PROTONS_ATOMS_REQUIRED, ELECTRONS_PROTONS_REQUIRED } from '$lib/constants';
+import { SAVE_KEY } from '$helpers/saves';
+import { LAYERS, STATS, type NumberStatName } from '$helpers/statConstants';
+import { info } from '$stores/toasts';
+import { get } from 'svelte/store';
+import type { Building, PowerUp, Price } from '$lib/types';
 import {
+	statManager,
 	achievements,
-	activePowerUps,
 	atoms,
 	buildings,
 	electrons,
-	lastSave,
+	photons,
+	photonUpgrades,
 	protons,
-	skillUpgrades,
-	startDate,
-	totalBonusPhotonsClicked,
-	totalClicks,
-	totalElectronizes,
-	totalProtonises,
-	totalXP,
+	purpleRealmUnlocked,
 	upgrades,
 	xpGainMultiplier,
-	settings,
+	getCurrentState,
+	settings
 } from '$stores/gameStore';
-import {info} from '$stores/toasts';
-import {derived, get} from 'svelte/store';
-import {BUILDING_COST_MULTIPLIER} from '../constants';
-import type {Building, GameState, PowerUp, Price} from '../types';
-import {loadSavedState, SAVE_KEY, SAVE_VERSION} from './saves';
 
-interface SaveData extends GameState { }
-
-export const currentState = derived(
-	[
-		achievements,
-		activePowerUps,
-		atoms,
-		electrons,
-		protons,
-		buildings,
-		lastSave,
-		settings,
-		skillUpgrades,
-		startDate,
-		totalBonusPhotonsClicked,
-		totalClicks,
-		totalElectronizes,
-		totalXP,
-		upgrades,
-		totalProtonises
-	],
-	([
-		achievements,
-		activePowerUps,
-		atoms,
-		electrons,
-		protons,
-		buildings,
-		lastSave,
-		settings,
-		skillUpgrades,
-		startDate,
-		totalBonusPhotonsClicked,
-		totalClicks,
-		totalElectronizes,
-		totalXP,
-		upgrades,
-		totalProtonises
-	]) => {
-		return {
-			achievements,
-			activePowerUps,
-			atoms,
-			electrons,
-			protons,
-			buildings,
-			lastSave,
-			settings,
-			skillUpgrades,
-			startDate,
-			totalBonusPhotonsClicked,
-			totalClicks,
-			totalElectronizes,
-			totalXP,
-			upgrades,
-			totalProtonises,
-		} as GameState;
-	}
-);
-
-export function resetGameState(): GameState {
-	return {
-		achievements: [],
-		activePowerUps: [],
-		atoms: 0,
-		buildings: {},
-		electrons: 0,
-		lastSave: Date.now(),
-		protons: 0,
-		settings: {
-			automation: {
-				buildings: [],
-				upgrades: false
-			}
-		},
-		skillUpgrades: [],
-		startDate: Date.now(),
-		totalBonusPhotonsClicked: 0,
-		totalClicks: 0,
-		totalElectronizes: 0,
-		totalProtonises: 0,
-		totalXP: 0,
-		upgrades: [],
-		version: SAVE_VERSION,
-	};
-}
+// Store interval references outside the object to avoid TypeScript issues
+let achievementInterval: ReturnType<typeof setInterval> | null = null;
+let xpInterval: ReturnType<typeof setInterval> | null = null;
 
 export const gameManager = {
 	initialize() {
-		const savedState = loadSavedState();
-		if (savedState) {
-			achievements.set(savedState.achievements.filter(a => a in ACHIEVEMENTS));
-			activePowerUps.set(savedState.activePowerUps);
-			atoms.set(savedState.atoms);
-			buildings.set(savedState.buildings);
-			electrons.set(savedState.electrons || 0);
-			lastSave.set(savedState.lastSave);
-			protons.set(savedState.protons || 0);
-			settings.set(savedState.settings || { automation: { buildings: [], upgrades: false } });
-			skillUpgrades.set(savedState.skillUpgrades || []);
-			startDate.set(savedState.startDate);
-			totalBonusPhotonsClicked.set(savedState.totalBonusPhotonsClicked || 0);
-			totalClicks.set(savedState.totalClicks);
-			totalElectronizes.set(savedState.totalElectronizes || 0);
-			totalProtonises.set(savedState.totalProtonises || 0);
-			totalXP.set(savedState.totalXP || 0);
-			upgrades.set(savedState.upgrades.filter(u => u in UPGRADES));
+		this.loadGame();
+		this.setupAchievementChecking();
+		this.setupXPGeneration();
+	},
 
-			get(activePowerUps).forEach(powerUp =>
-				setTimeout(() => {
-					this.removePowerUp(powerUp.id);
-				}, powerUp.duration - (Date.now() - powerUp.startTime))
-			);
+	loadGame() {
+		try {
+			const saved = localStorage.getItem(SAVE_KEY);
+			if (saved) {
+				const savedData = JSON.parse(saved);
+				if (statManager.isValidSaveData(savedData)) {
+					statManager.loadSaveData(savedData);
+					console.log('Game loaded successfully');
+					this.save();
+				}
+			}
+		} catch (e) {
+			console.error('Failed to load saved game:', e);
+		}
+	},
 
-			// Save in case of data migration
-			this.save();
+	setupAchievementChecking() {
+		// Clear existing interval if any
+		if (achievementInterval) {
+			clearInterval(achievementInterval);
 		}
 
-		// Check achievements periodically
-		setInterval(() => {
-			const state = this.getCurrentState();
+		achievementInterval = setInterval(() => {
+			const state = getCurrentState();
+			const currentAchievements = achievements.get();
 
-			Object.entries(ACHIEVEMENTS).forEach(([name, achievement]) => {
-				if (!state.achievements.includes(name) && achievement.condition(state)) {
-					achievements.update(current => [
-						...current,
-						name,
-					]);
+			Object.entries(ACHIEVEMENTS).forEach(([id, achievement]) => {
+				if (!currentAchievements.includes(id) && achievement.condition(state)) {
+					achievements.push(id);
 					info("Achievement unlocked", achievement.name);
 				}
 			});
 		}, 1000);
+	},
 
-		// Add XP every 100ms
-		let previousAtoms = get(atoms);
-		setInterval(() => {
-			const currentAtoms = get(atoms);
+	setupXPGeneration() {
+		// Clear existing interval if any
+		if (xpInterval) {
+			clearInterval(xpInterval);
+		}
+
+		let previousAtoms = atoms.get();
+		xpInterval = setInterval(() => {
+			const currentAtoms = atoms.get();
 			const deltaAtoms = currentAtoms - previousAtoms;
 			const xpPerAtom = 0.1;
 			const xp = deltaAtoms * xpPerAtom;
-			const state = this.getCurrentState();
-			if (xp > 0 && state.upgrades.includes('feature_levels')) {
-				totalXP.update(current => current + xp * get(xpGainMultiplier));
+
+			if (xp > 0 && upgrades.includes('feature_levels')) {
+				this.addStat(STATS.TOTAL_XP, xp * get(xpGainMultiplier));
 			}
 			previousAtoms = currentAtoms;
 		}, 100);
 	},
 
-	getCurrentState(): GameState {
-		return get(currentState);
-	},
-
-	addAtoms(amount: number) {
-		atoms.update(current => current + amount);
-	},
-
-	incrementBonusPhotonClicks() {
-		totalBonusPhotonsClicked.update(current => current + 1);
-	},
-
-	addCurrency(price: Price) {
-		if (price.currency === CurrenciesTypes.ATOMS) {
-			atoms.update(current => current + price.amount);
-		} else if (price.currency === CurrenciesTypes.ELECTRONS) {
-			electrons.update(current => current + price.amount);
-		} else if (price.currency === CurrenciesTypes.PROTONS) {
-			protons.update(current => current + price.amount);
-		}
-	},
-
 	canAfford(price: Price): boolean {
-		const currency = this.getCurrency(price);
-		return currency >= price.amount;
+		return this.getCurrency(price) >= price.amount;
 	},
 
 	getCurrency(price: Price): number {
 		if (price.currency === CurrenciesTypes.ATOMS) {
-			return get(atoms);
+			return atoms.get();
 		} else if (price.currency === CurrenciesTypes.ELECTRONS) {
-			return get(electrons);
+			return electrons.get();
+		} else if (price.currency === CurrenciesTypes.PHOTONS) {
+			return photons.get();
 		} else if (price.currency === CurrenciesTypes.PROTONS) {
-			return get(protons);
+			return protons.get();
 		}
 		return 0;
 	},
@@ -220,19 +114,21 @@ export const gameManager = {
 		if (!this.canAfford(price)) return false;
 
 		if (price.currency === CurrenciesTypes.ATOMS) {
-			atoms.update(current => current - price.amount);
+			this.addStat(STATS.ATOMS, -price.amount);
 		} else if (price.currency === CurrenciesTypes.ELECTRONS) {
-			electrons.update(current => current - price.amount);
+			this.addStat(STATS.ELECTRONS, -price.amount);
+		} else if (price.currency === CurrenciesTypes.PHOTONS) {
+			this.addStat(STATS.PHOTONS, -price.amount);
 		} else if (price.currency === CurrenciesTypes.PROTONS) {
-			protons.update(current => current - price.amount);
+			this.addStat(STATS.PROTONS, -price.amount);
 		}
 		return true;
 	},
 
 	purchaseBuilding(type: BuildingType, amount: number = 1) {
-		const currentState = this.getCurrentState();
+		const buildingsData = buildings.get();
 		const building = BUILDINGS[type];
-		const currentBuilding = currentState.buildings[type] ?? {
+		const currentBuilding = buildingsData[type] ?? {
 			cost: building.cost,
 			rate: building.rate,
 			level: 0,
@@ -240,8 +136,7 @@ export const gameManager = {
 			unlocked: true,
 		} as Building;
 
-		// Calculate total cost for all buildings being purchased
-		const baseCost = building.cost.amount; // Use original base cost from BUILDINGS
+		const baseCost = building.cost.amount;
 		let totalCost = 0;
 		for (let i = 0; i < amount; i++) {
 			totalCost += baseCost * (BUILDING_COST_MULTIPLIER ** (currentBuilding.count + i));
@@ -254,25 +149,27 @@ export const gameManager = {
 
 		if (!this.spendCurrency(cost)) return false;
 
+		const newBuilding = {
+			...currentBuilding,
+			cost: {
+				amount: Math.round(baseCost * (BUILDING_COST_MULTIPLIER ** (currentBuilding.count + amount))),
+				currency: cost.currency
+			},
+			count: currentBuilding.count + amount,
+			level: Math.floor((currentBuilding.count + amount) / BUILDING_LEVEL_UP_COST)
+		};
+
 		buildings.update(current => ({
 			...current,
-			[type]: {
-				...currentBuilding,
-				cost: {
-					amount: Math.round(baseCost * (BUILDING_COST_MULTIPLIER ** (currentBuilding.count + amount))),
-					currency: cost.currency
-				},
-				rate: currentBuilding.rate,
-				count: currentBuilding.count + amount,
-				level: Math.floor((currentBuilding.count + amount) / BUILDING_LEVEL_UP_COST)
-			},
+			[type]: newBuilding
 		}));
 
 		return true;
 	},
 
 	unlockBuilding(type: BuildingType) {
-		if (type in get(buildings)) return;
+		const buildingsData = buildings.get();
+		if (type in buildingsData) return;
 
 		buildings.update(current => ({
 			...current,
@@ -282,175 +179,160 @@ export const gameManager = {
 				level: 0,
 				count: 0,
 				unlocked: true,
-			},
+			}
 		}));
 	},
 
 	purchaseUpgrade(id: string) {
-		const currentState = this.getCurrentState();
 		const upgrade = UPGRADES[id];
-		const purchased = currentState.upgrades.includes(id);
+		const currentUpgrades = upgrades.get();
+		const purchased = currentUpgrades.includes(id);
 
 		if (!purchased && this.spendCurrency(upgrade.cost)) {
-			upgrades.update(current => [
-				...current,
-				id,
-			]);
+			statManager.getArray<string>(STATS.UPGRADES)?.push(id);
+
+			// Special handling for purple realm unlock
+			if (id === 'feature_purple_realm') {
+				purpleRealmUnlocked.set(true);
+			}
+
+			return true;
 		}
+		return false;
+	},
+
+	purchasePhotonUpgrade(upgradeId: string) {
+		const currentUpgrades = photonUpgrades.get();
+		const currentLevel = currentUpgrades[upgradeId] || 0;
+
+		const upgrade = PHOTON_UPGRADES[upgradeId];
+
+		if (!upgrade || currentLevel >= upgrade.maxLevel) {
+			return false;
+		}
+
+		const cost = {
+			amount: getPhotonUpgradeCost(upgrade, currentLevel),
+			currency: CurrenciesTypes.PHOTONS
+		};
+
+		if (this.spendCurrency(cost)) {
+			photonUpgrades.update(current => ({
+				...current,
+				[upgradeId]: currentLevel + 1
+			}));
+			return true;
+		}
+		return false;
 	},
 
 	protonise() {
-		const currentState = this.getCurrentState();
+		const currentAtoms = atoms.get();
 		const protonGain = get(protoniseProtonsGain);
 
-		if (currentState.atoms >= PROTONS_ATOMS_REQUIRED || protonGain > 0) {
-			// Keep protons, and electrons upgrades
-			const newState = {
-				...resetGameState(),
-				achievements: currentState.achievements,
-				electrons: currentState.electrons,
-				protons: currentState.protons + protonGain,
-				totalProtonises: currentState.totalProtonises + 1,
-				upgrades: currentState.upgrades.filter(id => id.startsWith('proton') || id.startsWith('electron')),
-			};
+		if (currentAtoms >= PROTONS_ATOMS_REQUIRED || protonGain > 0) {
+			const currentUpgrades = upgrades.get();
+			const persistentUpgrades = currentUpgrades.filter(id =>
+				id.startsWith('proton') || id.startsWith('electron') || id === 'feature_purple_realm'
+			);
 
-			// Apply quick start upgrades if any
-			const quickStartUpgrades = currentState.upgrades
-				.filter(id => id.startsWith('protonise_start_'))
-				.map(id => UPGRADES[id]);
+			// Increment protonise counter before reset
+			this.addStat(STATS.TOTAL_PROTONISES, 1);
+			// Reset all stats at protonizer layer and above
+			statManager.resetLayer(LAYERS.PROTONIZER);
+			// Restore persistent upgrades
+			statManager.getArray<string>(STATS.UPGRADES)?.set(persistentUpgrades);
+			this.addStat(STATS.PROTONS, protonGain);
 
-			if (quickStartUpgrades.length > 0) {
-				newState.atoms = Math.max(
-					...quickStartUpgrades.map(upgrade =>
-						parseInt(upgrade.description.match(/\\d+/)?.[0] || '0')
-					)
-				);
-			}
-
-			// Update all stores except startDate
-			achievements.set(newState.achievements);
-			activePowerUps.set(newState.activePowerUps);
-			atoms.set(newState.atoms);
-			protons.set(newState.protons);
-			electrons.set(newState.electrons);
-			buildings.set(newState.buildings);
-			lastSave.set(newState.lastSave);
-			skillUpgrades.set(newState.skillUpgrades);
-			totalBonusPhotonsClicked.set(newState.totalBonusPhotonsClicked);
-			totalClicks.set(newState.totalClicks);
-			totalXP.set(newState.totalXP);
-			upgrades.set(newState.upgrades);
-			totalProtonises.set(newState.totalProtonises);
-
+			this.save();
 			return true;
 		}
 		return false;
 	},
 
 	electronize() {
-		const currentState = this.getCurrentState();
+		const currentProtons = protons.get();
 		const electronGain = get(electronizeElectronsGain);
 
-		if (currentState.protons >= ELECTRONS_PROTONS_REQUIRED || electronGain > 0) {
-			// Keep electrons, and protons upgrades
-			const newState = {
-				...resetGameState(),
-				achievements: currentState.achievements,
-				electrons: currentState.electrons + electronGain,
-				protons: 0, // Reset protons but keep upgrades
-				totalElectronizes: currentState.totalElectronizes + 1,
-				upgrades: currentState.upgrades.filter(id => id.startsWith('electron') || id.startsWith('proton')),
-			};
+		if (currentProtons >= ELECTRONS_PROTONS_REQUIRED || electronGain > 0) {
+			const currentUpgrades = upgrades.get();
+			const persistentUpgrades = currentUpgrades.filter(id =>
+				id.startsWith('electron') || id.startsWith('proton') || id === 'feature_purple_realm'
+			);
 
-			// Update all stores except startDate
-			achievements.set(newState.achievements);
-			activePowerUps.set(newState.activePowerUps);
-			atoms.set(newState.atoms);
-			electrons.set(newState.electrons);
-			protons.set(0); // Reset protons
-			buildings.set(newState.buildings);
-			lastSave.set(newState.lastSave);
-			skillUpgrades.set(newState.skillUpgrades);
-			totalBonusPhotonsClicked.set(newState.totalBonusPhotonsClicked);
-			totalClicks.set(newState.totalClicks);
-			totalElectronizes.set(newState.totalElectronizes);
-			totalXP.set(newState.totalXP);
-			upgrades.set(newState.upgrades);
-			totalProtonises.set(0); // Reset protonises count
+			// Increment electronize counter before reset
+			this.addStat(STATS.TOTAL_ELECTRONIZES, 1);
+			// Reset protonise counter
+			statManager.getNumber(STATS.TOTAL_PROTONISES)?.reset();
+			// Reset all stats at electronize layer and above
+			statManager.resetLayer(LAYERS.ELECTRONIZE);
+			// Restore persistent upgrades
+			statManager.getArray<string>(STATS.UPGRADES)?.set(persistentUpgrades);
+			this.addStat(STATS.ELECTRONS, electronGain);
 
+			this.save();
 			return true;
 		}
 		return false;
 	},
 
 	addPowerUp(powerUp: PowerUp) {
-		activePowerUps.update(current => [
-			...current,
-			powerUp,
-		]);
+		statManager.getArray<PowerUp>(STATS.ACTIVE_POWER_UPS)?.push(powerUp);
+
+		setTimeout(() => {
+			this.removePowerUp(powerUp.id);
+		}, powerUp.duration);
 	},
 
 	removePowerUp(id: string) {
-		activePowerUps.update(current => current.filter(p => p.id !== id));
-	},
-
-	reset() {
-		const newState = resetGameState();
-		achievements.set(newState.achievements);
-		activePowerUps.set(newState.activePowerUps);
-		atoms.set(newState.atoms);
-		buildings.set(newState.buildings);
-		electrons.set(newState.electrons);
-		lastSave.set(newState.lastSave);
-		protons.set(newState.protons);
-		skillUpgrades.set(newState.skillUpgrades);
-		startDate.set(newState.startDate);
-		totalBonusPhotonsClicked.set(newState.totalBonusPhotonsClicked);
-		totalClicks.set(newState.totalClicks);
-		totalElectronizes.set(newState.totalElectronizes);
-		totalProtonises.set(newState.totalProtonises);
-		totalXP.set(newState.totalXP);
-		upgrades.set(newState.upgrades);
+		statManager.getArray<PowerUp>(STATS.ACTIVE_POWER_UPS)?.removeBy((powerUp: PowerUp) => powerUp.id === id);
 	},
 
 	save() {
-		const currentState = this.getCurrentState();
-		lastSave.set(Date.now());
-		localStorage.setItem(SAVE_KEY, JSON.stringify({
-			...currentState,
-			version: SAVE_VERSION,
-		}));
+		statManager.getNumber(STATS.LAST_SAVE)?.set(Date.now());
+		const saveData = statManager.getSaveData();
+		localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
 	},
 
-	load(saveData: SaveData) {
-		achievements.set(saveData.achievements.filter(a => a in ACHIEVEMENTS));
-		activePowerUps.set(saveData.activePowerUps);
-		atoms.set(saveData.atoms);
-		buildings.set(saveData.buildings);
-		electrons.set(saveData.electrons || 0);
-		lastSave.set(saveData.lastSave);
-		protons.set(saveData.protons || 0);
-		settings.set(saveData.settings || { automation: { buildings: [], upgrades: false } });
-		skillUpgrades.set(saveData.skillUpgrades);
-		startDate.set(saveData.startDate);
-		totalBonusPhotonsClicked.set(saveData.totalBonusPhotonsClicked || 0);
-		totalClicks.set(saveData.totalClicks);
-		totalElectronizes.set(saveData.totalElectronizes || 0);
-		totalProtonises.set(saveData.totalProtonises || 0);
-		totalXP.set(saveData.totalXP || 0);
-		upgrades.set(saveData.upgrades.filter(u => u in UPGRADES));
+	reset() {
+		statManager.resetAll();
+		statManager.getNumber(STATS.START_DATE)?.set(Date.now());
+		this.save();
 	},
 
-	toggleAutomation(type: BuildingType) {
+	getCurrentState,
+
+	addStat(statName: NumberStatName, amount: number) {
+		const stat = statManager.getNumber(statName);
+		stat?.add(amount);
+	},
+
+	multiplyStat(statName: NumberStatName, factor: number) {
+		const stat = statManager.getNumber(statName);
+		stat?.multiply(factor);
+	},
+
+	addAtoms: (amount: number) => gameManager.addStat(STATS.ATOMS, amount),
+	addPhotons: (amount: number) => gameManager.addStat(STATS.PHOTONS, amount),
+	incrementClicks: () => gameManager.addStat(STATS.TOTAL_CLICKS, 1),
+	incrementBonusPhotonClicks: () => gameManager.addStat(STATS.TOTAL_BONUS_PHOTONS_CLICKED, 1),
+
+	toggleAutomation(buildingType: BuildingType) {
 		settings.update(current => {
-			const buildings = current.automation.buildings;
-			const index = buildings.indexOf(type);
+			const buildings = [...current.automation.buildings];
+			const index = buildings.indexOf(buildingType);
+
+			if (index === -1) {
+				buildings.push(buildingType);
+			} else {
+				buildings.splice(index, 1);
+			}
 
 			return {
 				...current,
 				automation: {
 					...current.automation,
-					buildings: index === -1 ? [...buildings, type] : buildings.filter(b => b !== type)
+					buildings
 				}
 			};
 		});
@@ -467,14 +349,21 @@ export const gameManager = {
 	},
 
 	unlockAchievement(achievementId: string) {
-		const currentState = this.getCurrentState();
-		if (!currentState.achievements.includes(achievementId) && achievementId in ACHIEVEMENTS) {
-			achievements.update(current => [
-				...current,
-				achievementId,
-			]);
-			const achievement = ACHIEVEMENTS[achievementId];
-			info("Achievement unlocked", achievement.name);
+		const currentAchievements = achievements.get();
+		if (!currentAchievements.includes(achievementId)) {
+			achievements.push(achievementId);
 		}
 	},
+
+	// Add cleanup method
+	cleanup() {
+		if (achievementInterval) {
+			clearInterval(achievementInterval);
+			achievementInterval = null;
+		}
+		if (xpInterval) {
+			clearInterval(xpInterval);
+			xpInterval = null;
+		}
+	}
 };

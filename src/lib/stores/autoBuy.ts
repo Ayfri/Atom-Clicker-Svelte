@@ -1,7 +1,7 @@
 import { derived } from "svelte/store";
 import { currentUpgradesBought, settings } from "$stores/gameStore";
-import { getUpgradesWithEffects } from "$lib/helpers/effects";
-import { gameManager } from "$lib/helpers/gameManager";
+import { getUpgradesWithEffects } from "$helpers/effects";
+import { gameManager } from "$helpers/gameManager";
 import type { BuildingType } from "$data/buildings";
 import { browser } from "$app/environment";
 

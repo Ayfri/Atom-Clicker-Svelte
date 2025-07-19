@@ -196,6 +196,41 @@ function createBonusPhotonClicksAchievements(): Achievement[] {
 	return [1, 10, 64, 512, 4096].map(createBonusPhotonClicksAchievement);
 }
 
+function createPhotonAchievements(): Achievement[] {
+	function createPhotonAchievement(count: number): Achievement {
+		return {
+			id: `photons_${count}`,
+			name: `${formatNumber(count)} Photons`,
+			description: `Collect ${formatNumber(count)} photons`,
+			condition: (state: GameState) => state.photons >= count,
+			hiddenCondition: (state: GameState) => state.photons === 0,
+		};
+	}
+
+	return [1, 100, 1000, 10_000, 100_000, 1_000_000].map(createPhotonAchievement);
+}
+
+function createPhotonUpgradeAchievements(): Achievement[] {
+	const achievements: Achievement[] = [];
+
+	// Achievement for total photon upgrades
+	achievements.push({
+		id: 'photon_collector',
+		name: 'Photon Collector',
+		description: 'Purchase 50 total photon upgrade levels',
+		condition: (state: GameState) => {
+			const totalUpgrades = Object.values(state.photonUpgrades || {}).reduce((sum, level) => sum + level, 0);
+			return totalUpgrades >= 50;
+		},
+		hiddenCondition: (state: GameState) => {
+			const totalUpgrades = Object.values(state.photonUpgrades || {}).reduce((sum, level) => sum + level, 0);
+			return totalUpgrades < 10;
+		},
+	});
+
+	return achievements;
+}
+
 const achievementsArray: Achievement[] = [
 	...BUILDING_TYPES.map(createBuildingAchievements).flat(),
 	...createBuildingTotalAchievements(),
@@ -206,6 +241,8 @@ const achievementsArray: Achievement[] = [
 	...createProtonisesAchievements(),
 	...createElectronizesAchievements(),
 	...createBonusPhotonClicksAchievements(),
+	...createPhotonAchievements(),
+	...createPhotonUpgradeAchievements(),
 	...SPECIAL_ACHIEVEMENTS,
 ];
 

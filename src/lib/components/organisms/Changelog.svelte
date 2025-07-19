@@ -1,8 +1,8 @@
 <script lang="ts">
-	import Modal from '$lib/components/atoms/Modal.svelte';
 	import { onMount } from 'svelte';
-	import { changelog } from '$lib/stores/changelog';
 	import { marked } from 'marked';
+	import Modal from '@components/atoms/Modal.svelte';
+	import { changelog } from '$stores/changelog';
 
 	export let onClose: () => void;
 

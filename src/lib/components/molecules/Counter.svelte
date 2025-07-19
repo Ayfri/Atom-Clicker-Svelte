@@ -11,7 +11,7 @@
 		.map(([type, production]) => ({
 			type: type as BuildingType,
 			name: BUILDINGS[type as BuildingType].name,
-			production,
+			production: production,
 			count: $buildings[type as BuildingType]?.count ?? 0
 		}))
 		.sort((a, b) => Object.values(BuildingTypes).indexOf(a.type) - Object.values(BuildingTypes).indexOf(b.type));

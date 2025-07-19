@@ -29,8 +29,8 @@
 		"@supabase/supabase-js": "^2.49.8",
 		"@types/node": "^22.15.29",
 		"@xyflow/svelte": "0.1.39",
-		"marked": "^15.0.12",
-		"pixi.js": "^8.9.2"
+		"marked": "^16.0.0",
+		"pixi.js": "^8.11.0"
 	},
 	"type": "module"
 }
