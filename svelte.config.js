@@ -6,11 +6,11 @@ const config = {
 	kit: {
 		adapter: adapter(),
 		alias: {
+			'@': 'src/*',
 			'@components': 'src/lib/components/*',
 			'$data': 'src/lib/data/*',
 			'$helpers': 'src/lib/helpers/*',
 			'$stores': 'src/lib/stores/*',
-			'@': 'src/*',
 		},
 		version: {
 			name: process.env.npm_package_version,
