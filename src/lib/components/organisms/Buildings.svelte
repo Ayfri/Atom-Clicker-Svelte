@@ -115,12 +115,12 @@
 	}
 </script>
 
-<div class="bg-black/10 backdrop-blur-sm rounded-lg p-3 buildings flex flex-col gap-2">
+<div class="bg-black/10 backdrop-blur-xs rounded-lg p-3 buildings flex flex-col gap-2">
 	<h2 class="text-lg">Buildings</h2>
 	<div class="flex items-center gap-1 my-1">
 		{#each purchaseModes as mode}
 			<button
-				class="bg-white/5 hover:bg-white/10 rounded px-2 py-0.5 text-xs text-white transition-all duration-200 cursor-pointer {selectedPurchaseMode === mode ? '!bg-white/20' : ''}"
+				class="bg-white/5 hover:bg-white/10 rounded-sm px-2 py-0.5 text-xs text-white transition-all duration-200 cursor-pointer {selectedPurchaseMode === mode ? 'bg-white/20!' : ''}"
 				on:click={() => selectedPurchaseMode = mode}
 			>
 				{mode === 'max' ? 'Max' : mode}

@@ -22,25 +22,25 @@
 		<div class="left-panel flex flex-col gap-4 z-10">
 			<div class="grid grid-flow-col gap-2">
 				<button
-					class="backdrop-blur-sm rounded-lg p-2 transition-all duration-200 whitespace-nowrap w-full border-none text-inherit cursor-pointer {activeTab ===
+					class="backdrop-blur-xs rounded-lg p-2 transition-all duration-200 whitespace-nowrap w-full border-none text-inherit cursor-pointer {activeTab ===
 					'upgrades'
-						? 'bg-[var(--accent-color)] text-white'
+						? 'bg-accent-400 text-white'
 						: 'bg-white/5 hover:bg-white/10'}"
 					on:click={() => (activeTab = 'upgrades')}>Upgrades</button
 				>
 				{#if $mobile}
 					<button
-						class="backdrop-blur-sm rounded-lg p-2 transition-all duration-200 whitespace-nowrap w-full border-none text-inherit cursor-pointer {activeTab ===
+						class="backdrop-blur-xs rounded-lg p-2 transition-all duration-200 whitespace-nowrap w-full border-none text-inherit cursor-pointer {activeTab ===
 						'buildings'
-							? 'bg-[var(--accent-color)] text-white'
+							? 'bg-accent-400 text-white'
 							: 'bg-white/5 hover:bg-white/10'}"
 						on:click={() => (activeTab = 'buildings')}>Buildings</button
 					>
 				{/if}
 				<button
-					class="backdrop-blur-sm rounded-lg p-2 transition-all duration-200 whitespace-nowrap w-full border-none text-inherit cursor-pointer {activeTab ===
+					class="backdrop-blur-xs rounded-lg p-2 transition-all duration-200 whitespace-nowrap w-full border-none text-inherit cursor-pointer {activeTab ===
 					'achievements'
-						? 'bg-[var(--accent-color)] text-white'
+						? 'bg-accent-400 text-white'
 						: 'bg-white/5 hover:bg-white/10'}"
 					on:click={() => (activeTab = 'achievements')}
 				>
@@ -69,7 +69,7 @@
 	</div>
 </div>
 
-<style lang="postcss">
+<style>
 	.game-container {
 		grid-template-areas: 'upgrades atom buildings';
 		grid-template-columns: 300px 1fr 300px;

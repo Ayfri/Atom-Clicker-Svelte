@@ -76,7 +76,7 @@
 
 <div class="overlay" on:click={onClose} transition:fade={{ duration: 200 }}>
 	<div
-		class="modal bg-gradient-to-br from-accent-900 to-accent-800"
+		class="modal bg-linear-to-br from-accent-900 to-accent-800"
 		on:click|stopPropagation
 		transition:fly={{ y: -100, duration: 300 }}
 	>
@@ -93,7 +93,7 @@
 				</div>
 			</div>
 			<button
-				class="flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:*:stroke-[3]"
+				class="flex h-10 w-10 items-center justify-center rounded-lg transition-colors *:hover:stroke-3"
 				on:click={onClose}
 			>
 				<X class="transition-all duration-300"/>
@@ -124,11 +124,11 @@
 								<img
 									src={$supabaseAuth.profile?.picture || $supabaseAuth.user?.user_metadata?.avatar_url || $supabaseAuth.user?.user_metadata?.picture}
 									alt={username}
-									class="size-16 rounded-full object-cover ring-2 ring-accent ring-offset-2 ring-offset-accent-900"
+									class="size-16 rounded-full object-cover ring-2 ring-accent-400 ring-offset-2 ring-offset-accent-900"
 								/>
 							{:else}
 								<div
-									class="size-16 rounded-full bg-accent-400/30 flex items-center justify-center text-xl font-bold ring-2 ring-accent ring-offset-2 ring-offset-accent-900"
+									class="size-16 rounded-full bg-accent-400/30 flex items-center justify-center text-xl font-bold ring-2 ring-accent-400 ring-offset-2 ring-offset-accent-900"
 								>
 									{username[0].toUpperCase()}
 								</div>
@@ -152,7 +152,7 @@
 											<input
 												type="text"
 												bind:value={newUsername}
-												class="bg-black/20 rounded px-2 py-1 text-white border border-accent/50 focus:border-accent outline-none"
+												class="bg-black/20 rounded-sm px-2 py-1 text-white border border-accent/50 focus:border-accent outline-hidden"
 												placeholder="Enter new username"
 												maxlength="30"
 												minlength="3"
@@ -235,7 +235,7 @@
 					<div
 						class="flex items-center gap-3 rounded-lg bg-black/20 p-4 transition-colors"
 						class:ring-2={isCurrentUser}
-						class:ring-accent={isCurrentUser}
+						class:ring-accent-400={isCurrentUser}
 						class:ring-offset-2={isCurrentUser}
 						class:ring-offset-accent-900={isCurrentUser}
 					>
@@ -290,6 +290,7 @@
 	.overlay {
 		align-items: center;
 		background: rgba(0, 0, 0, 0.5);
+		backdrop-filter: blur(4px);
 		display: flex;
 		height: 100vh;
 		justify-content: center;

@@ -32,7 +32,7 @@
 	$: hasAutomation = getUpgradesWithEffects($currentUpgradesBought, { type: 'auto_upgrade' }).length > 0;
 </script>
 
-<div id="upgrades" class="bg-black/10 backdrop-blur-sm rounded-lg p-3 flex flex-col gap-2">
+<div id="upgrades" class="bg-black/10 backdrop-blur-xs rounded-lg p-3 flex flex-col gap-2">
 	<div class="header flex justify-between items-center gap-2">
 		<div class="flex items-center gap-2 justify-between w-full">
 			<h2 class="text-lg">Upgrades</h2>

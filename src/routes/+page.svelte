@@ -82,11 +82,11 @@
 	<Toaster/>
 
 	{#if $realmManager.availableRealms.length > 1}
-		<div class="fixed right-4 top-20 z-30 bg-black/10 backdrop-blur-sm border border-white/10 rounded-lg p-1">
+		<div class="fixed right-4 top-20 z-30 bg-black/10 backdrop-blur-xs border border-white/10 rounded-lg p-1">
 			<div class="flex flex-col gap-1">
 				{#each $realmManager.availableRealms as realm (realm.id)}
 					<button
-						class="flex items-center gap-2 px-2 py-1.5 rounded transition-all duration-200 hover:scale-105 {$realmManager.selectedRealm === realm.id ? realm.activeClasses : 'bg-white/5 hover:bg-white/10'}"
+						class="flex items-center gap-2 px-2 py-1.5 rounded-sm transition-all duration-200 hover:scale-105 {$realmManager.selectedRealm === realm.id ? realm.activeClasses : 'bg-white/5 hover:bg-white/10'}"
 						on:click={() => realmManager.selectRealm(realm.id)}
 						title="{realm.title} - {formatNumber($realmManager.realmValues[realm.id] ?? 0)} {realm.currency.name.toLowerCase()}"
 					>

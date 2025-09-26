@@ -17,7 +17,7 @@
 		.sort((a, b) => Object.values(BuildingTypes).indexOf(a.type) - Object.values(BuildingTypes).indexOf(b.type));
 </script>
 
-<div class="mb-8 text-center z-[1] sm:mb-4">
+<div class="mb-8 text-center z-1 sm:mb-4">
 	<div class="mb-2">
 		{#if $electrons > 0}
 			<div>

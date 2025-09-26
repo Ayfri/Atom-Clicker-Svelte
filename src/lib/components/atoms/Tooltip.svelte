@@ -76,7 +76,7 @@
 		<slot />
 
 		<!-- Desktop tooltip (hover) -->
-		<div class="tooltip absolute left-1/2 transform -translate-x-1/2 {positionClasses} bg-black/95 backdrop-blur-sm rounded-lg {sizeClasses} opacity-0 pointer-events-none transition-all duration-200">
+		<div class="tooltip absolute left-1/2 transform -translate-x-1/2 {positionClasses} bg-black/95 backdrop-blur-xs rounded-lg {sizeClasses} opacity-0 pointer-events-none transition-all duration-200">
 			<div class="text-white/90">
 				<slot name="content">{content}</slot>
 			</div>
@@ -99,7 +99,7 @@
 	id={tooltipId}
 	popover="auto"
 	on:toggle={handleToggle}
-	class="fixed bg-black/95 backdrop-blur-sm rounded-lg p-3 border border-white/20 max-w-[90vw] min-w-[200px] text-white/90 text-sm"
+	class="fixed bg-black/95 backdrop-blur-xs rounded-lg p-3 border border-white/20 max-w-[90vw] min-w-[200px] text-white/90 text-sm"
 >
 	<slot name="content">{content}</slot>
 	<!-- Arrow positioned dynamically via JS -->

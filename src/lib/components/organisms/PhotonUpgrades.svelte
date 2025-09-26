@@ -23,7 +23,7 @@
 	}
 </script>
 
-<div id="photon-upgrades" class="bg-black/10 backdrop-blur-sm rounded-lg p-3 flex flex-col gap-2">
+<div id="photon-upgrades" class="bg-black/10 backdrop-blur-xs rounded-lg p-3 flex flex-col gap-2">
 	<div class="header flex justify-between items-center gap-2">
 		<h2 class="text-sm lg:text-base text-realm-400">Photon Upgrades</h2>
 	</div>
@@ -34,14 +34,14 @@
 			{@const cost = getPhotonUpgradeCost(upgrade, currentLevel)}
 			{@const affordable = affordableUpgrades.includes(upgrade)}
 			<div
-				class="upgrade bg-realm-900/20 hover:bg-realm-900/30 border border-realm-500/20 hover:border-realm-500/40 rounded cursor-pointer p-2 transition-all duration-200 {affordable ? '' : 'opacity-50 cursor-not-allowed'}"
+				class="upgrade bg-realm-900/20 hover:bg-realm-900/30 border border-realm-500/20 hover:border-realm-500/40 rounded-sm cursor-pointer p-2 transition-all duration-200 {affordable ? '' : 'opacity-50 cursor-not-allowed'}"
 				on:click={() => {
 					if (affordable) handleUpgradeClick(upgrade.id);
 				}}
 			>
 				<div class="flex justify-between items-start mb-0.5">
 					<h3 class="text-realm-300 text-xs font-medium leading-tight">{upgrade.name}</h3>
-					<span class="text-realm-400 text-xs bg-realm-800/30 px-1 py-0.5 rounded whitespace-nowrap ml-1">
+					<span class="text-realm-400 text-xs bg-realm-800/30 px-1 py-0.5 rounded-sm whitespace-nowrap ml-1">
 						{currentLevel}/{upgrade.maxLevel}
 					</span>
 				</div>

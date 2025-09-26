@@ -33,11 +33,11 @@
 
 <svelte:window on:keydown={onKeydown} />
 
-<div class="overlay" on:click={onClose} transition:fade={{ duration: 200 }}>
-	<div class="modal bg-gradient-to-br from-accent-900 to-accent-800" on:click|stopPropagation transition:fly={{ y: -100, duration: 300 }}>
+<div class="overlay fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs" on:click={onClose} transition:fade={{ duration: 200 }}>
+	<div class="modal flex h-dvh w-screen md:h-[85vh] md:w-[85vw] max-w-4xl flex-col overflow-hidden md:rounded-2xl shadow-2xl bg-linear-to-br from-accent-900 to-accent-800" on:click|stopPropagation transition:fly={{ y: -100, duration: 300 }}>
 		<div class="flex items-center justify-between gap-4 border-b border-white/10 bg-black/40 p-6 sm:px-8">
 			<h2 class="flex-1 text-2xl font-bold text-white">Global Statistics (New System)</h2>
-			<button class="flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:*:stroke-[3]" on:click={onClose}>
+			<button class="flex h-10 w-10 items-center justify-center rounded-lg transition-colors *:hover:stroke-3" on:click={onClose}>
 				<X class="transition-all duration-300" />
 			</button>
 		</div>
@@ -72,19 +72,3 @@
 		</div>
 	</div>
 </div>
-
-<style lang="postcss">
-	.overlay {
-		@apply fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm;
-	}
-
-	.modal {
-		@apply flex h-[85vh] w-[85vw] max-w-4xl flex-col overflow-hidden rounded-2xl shadow-2xl;
-	}
-
-	@media (width <= 768px) {
-		.modal {
-			@apply h-[100dvh] w-screen rounded-none;
-		}
-	}
-</style>

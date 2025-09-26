@@ -118,7 +118,7 @@
 		{/each}
 	</div>
 {:else}
-	<nav class="fixed left-0 top-0 z-50 flex h-full flex-col items-center gap-5 bg-black/20 px-3 py-6 backdrop-blur">
+	<nav class="fixed left-0 top-0 z-50 flex h-full flex-col items-center gap-5 bg-black/20 px-3 py-6 backdrop-blur-xs">
 		{#each visibleComponents as link}
 			<NotificationDot hasNotification={link.notification ? link.notification() : false}>
 				<button
@@ -141,7 +141,7 @@
 	<svelte:component this={activeComponent} onClose={() => (activeComponent = null)} />
 {/if}
 
-<style lang="postcss">
+<style>
 	/* Label anchor, small triangle */
 	.label::after {
 		content: '';
@@ -151,6 +151,6 @@
 		transform: translateY(-50%);
 		border-width: 0.5rem;
 		border-style: solid;
-		border-color: transparent theme('colors.accent.900') transparent transparent;
+		border-color: transparent var(--color-accent-900) transparent transparent;
 	}
 </style>

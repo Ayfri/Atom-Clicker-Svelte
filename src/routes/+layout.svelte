@@ -29,7 +29,7 @@
 		class="flex h-screen w-screen items-center justify-center gap-4 flex-col"
 	>
 		<h1 class="text-2xl font-bold animate-pulse">Loading...</h1>
-		<LoaderCircle size={64} class="loading-action rotate-[115deg]"/>
+		<LoaderCircle size={64} class="loading-action rotate-115"/>
 	</div>
 {:else}
 	<slot/>

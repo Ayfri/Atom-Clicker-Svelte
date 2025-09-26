@@ -51,6 +51,8 @@
 </Modal>
 
 <style lang="postcss">
+	@reference '../../../app.css';
+
 	:global(.prose) {
 		@apply text-white/90;
 	}
@@ -64,7 +66,7 @@
 	}
 
 	:global(.prose ul) {
-		@apply space-y-2 pl-5 pb-8 list-disc;
+		@apply flex flex-col gap-2 pl-5 pb-8 list-disc;
 	}
 
 	:global(.prose li) {
@@ -80,7 +82,11 @@
 	}
 
 	:global(.prose a) {
-		@apply text-accent-500 hover:text-accent-400 transition-colors;
+		@apply text-accent-500 transition-colors;
+
+		&:hover {
+			@apply text-accent-400;
+		}
 	}
 
 	:global(.prose strong) {

@@ -54,10 +54,16 @@
 </Modal>
 
 <style lang="postcss">
+	@reference '../../../app.css';
+
 	.protonise-button {
-		@apply relative flex items-center justify-center w-full py-4 px-6 rounded-lg text-white font-bold text-lg shadow-lg overflow-hidden transition-all duration-300 transform hover:scale-[1.02];
+		@apply relative flex items-center justify-center w-full py-4 px-6 rounded-lg text-white font-bold text-lg shadow-lg overflow-hidden transition-all duration-300 transform;
 		border: 2px solid transparent;
 		background-clip: padding-box;
+
+		&:hover {
+			@apply scale-[1.02];
+		}
 	}
 
 	.protonise-button::before {
@@ -65,11 +71,11 @@
 		animation: rotate 7s linear infinite;
 		background: linear-gradient(
 			90deg,
-			theme('colors.blue.900'),
-			theme('colors.purple.800'),
-			theme('colors.blue.800'),
-			theme('colors.indigo.900'),
-			theme('colors.blue.900')
+			var(--color-blue-900),
+			var(--color-purple-800),
+			var(--color-blue-800),
+			var(--color-indigo-900),
+			var(--color-blue-900)
 		);
 		background-size: 300% 100%;
 	}
@@ -79,9 +85,13 @@
 	}
 
 	.protonise-button:disabled {
-		@apply opacity-50 cursor-not-allowed hover:scale-100;
-		border-color: theme('colors.red.900');
+		@apply opacity-50 cursor-not-allowed;
+		border-color: var(--color-red-900);
 		background: rgba(0, 0, 0, 0.5);
+
+		&:hover {
+			@apply scale-100;
+		}
 	}
 
 	.protonise-button:disabled::before {
@@ -102,6 +112,6 @@
 	}
 
 	.protonise-button:hover:not(:disabled) .gradient-overlay {
-		@apply inset-8 rounded-3xl
+		@apply inset-8 rounded-3xl;
 	}
 </style>

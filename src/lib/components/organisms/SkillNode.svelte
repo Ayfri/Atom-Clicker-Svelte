@@ -40,7 +40,7 @@
 
 <style>
 	.skill-node {
-		background: theme('colors.accent.800');
+		background: var(--color-accent-800);
 		border-radius: 8px;
 		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 		box-sizing: border-box;
@@ -63,12 +63,12 @@
 	}
 
 	.skill-node.available:hover {
-		box-shadow: 0 0 10px color-mix(in oklab, var(--accent-color), #000 20%);
-		background-color: color-mix(in oklab, #444, var(--accent-color) 10%);
+		box-shadow: 0 0 10px color-mix(in oklab, var(--color-accent-400), #000 20%);
+		background-color: color-mix(in oklab, #444, var(--color-accent-400) 10%);
 	}
 
 	.skill-node.unlocked {
-		background: var(--accent-color);
+		background: var(--color-accent-400);
 		color: white;
 	}
 

@@ -114,14 +114,14 @@
 
 <div class="overlay" on:click={onClose} on:keypress|stopPropagation|capture={onKeydown} transition:fade={{ duration: 200 }}>
 	<div
-		class="skill-tree bg-gradient-to-br from-accent-900 to-accent-800"
+		class="skill-tree bg-linear-to-br from-accent-900 to-accent-800"
 		on:click|stopPropagation
 		transition:fly={{ y: -100, duration: 300 }}
 	>
 		<div class="header">
 			<h2>Skill Tree</h2>
 			<div class="points-counter">Available Points: {$skillPointsAvailable}</div>
-			<div class="exit hover:*:stroke-[3]" on:click={onClose}>
+			<div class="exit *:hover:stroke-3" on:click={onClose}>
 				<X class="transition-all duration-300" />
 			</div>
 		</div>
@@ -163,15 +163,15 @@
 
 <svelte:window on:keydown={onKeydown} />
 
-<style lang="postcss">
+<style>
 	:global(.svelte-flow) {
 		--background-color: transparent;
-		--xy-background-color: theme('colors.accent.900');
-		--xy-edge-stroke: theme('colors.accent.800');
+		--xy-background-color: var(--color-accent-900);
+		--xy-edge-stroke: var(--color-accent-800);
 		--xy-edge-stroke-width: 5;
-		--xy-controls-button-background-color: theme('colors.accent.800');
-		--xy-controls-button-border-color: theme('colors.accent.800');
-		--xy-controls-button-color: theme('colors.accent.50');
+		--xy-controls-button-background-color: var(--color-accent-800);
+		--xy-controls-button-border-color: var(--color-accent-800);
+		--xy-controls-button-color: var(--color-accent-50);
 		--xy-attribution-background-color-default: transparent;
 	}
 
@@ -229,10 +229,10 @@
 	}
 
 	.points-counter {
-		background: color-mix(in oklab, transparent, var(--accent-color) 20%);
+		background: color-mix(in oklab, transparent, var(--color-accent-400) 20%);
 		border-radius: 8px;
-		border: 1px solid color-mix(in oklab, transparent, var(--accent-color) 20%);
-		color: var(--accent-color);
+		border: 1px solid color-mix(in oklab, transparent, var(--color-accent-400) 20%);
+		color: var(--color-accent-400);
 		font-weight: 500;
 		padding: 0.75rem 1.25rem;
 
@@ -263,7 +263,7 @@
 	}
 
 	:global(.svelte-flow__edge.unlocking path) {
-		--xy-edge-stroke: var(--accent-color);
+		--xy-edge-stroke: var(--color-accent-400);
 	}
 
 	:global(.svelte-flow__attribution) {

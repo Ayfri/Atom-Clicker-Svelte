@@ -15,7 +15,7 @@
 
 <div class="overlay" on:click={onClose} transition:fade={{ duration: 200 }}>
 	<div
-		class="modal bg-gradient-to-br from-accent-900 to-accent-800"
+		class="modal bg-linear-to-br from-accent-900 to-accent-800"
 		on:click|stopPropagation
 		transition:fly={{ y: -100, duration: 300 }}
 	>
@@ -24,7 +24,7 @@
 		>
 			<h2 class="flex-1 text-2xl font-bold text-white">Feedback</h2>
 			<button
-				class="flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:*:stroke-[3]"
+				class="flex h-10 w-10 items-center justify-center rounded-lg transition-colors *:hover:stroke-3"
 				on:click={onClose}
 			>
 				<X class="transition-all duration-300"/>
