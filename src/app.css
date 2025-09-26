@@ -1,87 +1,116 @@
-:root {
-	--accent-color: #4a90e2;
-	background-color: #1a1a1a;
-	background-blend-mode: screen;
-	background-attachment: fixed;
-	min-height: 100vh;
-	min-height: 100dvh;
+@import 'tailwindcss';
 
-	background-image: radial-gradient(circle at 10% 20%, rgba(74, 144, 226, 0.12) 0%, transparent 60%),
-		radial-gradient(circle at 95% 90%, rgba(74, 144, 226, 0.12) 0%, transparent 50%);
-	color: rgba(255, 255, 255, 0.87);
-	color-scheme: light dark;
-	font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+@theme {
+	--color-accent-50: #eef2f6;
+	--color-accent-100: #dbe5f0;
+	--color-accent-200: #aec8e4;
+	--color-accent-300: #81addf;
+	--color-accent-400: #4a90e2;
+	--color-accent-500: #3378c7;
+	--color-accent-600: #316096;
+	--color-accent-700: #2b4869;
+	--color-accent-800: #233243;
+	--color-accent-900: #15191e;
+	--color-accent-950: #0c0d0d;
 
-	font-synthesis: none;
-	font-weight: 400;
-	line-height: 1.5;
-	text-rendering: optimizeLegibility;
+	--color-realm-50: #f3f0ff;
+	--color-realm-100: #e9e5ff;
+	--color-realm-200: #d6ccff;
+	--color-realm-300: #bda8ff;
+	--color-realm-400: #9966cc;
+	--color-realm-500: #8b45bf;
+	--color-realm-600: #7c3aae;
+	--color-realm-700: #6a2c93;
+	--color-realm-800: #582379;
+	--color-realm-900: #4a1e64;
+	--color-realm-950: #2d1142;
 }
 
-* {
-	user-select: none;
-}
+@layer base {
+	:root {
+		--accent-color: #4a90e2;
+		background-color: #1a1a1a;
+		background-blend-mode: screen;
+		background-attachment: fixed;
+		min-height: 100vh;
+		min-height: 100dvh;
 
-body {
-	margin: 0;
-	min-height: 100vh;
-	min-height: 100dvh;
-	min-width: 320px;
-	overflow-x: hidden;
-	position: relative;
-}
+		background-image:
+			radial-gradient(
+				circle at 10% 20%,
+				rgba(74, 144, 226, 0.12) 0%,
+				transparent 60%
+			),
+			radial-gradient(
+				circle at 95% 90%,
+				rgba(74, 144, 226, 0.12) 0%,
+				transparent 50%
+			);
+		color: rgba(255, 255, 255, 0.87);
+		color-scheme: light dark;
+		font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-	line-height: 1.2;
-	margin: 0;
-}
-
-button {
-	background-color: #1a1a1a;
-	border: 1px solid transparent;
-	border-radius: 8px;
-	cursor: pointer;
-	font-family: inherit;
-	font-size: 1em;
-	font-weight: 500;
-	padding: 0.6em 1.2em;
-	transition: border-color 0.25s;
-}
-
-button:focus,
-button:focus-visible {
-	outline: none;
-}
-
-* {
-	box-sizing: border-box;
-}
-
-@keyframes pulse {
-	0% {
-		transform: scale(1);
+		font-synthesis: none;
+		font-weight: 400;
+		line-height: 1.5;
+		text-rendering: optimizeLegibility;
 	}
-	50% {
-		transform: scale(1.1);
+
+	* {
+		user-select: none;
 	}
-	100% {
-		transform: scale(1);
+
+	body {
+		margin: 0;
+		min-height: 100vh;
+		min-height: 100dvh;
+		min-width: 320px;
+		overflow-x: hidden;
+		position: relative;
+	}
+
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		line-height: 1.2;
+		margin: 0;
+	}
+
+	button {
+		border: 1px solid transparent;
+		cursor: pointer;
+		transition: border-color 0.25s;
+	}
+
+	button:focus,
+	button:focus-visible {
+		outline: none;
+	}
+
+	* {
+		box-sizing: border-box;
+	}
+
+	@keyframes pulse {
+		0% {
+			transform: scale(1);
+		}
+		50% {
+			transform: scale(1.1);
+		}
+		100% {
+			transform: scale(1);
+		}
+	}
+
+	canvas {
+		position: absolute;
+		top: 0;
+		left: 0;
+		pointer-events: none;
+		z-index: 1;
 	}
 }
-
-canvas {
-	position: absolute;
-	top: 0;
-	left: 0;
-	pointer-events: none;
-	z-index: 1;
-}
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
