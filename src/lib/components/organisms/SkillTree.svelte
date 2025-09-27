@@ -1,16 +1,15 @@
 <script lang="ts">
 	import '@xyflow/svelte/dist/style.css';
-	import { X } from 'lucide-svelte';
 	import { mobile } from '$stores/window';
 	import { onDestroy, onMount } from 'svelte';
 	import { SKILL_UPGRADES } from '$data/skillTree';
 	import { gameManager } from '$helpers/gameManager';
 	import { skillPointsAvailable, skillUpgrades } from '$stores/gameStore';
 	import type { SkillUpgrade } from '$lib/types';
-	import { fade, fly } from 'svelte/transition';
 	import { SvelteFlow, Background, Controls, type Node, type Edge, Position } from '@xyflow/svelte';
 	import { writable } from 'svelte/store';
 	import SkillNode from '@components/organisms/SkillNode.svelte';
+	import Modal from '@components/atoms/Modal.svelte';
 
 	export let onClose: () => void;
 
@@ -20,12 +19,6 @@
 
 	let nodes = writable<Node[]>([]);
 	let edges = writable<Edge[]>([]);
-
-	function onKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape') {
-			onClose();
-		}
-	}
 
 	// Skill management
 	function canUnlockSkill(skill: SkillUpgrade): boolean {
@@ -112,56 +105,45 @@
 	}
 </script>
 
-<div class="overlay" on:click={onClose} on:keypress|stopPropagation|capture={onKeydown} transition:fade={{ duration: 200 }}>
-	<div
-		class="skill-tree bg-linear-to-br from-accent-900 to-accent-800"
-		on:click|stopPropagation
-		transition:fly={{ y: -100, duration: 300 }}
-	>
-		<div class="header">
-			<h2>Skill Tree</h2>
-			<div class="points-counter">Available Points: {$skillPointsAvailable}</div>
-			<div class="exit *:hover:stroke-3" on:click={onClose}>
-				<X class="transition-all duration-300" />
-			</div>
-		</div>
-
-		<div class="graph-container">
-			<SvelteFlow
-				{nodes}
-				{edges}
-				{nodeTypes}
-				colorMode="dark"
-				minZoom={0.3}
-				maxZoom={2}
-				initialViewport={{ x: $mobile ? 100 : 500, y: 200, zoom: 0.8 }}
-				translateExtent={[
-					[-10000, -10000],
-					[10000, 10000],
-				]}
-				elementsSelectable={false}
-				nodesConnectable={false}
-				nodesDraggable={false}
-				panOnScroll={false}
-				preventScrolling={true}
-				zoomOnPinch={true}
-				zoomOnScroll={true}
-				on:nodeclick={({ detail }) => {
-					/** @type {SkillUpgrade} */
-					const data = detail.node.data;
-					unlockSkill(data);
-				}}
-			>
-				<Background gap={35} lineWidth={1} />
-				{#if !$mobile}
-					<Controls showZoom={true} showFitView={false} showLock={false} position="bottom-right" />
-				{/if}
-			</SvelteFlow>
+<Modal {onClose} containerClass="m-2 !p-0 rounded-xl" width="lg">
+	<div slot="header" class="flex w-full items-center justify-between">
+		<h2 class="text-2xl font-bold text-white">Skill Tree</h2>
+		<div class="points-counter bg-accent-400/20 border border-accent-400/20 px-4 py-2 rounded-lg text-accent-400 font-medium">
+			Available Points: {$skillPointsAvailable}
 		</div>
 	</div>
-</div>
 
-<svelte:window on:keydown={onKeydown} />
+	<SvelteFlow
+		{nodes}
+		{edges}
+		{nodeTypes}
+		colorMode="dark"
+		minZoom={0.3}
+		maxZoom={2}
+		initialViewport={{ x: $mobile ? 100 : 500, y: 200, zoom: 0.8 }}
+		translateExtent={[
+			[-10000, -10000],
+			[10000, 10000],
+		]}
+		elementsSelectable={false}
+		nodesConnectable={false}
+		nodesDraggable={false}
+		panOnScroll={false}
+		preventScrolling={true}
+		zoomOnPinch={true}
+		zoomOnScroll={true}
+		on:nodeclick={({ detail }) => {
+			/** @type {SkillUpgrade} */
+			const data = detail.node.data;
+			unlockSkill(data);
+		}}
+	>
+		<Background gap={35} lineWidth={1} />
+		{#if !$mobile}
+			<Controls showZoom={true} showFitView={false} showLock={false} position="bottom-right" />
+		{/if}
+	</SvelteFlow>
+</Modal>
 
 <style>
 	:global(.svelte-flow) {
@@ -173,93 +155,6 @@
 		--xy-controls-button-border-color: var(--color-accent-800);
 		--xy-controls-button-color: var(--color-accent-50);
 		--xy-attribution-background-color-default: transparent;
-	}
-
-	.overlay {
-		align-items: center;
-		backdrop-filter: blur(4px);
-		background: rgba(0, 0, 0, 0.7);
-		display: flex;
-		inset: 0;
-		justify-content: center;
-		position: fixed;
-		z-index: 1000;
-	}
-
-	.skill-tree {
-		border-radius: 16px;
-		box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
-		display: flex;
-		flex-direction: column;
-		height: 85vh;
-		overflow: hidden;
-		position: relative;
-		width: 85vw;
-
-		@media (max-width: 768px) {
-			border-radius: 0;
-			position: fixed;
-			height: 100dvh;
-			width: 100vw;
-		}
-	}
-
-	.header {
-		align-items: center;
-		background: rgba(0, 0, 0, 0.3);
-		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-		display: flex;
-		justify-content: space-between;
-		gap: 1rem;
-		padding: 1.5rem 1rem 1.5rem 2rem;
-
-		@media (max-width: 768px) {
-			gap: 0.5rem;
-			padding: 1rem 1rem 1rem 1.5rem;
-		}
-	}
-
-	.header h2 {
-		color: #fff;
-		flex: 1;
-		font-size: 1.5rem;
-		font-weight: 700;
-		margin: 0;
-		white-space: nowrap;
-	}
-
-	.points-counter {
-		background: color-mix(in oklab, transparent, var(--color-accent-400) 20%);
-		border-radius: 8px;
-		border: 1px solid color-mix(in oklab, transparent, var(--color-accent-400) 20%);
-		color: var(--color-accent-400);
-		font-weight: 500;
-		padding: 0.75rem 1.25rem;
-
-		@media (max-width: 768px) {
-			padding: 0.5rem 1rem;
-		}
-	}
-
-	.exit {
-		display: flex;
-		cursor: pointer;
-		justify-content: center;
-		align-items: center;
-		width: 3rem;
-		height: 3rem;
-	}
-
-	.graph-container {
-		flex: 1;
-		border-radius: 12px;
-		margin: 0.75rem;
-		overflow: hidden;
-		position: relative;
-
-		@media (max-width: 768px) {
-			margin: 0.4rem;
-		}
 	}
 
 	:global(.svelte-flow__edge.unlocking path) {

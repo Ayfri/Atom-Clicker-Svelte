@@ -45,17 +45,10 @@
 <script lang="ts">
 	import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 	import {supabaseAuth} from '$stores/supabaseAuth';
-	import {X} from 'lucide-svelte';
-	import {fade, fly} from 'svelte/transition';
+	import Modal from '@components/atoms/Modal.svelte';
 
-	export let onClose: () => void;
 	let error: string | null = null;
-
-	function onKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape') {
-			onClose();
-		}
-	}
+	export let onClose: () => void;
 
 	async function handleLogin(connection: AuthConnection) {
 		error = null;
@@ -100,70 +93,23 @@
 	}
 </script>
 
-<style>
-	.overlay {
-		align-items: center;
-		background: rgba(0, 0, 0, 0.5);
-		display: flex;
-		height: 100vh;
-		justify-content: center;
-		left: 0;
-		position: fixed;
-		top: 0;
-		width: 100vw;
-		z-index: 50;
-	}
+<Modal {onClose}>
+	{#if error}
+		<div class="mb-4 rounded-lg bg-red-500/20 p-4 text-red-200">
+			{error}
+		</div>
+	{/if}
 
-	.modal {
-		border-radius: 1rem;
-		display: flex;
-		flex-direction: column;
-		max-width: 400px;
-		overflow: hidden;
-		position: relative;
-		width: 90vw;
-	}
-</style>
-
-<svelte:window on:keydown={onKeydown}/>
-
-<div class="overlay" on:click={onClose} transition:fade={{ duration: 200 }}>
-	<div
-		class="modal bg-linear-to-br from-accent-900 to-accent-800"
-		on:click|stopPropagation
-		transition:fly={{ y: -100, duration: 300 }}
-	>
-		<div
-			class="flex items-center justify-between gap-4 border-b border-white/10 bg-black/40 p-6 sm:px-8"
-		>
-			<h2 class="flex-1 text-2xl font-bold text-white">Login</h2>
+	<div class="flex flex-col gap-4">
+		{#each AUTH_CONNECTIONS as connection}
 			<button
-				class="flex h-10 w-10 items-center justify-center rounded-lg transition-colors *:hover:stroke-3"
-				on:click={onClose}
+				on:click={() => handleLogin(connection)}
+				class="flex items-center justify-center gap-2 rounded-lg px-6 py-3 font-semibold transition-colors
+				{connection.backgroundColor} {connection.hoverBackgroundColor} {connection.textColor}"
 			>
-				<X class="transition-all duration-300"/>
+				<img src={connection.icon} alt={connection.name} class="h-6 w-6"/>
+				Continue with {connection.name}
 			</button>
-		</div>
-
-		<div class="flex-1 p-8">
-			{#if error}
-				<div class="mb-4 rounded-lg bg-red-500/20 p-4 text-red-200">
-					{error}
-				</div>
-			{/if}
-
-			<div class="flex flex-col gap-4">
-				{#each AUTH_CONNECTIONS as connection}
-					<button
-						on:click={() => handleLogin(connection)}
-						class="flex items-center justify-center gap-2 rounded-lg px-6 py-3 font-semibold transition-colors
-						{connection.backgroundColor} {connection.hoverBackgroundColor} {connection.textColor}"
-					>
-						<img src={connection.icon} alt={connection.name} class="h-6 w-6"/>
-						Continue with {connection.name}
-					</button>
-				{/each}
-			</div>
-		</div>
+		{/each}
 	</div>
-</div>
+</Modal>
