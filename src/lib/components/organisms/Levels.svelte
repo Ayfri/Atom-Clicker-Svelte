@@ -3,73 +3,12 @@
 	import { formatNumber } from '$lib/utils';
 </script>
 
-<div class="levels-container">
-	<div class="level-info">
-		<span class="level">Level {$playerLevel}</span>
-		<span class="xp-text">{formatNumber($currentLevelXP, 0)} / {formatNumber($nextLevelXP, 0)} XP</span>
+<div class="flex fixed left-1/2 top-0 z-10 w-full p-2 -translate-x-1/2 flex-col-reverse gap-1 md:w-3/5 md:flex-col">
+	<div class="flex items-center justify-between px-2 text-sm">
+		<span class="font-bold text-accent-400">Level {$playerLevel}</span>
+		<span class="text-gray-300">{formatNumber($currentLevelXP, 0)} / {formatNumber($nextLevelXP, 0)} XP</span>
 	</div>
-	<div class="xp-bar-container">
-		<div class="xp-bar" style="width: {$xpProgress}%"></div>
+	<div class="h-2 w-full overflow-hidden bg-gray-700 md:rounded-full">
+		<div class="h-full w-full transition-all duration-300 ease-out bg-gradient-to-r from-accent-400 to-accent-500" style="clip-path: inset(0 {100 - $xpProgress}% 0 0);"></div>
 	</div>
 </div>
-
-<style>
-	.levels-container {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-		left: 50%;
-		padding: 0.5rem;
-		position: fixed;
-		transform: translateX(-50%);
-		top: 0;
-		width: 60vw;
-		z-index: 10;
-
-		@media (width < 768px) {
-			padding: 0;
-			width: 100%;
-		}
-	}
-
-	.level-info {
-		align-items: center;
-		display: flex;
-		font-size: 0.875rem;
-		justify-content: space-between;
-		padding: 0 0.5rem;
-	}
-
-	.level {
-		font-weight: bold;
-		color: var(--accent-color);
-	}
-
-	.xp-text {
-		color: #d1d1d1;
-	}
-
-	.xp-bar-container {
-		background: #4a4a4a;
-		border-radius: 9999px;
-		height: 0.5rem;
-		overflow: hidden;
-		width: 100%;
-	}
-
-	.xp-bar {
-		background: var(--accent-color);
-		height: 100%;
-		transition: all 300ms ease-out;
-	}
-
-	@media (width < 768px) {
-		.levels-container {
-			flex-direction: column-reverse;
-		}
-
-		.xp-bar-container {
-			border-radius: 0;
-		}
-	}
-</style>
