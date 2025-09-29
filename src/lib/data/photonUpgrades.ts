@@ -34,8 +34,8 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 		name: 'Photon Value',
 		description: (level: number) => `+${level} photons per circle`,
 		baseCost: 25,
-		costMultiplier: 2,
-		maxLevel: 15,
+		costMultiplier: 1.75,
+		maxLevel: 20,
 		effects: (level: number) => [
 			{
 				type: 'click',
@@ -79,8 +79,8 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 		name: 'Double Photons',
 		description: (level: number) => `${formatNumber(level * 2)}% chance for double photons`,
 		baseCost: 100,
-		costMultiplier: 2.5,
-		maxLevel: 25,
+		costMultiplier: 2.25,
+		maxLevel: 10,
 		effects: (level: number) => [
 			{
 				type: 'power_up_multiplier',
@@ -95,7 +95,7 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 		description: (level: number) => `Auto-click ${level} circle${level > 1 ? 's' : ''} every 5 seconds`,
 		baseCost: 500,
 		costMultiplier: 3,
-		maxLevel: 3,
+		maxLevel: 5,
 		effects: (level: number) => [
 			{
 				type: 'auto_click',
