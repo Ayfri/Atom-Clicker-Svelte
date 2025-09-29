@@ -11,7 +11,7 @@
 	}
 </script>
 
-<Modal {onClose} title="Hard Reset">
+<Modal {onClose} width="sm" title="Hard Reset">
 	<div class="flex flex-col gap-6 text-center">
 		<div>
 			<h2 class="text-2xl font-bold mb-2">Are you sure?</h2>
