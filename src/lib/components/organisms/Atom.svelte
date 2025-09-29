@@ -60,7 +60,7 @@
 </script>
 
 <div
-	class="atom"
+	class="atom relative mt-20 flex size-[450px] items-center justify-center cursor-pointer bg-transparent md:size-[360px] sm:size-[300px]"
 	class:bonus={$hasBonus}
 	on:click={async e => await handleClick(e)}
 	bind:this={atomElement}
@@ -77,7 +77,7 @@
 			</div>
 		{/if}
 	{/each}
-	<div class="nucleus"></div>
+	<div class="nucleus h-[60px] w-[60px] rounded-full md:h-[50px] md:w-[50px]"></div>
 </div>
 
 <style>
@@ -86,17 +86,6 @@
 		--initial-electrons-spacing: 130px;
 		--nucleus-size: 60px;
 		--speed: 1;
-		align-items: center;
-		background: transparent;
-		border: none;
-		cursor: pointer;
-		display: flex;
-		margin-top: 5rem;
-		justify-content: center;
-		position: relative;
-		transition: transform 0.1s;
-		width: 450px;
-		height: 450px;
 		-webkit-tap-highlight-color: transparent;
 
 		&.bonus {
@@ -106,26 +95,18 @@
 		@media screen and (width <= 1000px) {
 			--electron-line-spacing: 40px;
 			--initial-electrons-spacing: 110px;
-			width: 360px;
-			height: 360px;
 		}
 
 		@media screen and (width <= 600px) {
 			--electron-line-spacing: 30px;
 			--initial-electrons-spacing: 100px;
 			--nucleus-size: 50px;
-			width: 300px;
-			height: 300px;
-			margin-top: 0;
 		}
 	}
 
 	.nucleus {
 		background: radial-gradient(circle at 30% 30%, #4a90e2, #2c3e50);
-		border-radius: 50%;
 		box-shadow: 0 0 20px rgba(74, 144, 226, 0.5);
-		height: var(--nucleus-size);
-		width: var(--nucleus-size);
 	}
 
 	.electron-shell {
@@ -135,7 +116,6 @@
 		border-radius: 50%;
 		height: var(--radius);
 		position: absolute;
-		transform: translate(-50%, -50%);
 		width: var(--radius);
 	}
 
