@@ -17,15 +17,15 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 	photon_spawn_rate: {
 		id: 'photon_spawn_rate',
 		name: 'Faster Circles',
-		description: (level: number) => `Spawn circles ${formatNumber(5 * level)}% faster`,
+		description: (level: number) => `Spawn circles ${formatNumber(4 * level)}% faster`,
 		baseCost: 10,
-		costMultiplier: 1.5,
-		maxLevel: 20,
+		costMultiplier: 1.6,
+		maxLevel: 22,
 		effects: (level: number) => [
 			{
 				type: 'power_up_interval',
-				description: `Reduce circle spawn interval by ${5 * level}%`,
-				apply: (currentValue) => currentValue * (1 - (0.05 * level)),
+				description: `Reduce circle spawn interval by ${4 * level}%`,
+				apply: (currentValue) => currentValue * (1 - (0.04 * level)),
 			},
 		],
 	},

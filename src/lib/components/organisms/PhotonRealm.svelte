@@ -57,6 +57,7 @@
 	let baseCircleLifetime = 5000;
 	let baseSizeMultiplier = 1;
 
+	const MAX_CIRCLES = 100;
 	const MIN_SIZE = 30;
 	const MAX_SIZE = 80;
 	const MIN_PHOTONS = 1;
@@ -160,6 +161,8 @@
 		};
 
 		circles = [...circles, circle];
+		// Limit the number of circles to 100
+		circles = circles.slice(0, MAX_CIRCLES);
 	}
 
 	async function clickCircle(circle: Circle, event: MouseEvent) {
@@ -259,7 +262,7 @@
 			>
 				{#each circles as circle (circle.id)}
 					<button
-						class="absolute rounded-full cursor-pointer flex items-center justify-center transition-all duration-100 hover:scale-110 active:scale-95"
+						class="absolute rounded-full cursor-pointer flex items-center justify-center"
 						style="
 							left: {circle.x}px;
 							top: {circle.y}px;
