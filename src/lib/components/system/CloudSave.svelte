@@ -5,9 +5,9 @@
     import { onMount } from 'svelte';
     import type { GameState } from '$lib/types';
     import { getLevelFromTotalXP } from '$stores/gameStore';
-    import Value from '@components/atoms/Value.svelte';
+    import Value from '@components/ui/Value.svelte';
     import { CurrenciesTypes } from '$data/currencies';
-    import Modal from '@components/atoms/Modal.svelte';
+    import Modal from '@components/ui/Modal.svelte';
 
     export let onClose: () => void;
 

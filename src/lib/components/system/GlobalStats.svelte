@@ -15,9 +15,9 @@
 		playerLevel,
 	} from '$stores/gameStore';
 	import { formatNumber } from '$lib/utils';
-	import StatItem from '@components/atoms/StatItem.svelte';
+	import StatItem from '@components/ui/StatItem.svelte';
 	import { POWER_UP_DEFAULT_INTERVAL } from '$data/powerUp';
-	import Modal from '@components/atoms/Modal.svelte';
+	import Modal from '@components/ui/Modal.svelte';
 
 	export let onClose: () => void;
 

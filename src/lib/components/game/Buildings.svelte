@@ -3,8 +3,8 @@
 	import { BUILDING_COLORS, type BuildingData, BUILDINGS, type BuildingType } from '$data/buildings';
 	import { buildingProductions, buildings, currentUpgradesBought, globalMultiplier, bonusMultiplier, settings, atoms, electrons, protons } from '$stores/gameStore';
 	import type { Building, Price } from '$lib/types';
-	import AutoButton from '@components/atoms/AutoButton.svelte';
-	import Value from '@components/atoms/Value.svelte';
+	import AutoButton from '@components/ui/AutoButton.svelte';
+	import Value from '@components/ui/Value.svelte';
 	import { fade } from 'svelte/transition';
 	import { BUILDING_COST_MULTIPLIER } from '$lib/constants';
 	import { getUpgradesWithEffects } from '$lib/helpers/effects';

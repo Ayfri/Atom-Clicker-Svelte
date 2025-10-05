@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { gameManager } from '$helpers/gameManager';
 	import { formatNumber } from '$lib/utils';
-	import Modal from '@components/atoms/Modal.svelte';
+	import Modal from '@components/ui/Modal.svelte';
 	import { atoms, protons } from '$stores/gameStore';
 	import { protoniseProtonsGain } from '$stores/protons';
 	import { PROTONS_ATOMS_REQUIRED } from '$lib/constants';

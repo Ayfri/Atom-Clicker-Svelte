@@ -2,7 +2,7 @@
 	import { PHOTON_UPGRADES, getPhotonUpgradeCost, canAffordPhotonUpgrade } from '$data/photonUpgrades';
 	import { gameManager } from '$helpers/gameManager';
 	import { photons, photonUpgrades, getCurrentState } from '$stores/gameStore';
-	import Value from '@components/atoms/Value.svelte';
+	import Value from '@components/ui/Value.svelte';
 	import { CurrenciesTypes } from '$data/currencies';
 
 	$: currentState = getCurrentState();

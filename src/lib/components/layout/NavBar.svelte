@@ -1,22 +1,22 @@
 <script lang="ts">
 	import { mobile } from '$stores/window';
-	import NotificationDot from '@components/atoms/NotificationDot.svelte';
-	import GlobalStats from '@components/organisms/GlobalStats.svelte';
-	import SkillTree from '@components/organisms/SkillTree.svelte';
-	import Credits from '@components/organisms/Credits.svelte';
-	import Protonise from '@components/organisms/Protonise.svelte';
-	import Electronize from '@components/organisms/Electronize.svelte';
-	import Leaderboard from '@components/organisms/Leaderboard.svelte';
+	import NotificationDot from '@components/ui/NotificationDot.svelte';
+	import GlobalStats from '@components/system/GlobalStats.svelte';
+	import SkillTree from '@components/game/SkillTree.svelte';
+	import Credits from '@components/system/Credits.svelte';
+	import Protonise from '@components/prestige/Protonise.svelte';
+	import Electronize from '@components/prestige/Electronize.svelte';
+	import Leaderboard from '@components/system/Leaderboard.svelte';
 	import { ChartNoAxesColumn, Network, Info, Atom, Trophy, MessageSquare, Orbit, FileText, Cloud } from 'lucide-svelte';
 	import { onDestroy, onMount, type ComponentType } from 'svelte';
 	import { protons, atoms, electrons, skillPointsTotal, hasAvailableSkillUpgrades } from '$stores/gameStore';
 	import { protoniseProtonsGain } from '$stores/protons';
 	import { electronizeElectronsGain } from '$stores/electrons';
 	import { PROTONS_ATOMS_REQUIRED, ELECTRONS_PROTONS_REQUIRED } from '$lib/constants';
-	import FeedbackForm from '@components/organisms/FeedbackForm.svelte';
+	import FeedbackForm from '@components/system/FeedbackForm.svelte';
 	import { changelog } from '$stores/changelog';
-	import Changelog from '@components/organisms/Changelog.svelte';
-	import CloudSave from '@components/organisms/CloudSave.svelte';
+	import Changelog from '@components/system/Changelog.svelte';
+	import CloudSave from '@components/system/CloudSave.svelte';
 
 	interface Link {
 		icon: ComponentType;

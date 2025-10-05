@@ -5,10 +5,10 @@
 	import {atomsPerSecond, upgrades} from '$stores/gameStore';
 	import {app} from '$stores/pixi';
 	import {mobile} from '$stores/window';
-	import HardReset from '@components/organisms/HardReset.svelte';
-	import Levels from '@components/organisms/Levels.svelte';
-	import NavBar from '@components/molecules/NavBar.svelte';
-	import Toaster from '@components/molecules/Toaster.svelte';
+	import HardReset from '@components/system/HardReset.svelte';
+	import Levels from '@components/game/Levels.svelte';
+	import NavBar from '@components/layout/NavBar.svelte';
+	import Toaster from '@components/layout/Toaster.svelte';
 	import {RotateCcw} from 'lucide-svelte';
 	import {onDestroy, onMount} from 'svelte';
 	import { realmManager } from '$helpers/realmManager';

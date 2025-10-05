@@ -5,7 +5,7 @@
 	import { fade } from 'svelte/transition';
 	import { gameManager } from '$helpers/gameManager';
 	import { achievements } from '$stores/gameStore';
-	import Modal from '@components/atoms/Modal.svelte';
+	import Modal from '@components/ui/Modal.svelte';
 
 	export let onClose: () => void;
 

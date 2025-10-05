@@ -1,11 +1,11 @@
 <script lang="ts">
-	import BonusPhoton from '@components/molecules/BonusPhoton.svelte';
-	import Canvas from '@components/molecules/Canvas.svelte';
-	import Counter from '@components/molecules/Counter.svelte';
-	import Achievements from '@components/organisms/Achievements.svelte';
-	import Atom from '@components/organisms/Atom.svelte';
-	import Buildings from '@components/organisms/Buildings.svelte';
-	import Upgrades from '@components/organisms/Upgrades.svelte';
+	import BonusPhoton from '@components/prestige/BonusPhoton.svelte';
+	import Canvas from '@components/game/Canvas.svelte';
+	import Counter from '@components/game/Counter.svelte';
+	import Achievements from '@components/game/Achievements.svelte';
+	import Atom from '@components/game/Atom.svelte';
+	import Buildings from '@components/game/Buildings.svelte';
+	import Upgrades from '@components/game/Upgrades.svelte';
 	import { app } from '$stores/pixi';
 	import { mobile } from '$stores/window';
 

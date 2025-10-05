@@ -3,8 +3,8 @@
 	import { createClickParticle, type Particle } from '$helpers/particles';
 	import { STATS } from '$helpers/statConstants';
 	import { onDestroy, onMount } from 'svelte';
-	import PhotonCounter from '@components/molecules/PhotonCounter.svelte';
-	import PhotonUpgrades from '@components/organisms/PhotonUpgrades.svelte';
+	import PhotonCounter from '@components/prestige/PhotonCounter.svelte';
+	import PhotonUpgrades from '@components/prestige/PhotonUpgrades.svelte';
 	import { particles } from '$stores/canvas';
 	import { CurrenciesTypes } from '$data/currencies';
 	import { photonUpgrades } from '$stores/gameStore';

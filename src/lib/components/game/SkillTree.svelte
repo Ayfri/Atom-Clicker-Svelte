@@ -8,8 +8,8 @@
 	import type { SkillUpgrade } from '$lib/types';
 	import { SvelteFlow, Background, Controls, type Node, type Edge, Position } from '@xyflow/svelte';
 	import { writable } from 'svelte/store';
-	import SkillNode from '@components/organisms/SkillNode.svelte';
-	import Modal from '@components/atoms/Modal.svelte';
+	import SkillNode from '@components/game/SkillNode.svelte';
+	import Modal from '@components/ui/Modal.svelte';
 
 	export let onClose: () => void;
 

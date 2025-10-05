@@ -3,11 +3,11 @@
 	import {supabaseAuth} from '$stores/supabaseAuth';
 	import {leaderboard} from '$stores/leaderboard';
 	import {startDate} from '$stores/gameStore';
-	import Login, {getAuthConnection} from '@components/organisms/Login.svelte';
+	import Login, {getAuthConnection} from '@components/system/Login.svelte';
 	import {Info, LogOut, Edit2, Save} from 'lucide-svelte';
 	import {onDestroy, onMount} from 'svelte';
 	import type { LeaderboardEntry } from '$lib/types/leaderboard';
-	import Modal from '@components/atoms/Modal.svelte';
+	import Modal from '@components/ui/Modal.svelte';
 	import { fade } from 'svelte/transition';
 
 	export let onClose: () => void;

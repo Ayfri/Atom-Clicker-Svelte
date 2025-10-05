@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Modal from '@components/atoms/Modal.svelte';
+	import Modal from '@components/ui/Modal.svelte';
 
 	export let onClose: () => void;
 </script>

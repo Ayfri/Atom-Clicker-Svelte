@@ -45,7 +45,7 @@
 <script lang="ts">
 	import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 	import {supabaseAuth} from '$stores/supabaseAuth';
-	import Modal from '@components/atoms/Modal.svelte';
+	import Modal from '@components/ui/Modal.svelte';
 
 	let error: string | null = null;
 	export let onClose: () => void;

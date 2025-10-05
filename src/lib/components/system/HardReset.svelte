@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Modal from '@components/atoms/Modal.svelte';
+	import Modal from '@components/ui/Modal.svelte';
 	import { gameManager } from '$helpers/gameManager';
     import { Trash2, X } from 'lucide-svelte';
 
@@ -39,5 +39,4 @@
 			</button>
 		</div>
 	</div>
-
 </Modal>

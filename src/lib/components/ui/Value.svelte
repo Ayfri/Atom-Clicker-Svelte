@@ -1,7 +1,7 @@
 <script lang="ts">
 	import {CURRENCIES, type CurrencyName} from '$data/currencies';
 	import {formatNumber} from '$lib/utils';
-	import Currency from '@components/atoms/Currency.svelte';
+	import Currency from '@components/ui/Currency.svelte';
 
 	export let value: number;
 	export let precision: number | undefined = undefined;

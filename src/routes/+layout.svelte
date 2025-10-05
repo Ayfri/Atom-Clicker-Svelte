@@ -1,8 +1,8 @@
 <script lang="ts">
 	import '@/app.css';
 	import {browser} from '$app/environment';
-	import Analytics from '@components/atoms/Analytics.svelte';
-	import SEO from '@components/atoms/SEO.svelte';
+	import Analytics from '@components/system/Analytics.svelte';
+	import SEO from '@components/system/SEO.svelte';
 	import {LoaderCircle} from 'lucide-svelte';
 </script>
 

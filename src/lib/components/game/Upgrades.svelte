@@ -5,9 +5,9 @@
 	import { currentUpgradesBought, protons, electrons, upgrades, totalProtonises, settings, atoms } from '$stores/gameStore';
 	import { UPGRADES } from '$data/upgrades';
 	import type { Upgrade } from '$lib/types';
-	import AutoButton from '@components/atoms/AutoButton.svelte';
-	import Currency from '@components/atoms/Currency.svelte';
-	import Value from '@components/atoms/Value.svelte';
+	import AutoButton from '@components/ui/AutoButton.svelte';
+	import Currency from '@components/ui/Currency.svelte';
+	import Value from '@components/ui/Value.svelte';
 	import { getUpgradesWithEffects } from '$helpers/effects';
 
 	let availableUpgrades: Upgrade[] = [];

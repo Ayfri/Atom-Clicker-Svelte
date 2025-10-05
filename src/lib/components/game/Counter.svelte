@@ -3,7 +3,7 @@
 	import {formatNumber} from '$lib/utils';
 	import {BUILDINGS, BuildingTypes, type BuildingType} from '$data/buildings';
 	import {Info} from 'lucide-svelte';
-	import Tooltip from '@components/atoms/Tooltip.svelte';
+	import Tooltip from '@components/ui/Tooltip.svelte';
 
 	// Get buildings with their production sorted by production value (highest first)
 	$: buildingsWithProduction = Object.entries($buildingProductions)
