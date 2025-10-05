@@ -1,5 +1,5 @@
 <script lang="ts">
-	export let onClick: () => void;
+	export let onClick: (e: MouseEvent) => void;
 	export let toggled: boolean = false;
 </script>
 

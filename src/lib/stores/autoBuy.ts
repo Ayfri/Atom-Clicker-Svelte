@@ -1,9 +1,12 @@
-import { derived } from "svelte/store";
+import { derived, writable } from "svelte/store";
 import { currentUpgradesBought, settings } from "$stores/gameStore";
 import { getUpgradesWithEffects } from "$helpers/effects";
 import { gameManager } from "$helpers/gameManager";
 import type { BuildingType } from "$data/buildings";
 import { browser } from "$app/environment";
+
+// Track recently auto-purchased buildings for visual feedback
+export const recentlyAutoPurchasedBuildings = writable<Map<BuildingType, number>>(new Map());
 
 // Set up auto-buy intervals for each building
 export const autoBuyIntervals = derived([currentUpgradesBought, settings], ([$currentUpgradesBought, $settings]) => {
@@ -37,9 +40,29 @@ if (browser) {
         Object.entries(intervals).forEach(([buildingType, interval]) => {
             timers[buildingType] = setInterval(() => {
                 try {
-                    gameManager.purchaseBuilding(buildingType as BuildingType, 1);
+                    const type = buildingType as BuildingType;
+                    gameManager.purchaseBuilding(type, 1);
+                    
+                    // Add visual feedback
+                    recentlyAutoPurchasedBuildings.update(map => {
+                        const current = map.get(type) || 0;
+                        map.set(type, current + 1);
+                        return map;
+                    });
+                    
+                    setTimeout(() => {
+                        recentlyAutoPurchasedBuildings.update(map => {
+                            const current = map.get(type) || 0;
+                            if (current <= 1) {
+                                map.delete(type);
+                            } else {
+                                map.set(type, current - 1);
+                            }
+                            return map;
+                        });
+                    }, 2000);
                 } catch (error) {
-                    console.error(`Error auto-buying ${buildingType}:`, error);
+                    // Silent fail for auto-buy
                 }
             }, interval);
         });

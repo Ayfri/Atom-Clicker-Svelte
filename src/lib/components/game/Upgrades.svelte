@@ -9,6 +9,8 @@
 	import Currency from '@components/ui/Currency.svelte';
 	import Value from '@components/ui/Value.svelte';
 	import { getUpgradesWithEffects } from '$helpers/effects';
+	import { recentlyAutoPurchased } from '$stores/autoUpgrade';
+	import { fly, scale } from 'svelte/transition';
 
 	let availableUpgrades: Upgrade[] = [];
 	let selectedCurrency: CurrencyName = CurrenciesTypes.ATOMS;
@@ -38,16 +40,19 @@
 			<h2 class="text-lg">Upgrades</h2>
 			{#if hasAutomation}
 				<AutoButton
-					onClick={() => gameManager.toggleUpgradeAutomation()}
+					onClick={(e) => {
+						e.stopPropagation();
+						gameManager.toggleUpgradeAutomation();
+					}}
 					toggled={$settings.automation.upgrades}
 				/>
 			{/if}
 		</div>
 	</div>
 
-	<div class="currency-tabs flex gap-[0.35rem]">
+	<div class="currency-tabs flex gap-1">
 		<button
-			class="currency-tab"
+			class="currency-tab flex items-center bg-white/5 border-none rounded-lg cursor-pointer p-2 transition-all duration-200 hover:bg-white/10 active:bg-white/[0.15] active:shadow-[0_0_10px_rgba(255,255,255,0.1)] xl:p-2 lg:p-1.5"
 			class:active={selectedCurrency === CurrenciesTypes.ATOMS}
 			on:click={() => selectedCurrency = CurrenciesTypes.ATOMS}
 		>
@@ -55,7 +60,7 @@
 		</button>
 		{#if showProtons}
 			<button
-				class="currency-tab"
+				class="currency-tab flex items-center bg-white/5 border-none rounded-lg cursor-pointer p-2 transition-all duration-200 hover:bg-white/10 active:bg-white/[0.15] active:shadow-[0_0_10px_rgba(255,255,255,0.1)] xl:p-2 lg:p-1.5"
 				class:active={selectedCurrency === CurrenciesTypes.PROTONS}
 				on:click={() => selectedCurrency = CurrenciesTypes.PROTONS}
 			>
@@ -64,7 +69,7 @@
 		{/if}
 		{#if showElectrons}
 			<button
-				class="currency-tab"
+				class="currency-tab flex items-center bg-white/5 border-none rounded-lg cursor-pointer p-2 transition-all duration-200 hover:bg-white/10 active:bg-white/[0.15] active:shadow-[0_0_10px_rgba(255,255,255,0.1)] xl:p-2 lg:p-1.5"
 				class:active={selectedCurrency === CurrenciesTypes.ELECTRONS}
 				on:click={() => selectedCurrency = CurrenciesTypes.ELECTRONS}
 			>
@@ -76,12 +81,22 @@
 	<div class="grid gap-1.5">
 		{#each availableUpgrades.slice(0, 10) as upgrade (upgrade.id)}
 			{@const affordable = affordableUpgrades.includes(upgrade)}
+			{@const wasAutoPurchased = $recentlyAutoPurchased.has(upgrade.id)}
 			<div
-				class="upgrade bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer p-2 transition-all duration-200 {affordable ? '' : 'opacity-50 cursor-not-allowed'}"
+				class="relative bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer p-2 transition-all duration-200 {affordable ? '' : 'opacity-50 cursor-not-allowed'}"
 				on:click={() => {
 					if (affordable) gameManager.purchaseUpgrade(upgrade.id);
 				}}
 			>
+				{#if wasAutoPurchased}
+					<div
+						class="absolute top-1 right-1 bg-gradient-to-br from-green-500 to-green-700 text-white font-bold text-xs px-1.5 py-0.5 rounded shadow-lg shadow-green-500/40 z-10 pointer-events-none"
+						in:scale={{ duration: 200, start: 0.3 }}
+						out:fly={{ y: -30, duration: 500, opacity: 0 }}
+					>
+						+1
+					</div>
+				{/if}
 				<h3 class="text-blue-400 text-sm">{upgrade.name}</h3>
 				<p class="text-xs my-0.5">{upgrade.description}</p>
 				<div class="text-xs mt-1" style="color: {CURRENCIES[upgrade.cost.currency].color}">
@@ -92,35 +107,3 @@
 	</div>
 </div>
 
-<style>
-	.currency-tab {
-		align-items: center;
-		background: rgba(255, 255, 255, 0.05);
-		border: none;
-		border-radius: 8px;
-		cursor: pointer;
-		display: flex;
-		padding: 0.5rem;
-		transition: all 0.2s;
-
-		& img {
-			width: 1rem;
-			height: 1rem;
-		}
-	}
-
-	@media (width <= 1538px) {
-		.currency-tab {
-			padding: 0.35rem;
-		}
-	}
-
-	.currency-tab:hover {
-		background: rgba(255, 255, 255, 0.1);
-	}
-
-	.currency-tab.active {
-		background: rgba(255, 255, 255, 0.15);
-		box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-	}
-</style>

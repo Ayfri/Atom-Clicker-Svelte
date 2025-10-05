@@ -5,9 +5,10 @@
 	import type { Building, Price } from '$lib/types';
 	import AutoButton from '@components/ui/AutoButton.svelte';
 	import Value from '@components/ui/Value.svelte';
-	import { fade } from 'svelte/transition';
+	import { fade, fly, scale } from 'svelte/transition';
 	import { BUILDING_COST_MULTIPLIER } from '$lib/constants';
 	import { getUpgradesWithEffects } from '$lib/helpers/effects';
+	import { recentlyAutoPurchasedBuildings } from '$stores/autoBuy';
 
 	const buildingsEntries = Object.entries(BUILDINGS) as [BuildingType, BuildingData][];
 	let unaffordableRootBuildings: [BuildingType, BuildingData][] = [];
@@ -140,14 +141,24 @@
 			{@const totalCost = getBulkBuyCost(type, purchaseAmount)}
 			{@const isAutomated = $settings.automation.buildings.includes(type)}
 			{@const hasAutomation = getUpgradesWithEffects($currentUpgradesBought, { type: 'auto_buy', target: type }).length > 0}
+			{@const autoPurchasedCount = $recentlyAutoPurchasedBuildings.get(type) || 0}
 
 			<div
-				class="bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer p-2 transition-all duration-200 {unaffordable ? 'opacity-50 cursor-not-allowed' : ''}"
+				class="relative bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer p-2 transition-all duration-200 {unaffordable ? 'opacity-50 cursor-not-allowed' : ''}"
 				style="--color: {color};"
 				on:click={() => handlePurchase(type)}
 				transition:fade
 				{hidden}
 			>
+				{#if autoPurchasedCount > 0}
+					<div
+						class="absolute top-1 right-1 bg-blue-500/20 text-blue-300 font-medium text-[0.65rem] px-1 py-0.5 rounded border border-blue-500/30 z-10 pointer-events-none"
+						in:scale={{ duration: 150, start: 0.5 }}
+						out:fly={{ y: -20, duration: 300, opacity: 0, delay: 200 }}
+					>
+						+{autoPurchasedCount}
+					</div>
+				{/if}
 				<div>
 					<h3 class="text-sm m-0" style="color: var(--color);">
 						{obfuscated ? '???' : building.name}
@@ -176,7 +187,10 @@
 					</div>
 					{#if hasAutomation}
 						<AutoButton
-							onClick={() => gameManager.toggleAutomation(type)}
+							onClick={(e) => {
+								e.stopPropagation();
+								gameManager.toggleAutomation(type);
+							}}
 							toggled={isAutomated}
 						/>
 					{/if}
