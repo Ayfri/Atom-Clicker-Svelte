@@ -2,25 +2,16 @@
 	export let hasNotification = false;
 </script>
 
-<span class="dot-icon" on:click class:has-notification={hasNotification} {...$$restProps}>
+<span
+	class="
+		relative
+		{
+			hasNotification ?
+			'after:absolute after:-top-1 after:-right-1 after:size-2 after:bg-accent-400 after:rounded-full after:shadow-[0_0_10px] after:shadow-accent-400 after:animate-pulse' :
+			''
+		}
+	"
+	{...$$restProps}
+>
 	<slot/>
 </span>
-
-<style>
-	.has-notification {
-		position: relative;
-	}
-
-	.has-notification::after {
-		animation: pulse 1s infinite;
-		background: var(--color-accent-400);
-		border-radius: 50%;
-		box-shadow: 0 0 10px var(--color-accent-400);
-		content: '';
-		height: 0.5rem;
-		position: absolute;
-		right: -0.25rem;
-		top: -0.25rem;
-		width: 0.5rem;
-	}
-</style>
