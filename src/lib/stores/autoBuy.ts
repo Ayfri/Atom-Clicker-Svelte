@@ -41,26 +41,28 @@ if (browser) {
             timers[buildingType] = setInterval(() => {
                 try {
                     const type = buildingType as BuildingType;
-                    gameManager.purchaseBuilding(type, 1);
+                    const success = gameManager.purchaseBuilding(type, 1);
                     
-                    // Add visual feedback
-                    recentlyAutoPurchasedBuildings.update(map => {
-                        const current = map.get(type) || 0;
-                        map.set(type, current + 1);
-                        return map;
-                    });
-                    
-                    setTimeout(() => {
+                    if (success) {
+                        // Add visual feedback
                         recentlyAutoPurchasedBuildings.update(map => {
                             const current = map.get(type) || 0;
-                            if (current <= 1) {
-                                map.delete(type);
-                            } else {
-                                map.set(type, current - 1);
-                            }
+                            map.set(type, current + 1);
                             return map;
                         });
-                    }, 2000);
+                        
+                        setTimeout(() => {
+                            recentlyAutoPurchasedBuildings.update(map => {
+                                const current = map.get(type) || 0;
+                                if (current <= 1) {
+                                    map.delete(type);
+                                } else {
+                                    map.set(type, current - 1);
+                                }
+                                return map;
+                            });
+                        }, 2000);
+                    }
                 } catch (error) {
                     // Silent fail for auto-buy
                 }
