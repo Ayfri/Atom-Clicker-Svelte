@@ -35,7 +35,7 @@
 		<span class="font-bold text-2xl opacity-80">atoms</span>
 	</div>
 	<div class="text-lg relative flex justify-center items-center">
-		<div>
+		<div class="mr-2">
 			<span
 				id="atoms-per-second-value"
 				class="{$hasBonus ? 'opacity-100' : 'opacity-80'} font-bold transition-[filter] duration-200 {$hasBonus ? 'drop-shadow-[0_0_7px_currentColor]' : ''}"
@@ -46,7 +46,7 @@
 
 		{#if buildingsWithProduction.length > 0}
 			<Tooltip position="bottom" size="md">
-				<Info size={16} class="inline cursor-help text-white/60 hover:text-white/80 transition-colors ml-2" />
+				<Info size={16} class="inline cursor-help text-white/60 hover:text-white/80 transition-colors" />
 
 				<svelte:fragment slot="content">
 					<div class="text-xs font-semibold mb-2">Buildings Production:</div>
