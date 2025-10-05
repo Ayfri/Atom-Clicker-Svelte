@@ -42,8 +42,15 @@
 			</div>
 		</div>
 
-		<button class="protonise-button" on:click={handleProtonise} disabled={!canProtonise || $protoniseProtonsGain === 0}>
-			<div class="gradient-overlay" />
+		<button
+			class="
+				protonise-button group relative flex items-center justify-center w-full py-4 px-6 rounded-lg text-white font-bold text-lg shadow-lg overflow-hidden transition-all duration-300 transform border-2 border-transparent bg-clip-padding hover:scale-[1.02]
+				disabled:before:hidden disabled:opacity-50 disabled:cursor-not-allowed disabled:border-[var(--color-red-900)] disabled:bg-black/50 disabled:hover:scale-100
+			"
+			disabled={!canProtonise || $protoniseProtonsGain === 0}
+			on:click={handleProtonise}
+		>
+			<div class="absolute inset-0.5 bg-gray-900 rounded transition-all duration-150 group-hover:inset-8 group-hover:rounded-3xl" />
 			<span class="z-10 relative">Protonise</span>
 		</button>
 
@@ -53,21 +60,12 @@
 	</div>
 </Modal>
 
-<style lang="postcss">
-	@reference '../../../app.css';
-
-	.protonise-button {
-		@apply relative flex items-center justify-center w-full py-4 px-6 rounded-lg text-white font-bold text-lg shadow-lg overflow-hidden transition-all duration-300 transform;
-		border: 2px solid transparent;
-		background-clip: padding-box;
-
-		&:hover {
-			@apply scale-[1.02];
-		}
-	}
-
+<style>
 	.protonise-button::before {
-		@apply absolute inset-[-2px] content-[''] rounded-lg -z-10;
+		content: '';
+		position: absolute;
+		inset: -2px;
+		border-radius: 0.5rem;
 		animation: rotate 7s linear infinite;
 		background: linear-gradient(
 			90deg,
@@ -84,20 +82,6 @@
 		animation: rotate 4s linear infinite;
 	}
 
-	.protonise-button:disabled {
-		@apply opacity-50 cursor-not-allowed;
-		border-color: var(--color-red-900);
-		background: rgba(0, 0, 0, 0.5);
-
-		&:hover {
-			@apply scale-100;
-		}
-	}
-
-	.protonise-button:disabled::before {
-		@apply hidden;
-	}
-
 	@keyframes rotate {
 		0% {
 			background-position: 0% 50%;
@@ -105,13 +89,5 @@
 		100% {
 			background-position: 300% 50%;
 		}
-	}
-
-	.gradient-overlay {
-		@apply absolute inset-0.5 bg-gray-900 rounded transition-all duration-150;
-	}
-
-	.protonise-button:hover:not(:disabled) .gradient-overlay {
-		@apply inset-8 rounded-3xl;
 	}
 </style>
