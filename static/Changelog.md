@@ -1,3 +1,12 @@
+# What's new 06-10-2025
+
+- Add login button to Cloud Save modal if not logged in.
+- Add small indicator for auto-bought buildings in the building list.
+- Display protons upgrades even if you have no protons after electronizing.
+- Fix atoms production tooltip behind the building list.
+- Fix auto-buying not working for buildings.
+- Fix purple realm not being unlocked after protonizing even if already unlocked before.
+
 # What's new 16-07-2025
 
 - **Purple Realm**: Unlock a mysterious new gameplay dimension with the "Purple Realm" upgrade
