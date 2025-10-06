@@ -8,6 +8,7 @@
     import Value from '@components/ui/Value.svelte';
     import { CurrenciesTypes } from '$data/currencies';
     import Modal from '@components/ui/Modal.svelte';
+    import Login from '@components/system/Login.svelte';
 
     export let onClose: () => void;
 
@@ -21,6 +22,7 @@
     let lastSaveTime = 0;
     let cooldownProgress = 0;
     let cooldownInterval: ReturnType<typeof setInterval>;
+    let showLoginModal = false;
 
     const SAVE_COOLDOWN = 30000; // 30 seconds
 
@@ -133,10 +135,17 @@
 
 <Modal {onClose} on:introstart={refreshCloudSaveInfo} title="Cloud Save" width="sm">
     {#if !$supabaseAuth.isAuthenticated}
-        <div class="flex flex-col items-center gap-4 text-center">
-            <AlertCircle class="text-red-500" size={48} />
-            <p class="text-lg font-semibold text-white">Please log in to use cloud saves</p>
-            <p class="text-sm text-white/60">Cloud saves allow you to sync your game progress across devices</p>
+        <div class="flex flex-col gap-4 text-center">
+            <h3 class="text-lg font-bold text-accent">Login Required</h3>
+            <p class="text-white/60">
+                Please log in to use cloud saves.
+            </p>
+            <button
+                on:click={() => showLoginModal = true}
+                class="mx-auto rounded-lg bg-accent px-6 py-2 font-semibold text-white transition-colors hover:bg-accent-600"
+            >
+                Login
+            </button>
         </div>
     {:else}
         <div class="flex flex-col gap-6">
@@ -226,3 +235,7 @@
         </div>
     {/if}
 </Modal>
+
+{#if showLoginModal}
+    <Login onClose={() => showLoginModal = false}/>
+{/if}
