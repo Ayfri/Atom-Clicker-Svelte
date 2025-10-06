@@ -3,8 +3,8 @@
 	import { goto } from '$app/navigation';
 	import { supabaseAuth } from '$stores/supabaseAuth';
 
-	let isLoading = true;
-	let error: string | null = null;
+	let isLoading = $state(true);
+	let error: string | null = $state(null);
 
 	onMount(async () => {
 		try {
@@ -42,7 +42,7 @@
 			<p class="text-gray-400 mb-4">{error}</p>
 			<button
 				class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-				on:click={() => goto('/')}
+				onclick={() => goto('/')}
 			>
 				Return home
 			</button>

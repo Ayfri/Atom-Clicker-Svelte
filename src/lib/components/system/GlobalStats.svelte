@@ -19,9 +19,13 @@
 	import { POWER_UP_DEFAULT_INTERVAL } from '$data/powerUp';
 	import Modal from '@components/ui/Modal.svelte';
 
-	export let onClose: () => void;
+	interface Props {
+		onClose: () => void;
+	}
 
-	$: powerUpIntervalReduction = (1 - ($powerUpInterval[0] / POWER_UP_DEFAULT_INTERVAL[0])) * 100;
+	let { onClose }: Props = $props();
+
+	let powerUpIntervalReduction = $derived((1 - ($powerUpInterval[0] / POWER_UP_DEFAULT_INTERVAL[0])) * 100);
 </script>
 
 <Modal title="Global Statistics" {onClose}>

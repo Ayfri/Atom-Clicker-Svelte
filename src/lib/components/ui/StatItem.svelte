@@ -1,8 +1,17 @@
 <script lang="ts">
-	export let label: string;
-	export let value: string | number;
-	export let prefix = '';
-	export let suffix = '';
+	interface Props {
+		label: string;
+		prefix?: string;
+		suffix?: string;
+		value: string | number;
+	}
+
+	let {
+		label,
+		prefix = '',
+		suffix = '',
+		value,
+	}: Props = $props();
 </script>
 
 <div class="flex justify-between items-center rounded-lg bg-black/20 p-3 hover:bg-black/30 transition-colors">

@@ -10,17 +10,21 @@
 	import Modal from '@components/ui/Modal.svelte';
 	import { fade } from 'svelte/transition';
 
-	export let onClose: () => void;
+	interface Props {
+		onClose: () => void;
+	}
+
+	let { onClose }: Props = $props();
 
 	function getDisplayUsername(user: LeaderboardEntry | undefined): string {
 		return user?.username || 'Anonymous';
 	}
 
 	let refreshInterval: ReturnType<typeof setInterval>;
-	let showLoginModal = false;
-	let isEditingUsername = false;
-	let newUsername = '';
-	let editError: string | null = null;
+	let showLoginModal = $state(false);
+	let isEditingUsername = $state(false);
+	let newUsername = $state('');
+	let editError: string | null = $state(null);
 
 	function formatStartDate(timestamp: number) {
 		return new Intl.DateTimeFormat('en-us', {
@@ -41,11 +45,13 @@
 		if (refreshInterval) clearInterval(refreshInterval);
 	});
 
-	$: currentUserId = $supabaseAuth.user?.id;
-	$: username = $supabaseAuth.profile?.username || $supabaseAuth.user?.user_metadata?.full_name || $supabaseAuth.user?.user_metadata?.username || $supabaseAuth.user?.email?.split('@')[0] || 'Anonymous';
-	$: userRank = $leaderboard.findIndex(entry => entry.userId === currentUserId) + 1;
+	let currentUserId = $derived($supabaseAuth.user?.id);
+	let username = $derived($supabaseAuth.profile?.username || $supabaseAuth.user?.user_metadata?.full_name || $supabaseAuth.user?.user_metadata?.username || $supabaseAuth.user?.email?.split('@')[0] || 'Anonymous');
+	let userRank = $derived($leaderboard.findIndex(entry => entry.userId === currentUserId) + 1);
 
-	async function handleUsernameUpdate() {
+	async function handleUsernameUpdate(event: SubmitEvent) {
+		event.preventDefault();
+		
 		if (!$supabaseAuth.supabase || !newUsername) return;
 
 		try {
@@ -69,15 +75,17 @@
 </script>
 
 <Modal {onClose}>
-	<div slot="header" class="flex items-center gap-2">
-		<h2 class="flex-1 text-2xl font-bold text-white">Global Leaderboard</h2>
-		<div class="group relative">
-			<Info size={20} class="cursor-help" />
-			<div class="absolute left-1/2 top-full z-10 mt-2 hidden w-64 -translate-x-1/2 rounded-lg bg-black/90 p-3 text-sm text-white/80 shadow-xl group-hover:block">
-				Your progress is stored locally and not tied to your account yet. The leaderboard only shows your highest recorded value.
+	{#snippet header()}
+		<div class="flex items-center gap-2">
+			<h2 class="flex-1 text-2xl font-bold text-white">Global Leaderboard</h2>
+			<div class="group relative">
+				<Info size={20} class="cursor-help" />
+				<div class="absolute left-1/2 top-full z-10 mt-2 hidden w-64 -translate-x-1/2 rounded-lg bg-black/90 p-3 text-sm text-white/80 shadow-xl group-hover:block">
+					Your progress is stored locally and not tied to your account yet. The leaderboard only shows your highest recorded value.
+				</div>
 			</div>
 		</div>
-	</div>
+	{/snippet}
 
 	<div class="flex-1 overflow-y-auto p-4 sm:p-8">
 		{#if !$supabaseAuth.isAuthenticated}
@@ -87,7 +95,7 @@
 					Please log in to participate in the global leaderboard.
 				</p>
 				<button
-					on:click={() => showLoginModal = true}
+					onclick={() => showLoginModal = true}
 					class="mx-auto rounded-lg bg-accent px-6 py-2 font-semibold text-white transition-colors hover:bg-accent-600"
 				>
 					Login
@@ -125,7 +133,7 @@
 							<div class="flex items-center gap-2">
 								{#if isEditingUsername}
 									<form
-										on:submit|preventDefault={handleUsernameUpdate}
+										onsubmit={handleUsernameUpdate}
 										class="flex items-center gap-2"
 									>
 										<input
@@ -145,7 +153,7 @@
 										</button>
 										<button
 											type="button"
-											on:click={() => {
+											onclick={() => {
 												isEditingUsername = false;
 												editError = null;
 											}}
@@ -159,7 +167,7 @@
 									<div class="font-bold text-white text-lg capitalize">
 										{username}
 										<button
-											on:click={startEditing}
+											onclick={startEditing}
 											class="ml-2 text-accent/60 hover:text-accent inline-flex items-center transition-colors"
 											title="Edit username"
 										>
@@ -177,7 +185,7 @@
 								{/if}
 							</div>
 							<button
-								on:click={() => supabaseAuth.signOut()}
+								onclick={() => supabaseAuth.signOut()}
 								class="flex items-center gap-2 text-sm text-red-500 hover:text-red-400 transition-colors"
 								title="Log out"
 							>

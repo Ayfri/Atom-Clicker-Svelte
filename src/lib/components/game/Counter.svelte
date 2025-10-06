@@ -6,7 +6,7 @@
 	import Tooltip from '@components/ui/Tooltip.svelte';
 
 	// Get buildings with their production sorted by production value (highest first)
-	$: buildingsWithProduction = Object.entries($buildingProductions)
+	const buildingsWithProduction = $derived(Object.entries($buildingProductions)
 		.filter(([type, production]) => production > 0)
 		.map(([type, production]) => ({
 			type: type as BuildingType,
@@ -14,7 +14,7 @@
 			production: production,
 			count: $buildings[type as BuildingType]?.count ?? 0
 		}))
-		.sort((a, b) => Object.values(BuildingTypes).indexOf(a.type) - Object.values(BuildingTypes).indexOf(b.type));
+		.sort((a, b) => Object.values(BuildingTypes).indexOf(a.type) - Object.values(BuildingTypes).indexOf(b.type)));
 </script>
 
 <div class="mb-8 text-center z-1 sm:mb-4">
@@ -48,7 +48,7 @@
 			<Tooltip position="bottom" size="md">
 				<Info size={16} class="inline cursor-help text-white/60 hover:text-white/80 transition-colors" />
 
-				<svelte:fragment slot="content">
+				{#snippet content()}
 					<div class="text-xs font-semibold mb-2">Buildings Production:</div>
 					<div class="space-y-1">
 						{#each buildingsWithProduction as building}
@@ -58,7 +58,7 @@
 							</div>
 						{/each}
 					</div>
-				</svelte:fragment>
+				{/snippet}
 			</Tooltip>
 		{/if}
 	</div>

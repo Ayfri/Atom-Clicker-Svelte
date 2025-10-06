@@ -19,7 +19,7 @@
 	const SAVE_INTERVAL = 1000;
 	let saveLoop: ReturnType<typeof setInterval>;
 	let gameUpdateInterval: ReturnType<typeof setInterval> | null = null;
-	let showHardReset = false;
+	let showHardReset = $state(false);
 
 	function update(ticker: any) {
 		gameManager.addAtoms(($atomsPerSecond * ticker.deltaMS) / 1000);
@@ -59,11 +59,13 @@
 		gameManager.cleanup();
 	});
 
-	$: $mobile && $app?.queueResize?.();
+	$effect(() => {
+		if ($mobile) $app?.queueResize?.();
+	});
 </script>
 
 <svelte:window
-	on:resize={() => {
+	onresize={() => {
     $mobile = window.innerWidth <= 900
   }}
 />
@@ -71,7 +73,7 @@
 <main class="relative py-12 lg:pb-4 min-h-screen {$mobile ? 'overflow-y-auto' : 'overflow-hidden'}">
 	<button
 		class="fixed right-4 top-4 z-40 flex gap-2 py-1.5 px-3 items-center justify-center rounded-lg bg-red-900/30 text-white transition-colors hover:bg-red-900/50"
-		on:click={() => showHardReset = true}
+		onclick={() => showHardReset = true}
 		title="Hard Reset"
 	>
 		<RotateCcw class="size-5" />
@@ -87,7 +89,7 @@
 				{#each $realmManager.availableRealms as realm (realm.id)}
 					<button
 						class="flex items-center gap-2 px-2 py-1.5 rounded-sm transition-all duration-200 hover:scale-105 {$realmManager.selectedRealm === realm.id ? realm.activeClasses : 'bg-white/5 hover:bg-white/10'}"
-						on:click={() => realmManager.selectRealm(realm.id)}
+						onclick={() => realmManager.selectRealm(realm.id)}
 						title="{realm.title} - {formatNumber($realmManager.realmValues[realm.id] ?? 0)} {realm.currency.name.toLowerCase()}"
 					>
 						<img src="/currencies/{realm.currency.icon}.png" alt={realm.currency.name} class="w-4 h-4" />
@@ -112,7 +114,7 @@
 			class:pointer-events-none={$realmManager.selectedRealm !== realm.id}
 			style="transform: translateX({$realmManager.selectedRealm === realm.id ? '0' : (i > $realmManager.availableRealms.findIndex(r => r.id === $realmManager.selectedRealm) ? '100%' : '-100%')});"
 		>
-			<svelte:component this={realm.component} />
+			<realm.component />
 		</div>
 	{/each}
 

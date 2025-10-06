@@ -10,19 +10,23 @@
     import Modal from '@components/ui/Modal.svelte';
     import Login from '@components/system/Login.svelte';
 
-    export let onClose: () => void;
+    interface Props {
+        onClose: () => void;
+    }
+
+    let { onClose }: Props = $props();
 
     type CloudSaveInfo = {
         lastSaveDate: number | null;
     } & GameState;
 
-    let loading = false;
-    let error: string | null = null;
-    let cloudSaveInfo: CloudSaveInfo | null = null;
+    let loading = $state(false);
+    let error: string | null = $state(null);
+    let cloudSaveInfo: CloudSaveInfo | null = $state(null);
     let lastSaveTime = 0;
-    let cooldownProgress = 0;
+    let cooldownProgress = $state(0);
     let cooldownInterval: ReturnType<typeof setInterval>;
-    let showLoginModal = false;
+    let showLoginModal = $state(false);
 
     const SAVE_COOLDOWN = 30000; // 30 seconds
 
@@ -130,10 +134,10 @@
         }
     }
 
-    $: canSave = cooldownProgress >= 1 && !loading;
+    let canSave = $derived(cooldownProgress >= 1 && !loading);
 </script>
 
-<Modal {onClose} on:introstart={refreshCloudSaveInfo} title="Cloud Save" width="sm">
+<Modal {onClose} title="Cloud Save" width="sm">
     {#if !$supabaseAuth.isAuthenticated}
         <div class="flex flex-col gap-4 text-center">
             <h3 class="text-lg font-bold text-accent">Login Required</h3>
@@ -141,7 +145,7 @@
                 Please log in to use cloud saves.
             </p>
             <button
-                on:click={() => showLoginModal = true}
+                onclick={() => showLoginModal = true}
                 class="mx-auto rounded-lg bg-accent px-6 py-2 font-semibold text-white transition-colors hover:bg-accent-600"
             >
                 Login
@@ -202,7 +206,7 @@
                 <div class="relative">
                     <button
                         class="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-6 py-3 font-semibold text-white transition-colors hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                        on:click={handleSaveToCloud}
+                        onclick={handleSaveToCloud}
                         disabled={!canSave}
                     >
                         <CloudUpload class="size-5" />
@@ -211,12 +215,12 @@
                     <div
                         class="absolute inset-0 rounded-lg bg-black/20 transition-transform origin-left"
                         style:transform="scaleX({1 - cooldownProgress})"
-                    />
+                    ></div>
                 </div>
 
                 <button
                     class="flex items-center justify-center gap-2 rounded-lg bg-accent px-6 py-3 font-semibold text-white transition-colors hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                    on:click={handleLoadFromCloud}
+                    onclick={handleLoadFromCloud}
                     disabled={loading}
                 >
                     <CloudDownload class="size-5" />

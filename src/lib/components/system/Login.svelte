@@ -1,4 +1,4 @@
-<script context="module" lang="ts">
+<script module lang="ts">
 	import type {AuthConnection} from '$lib/types/auth';
 
 	export const AUTH_CONNECTIONS: AuthConnection[] = [
@@ -46,9 +46,15 @@
 	import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 	import {supabaseAuth} from '$stores/supabaseAuth';
 	import Modal from '@components/ui/Modal.svelte';
+	
+	interface Props {
+		onClose: () => void;
+	}
 
-	let error: string | null = null;
-	export let onClose: () => void;
+	let { onClose }: Props = $props();
+
+	let error: string | null = $state(null);
+
 
 	async function handleLogin(connection: AuthConnection) {
 		error = null;
@@ -103,7 +109,7 @@
 	<div class="flex flex-col gap-4">
 		{#each AUTH_CONNECTIONS as connection}
 			<button
-				on:click={() => handleLogin(connection)}
+				onclick={() => handleLogin(connection)}
 				class="flex items-center justify-center gap-2 rounded-lg px-6 py-3 font-semibold transition-colors
 				{connection.backgroundColor} {connection.hoverBackgroundColor} {connection.textColor}"
 			>

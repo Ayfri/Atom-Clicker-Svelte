@@ -11,10 +11,6 @@
 	import { recentlyAutoPurchasedBuildings } from '$stores/autoBuy';
 
 	const buildingsEntries = Object.entries(BUILDINGS) as [BuildingType, BuildingData][];
-	let unaffordableRootBuildings: [BuildingType, BuildingData][] = [];
-	let affordableBuildings: [BuildingType, Building][] = [];
-	let unlockedBuildings: [BuildingType, Building][] = [];
-	let hiddenBuildings: [BuildingType, BuildingData][] = [];
 
 	const PurchaseModes = {
 		x1: 1,
@@ -22,13 +18,44 @@
 		x25: 25,
 		max: Infinity,
 	} as const;
-	const purchaseModes = Object.keys(PurchaseModes) as (keyof typeof PurchaseModes)[];
-	let purchaseAmounts: Record<BuildingType, number> = Object.fromEntries(
-		buildingsEntries.map(([type]) => [type, 0])
-	) as Record<BuildingType, number>;
-
 	type PurchaseMode = keyof typeof PurchaseModes;
-	let selectedPurchaseMode: PurchaseMode = 'x1';
+
+	const purchaseModes = Object.keys(PurchaseModes) as PurchaseMode[];
+
+	let selectedPurchaseMode: PurchaseMode = $state('x1');
+
+	// Use $derived for computed values instead of $effect with state updates
+	const unaffordableRootBuildings = $derived(
+		buildingsEntries.filter(([type, building]) => gameManager.canAfford(building.cost) === false)
+	);
+	
+	const unlockedBuildings = $derived(
+		Object.entries($buildings).filter(([, { unlocked }]) => unlocked) as [BuildingType, Building][]
+	);
+	
+	const hiddenBuildings = $derived(
+		buildingsEntries.filter(
+			([type]) =>
+				unlockedBuildings.map((u) => u[0]).indexOf(type) === -1 && 
+				unaffordableRootBuildings.map((u) => u[0]).indexOf(type) !== -1,
+		)
+	);
+
+	const purchaseAmounts = $derived(
+		Object.fromEntries(
+			buildingsEntries.map(([type]) => [type, getPurchaseAmount(type)])
+		) as Record<BuildingType, number>
+	);
+
+	const affordableBuildings = $derived(
+		Object.entries($buildings).filter(([type, building]) => {
+			const bulkCost = {
+				amount: getBulkBuyCost(type as BuildingType, purchaseAmounts[type as BuildingType]),
+				currency: building.cost.currency
+			};
+			return gameManager.canAfford(bulkCost);
+		}) as [BuildingType, Building][]
+	);
 
 	function handlePurchase(type: BuildingType) {
 		if (!affordableBuildings.some(([t]) => t === type)) return;
@@ -36,31 +63,6 @@
 		if (amount > 0) {
 			gameManager.purchaseBuilding(type, amount);
 		}
-	}
-
-	$: if ($buildings && ($atoms || $electrons || $protons || true)) {
-		unaffordableRootBuildings = buildingsEntries.filter(([type, building]) => gameManager.canAfford(building.cost) === false);
-		unlockedBuildings = Object.entries($buildings).filter(([, { unlocked }]) => unlocked) as [BuildingType, Building][];
-		hiddenBuildings = buildingsEntries.filter(
-			([type]) =>
-				unlockedBuildings.map((u) => u[0]).indexOf(type) === -1 && unaffordableRootBuildings.map((u) => u[0]).indexOf(type) !== -1,
-		);
-
-		buildingsEntries
-			.filter(
-				([type]) =>
-					unlockedBuildings.map((u) => u[0]).indexOf(type) === -1 &&
-					unaffordableRootBuildings.map((u) => u[0]).indexOf(type) === -1,
-			)
-			.forEach(([type]) => gameManager.unlockBuilding(type));
-
-		affordableBuildings = Object.entries($buildings).filter(([type, building]) => {
-			const bulkCost = {
-				amount: getBulkBuyCost(type as BuildingType, purchaseAmounts[type as BuildingType]),
-				currency: building.cost.currency
-			};
-			return gameManager.canAfford(bulkCost);
-		}) as [BuildingType, Building][];
 	}
 
 	function getMaxAffordable(price: Price, type: BuildingType): number {
@@ -97,11 +99,6 @@
 		return getMaxAffordable(baseCost, type);
 	}
 
-	$: if (selectedPurchaseMode && $buildings && ($atoms || $electrons || $protons || true)) {
-		purchaseAmounts = Object.fromEntries(
-			buildingsEntries.map(([type]) => [type, getPurchaseAmount(type)])
-		) as Record<BuildingType, number>;
-	}
 
 	function getBulkBuyCost(type: BuildingType, amount: number): number {
 		const currentCount = $buildings[type]?.count ?? 0;
@@ -114,6 +111,17 @@
 
 		return Math.round(totalCost);
 	}
+
+
+	$effect(() => {
+		buildingsEntries
+			.filter(
+				([type]) =>
+					unlockedBuildings.map((u) => u[0]).indexOf(type) === -1 &&
+					unaffordableRootBuildings.map((u) => u[0]).indexOf(type) === -1,
+			)
+			.forEach(([type]) => gameManager.unlockBuilding(type));
+	});
 </script>
 
 <div class="bg-black/10 backdrop-blur-xs rounded-lg p-3 buildings flex flex-col gap-2">
@@ -122,7 +130,7 @@
 		{#each purchaseModes as mode}
 			<button
 				class="bg-white/5 hover:bg-white/10 rounded-sm px-2 py-0.5 text-xs text-white transition-all duration-200 cursor-pointer {selectedPurchaseMode === mode ? 'bg-white/20!' : ''}"
-				on:click={() => selectedPurchaseMode = mode}
+				onclick={() => selectedPurchaseMode = mode}
 			>
 				{mode === 'max' ? 'Max' : mode}
 			</button>
@@ -146,7 +154,7 @@
 			<div
 				class="relative bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer p-2 transition-all duration-200 {unaffordable ? 'opacity-50 cursor-not-allowed' : ''}"
 				style="--color: {color};"
-				on:click={() => handlePurchase(type)}
+				onclick={() => handlePurchase(type)}
 				transition:fade
 				{hidden}
 			>

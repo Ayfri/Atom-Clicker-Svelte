@@ -29,25 +29,26 @@
 		},
 	];
 
-	const powerUp = {
+	const powerUp = $state({
 		description: '',
 		duration: 0,
 		id: Date.now().toString(),
 		multiplier: 0,
 		name: 'Double Atoms',
 		startTime: Date.now(),
-	} satisfies PowerUp;
+	} satisfies PowerUp);
 
-	let x = 0;
-	let y = 0;
-	let visible = false;
-	let messageShown = false;
+	let x = $state(0);
+	let y = $state(0);
+	let visible = $state(false);
+	let messageShown = $state(false);
 
 	function spawnBonusAtom() {
 		const margin = 100;
 
 		x = Math.random() * (window.innerWidth - margin * 2) + margin;
 		y = Math.random() * (window.innerHeight - margin * 2) + margin;
+
 		const randomPowerUp = randomValue(powerUps);
 		powerUp.multiplier = randomPowerUp.multiplier * $powerUpEffectMultiplier;
 		powerUp.duration = randomPowerUp.duration * $powerUpDurationMultiplier;
@@ -64,6 +65,7 @@
 		powerUp.startTime = Date.now();
 		gameManager.addPowerUp(powerUp);
 		gameManager.incrementBonusPhotonClicks();
+
 		const id = powerUp.id;
 		setTimeout(() => gameManager.removePowerUp(id), powerUp.duration);
 		setTimeout(() => (messageShown = false), 3_000);
@@ -88,10 +90,10 @@
 {#if visible}
 	<div
 		class="power-up bonus-atom absolute z-20 size-10 cursor-pointer rounded-full"
-		on:click|once={onClick}
+		onclick={onClick}
 		style="left: {x}px; top: {y}px;"
 		transition:fade={{ duration: 1000 }}
-	/>
+	></div>
 {/if}
 
 {#if messageShown}

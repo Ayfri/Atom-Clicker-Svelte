@@ -3,7 +3,7 @@ import { statManager, purpleRealmUnlocked } from '$stores/gameStore';
 import { CURRENCIES, CurrenciesTypes } from '$data/currencies';
 import { STATS } from '$helpers/statConstants';
 import type { Currency } from '$lib/types';
-import type { ComponentType } from 'svelte';
+import type { Component } from 'svelte';
 import AtomRealm from '@components/prestige/AtomRealm.svelte';
 import PhotonRealm from '@components/prestige/PhotonRealm.svelte';
 
@@ -14,7 +14,7 @@ export interface RealmConfig {
 	title: string;
 	activeClasses: string;
 	isUnlocked: () => boolean;
-	component: ComponentType;
+	component: Component;
 	props?: Record<string, unknown>;
 }
 

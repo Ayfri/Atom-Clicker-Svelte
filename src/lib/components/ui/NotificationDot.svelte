@@ -1,5 +1,11 @@
 <script lang="ts">
-	export let hasNotification = false;
+	interface Props {
+		hasNotification?: boolean;
+		children?: import('svelte').Snippet;
+		[key: string]: any
+	}
+
+	let { hasNotification = false, children, ...rest }: Props = $props();
 </script>
 
 <span
@@ -11,7 +17,7 @@
 			''
 		}
 	"
-	{...$$restProps}
+	{...rest}
 >
-	<slot/>
+	{@render children?.()}
 </span>

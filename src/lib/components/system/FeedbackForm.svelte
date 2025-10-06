@@ -1,7 +1,11 @@
 <script lang="ts">
 	import Modal from '@components/ui/Modal.svelte';
 
-	export let onClose: () => void;
+	interface Props {
+		onClose: () => void;
+	}
+
+	let { onClose }: Props = $props();
 </script>
 
 <Modal {onClose} title="Feedback" containerClass="m-2 !p-0 rounded-xl">
@@ -10,5 +14,5 @@
 		width="100%"
 		height="100%"
 		title="Feedback Form"
-	/>
+	></iframe>
 </Modal>

@@ -7,12 +7,16 @@
 	import { achievements } from '$stores/gameStore';
 	import Modal from '@components/ui/Modal.svelte';
 
-	export let onClose: () => void;
+	interface Props {
+		onClose: () => void;
+	}
 
-	let hiddenAtomClicked = false;
+	let { onClose }: Props = $props();
+
+	let hiddenAtomClicked = $state(false);
 
 	// Check if achievement is already unlocked
-	$: isAlreadyUnlocked = $achievements.includes('hidden_atom_clicked');
+	let isAlreadyUnlocked = $derived($achievements.includes('hidden_atom_clicked'));
 
 	function handleHiddenAtomClick() {
 		if (!hiddenAtomClicked && !isAlreadyUnlocked) {
@@ -63,20 +67,22 @@
 </script>
 
 <Modal {onClose}>
-	<div slot="header" class="flex items-center gap-3 flex-1">
-		<h2 class="text-2xl font-bold text-white">Credits</h2>
-		{#if !hiddenAtomClicked && !isAlreadyUnlocked}
-			<button
-				class="opacity-10 hover:opacity-50 transition-opacity duration-1000"
-				on:click={handleHiddenAtomClick}
-				transition:fade={{ duration: 1000 }}
-				aria-label="Hidden secret"
-				title="?"
-			>
-				<img src="/atom.png" alt="Hidden atom" class="size-5" />
-			</button>
-		{/if}
-	</div>
+	{#snippet header()}
+		<div  class="flex items-center gap-3 flex-1">
+			<h2 class="text-2xl font-bold text-white">Credits</h2>
+			{#if !hiddenAtomClicked && !isAlreadyUnlocked}
+				<button
+					class="opacity-10 hover:opacity-50 transition-opacity duration-1000"
+					onclick={handleHiddenAtomClick}
+					transition:fade={{ duration: 1000 }}
+					aria-label="Hidden secret"
+					title="?"
+				>
+					<img src="/atom.png" alt="Hidden atom" class="size-5" />
+				</button>
+			{/if}
+		</div>
+	{/snippet}
 
 	<div class="flex flex-col gap-8 md:flex-row md:gap-12">
 		<div class="flex-1 flex flex-col gap-6">
@@ -102,7 +108,7 @@
 							rel="noopener noreferrer"
 							class="group flex items-baseline gap-2 rounded-lg bg-black/20 p-4 transition-colors hover:bg-black/30"
 						>
-							<svelte:component this={social.icon} class="size-6 self-center mr-1" />
+							<social.icon class="size-6 self-center mr-1" />
 							<span class="text-lg font-semibold text-white group-hover:text-accent">{social.name}</span>
 							<span class="text-sm text-white/60 flex-1">{social.description}</span>
 							<SquareArrowOutUpRight size={16} />

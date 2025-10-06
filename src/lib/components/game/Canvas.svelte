@@ -6,11 +6,11 @@
 
 	let particlesContainer: any;
 	let pixiApp: {
+		canvas: HTMLCanvasElement;
+		destroy: () => void;
 		renderer: any;
 		stage: any;
 		ticker: any;
-		canvas: HTMLCanvasElement;
-		destroy: () => void;
 	} | null = null;
 
 	const animate = (deltaTime: number) => {

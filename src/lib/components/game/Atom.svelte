@@ -9,7 +9,7 @@
 	import {app} from '$stores/pixi';
 	import { CurrenciesTypes } from '$data/currencies';
 
-	let atomElement: HTMLDivElement;
+	let atomElement = $state<HTMLDivElement>();
 
 	export function simulateClick() {
 		if (!atomElement) return;
@@ -38,10 +38,10 @@
 		gameManager.addAtoms($clickPower);
 		$totalClicks++;
 
-		// TODO: Re-add main atom animation
+		// TODO: Re-add main atom click animation
 
 		// Only create particles if graphics support is available
-		if (shouldCreateParticles() && $app && $app.canvas) {
+		if (shouldCreateParticles() && $app?.canvas) {
 			try {
 				const newParticles: Particle[] = [];
 				newParticles.push(await createClickTextParticle(event.clientX + Math.random() * 10, event.clientY + Math.random() * 10, `+${formatNumber($clickPower)}`));
@@ -62,7 +62,7 @@
 <div
 	class="atom relative mt-20 flex size-[450px] items-center justify-center cursor-pointer bg-transparent md:size-[360px] sm:size-[300px]"
 	class:bonus={$hasBonus}
-	on:click={async e => await handleClick(e)}
+	onclick={async e => await handleClick(e)}
 	bind:this={atomElement}
 >
 	{#each BUILDING_TYPES.filter(name => name in $buildings) as name, i}

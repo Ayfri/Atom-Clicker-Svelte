@@ -44,9 +44,9 @@
 		maxLifetime: number;
 	}
 
-	let circles: Circle[] = [];
+	let circles: Circle[] = $state([]);
 	let nextId = 0;
-	let container: HTMLDivElement;
+	let container = $state<HTMLDivElement>();
 	let spawnInterval: ReturnType<typeof setInterval>;
 	let updateInterval: ReturnType<typeof setInterval>;
 	let autoClickInterval: ReturnType<typeof setInterval>;
@@ -208,23 +208,34 @@
 		}, 0);
 	});
 
+	// Calculate current spawn rate reactively
+	const currentSpawnRate = $derived(getSpawnRate());
+
 	// Set up auto-clicker subscription like in Atom.svelte
-	photonAutoClicksPerSecond.subscribe(clicksPerSecond => {
+	$effect(() => {
+		const clicksPerSecond = $photonAutoClicksPerSecond;
 		if (autoClickInterval) clearInterval(autoClickInterval);
 		if (clicksPerSecond > 0) {
 			autoClickInterval = setInterval(() => simulateClick(), 5000 / clicksPerSecond);
 		}
+		return () => {
+			if (autoClickInterval) clearInterval(autoClickInterval);
+		};
 	});
 
 	// Update spawn rate when upgrades change
-	$: {
+	$effect(() => {
+		const newSpawnRate = currentSpawnRate;
 		if (spawnInterval) {
 			clearInterval(spawnInterval);
-			spawnInterval = setInterval(spawnCircle, getSpawnRate());
+			spawnInterval = setInterval(spawnCircle, newSpawnRate);
 		}
-	}
+		return () => {
+			if (spawnInterval) clearInterval(spawnInterval);
+		};
+	});
 
-		onMount(() => {
+	onMount(() => {
 		lastUpdateTime = Date.now();
 		spawnInterval = setInterval(spawnCircle, getSpawnRate());
 		updateInterval = setInterval(updateCircles, 16);
@@ -233,17 +244,16 @@
 	onDestroy(() => {
 		if (spawnInterval) clearInterval(spawnInterval);
 		if (updateInterval) clearInterval(updateInterval);
-		if (autoClickInterval) clearInterval(autoClickInterval);
 	});
 
-	$: opacity = (circle: Circle) => Math.max(0, 1 - circle.lifetime / circle.maxLifetime);
-	$: scale = (circle: Circle) => {
+	const opacity = $derived((circle: Circle) => Math.max(0, 1 - circle.lifetime / circle.maxLifetime));
+	const scale = $derived((circle: Circle) => {
 		const fadeInDuration = 150; // 0.15s
 		if (circle.lifetime < fadeInDuration) {
 			return circle.lifetime / fadeInDuration;
 		}
 		return 1;
-	};
+	});
 </script>
 
 <div
@@ -271,7 +281,7 @@
 							opacity: {opacity(circle)};
 							transform: translate(-50%, -50%) scale({scale(circle)});
 						"
-						on:click={(event) => clickCircle(circle, event)}
+						onclick={(event) => clickCircle(circle, event)}
 					>
 						<img
 							src="/currencies/photon.png"

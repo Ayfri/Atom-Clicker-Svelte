@@ -1,22 +1,17 @@
 <script lang="ts">
-	import { Handle, Position } from '@xyflow/svelte';
+	import { Handle, Position, type NodeProps } from '@xyflow/svelte';
 	import type { SkillUpgrade } from '$lib/types';
 
 	interface SkillNode extends SkillUpgrade {
+		available: boolean;
 		onClick?: () => void;
 		unlocked: boolean;
-		available: boolean;
 	}
 
-	type $$Props = SkillNode & {
-		id: string;
-		data: SkillNode;
-	};
-
-	export let id: string;
-	export let data: SkillNode;
-
-	$$restProps;
+	let { data, id }: NodeProps = $props();
+	
+	// Use $derived to make skillData reactive
+	const skillData = $derived(data as unknown as SkillNode);
 </script>
 
 <Handle id="{id}-{Position.Bottom}" type="source" position={Position.Bottom} class="hidden-handle" />
@@ -31,10 +26,10 @@
 <Handle id="{id}-{Position.Right}" type="source" position={Position.Right} class="hidden-handle" />
 <Handle id="{id}-{Position.Right}" type="target" position={Position.Right} class="hidden-handle" />
 
-<div class="skill-node" class:unlocked={data.unlocked} class:available={data.available} on:click={() => data.onClick?.()}>
+<div class="skill-node" class:unlocked={skillData.unlocked} class:available={skillData.available} onclick={() => skillData.onClick?.()}>
 	<div class="skill-content">
-		<h3>{data.name}</h3>
-		<p>{data.description}</p>
+		<h3>{skillData.name}</h3>
+		<p>{skillData.description}</p>
 	</div>
 </div>
 
