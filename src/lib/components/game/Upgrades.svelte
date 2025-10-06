@@ -15,8 +15,13 @@
 	let availableUpgrades: Upgrade[] = [];
 	let selectedCurrency: CurrencyName = CurrenciesTypes.ATOMS;
 
-	$: showProtons = $protons > 0 || $totalProtonises > 0;
-	$: showElectrons = $electrons > 0;
+	// Show proton upgrades if player has protons, has protonised before, or has purchased any proton upgrade
+	$: hasProtonUpgrades = $upgrades.some(id => id.startsWith('proton'));
+	$: showProtons = $protons > 0 || $totalProtonises > 0 || hasProtonUpgrades;
+	
+	// Show electron upgrades if player has electrons or has purchased any electron upgrade
+	$: hasElectronUpgrades = $upgrades.some(id => id.startsWith('electron'));
+	$: showElectrons = $electrons > 0 || hasElectronUpgrades;
 
 	$: if ($upgrades && ($atoms || $electrons || $protons || true)) {
 		const currentState = getCurrentState();
