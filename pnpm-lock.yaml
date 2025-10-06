@@ -25,11 +25,11 @@ importers:
         version: 8.13.2
     devDependencies:
       '@sveltejs/adapter-cloudflare':
-        specifier: 7.2.3
-        version: 7.2.3(@sveltejs/kit@2.33.1(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.39.9)(vite@7.1.9(@types/node@22.18.6)(jiti@2.6.0)(lightningcss@1.30.1)))(svelte@5.39.9)(vite@7.1.9(@types/node@22.18.6)(jiti@2.6.0)(lightningcss@1.30.1)))(wrangler@3.107.2(@cloudflare/workers-types@4.20250923.0))
+        specifier: 7.2.4
+        version: 7.2.4(@sveltejs/kit@2.44.0(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.39.9)(vite@7.1.9(@types/node@22.18.6)(jiti@2.6.0)(lightningcss@1.30.1)))(svelte@5.39.9)(vite@7.1.9(@types/node@22.18.6)(jiti@2.6.0)(lightningcss@1.30.1)))(wrangler@3.107.2(@cloudflare/workers-types@4.20250923.0))
       '@sveltejs/kit':
-        specifier: 2.33.1
-        version: 2.33.1(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.39.9)(vite@7.1.9(@types/node@22.18.6)(jiti@2.6.0)(lightningcss@1.30.1)))(svelte@5.39.9)(vite@7.1.9(@types/node@22.18.6)(jiti@2.6.0)(lightningcss@1.30.1))
+        specifier: 2.44.0
+        version: 2.44.0(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.39.9)(vite@7.1.9(@types/node@22.18.6)(jiti@2.6.0)(lightningcss@1.30.1)))(svelte@5.39.9)(vite@7.1.9(@types/node@22.18.6)(jiti@2.6.0)(lightningcss@1.30.1))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^6.2.1
         version: 6.2.1(svelte@5.39.9)(vite@7.1.9(@types/node@22.18.6)(jiti@2.6.0)(lightningcss@1.30.1))
@@ -582,14 +582,14 @@ packages:
     peerDependencies:
       acorn: ^8.9.0
 
-  '@sveltejs/adapter-cloudflare@7.2.3':
-    resolution: {integrity: sha512-HlNqRoe1Y6n3P2EdFuX7pXWcMUTVk5b+RlGCFSa86kJMXNUON9LzxOMqI4qof9ef28BbMNCEUoucizD4yg7BtA==}
+  '@sveltejs/adapter-cloudflare@7.2.4':
+    resolution: {integrity: sha512-uD8VlOuGXGuZWL+zbBYSjtmC4WDtlonUodfqAZ/COd5uIy2Z0QptIicB/nkTrGNI9sbmzgf7z0N09CHyWYlUvQ==}
     peerDependencies:
       '@sveltejs/kit': ^2.0.0
       wrangler: ^4.0.0
 
-  '@sveltejs/kit@2.33.1':
-    resolution: {integrity: sha512-q2jnchZAG3+DvaEB3/SDF4hqjWPhWE8HRuQPEp+6v2r9n0PpsFH+Ea0EJQPPzzlqlMRO6+t58INhbjshevHE8A==}
+  '@sveltejs/kit@2.44.0':
+    resolution: {integrity: sha512-xU5qP7PiYmrSH70Whm/I+nf0j4xBnHyRQNkC1SEfaBOwCCkkeuL6WNxSb8q4Ib7+Z+sZ4JUTDYHfoyVm02EXVQ==}
     engines: {node: '>=18.13'}
     hasBin: true
     peerDependencies:
@@ -1032,9 +1032,6 @@ packages:
 
   magic-string@0.25.9:
     resolution: {integrity: sha512-RmF0AsMzgt25qzqqLc1+MbHmhdx0ojF2Fvs4XnOqz2ZOBXzzkEwc/dJQZCYHAn7v1jbVOjAZfK8msRn4BxO4VQ==}
-
-  magic-string@0.30.17:
-    resolution: {integrity: sha512-sNPKHvyjVf7gyjwS4xGTaW/mCnF8wnjtifKBEhxfZ7E/S8tQ0rssrwGNn6q8JH/ohItJfSQp9mBtQYuTlH5QnA==}
 
   magic-string@0.30.19:
     resolution: {integrity: sha512-2N21sPY9Ws53PZvsEpVtNuSW+ScYbQdp4b9qUaL+9QkHUrGFKo56Lg9Emg5s9V/qrtNBmiR01sYhUOwu3H+VOw==}
@@ -1665,25 +1662,29 @@ snapshots:
     dependencies:
       acorn: 8.14.1
 
-  '@sveltejs/adapter-cloudflare@7.2.3(@sveltejs/kit@2.33.1(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.39.9)(vite@7.1.9(@types/node@22.18.6)(jiti@2.6.0)(lightningcss@1.30.1)))(svelte@5.39.9)(vite@7.1.9(@types/node@22.18.6)(jiti@2.6.0)(lightningcss@1.30.1)))(wrangler@3.107.2(@cloudflare/workers-types@4.20250923.0))':
+  '@sveltejs/acorn-typescript@1.0.5(acorn@8.15.0)':
+    dependencies:
+      acorn: 8.15.0
+
+  '@sveltejs/adapter-cloudflare@7.2.4(@sveltejs/kit@2.44.0(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.39.9)(vite@7.1.9(@types/node@22.18.6)(jiti@2.6.0)(lightningcss@1.30.1)))(svelte@5.39.9)(vite@7.1.9(@types/node@22.18.6)(jiti@2.6.0)(lightningcss@1.30.1)))(wrangler@3.107.2(@cloudflare/workers-types@4.20250923.0))':
     dependencies:
       '@cloudflare/workers-types': 4.20250923.0
-      '@sveltejs/kit': 2.33.1(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.39.9)(vite@7.1.9(@types/node@22.18.6)(jiti@2.6.0)(lightningcss@1.30.1)))(svelte@5.39.9)(vite@7.1.9(@types/node@22.18.6)(jiti@2.6.0)(lightningcss@1.30.1))
+      '@sveltejs/kit': 2.44.0(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.39.9)(vite@7.1.9(@types/node@22.18.6)(jiti@2.6.0)(lightningcss@1.30.1)))(svelte@5.39.9)(vite@7.1.9(@types/node@22.18.6)(jiti@2.6.0)(lightningcss@1.30.1))
       worktop: 0.8.0-next.18
       wrangler: 3.107.2(@cloudflare/workers-types@4.20250923.0)
 
-  '@sveltejs/kit@2.33.1(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.39.9)(vite@7.1.9(@types/node@22.18.6)(jiti@2.6.0)(lightningcss@1.30.1)))(svelte@5.39.9)(vite@7.1.9(@types/node@22.18.6)(jiti@2.6.0)(lightningcss@1.30.1))':
+  '@sveltejs/kit@2.44.0(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.39.9)(vite@7.1.9(@types/node@22.18.6)(jiti@2.6.0)(lightningcss@1.30.1)))(svelte@5.39.9)(vite@7.1.9(@types/node@22.18.6)(jiti@2.6.0)(lightningcss@1.30.1))':
     dependencies:
       '@standard-schema/spec': 1.0.0
-      '@sveltejs/acorn-typescript': 1.0.5(acorn@8.14.1)
+      '@sveltejs/acorn-typescript': 1.0.5(acorn@8.15.0)
       '@sveltejs/vite-plugin-svelte': 6.2.1(svelte@5.39.9)(vite@7.1.9(@types/node@22.18.6)(jiti@2.6.0)(lightningcss@1.30.1))
       '@types/cookie': 0.6.0
-      acorn: 8.14.1
+      acorn: 8.15.0
       cookie: 0.6.0
       devalue: 5.3.2
       esm-env: 1.2.2
       kleur: 4.1.5
-      magic-string: 0.30.17
+      magic-string: 0.30.19
       mrmime: 2.0.0
       sade: 1.8.1
       set-cookie-parser: 2.7.1
@@ -2089,10 +2090,6 @@ snapshots:
   magic-string@0.25.9:
     dependencies:
       sourcemap-codec: 1.4.8
-
-  magic-string@0.30.17:
-    dependencies:
-      '@jridgewell/sourcemap-codec': 1.5.0
 
   magic-string@0.30.19:
     dependencies:
