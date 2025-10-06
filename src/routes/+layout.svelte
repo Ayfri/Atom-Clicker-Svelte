@@ -1,8 +1,8 @@
 <script lang="ts">
 	import '@/app.css';
 	import {browser} from '$app/environment';
-	import Analytics from '@components/atoms/Analytics.svelte';
-	import SEO from '@components/atoms/SEO.svelte';
+	import Analytics from '@components/system/Analytics.svelte';
+	import SEO from '@components/system/SEO.svelte';
 	import {LoaderCircle} from 'lucide-svelte';
 </script>
 
@@ -29,7 +29,7 @@
 		class="flex h-screen w-screen items-center justify-center gap-4 flex-col"
 	>
 		<h1 class="text-2xl font-bold animate-pulse">Loading...</h1>
-		<LoaderCircle size={64} class="loading-action rotate-[115deg]"/>
+		<LoaderCircle size={64} class="loading-action rotate-115"/>
 	</div>
 {:else}
 	<slot/>

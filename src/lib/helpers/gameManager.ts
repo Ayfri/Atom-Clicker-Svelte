@@ -242,6 +242,10 @@ export const gameManager = {
 			statManager.resetLayer(LAYERS.PROTONIZER);
 			// Restore persistent upgrades
 			statManager.getArray<string>(STATS.UPGRADES)?.set(persistentUpgrades);
+			// Restore purple realm unlocked status if the feature was purchased
+			if (persistentUpgrades.includes('feature_purple_realm')) {
+				purpleRealmUnlocked.set(true);
+			}
 			this.addStat(STATS.PROTONS, protonGain);
 
 			this.save();
@@ -268,6 +272,10 @@ export const gameManager = {
 			statManager.resetLayer(LAYERS.ELECTRONIZE);
 			// Restore persistent upgrades
 			statManager.getArray<string>(STATS.UPGRADES)?.set(persistentUpgrades);
+			// Restore purple realm unlocked status if the feature was purchased
+			if (persistentUpgrades.includes('feature_purple_realm')) {
+				purpleRealmUnlocked.set(true);
+			}
 			this.addStat(STATS.ELECTRONS, electronGain);
 
 			this.save();

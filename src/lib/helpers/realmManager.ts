@@ -4,8 +4,8 @@ import { CURRENCIES, CurrenciesTypes } from '$data/currencies';
 import { STATS } from '$helpers/statConstants';
 import type { Currency } from '$lib/types';
 import type { ComponentType } from 'svelte';
-import AtomRealm from '@components/organisms/AtomRealm.svelte';
-import PhotonRealm from '@components/organisms/PhotonRealm.svelte';
+import AtomRealm from '@components/prestige/AtomRealm.svelte';
+import PhotonRealm from '@components/prestige/PhotonRealm.svelte';
 
 export interface RealmConfig {
 	id: string;
