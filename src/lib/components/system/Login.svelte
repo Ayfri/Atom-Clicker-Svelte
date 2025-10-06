@@ -93,7 +93,7 @@
 	}
 </script>
 
-<Modal {onClose}>
+<Modal {onClose} title="Choose how to connect" width="sm">
 	{#if error}
 		<div class="mb-4 rounded-lg bg-red-500/20 p-4 text-red-200">
 			{error}
