@@ -5,29 +5,7 @@
 	import { powerUpInterval, powerUpDurationMultiplier, powerUpEffectMultiplier } from '$stores/gameStore';
 	import type { PowerUp } from '$lib/types';
 	import { randomBetween, randomValue, formatNumber } from '$lib/utils';
-
-	const powerUps = [
-		{
-			duration: 40_000,
-			multiplier: 1.5,
-		},
-		{
-			duration: 20_000,
-			multiplier: 2,
-		},
-		{
-			duration: 15_000,
-			multiplier: 2.5,
-		},
-		{
-			duration: 5000,
-			multiplier: 6,
-		},
-		{
-			duration: 2000,
-			multiplier: 25,
-		},
-	];
+	import { POWER_UPS } from '@/lib/data/powerUp';
 
 	const powerUp = $state({
 		description: '',
@@ -49,7 +27,7 @@
 		x = Math.random() * (window.innerWidth - margin * 2) + margin;
 		y = Math.random() * (window.innerHeight - margin * 2) + margin;
 
-		const randomPowerUp = randomValue(powerUps);
+		const randomPowerUp = randomValue(POWER_UPS);
 		powerUp.multiplier = randomPowerUp.multiplier * $powerUpEffectMultiplier;
 		powerUp.duration = randomPowerUp.duration * $powerUpDurationMultiplier;
 		powerUp.description = `Multiplies atoms by ${formatNumber(powerUp.multiplier)} for ${formatNumber(powerUp.duration / 1000)} seconds`;
