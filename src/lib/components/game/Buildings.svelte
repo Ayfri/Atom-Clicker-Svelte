@@ -49,8 +49,27 @@
 
 	const affordableBuildings = $derived(
 		Object.entries($buildings).filter(([type, building]) => {
+			const buildingType = type as BuildingType;
+
+			// Check if we can afford at least 1 building
+			const currentCount = building.count;
+			const baseCost = BUILDINGS[buildingType].cost.amount;
+			const actualCost = baseCost * (BUILDING_COST_MULTIPLIER ** currentCount);
+			const canAffordOne = gameManager.canAfford({
+				amount: Math.round(actualCost),
+				currency: building.cost.currency
+			});
+
+			if (!canAffordOne) return false;
+
+			// For max mode, check if purchaseAmounts[type] > 0
+			if (selectedPurchaseMode === 'max') {
+				return purchaseAmounts[buildingType] > 0;
+			}
+
+			// For other modes, check if we can afford the bulk purchase
 			const bulkCost = {
-				amount: getBulkBuyCost(type as BuildingType, purchaseAmounts[type as BuildingType]),
+				amount: getBulkBuyCost(buildingType, purchaseAmounts[buildingType]),
 				currency: building.cost.currency
 			};
 			return gameManager.canAfford(bulkCost);
@@ -68,8 +87,11 @@
 	function getMaxAffordable(price: Price, type: BuildingType): number {
 		const currency = gameManager.getCurrency(price);
 		const baseCost = price.amount;
+		const currentCount = $buildings[type]?.count ?? 0;
+		const actualFirstCost = baseCost * (BUILDING_COST_MULTIPLIER ** currentCount);
 
-		if (currency < baseCost) return 1;
+		// If we can't afford even one, return 0
+		if (currency < actualFirstCost) return 0;
 
 		// Binary search for max affordable amount
 		let left = 1;
@@ -95,8 +117,7 @@
 		}
 
 		const building = BUILDINGS[type];
-		const baseCost = structuredClone($buildings[type]?.cost ?? building.cost);
-		return getMaxAffordable(baseCost, type);
+		return getMaxAffordable(building.cost, type);
 	}
 
 
@@ -114,12 +135,13 @@
 
 
 	$effect(() => {
+		// Auto-unlock buildings that are affordable but not yet unlocked
 		buildingsEntries
-			.filter(
-				([type]) =>
-					unlockedBuildings.map((u) => u[0]).indexOf(type) === -1 &&
-					unaffordableRootBuildings.map((u) => u[0]).indexOf(type) === -1,
-			)
+			.filter(([type]) => {
+				const isUnlocked = unlockedBuildings.some(([t]) => t === type);
+				const isAffordable = !unaffordableRootBuildings.some(([t]) => t === type);
+				return !isUnlocked && isAffordable;
+			})
 			.forEach(([type]) => gameManager.unlockBuilding(type));
 	});
 </script>
