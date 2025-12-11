@@ -1,14 +1,26 @@
 <script lang="ts">
-	import { gameManager } from '$helpers/gameManager';
-	import { BUILDING_COLORS, type BuildingData, BUILDINGS, type BuildingType } from '$data/buildings';
-	import { buildingProductions, buildings, currentUpgradesBought, globalMultiplier, bonusMultiplier, settings, atoms, electrons, protons } from '$stores/gameStore';
-	import type { Building, Price } from '$lib/types';
-	import AutoButton from '@components/ui/AutoButton.svelte';
-	import Value from '@components/ui/Value.svelte';
-	import { fade, fly, scale } from 'svelte/transition';
-	import { BUILDING_COST_MULTIPLIER } from '$lib/constants';
-	import { getUpgradesWithEffects } from '$lib/helpers/effects';
-	import { recentlyAutoPurchasedBuildings } from '$stores/autoBuy';
+import { BUILDING_COLORS, BUILDINGS, type BuildingData, type BuildingType } from '$data/buildings';
+import { CurrenciesTypes } from '$data/currencies';
+import { BUILDING_COST_MULTIPLIER } from '$lib/constants';
+import { getUpgradesWithEffects } from '$lib/helpers/effects';
+import type { Building, Price } from '$lib/types';
+import { gameManager } from '$helpers/gameManager';
+import { recentlyAutoPurchasedBuildings } from '$stores/autoBuy';
+import {
+	atoms,
+	bonusMultiplier,
+	buildingProductions,
+	buildings,
+	currentUpgradesBought,
+	electrons,
+	globalMultiplier,
+	photons,
+	protons,
+	settings
+} from '$stores/gameStore';
+import AutoButton from '@components/ui/AutoButton.svelte';
+import Value from '@components/ui/Value.svelte';
+import { fade, fly, scale } from 'svelte/transition';
 
 	const buildingsEntries = Object.entries(BUILDINGS) as [BuildingType, BuildingData][];
 
@@ -26,17 +38,17 @@
 
 	// Use $derived for computed values instead of $effect with state updates
 	const unaffordableRootBuildings = $derived(
-		buildingsEntries.filter(([type, building]) => gameManager.canAfford(building.cost) === false)
+		buildingsEntries.filter(([, building]) => canAfford(building.cost) === false)
 	);
-	
+
 	const unlockedBuildings = $derived(
 		Object.entries($buildings).filter(([, { unlocked }]) => unlocked) as [BuildingType, Building][]
 	);
-	
+
 	const hiddenBuildings = $derived(
 		buildingsEntries.filter(
 			([type]) =>
-				unlockedBuildings.map((u) => u[0]).indexOf(type) === -1 && 
+				unlockedBuildings.map((u) => u[0]).indexOf(type) === -1 &&
 				unaffordableRootBuildings.map((u) => u[0]).indexOf(type) !== -1,
 		)
 	);
@@ -55,7 +67,7 @@
 			const currentCount = building.count;
 			const baseCost = BUILDINGS[buildingType].cost.amount;
 			const actualCost = baseCost * (BUILDING_COST_MULTIPLIER ** currentCount);
-			const canAffordOne = gameManager.canAfford({
+			const canAffordOne = canAfford({
 				amount: Math.round(actualCost),
 				currency: building.cost.currency
 			});
@@ -72,7 +84,7 @@
 				amount: getBulkBuyCost(buildingType, purchaseAmounts[buildingType]),
 				currency: building.cost.currency
 			};
-			return gameManager.canAfford(bulkCost);
+			return canAfford(bulkCost);
 		}) as [BuildingType, Building][]
 	);
 
@@ -85,7 +97,7 @@
 	}
 
 	function getMaxAffordable(price: Price, type: BuildingType): number {
-		const currency = gameManager.getCurrency(price);
+		const currency = getCurrencyAmount(price);
 		const baseCost = price.amount;
 		const currentCount = $buildings[type]?.count ?? 0;
 		const actualFirstCost = baseCost * (BUILDING_COST_MULTIPLIER ** currentCount);
@@ -144,6 +156,26 @@
 			})
 			.forEach(([type]) => gameManager.unlockBuilding(type));
 	});
+
+	function canAfford(price: Price): boolean {
+		return getCurrencyAmount(price) >= price.amount;
+	}
+
+	function getCurrencyAmount(price: Price): number {
+		if (price.currency === CurrenciesTypes.ATOMS) {
+			return $atoms;
+		}
+		if (price.currency === CurrenciesTypes.ELECTRONS) {
+			return $electrons;
+		}
+		if (price.currency === CurrenciesTypes.PHOTONS) {
+			return $photons;
+		}
+		if (price.currency === CurrenciesTypes.PROTONS) {
+			return $protons;
+		}
+		return 0;
+	}
 </script>
 
 <div class="bg-black/10 backdrop-blur-xs rounded-lg p-3 buildings flex flex-col gap-2">
@@ -168,7 +200,7 @@
 			{@const level = saveData?.level ?? 0}
 			{@const color = BUILDING_COLORS[level]}
 			{@const purchaseAmount = purchaseAmounts[type]}
-			{@const totalCost = getBulkBuyCost(type, purchaseAmount)}
+			{@const totalCost = getBulkBuyCost(type, purchaseAmount || 1)}
 			{@const isAutomated = $settings.automation.buildings.includes(type)}
 			{@const hasAutomation = getUpgradesWithEffects($currentUpgradesBought, { type: 'auto_buy', target: type }).length > 0}
 			{@const autoPurchasedCount = $recentlyAutoPurchasedBuildings.get(type) || 0}
