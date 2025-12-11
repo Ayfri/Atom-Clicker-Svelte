@@ -48,7 +48,7 @@
 
 	const technologies = [
 		{
-			name: 'Svelte 4',
+			name: 'Svelte 5',
 			url: 'https://svelte.dev',
 		},
 		{
