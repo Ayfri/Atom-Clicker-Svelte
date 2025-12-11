@@ -1,5 +1,6 @@
 # What's new 11-12-2025
 
+- Added a compact footer with icon links to Discord, GitHub, ayfri.com, and Buy Me a Coffee support.
 - Enable vertical scrolling on desktop views (main layout and realms) so long pages stay accessible.
 
 # What's new 06-10-2025
