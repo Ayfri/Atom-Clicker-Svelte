@@ -1,3 +1,7 @@
+# What's new 11-12-2025
+
+- Enable vertical scrolling on desktop views (main layout and realms) so long pages stay accessible.
+
 # What's new 06-10-2025
 
 - Add login button to Cloud Save modal if not logged in.

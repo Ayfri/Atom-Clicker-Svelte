@@ -107,7 +107,7 @@
 	<!-- Use transform and opacity for virtual desktop swipe effect -->
 	{#each $realmManager.availableRealms as realm, i (realm.id)}
 		<div
-			class="absolute inset-0 transition-all duration-300 ease-in-out {$mobile ? 'overflow-y-auto' : ''}"
+			class="absolute inset-0 overflow-y-auto transition-all duration-300 ease-in-out"
 			class:opacity-100={$realmManager.selectedRealm === realm.id}
 			class:translate-x-0={$realmManager.selectedRealm === realm.id}
 			class:opacity-0={$realmManager.selectedRealm !== realm.id}
