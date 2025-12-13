@@ -9,6 +9,7 @@
 	import Levels from '@components/game/Levels.svelte';
 	import NavBar from '@components/layout/NavBar.svelte';
 	import Toaster from '@components/layout/Toaster.svelte';
+	import AutoSaveIndicator from '@components/system/AutoSaveIndicator.svelte';
 	import {realmManager} from '$helpers/realmManager';
 	import {gameManager} from '$helpers/gameManager';
 	import {setGlobals} from '$lib/globals';
@@ -75,6 +76,7 @@
 <div class="flex flex-col min-h-screen">
 	<NavBar/>
 	<Toaster/>
+	<AutoSaveIndicator/>
 
 	<button
 		class="fixed right-4 top-4 z-40 flex gap-2 py-1.5 px-3 items-center justify-center rounded-lg bg-red-900/30 text-white transition-colors hover:bg-red-900/50"
