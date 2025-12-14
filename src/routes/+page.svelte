@@ -1,13 +1,12 @@
 <script lang="ts">
 	import '$stores/autoBuy';
 	import '$stores/autoUpgrade';
-	import {Coffee, RotateCcw} from 'lucide-svelte';
+	import { RotateCcw } from 'lucide-svelte';
 	import {onDestroy, onMount} from 'svelte';
-	import Discord from '@components/icons/Discord.svelte';
-	import GitHub from '@components/icons/GitHub.svelte';
 	import HardReset from '@components/system/HardReset.svelte';
 	import Levels from '@components/game/Levels.svelte';
 	import NavBar from '@components/layout/NavBar.svelte';
+	import RealmFooter from '@components/layout/RealmFooter.svelte';
 	import Toaster from '@components/layout/Toaster.svelte';
 	import AutoSaveIndicator from '@components/system/AutoSaveIndicator.svelte';
 	import {realmManager} from '$helpers/realmManager';
@@ -119,54 +118,13 @@
 				class:pointer-events-none={$realmManager.selectedRealm !== realm.id}
 				style="transform: translateX({$realmManager.selectedRealm === realm.id ? '0' : (i > $realmManager.availableRealms.findIndex(r => r.id === $realmManager.selectedRealm) ? '100%' : '-100%')});"
 			>
-				<realm.component />
-				<!-- Footer at the end of each realm for scrolling -->
-				<footer class="px-4 py-2 text-xs text-white/60 mt-16">
-					<div class="mx-auto max-w-4xl flex flex-col items-center gap-1.5">
-						<div class="flex flex-wrap items-center justify-center gap-3">
-							<a
-								class="group flex items-center gap-1 text-white/60 transition-colors hover:text-white"
-								href="https://discord.gg/BySjRNQ9Je"
-								rel="noopener noreferrer"
-								target="_blank"
-								title="Join our Discord community"
-							>
-								<Discord class="w-3.5 h-3.5 fill-white/60 group-hover:fill-white duration-200 transition-all" />
-							</a>
-							<a
-								class="flex items-center gap-1 text-white/60 transition-colors hover:text-white"
-								href="https://github.com/Ayfri/Atom-Clicker-Svelte"
-								rel="noopener noreferrer"
-								target="_blank"
-								title="View source code on GitHub"
-							>
-								<GitHub class="w-3.5 h-3.5 fill-white/60 group-hover:fill-white duration-200 transition-all" />
-							</a>
-							<a
-								class="text-white/60 transition-colors hover:text-white"
-								href="https://ayfri.com"
-								rel="noopener noreferrer"
-								target="_blank"
-								title="Visit creator's website"
-							>
-								ayfri.com
-							</a>
-							<a
-								class="group flex items-center gap-1 rounded-sm bg-yellow-500 px-2 py-0.5 text-black transition-colors hover:bg-yellow-300"
-								href="https://buymeacoffee.com/ayfri"
-								rel="noopener noreferrer"
-								target="_blank"
-								title="Support the creator"
-							>
-								<Coffee class="w-3 h-3 fill-transparent group-hover:fill-black duration-200 transition-all" />
-								<span>Buy me a coffee</span>
-							</a>
-						</div>
-						<div class="text-white/40 text-[0.7rem]">
-							Atom Clicker © {new Date().getFullYear()} • Made with ❤️ by <a href="https://ayfri.com" class="text-white/50 hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">Ayfri</a>
-						</div>
+				<div class="relative min-h-full">
+					<realm.component />
+					<!-- Footer at the end of each realm for scrolling -->
+					<div class="absolute bottom-0 left-0 right-0 pointer-events-auto">
+						<RealmFooter footerTheme={realm.footerTheme} />
 					</div>
-				</footer>
+				</div>
 			</div>
 		{/each}
 
