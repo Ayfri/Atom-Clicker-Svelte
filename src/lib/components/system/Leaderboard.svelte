@@ -21,13 +21,14 @@
 		return user?.username || 'Anonymous';
 	}
 
-	let refreshInterval: ReturnType<typeof setInterval>;
-	let showLoginModal = $state(false);
-	let isEditingUsername = $state(false);
-	let newUsername = $state('');
 	let editError: string | null = $state(null);
+	let isEditingUsername = $state(false);
+	let isSavingUsername = $state(false);
+	let newUsername = $state('');
+	let refreshInterval: ReturnType<typeof setInterval>;
 	let searchQuery = $state('');
 	let selectedFilter: 'all' | 'top10' | 'top50' | 'top100' = $state('all');
+	let showLoginModal = $state(false);
 
 	function formatStartDate(timestamp: number) {
 		return new Intl.DateTimeFormat('en-us', {
@@ -111,28 +112,43 @@
 		}
 	}
 
+	function cancelEditing() {
+		editError = null;
+		isEditingUsername = false;
+		isSavingUsername = false;
+		newUsername = '';
+	}
+
 	async function handleUsernameUpdate(event: SubmitEvent) {
 		event.preventDefault();
 
-		if (!$supabaseAuth.supabase || !newUsername) return;
+		// Prevent multiple submissions
+		if (isSavingUsername || !$supabaseAuth.supabase) return;
+
+		const trimmedUsername = newUsername.trim();
+		if (!trimmedUsername || trimmedUsername === username) {
+			cancelEditing();
+			return;
+		}
+
+		isSavingUsername = true;
+		editError = null;
 
 		try {
-			await supabaseAuth.updateProfile({
-				username: newUsername
-			});
-
-			isEditingUsername = false;
-			editError = null;
-
-			await fetchLeaderboard();
+			await supabaseAuth.updateProfile({ username: trimmedUsername });
+			cancelEditing();
+			// No need to fetch leaderboard immediately, it will be fetched on next interval
 		} catch (error) {
 			editError = 'Failed to update username. Please try again.';
+			isSavingUsername = false;
 		}
 	}
 
 	function startEditing() {
-		newUsername = username;
+		editError = null;
 		isEditingUsername = true;
+		isSavingUsername = false;
+		newUsername = username;
 	}
 </script>
 
@@ -204,25 +220,26 @@
 										<input
 											type="text"
 											bind:value={newUsername}
-											class="bg-black/20 rounded-sm px-2 py-1 text-white border border-accent/50 focus:border-accent outline-hidden"
+											disabled={isSavingUsername}
+											class="bg-black/20 rounded-sm px-2 py-1 text-white border border-accent/50 focus:border-accent outline-hidden disabled:opacity-50 disabled:cursor-not-allowed"
 											placeholder="Enter new username"
 											maxlength="30"
 											minlength="3"
+											autofocus
 										/>
 										<button
 											type="submit"
-											class="text-accent hover:text-accent-400 transition-colors"
+											disabled={isSavingUsername || !newUsername.trim()}
+											class="text-accent hover:text-accent-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 											title="Save username"
 										>
 											<Save class="size-4" />
 										</button>
 										<button
 											type="button"
-											onclick={() => {
-												isEditingUsername = false;
-												editError = null;
-											}}
-											class="text-white/60 hover:text-white transition-colors"
+											onclick={cancelEditing}
+											disabled={isSavingUsername}
+											class="text-white/60 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 											title="Cancel"
 										>
 											Cancel
