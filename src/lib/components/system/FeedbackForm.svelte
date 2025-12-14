@@ -2,12 +2,22 @@
 	import Modal from '@components/ui/Modal.svelte';
 	import Discord from '@components/icons/Discord.svelte';
 	import GitHub from '@components/icons/GitHub.svelte';
+	import { supabaseAuth } from '$stores/supabaseAuth';
 
 	interface Props {
 		onClose: () => void;
 	}
 
 	let { onClose }: Props = $props();
+
+	// Generate the Tally URL with email parameter if user is logged in
+	const tallyUrl = $derived.by(() => {
+		const baseUrl = 'https://tally.so/r/mO8OxM';
+		if ($supabaseAuth.user?.email) {
+			return `${baseUrl}?email=${encodeURIComponent($supabaseAuth.user.email)}`;
+		}
+		return baseUrl;
+	});
 </script>
 
 {#snippet headerSnippet()}
@@ -36,7 +46,7 @@
 
 <Modal {onClose} containerClass="m-2 !p-0 rounded-xl" header={headerSnippet}>
 	<iframe
-		src="https://tally.so/r/mO8OxM"
+		src={tallyUrl}
 		width="100%"
 		height="100%"
 		title="Feedback Form"
