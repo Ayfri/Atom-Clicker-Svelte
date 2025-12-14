@@ -4,7 +4,7 @@ import { leaderboardService } from '$lib/server/supabase.server';
 import { verifyAndDecryptClientData } from '$lib/server/obfuscation.server';
 import { addRankToLeaderboard } from '$lib/utils/number-parser';
 
-const UPDATE_INTERVAL = 60 * 1000; // 1 minute minimum between updates
+const UPDATE_INTERVAL = 25 * 1000; // 25 seconds minimum between updates
 
 // Cache for rate limiting
 const userLastUpdate = new Map<string, number>();
@@ -34,7 +34,30 @@ export const GET: RequestHandler = async ({ url }) => {
 			userId: entry.id
 		}));
 
-		return json(formattedLeaderboard);
+		// Calculate statistics
+		const totalUsers = formattedLeaderboard.length;
+		const totalAtoms = formattedLeaderboard.reduce((sum, entry) => sum + entry.atoms, 0);
+		const averageAtoms = totalUsers > 0 ? totalAtoms / totalUsers : 0;
+
+		// Calculate median
+		let medianAtoms = 0;
+		if (totalUsers > 0) {
+			const sortedAtoms = formattedLeaderboard.map(e => e.atoms).sort((a, b) => a - b);
+			const mid = Math.floor(sortedAtoms.length / 2);
+			medianAtoms = sortedAtoms.length % 2 === 0
+				? (sortedAtoms[mid - 1] + sortedAtoms[mid]) / 2
+				: sortedAtoms[mid];
+		}
+
+		return json({
+			entries: formattedLeaderboard,
+			stats: {
+				totalUsers,
+				totalAtoms,
+				averageAtoms,
+				medianAtoms
+			}
+		});
 	} catch (error) {
 		console.error('Failed to fetch leaderboard:', error);
 		return json({ error: 'Failed to fetch leaderboard' }, { status: 500 });

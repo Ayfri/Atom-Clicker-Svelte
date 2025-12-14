@@ -7,18 +7,21 @@
 	import { skillPointsAvailable, skillUpgrades } from '$stores/gameStore';
 	import type { SkillUpgrade } from '$lib/types';
 	import { SvelteFlow, Background, Controls, type Node, type Edge, Position } from '@xyflow/svelte';
-	import { writable } from 'svelte/store';
 	import SkillNode from '@components/game/SkillNode.svelte';
 	import Modal from '@components/ui/Modal.svelte';
 
-	export let onClose: () => void;
+	interface Props {
+		onClose: () => void;
+	}
+
+	let { onClose }: Props = $props();
 
 	const nodeTypes = {
 		skill: SkillNode,
 	};
 
-	let nodes = writable<Node[]>([]);
-	let edges = writable<Edge[]>([]);
+	let nodes = $state.raw<Node[]>([]);
+	let edges = $state.raw<Edge[]>([]);
 
 	// Skill management
 	function canUnlockSkill(skill: SkillUpgrade): boolean {
@@ -33,6 +36,8 @@
 	function unlockSkill(skill: SkillUpgrade) {
 		if (!canUnlockSkill(skill)) return;
 		skillUpgrades.update((skills) => [...(skills ?? []), skill.id]);
+		// Force immediate update after unlock
+		updateTree();
 	}
 
 	let interval: ReturnType<typeof setInterval>;
@@ -44,20 +49,23 @@
 	onDestroy(() => clearInterval(interval));
 
 	function updateTree() {
-		// Convert skills to nodes
-		$nodes = Object.values(SKILL_UPGRADES).map((skill) => ({
+		// Convert skills to nodes - create new objects each time to trigger reactivity
+		const newNodes = Object.values(SKILL_UPGRADES).map((skill) => ({
 			id: skill.id,
 			type: 'skill',
-			position: skill.position,
+			position: { ...skill.position },
 			data: {
 				...skill,
 				unlocked: $skillUpgrades.includes(skill.id),
 				available: canUnlockSkill(skill),
 			},
 		}));
+		
+		// Only update if there are actual changes
+		nodes = newNodes;
 
 		// Convert skill requirements to edges
-		$edges = Object.values(SKILL_UPGRADES).flatMap((skill) =>
+		edges = Object.values(SKILL_UPGRADES).flatMap((skill) =>
 			(skill.requires ?? []).map<Edge>((requireId) => {
 				const require = SKILL_UPGRADES[requireId];
 				const targetPositionDiff = {
@@ -106,16 +114,18 @@
 </script>
 
 <Modal {onClose} containerClass="m-2 !p-0 rounded-xl" width="lg">
-	<div slot="header" class="flex w-full items-center justify-between">
-		<h2 class="text-2xl font-bold text-white">Skill Tree</h2>
-		<div class="points-counter bg-accent-400/20 border border-accent-400/20 px-4 py-2 rounded-lg text-accent-400 font-medium">
-			Available Points: {$skillPointsAvailable}
+	{#snippet header()}
+		<div  class="flex w-full items-center justify-between">
+			<h2 class="text-2xl font-bold text-white">Skill Tree</h2>
+			<div class="points-counter bg-accent-400/20 border border-accent-400/20 px-4 py-2 rounded-lg text-accent-400 font-medium">
+				Available Points: {$skillPointsAvailable}
+			</div>
 		</div>
-	</div>
+	{/snippet}
 
 	<SvelteFlow
-		{nodes}
-		{edges}
+		bind:nodes
+		bind:edges
 		{nodeTypes}
 		colorMode="dark"
 		minZoom={0.3}
@@ -132,9 +142,9 @@
 		preventScrolling={true}
 		zoomOnPinch={true}
 		zoomOnScroll={true}
-		on:nodeclick={({ detail }) => {
-			/** @type {SkillUpgrade} */
-			const data = detail.node.data;
+		onnodeclick={({ node }) => {
+			// @ts-ignore
+			const data = node.data as SkillUpgrade;
 			unlockSkill(data);
 		}}
 	>

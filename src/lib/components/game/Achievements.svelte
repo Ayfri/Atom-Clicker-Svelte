@@ -3,10 +3,10 @@
 	import {ACHIEVEMENTS} from '$data/achievements';
 	import {achievements} from '$stores/gameStore';
 
-	$: unlockedAchievements = Object.entries(ACHIEVEMENTS).map(([name, achievement]) => ({
+	const unlockedAchievements = $derived(Object.entries(ACHIEVEMENTS).map(([name, achievement]) => ({
 		...achievement,
 		unlocked: $achievements.includes(name)
-	}));
+	})));
 </script>
 
 <div class="backdrop-blur-xs bg-black/10 p-3 rounded-lg">

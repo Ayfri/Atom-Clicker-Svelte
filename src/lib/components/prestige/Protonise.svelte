@@ -6,9 +6,13 @@
 	import { protoniseProtonsGain } from '$stores/protons';
 	import { PROTONS_ATOMS_REQUIRED } from '$lib/constants';
 
-	export let onClose: () => void;
+	interface Props {
+		onClose: () => void;
+	}
 
-	$: canProtonise = $atoms >= PROTONS_ATOMS_REQUIRED || $protons > 0;
+	let { onClose }: Props = $props();
+
+	let canProtonise = $derived($atoms >= PROTONS_ATOMS_REQUIRED || $protons > 0);
 
 	function handleProtonise() {
 		gameManager.protonise();
@@ -48,9 +52,9 @@
 				disabled:before:hidden disabled:opacity-50 disabled:cursor-not-allowed disabled:border-[var(--color-red-900)] disabled:bg-black/50 disabled:hover:scale-100
 			"
 			disabled={!canProtonise || $protoniseProtonsGain === 0}
-			on:click={handleProtonise}
+			onclick={handleProtonise}
 		>
-			<div class="absolute inset-0.5 bg-gray-900 rounded transition-all duration-150 group-hover:inset-8 group-hover:rounded-3xl" />
+			<div class="absolute inset-0.5 bg-gray-900 rounded transition-all duration-150 group-hover:inset-8 group-hover:rounded-3xl"></div>
 			<span class="z-10 relative">Protonise</span>
 		</button>
 

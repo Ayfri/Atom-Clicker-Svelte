@@ -1,139 +1,183 @@
 <script lang="ts">
-    import { supabaseAuth } from '$stores/supabaseAuth';
-    import { CloudUpload, CloudDownload, AlertCircle, Clock } from 'lucide-svelte';
-    import { info, error as errorToast } from '$stores/toasts';
-    import { onMount } from 'svelte';
-    import type { GameState } from '$lib/types';
-    import { getLevelFromTotalXP } from '$stores/gameStore';
-    import Value from '@components/ui/Value.svelte';
-    import { CurrenciesTypes } from '$data/currencies';
-    import Modal from '@components/ui/Modal.svelte';
-    import Login from '@components/system/Login.svelte';
+	import { onMount } from 'svelte';
+	import { AlertCircle, Clock, CloudDownload, CloudUpload } from 'lucide-svelte';
+	import type { GameState } from '$lib/types';
+	import { CurrenciesTypes } from '$data/currencies';
+	import { autoSaveEnabled, autoSaveState, shouldAutoSave } from '$stores/autoSave';
+	import { error as errorToast, info } from '$stores/toasts';
+	import { getLevelFromTotalXP } from '$stores/gameStore';
+	import { supabaseAuth } from '$stores/supabaseAuth';
+	import Login from '@components/system/Login.svelte';
+	import Modal from '@components/ui/Modal.svelte';
+	import Value from '@components/ui/Value.svelte';
 
-    export let onClose: () => void;
+	interface Props {
+		onClose: () => void;
+	}
 
-    type CloudSaveInfo = {
-        lastSaveDate: number | null;
-    } & GameState;
+	let { onClose }: Props = $props();
 
-    let loading = false;
-    let error: string | null = null;
-    let cloudSaveInfo: CloudSaveInfo | null = null;
-    let lastSaveTime = 0;
-    let cooldownProgress = 0;
-    let cooldownInterval: ReturnType<typeof setInterval>;
-    let showLoginModal = false;
+	type CloudSaveInfo = {
+		lastSaveDate: number | null;
+	} & GameState;
 
-    const SAVE_COOLDOWN = 30000; // 30 seconds
+	const SAVE_COOLDOWN = 30000; // 30 seconds
 
-    function updateCooldownProgress() {
-        const now = Date.now();
-        const elapsed = now - lastSaveTime;
-        cooldownProgress = Math.min(1, elapsed / SAVE_COOLDOWN);
+	let autoSaveProgress = $state(0);
+	let cloudSaveInfo = $state<CloudSaveInfo | null>(null);
+	let cooldownProgress = $state(0);
+	let error: string | null = $state(null);
+	let lastAutoSaveTime = $state(0);
+	let lastManualSaveTime = $state(0);
+	let loading = $state(false);
+	let progressInterval: ReturnType<typeof setInterval> | null = null;
+	let showLoginModal = $state(false);
 
-        if (cooldownProgress >= 1) {
-            clearInterval(cooldownInterval);
-        }
-    }
+	function updateProgress() {
+		const now = Date.now();
+		cooldownProgress = Math.min(1, (now - lastManualSaveTime) / SAVE_COOLDOWN);
 
-    function startCooldown() {
-        lastSaveTime = Date.now();
-        cooldownProgress = 0;
+		if ($shouldAutoSave && lastAutoSaveTime > 0) {
+			autoSaveProgress = Math.min(1, (now - lastAutoSaveTime) / SAVE_COOLDOWN);
+		} else {
+			autoSaveProgress = 0;
+		}
+	}
 
-        if (cooldownInterval) {
-            clearInterval(cooldownInterval);
-        }
+	function startProgressTimer() {
+		if (progressInterval) clearInterval(progressInterval);
+		updateProgress();
+		progressInterval = setInterval(updateProgress, 100);
+	}
 
-        cooldownInterval = setInterval(() => {
-            updateCooldownProgress();
-        }, 100); // Update every 100ms for smooth animation
-    }
+	function stopProgressTimer() {
+		if (progressInterval) {
+			clearInterval(progressInterval);
+			progressInterval = null;
+		}
+		autoSaveProgress = 0;
+	}
 
-    onMount(() => {
-        // Check if there's an existing cooldown
-        const now = Date.now();
-        if (lastSaveTime && now - lastSaveTime < SAVE_COOLDOWN) {
-            cooldownProgress = (now - lastSaveTime) / SAVE_COOLDOWN;
-            startCooldown();
-        } else {
-            cooldownProgress = 1;
-        }
-    });
+	function startCooldown() {
+		lastManualSaveTime = Date.now();
+		cooldownProgress = 0;
+		startProgressTimer();
+	}
 
-    function formatDate(timestamp: number) {
-        return new Intl.DateTimeFormat('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        }).format(new Date(timestamp));
-    }
+	// Subscribe to auto-save state
+	autoSaveState.subscribe(state => {
+		if (state.lastSaveTime > 0) lastAutoSaveTime = state.lastSaveTime;
+		if (state.isSaving && cooldownProgress >= 1) startCooldown();
+	});
 
-    async function refreshCloudSaveInfo() {
-        if (!$supabaseAuth.isAuthenticated) return;
-        cloudSaveInfo = await supabaseAuth.getCloudSaveInfo();
-    }
+	// Subscribe to shouldAutoSave
+	shouldAutoSave.subscribe(enabled => {
+		enabled ? startProgressTimer() : stopProgressTimer();
+	});
 
-    onMount(refreshCloudSaveInfo);
+	async function refreshCloudSaveInfo() {
+		if (!$supabaseAuth.isAuthenticated) return;
+		cloudSaveInfo = await supabaseAuth.getCloudSaveInfo();
+	}
 
-    async function handleSaveToCloud() {
-        if (!$supabaseAuth.isAuthenticated) {
-            error = 'Please log in to use cloud saves';
-            return;
-        }
+	function formatDate(timestamp: number) {
+		return new Intl.DateTimeFormat('en-US', {
+			day: '2-digit',
+			hour: '2-digit',
+			minute: '2-digit',
+			month: 'short',
+			year: 'numeric'
+		}).format(new Date(timestamp));
+	}
 
-        if (cooldownProgress < 1) {
-            const remainingTime = Math.ceil((SAVE_COOLDOWN * (1 - cooldownProgress)) / 1000);
-            info('Wait', `Please wait ${remainingTime} seconds before saving again`);
-            return;
-        }
+	onMount(() => {
+		refreshCloudSaveInfo();
 
-        loading = true;
-        error = null;
+		const now = Date.now();
+		if (lastManualSaveTime && now - lastManualSaveTime < SAVE_COOLDOWN) {
+			cooldownProgress = (now - lastManualSaveTime) / SAVE_COOLDOWN;
+		} else {
+			cooldownProgress = 1;
+		}
 
-        try {
-            await supabaseAuth.saveGameToCloud();
-            await refreshCloudSaveInfo();
-            info('Success', 'Game saved to cloud');
-            startCooldown();
-        } catch (e) {
-            error = e instanceof Error ? e.message : 'Failed to save game to cloud';
-            errorToast('Error', error);
-        } finally {
-            loading = false;
-        }
-    }
+		if ($shouldAutoSave) startProgressTimer();
 
-    async function handleLoadFromCloud() {
-        if (!$supabaseAuth.isAuthenticated) {
-            error = 'Please log in to use cloud saves';
-            return;
-        }
+		const handleBeforeUnload = async () => {
+			if ($autoSaveEnabled && $supabaseAuth.isAuthenticated) {
+				try {
+					await supabaseAuth.saveGameToCloud();
+				} catch (e) {
+					console.warn('Save on exit failed:', e);
+				}
+			}
+		};
 
-        loading = true;
-        error = null;
-        try {
-            const loaded = await supabaseAuth.loadGameFromCloud();
-            if (loaded) {
-                info('Success', 'Game loaded from cloud');
-                onClose();
-            } else {
-                error = 'No saved game found in cloud';
-                errorToast('Error', error);
-            }
-        } catch (e) {
-            error = e instanceof Error ? e.message : 'Failed to load game from cloud';
-            errorToast('Error', error);
-        } finally {
-            loading = false;
-        }
-    }
+		window.addEventListener('beforeunload', handleBeforeUnload);
+		return () => {
+			stopProgressTimer();
+			window.removeEventListener('beforeunload', handleBeforeUnload);
+		};
+	});
 
-    $: canSave = cooldownProgress >= 1 && !loading;
+	async function handleSaveToCloud() {
+		if (!$supabaseAuth.isAuthenticated) {
+			error = 'Please log in to use cloud saves';
+			return;
+		}
+
+		if (cooldownProgress < 1) {
+			const remainingTime = Math.ceil((SAVE_COOLDOWN * (1 - cooldownProgress)) / 1000);
+			info('Wait', `Please wait ${remainingTime} seconds before saving again`);
+			return;
+		}
+
+		loading = true;
+		error = null;
+
+		try {
+			await supabaseAuth.saveGameToCloud();
+			await refreshCloudSaveInfo();
+			info('Success', 'Game saved to cloud');
+			startCooldown();
+		} catch (e) {
+			error = e instanceof Error ? e.message : 'Failed to save game to cloud';
+			errorToast('Error', error);
+		} finally {
+			loading = false;
+		}
+	}
+
+	async function handleLoadFromCloud() {
+		if (!$supabaseAuth.isAuthenticated) {
+			error = 'Please log in to use cloud saves';
+			return;
+		}
+
+		loading = true;
+		error = null;
+
+		try {
+			const loaded = await supabaseAuth.loadGameFromCloud();
+			if (loaded) {
+				info('Success', 'Game loaded from cloud');
+				onClose();
+			} else {
+				error = 'No saved game found in cloud';
+				errorToast('Error', error);
+			}
+		} catch (e) {
+			error = e instanceof Error ? e.message : 'Failed to load game from cloud';
+			errorToast('Error', error);
+		} finally {
+			loading = false;
+		}
+	}
+
+    let canSave = $derived(cooldownProgress >= 1 && !loading);
+
 </script>
 
-<Modal {onClose} on:introstart={refreshCloudSaveInfo} title="Cloud Save" width="sm">
+<Modal {onClose} title="Cloud Save" width="sm">
     {#if !$supabaseAuth.isAuthenticated}
         <div class="flex flex-col gap-4 text-center">
             <h3 class="text-lg font-bold text-accent">Login Required</h3>
@@ -141,7 +185,7 @@
                 Please log in to use cloud saves.
             </p>
             <button
-                on:click={() => showLoginModal = true}
+                onclick={() => showLoginModal = true}
                 class="mx-auto rounded-lg bg-accent px-6 py-2 font-semibold text-white transition-colors hover:bg-accent-600"
             >
                 Login
@@ -198,12 +242,42 @@
                 </div>
             {/if}
 
+            <!-- Auto-save toggle -->
+            <div class="relative rounded-lg bg-black/20 overflow-hidden">
+                <div class="p-4 pb-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <Clock class="size-4 text-accent" />
+                            <div>
+                                <div class="text-sm font-semibold text-white">Auto-save</div>
+                                <div class="text-xs text-white/60">Save automatically every 30 seconds</div>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input
+                                type="checkbox"
+                                bind:checked={$autoSaveEnabled}
+                                class="sr-only peer"
+                            />
+                            <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
+                        </label>
+                    </div>
+                </div>
+                {#if $shouldAutoSave}
+                    <div
+                        class="h-[2px] bg-accent-500 transition-all duration-100 ease-linear"
+                        style:width="{autoSaveProgress * 100}%"
+                    ></div>
+                {/if}
+            </div>
+
             <div class="flex flex-col gap-4">
                 <div class="relative">
                     <button
-                        class="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-6 py-3 font-semibold text-white transition-colors hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                        on:click={handleSaveToCloud}
+                        class="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-6 py-3 font-semibold text-white transition-all duration-300 hover:not-disabled:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        onclick={handleSaveToCloud}
                         disabled={!canSave}
+                        style:transform="scale({0.9 + (cooldownProgress * 0.1)})"
                     >
                         <CloudUpload class="size-5" />
                         Save to Cloud
@@ -211,12 +285,12 @@
                     <div
                         class="absolute inset-0 rounded-lg bg-black/20 transition-transform origin-left"
                         style:transform="scaleX({1 - cooldownProgress})"
-                    />
+                    ></div>
                 </div>
 
                 <button
                     class="flex items-center justify-center gap-2 rounded-lg bg-accent px-6 py-3 font-semibold text-white transition-colors hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                    on:click={handleLoadFromCloud}
+                    onclick={handleLoadFromCloud}
                     disabled={loading}
                 >
                     <CloudDownload class="size-5" />

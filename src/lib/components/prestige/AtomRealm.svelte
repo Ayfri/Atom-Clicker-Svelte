@@ -9,9 +9,11 @@
 	import { app } from '$stores/pixi';
 	import { mobile } from '$stores/window';
 
-	let activeTab: 'achievements' | 'buildings' | 'upgrades' = 'upgrades';
+	let activeTab: 'achievements' | 'buildings' | 'upgrades' = $state('upgrades');
 
-	$: $mobile && activeTab && $app?.queueResize?.();
+	$effect(() => {
+		if ($mobile && activeTab) $app?.queueResize?.();
+	});
 </script>
 
 <div class="relative pt-12 transition-all duration-1000 ease-in-out lg:pt-4 {$mobile ? 'min-h-screen pb-8' : ''}">
@@ -25,21 +27,21 @@
 					class="backdrop-blur-xs rounded-lg p-2 w-full whitespace-nowrap border-none text-inherit cursor-pointer transition-all duration-200 {activeTab === 'upgrades'
 						? 'bg-accent-400 text-white'
 						: 'bg-white/5 hover:bg-white/10'}"
-					on:click={() => (activeTab = 'upgrades')}>Upgrades</button
+					onclick={() => (activeTab = 'upgrades')}>Upgrades</button
 				>
 				{#if $mobile}
 					<button
 						class="backdrop-blur-xs rounded-lg p-2 w-full whitespace-nowrap border-none text-inherit cursor-pointer transition-all duration-200 {activeTab === 'buildings'
 							? 'bg-accent-400 text-white'
 							: 'bg-white/5 hover:bg-white/10'}"
-						on:click={() => (activeTab = 'buildings')}>Buildings</button
+						onclick={() => (activeTab = 'buildings')}>Buildings</button
 					>
 				{/if}
 				<button
 					class="backdrop-blur-xs rounded-lg p-2 w-full whitespace-nowrap border-none text-inherit cursor-pointer transition-all duration-200 {activeTab === 'achievements'
 						? 'bg-accent-400 text-white'
 						: 'bg-white/5 hover:bg-white/10'}"
-					on:click={() => (activeTab = 'achievements')}
+					onclick={() => (activeTab = 'achievements')}
 				>
 					Achievements
 				</button>

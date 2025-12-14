@@ -6,9 +6,13 @@
 	import { electronizeElectronsGain } from '$stores/electrons';
 	import { ELECTRONS_PROTONS_REQUIRED } from '$lib/constants';
 
-	export let onClose: () => void;
+	interface Props {
+		onClose: () => void;
+	}
 
-	$: canElectronize = $protons >= ELECTRONS_PROTONS_REQUIRED || $electronizeElectronsGain > 0;
+	let { onClose }: Props = $props();
+
+	let canElectronize = $derived($protons >= ELECTRONS_PROTONS_REQUIRED || $electronizeElectronsGain > 0);
 
 	function handleElectronize() {
 		gameManager.electronize();
@@ -44,10 +48,10 @@
 
 		<button
 			class="electronize-button"
-			on:click={handleElectronize}
+			onclick={handleElectronize}
 			disabled={!canElectronize || $electronizeElectronsGain === 0}
 		>
-			<div class="pulse-overlay" />
+			<div class="pulse-overlay"></div>
 			<span class="z-10 relative">Electronize</span>
 		</button>
 

@@ -1,4 +1,4 @@
-import { writable, type Invalidator, type Subscriber, type Unsubscriber, type Writable } from 'svelte/store';
+import { writable, type Subscriber, type Unsubscriber, type Writable } from 'svelte/store';
 import type { Updater } from 'svelte/store';
 import { SAVE_VERSION } from '$helpers/saves';
 import { type NumberStatName, type ArrayStatName, type LayerType } from '$helpers/statConstants';
@@ -21,7 +21,7 @@ export class Stat<T> {
 	public readonly description: string;
 
 	public store: Writable<T>;
-	public subscribe: (run: Subscriber<T>, invalidate?: Invalidator<T> | undefined) => Unsubscriber;
+	public subscribe: (run: Subscriber<T>, invalidate?: () => void) => Unsubscriber;
 
 	constructor(config: StatConfig<T>) {
 		this.id = config.id;

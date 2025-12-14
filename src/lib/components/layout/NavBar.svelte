@@ -8,7 +8,8 @@
 	import Electronize from '@components/prestige/Electronize.svelte';
 	import Leaderboard from '@components/system/Leaderboard.svelte';
 	import { ChartNoAxesColumn, Network, Info, Atom, Trophy, MessageSquare, Orbit, FileText, Cloud } from 'lucide-svelte';
-	import { onDestroy, onMount, type ComponentType } from 'svelte';
+	import { onDestroy, onMount, type Component } from 'svelte';
+	import type { Icon as IconType } from 'lucide-svelte';
 	import { protons, atoms, electrons, skillPointsTotal, hasAvailableSkillUpgrades } from '$stores/gameStore';
 	import { protoniseProtonsGain } from '$stores/protons';
 	import { electronizeElectronsGain } from '$stores/electrons';
@@ -18,12 +19,14 @@
 	import Changelog from '@components/system/Changelog.svelte';
 	import CloudSave from '@components/system/CloudSave.svelte';
 
+	type NavBarComponent = Component<{ onClose: () => void }>;
+
 	interface Link {
-		icon: ComponentType;
-		label: string;
-		component: ComponentType;
-		notification?: () => boolean;
+		component: NavBarComponent;
 		condition?: () => boolean;
+		icon: typeof IconType;
+		label: string;
+		notification?: () => boolean;
 	}
 
 	const links: Link[] = [
@@ -81,8 +84,8 @@
 		},
 	];
 
-	let activeComponent: ComponentType | null = null;
-	let visibleComponents: Link[] = [];
+	let activeComponent: NavBarComponent | null = $state(null);
+	let visibleComponents: Link[] = $state([]);
 
 	let interval: ReturnType<typeof setInterval> | null = null;
 
@@ -110,9 +113,9 @@
 			<NotificationDot hasNotification={link.notification ? link.notification() : false}>
 				<button
 					class="flex items-center justify-center rounded-lg bg-accent/90 p-2 text-white transition-all hover:bg-accent pointer-events-auto"
-					on:click={() => activeComponent = link.component}
+					onclick={() => activeComponent = link.component}
 				>
-					<svelte:component this={link.icon} size={30} />
+					<link.icon size={30} />
 				</button>
 			</NotificationDot>
 		{/each}
@@ -123,9 +126,9 @@
 			<NotificationDot hasNotification={link.notification ? link.notification() : false}>
 				<button
 					class="group relative flex h-12 w-12 items-center justify-center rounded-lg bg-accent/90 text-white transition-all hover:bg-accent"
-					on:click={() => activeComponent = link.component}
+					onclick={() => activeComponent = link.component}
 				>
-					<svelte:component this={link.icon} size={32} />
+					<link.icon size={32} />
 					<span
 						class="label invisible absolute left-[calc(100%+1.25rem)] whitespace-nowrap rounded-lg bg-accent/90 px-3 py-2 text-sm opacity-0 transition-all group-hover:visible group-hover:opacity-100 bg-accent-900"
 					>
@@ -138,7 +141,8 @@
 {/if}
 
 {#if activeComponent}
-	<svelte:component this={activeComponent} onClose={() => (activeComponent = null)} />
+	{@const SvelteComponent = activeComponent}
+	<SvelteComponent onClose={() => (activeComponent = null)} />
 {/if}
 
 <style>

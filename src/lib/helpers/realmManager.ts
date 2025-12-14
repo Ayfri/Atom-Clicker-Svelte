@@ -3,19 +3,27 @@ import { statManager, purpleRealmUnlocked } from '$stores/gameStore';
 import { CURRENCIES, CurrenciesTypes } from '$data/currencies';
 import { STATS } from '$helpers/statConstants';
 import type { Currency } from '$lib/types';
-import type { ComponentType } from 'svelte';
+import type { Component } from 'svelte';
 import AtomRealm from '@components/prestige/AtomRealm.svelte';
 import PhotonRealm from '@components/prestige/PhotonRealm.svelte';
 
 export interface RealmConfig {
-	id: string;
-	currency: Currency;
+	component: Component;
 	store: Writable<number>;
-	title: string;
 	activeClasses: string;
+	currency: Currency;
+	footerTheme: RealmFooterTheme;
+	id: string;
 	isUnlocked: () => boolean;
-	component: ComponentType;
 	props?: Record<string, unknown>;
+	title: string;
+}
+
+export interface RealmFooterTheme {
+	baseClass: string;
+	hoverClass: string;
+	mutedClass: string;
+	mutedHoverClass: string;
 }
 
 interface RealmManagerStore {
@@ -38,22 +46,34 @@ class RealmManager implements Readable<RealmManagerStore> {
 	constructor() {
 		this.realms = [
 			{
-				id: 'atoms',
+				activeClasses: 'bg-accent-500/60 border-accent-400/50',
+				component: AtomRealm,
 				currency: CURRENCIES[CurrenciesTypes.ATOMS],
+				footerTheme: {
+					baseClass: 'text-white/60',
+					hoverClass: 'hover:text-white',
+					mutedClass: 'text-white/40',
+					mutedHoverClass: 'hover:text-white'
+				},
+				id: 'atoms',
 				store: statManager.getNumber(STATS.ATOMS)!.store,
 				title: 'Atoms Realm',
-				activeClasses: 'bg-accent-500/60 border-accent-400/50',
-				isUnlocked: () => true,
-				component: AtomRealm
+				isUnlocked: () => true
 			},
 			{
-				id: 'photons',
+				activeClasses: 'bg-realm-500/60 border-realm-400/50',
+				component: PhotonRealm,
 				currency: CURRENCIES[CurrenciesTypes.PHOTONS],
+				footerTheme: {
+					baseClass: 'text-white/85',
+					hoverClass: 'hover:text-purple-200',
+					mutedClass: 'text-white/70',
+					mutedHoverClass: 'hover:text-purple-200'
+				},
+				id: 'photons',
 				store: statManager.getNumber(STATS.PHOTONS)!.store,
 				title: 'Purple Realm',
-				activeClasses: 'bg-realm-500/60 border-realm-400/50',
-				isUnlocked: () => purpleRealmUnlocked.get(),
-				component: PhotonRealm
+				isUnlocked: () => purpleRealmUnlocked.get()
 			}
 		];
 

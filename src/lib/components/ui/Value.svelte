@@ -3,17 +3,30 @@
 	import {formatNumber} from '$lib/utils';
 	import Currency from '@components/ui/Currency.svelte';
 
-	export let value: number;
-	export let precision: number | undefined = undefined;
-	export let postfix: string = '';
-	export let prefix: string = '';
-	export let currency: CurrencyName | undefined = undefined;
-	export let currencyClass = '';
+	interface Props {
+		currency?: CurrencyName | undefined;
+		currencyClass?: string;
+		postfix?: string;
+		precision?: number | undefined;
+		prefix?: string;
+		value: number;
+		[key: string]: any
+	}
+
+	let {
+		currency = undefined,
+		currencyClass = '',
+		postfix = '',
+		precision = undefined,
+		prefix = '',
+		value,
+		...rest
+	}: Props = $props();
 
 	let currencyObject = currency ? CURRENCIES[currency] : undefined;
 </script>
 
-<span title={currencyObject ? currencyObject.name : ''} {...$$restProps}>
+<span title={currencyObject ? currencyObject.name : ''} {...rest}>
 	{prefix}{formatNumber(value, precision)}
 	{#if currency}
 		<Currency name={currency} icon={true} class={currencyClass} />

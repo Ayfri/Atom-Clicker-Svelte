@@ -4,9 +4,13 @@
 	import Modal from '@components/ui/Modal.svelte';
 	import { changelog } from '$stores/changelog';
 
-	export let onClose: () => void;
+	interface Props {
+		onClose: () => void;
+	}
 
-	let changelogContent = '';
+	let { onClose }: Props = $props();
+
+	let changelogContent = $state('');
 
 	function parseChangelogDate(title: string): Date | null {
 		const dateMatch = title.match(/(\d{2})-(\d{2})-(\d{4})/);

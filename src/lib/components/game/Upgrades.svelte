@@ -12,31 +12,33 @@
 	import { recentlyAutoPurchased } from '$stores/autoUpgrade';
 	import { fly, scale } from 'svelte/transition';
 
-	let availableUpgrades: Upgrade[] = [];
-	let selectedCurrency: CurrencyName = CurrenciesTypes.ATOMS;
+	let availableUpgrades: Upgrade[] = $state([]);
+	let selectedCurrency: CurrencyName = $state(CurrenciesTypes.ATOMS);
 
 	// Show proton upgrades if player has protons, has protonised before, or has purchased any proton upgrade
-	$: hasProtonUpgrades = $upgrades.some(id => id.startsWith('proton'));
-	$: showProtons = $protons > 0 || $totalProtonises > 0 || hasProtonUpgrades;
+	const hasProtonUpgrades = $derived($upgrades.some(id => id.startsWith('proton')));
+	const showProtons = $derived($protons > 0 || $totalProtonises > 0 || hasProtonUpgrades);
 	
 	// Show electron upgrades if player has electrons or has purchased any electron upgrade
-	$: hasElectronUpgrades = $upgrades.some(id => id.startsWith('electron'));
-	$: showElectrons = $electrons > 0 || hasElectronUpgrades;
+	const hasElectronUpgrades = $derived($upgrades.some(id => id.startsWith('electron')));
+	const showElectrons = $derived($electrons > 0 || hasElectronUpgrades);
 
-	$: if ($upgrades && ($atoms || $electrons || $protons || true)) {
-		const currentState = getCurrentState();
-		availableUpgrades = Object.values(UPGRADES)
-			.filter((upgrade) => {
-				const condition = upgrade.condition?.(currentState) ?? true;
-				const notPurchased = !$upgrades.includes(upgrade.id);
-				const matchesCurrency = upgrade.cost.currency === selectedCurrency;
-				return condition && notPurchased && matchesCurrency;
-			})
-			.sort((a, b) => a.cost.amount - b.cost.amount);
-	}
+	$effect(() => {
+		if ($upgrades && ($atoms || $electrons || $protons || true)) {
+			const currentState = getCurrentState();
+			availableUpgrades = Object.values(UPGRADES)
+				.filter((upgrade) => {
+					const condition = upgrade.condition?.(currentState) ?? true;
+					const notPurchased = !$upgrades.includes(upgrade.id);
+					const matchesCurrency = upgrade.cost.currency === selectedCurrency;
+					return condition && notPurchased && matchesCurrency;
+				})
+				.sort((a, b) => a.cost.amount - b.cost.amount);
+		}
+	});
 
-	$: affordableUpgrades = availableUpgrades.filter((upgrade) => gameManager.canAfford(upgrade.cost));
-	$: hasAutomation = getUpgradesWithEffects($currentUpgradesBought, { type: 'auto_upgrade' }).length > 0;
+	let affordableUpgrades = $derived(availableUpgrades.filter((upgrade) => gameManager.canAfford(upgrade.cost)));
+	let hasAutomation = $derived(getUpgradesWithEffects($currentUpgradesBought, { type: 'auto_upgrade' }).length > 0);
 </script>
 
 <div id="upgrades" class="bg-black/10 backdrop-blur-xs rounded-lg p-3 flex flex-col gap-2">
@@ -59,7 +61,7 @@
 		<button
 			class="currency-tab flex items-center bg-white/5 border-none rounded-lg cursor-pointer p-2 transition-all duration-200 hover:bg-white/10 active:bg-white/[0.15] active:shadow-[0_0_10px_rgba(255,255,255,0.1)] xl:p-2 lg:p-1.5"
 			class:active={selectedCurrency === CurrenciesTypes.ATOMS}
-			on:click={() => selectedCurrency = CurrenciesTypes.ATOMS}
+			onclick={() => selectedCurrency = CurrenciesTypes.ATOMS}
 		>
 			<Currency name={CurrenciesTypes.ATOMS} />
 		</button>
@@ -67,7 +69,7 @@
 			<button
 				class="currency-tab flex items-center bg-white/5 border-none rounded-lg cursor-pointer p-2 transition-all duration-200 hover:bg-white/10 active:bg-white/[0.15] active:shadow-[0_0_10px_rgba(255,255,255,0.1)] xl:p-2 lg:p-1.5"
 				class:active={selectedCurrency === CurrenciesTypes.PROTONS}
-				on:click={() => selectedCurrency = CurrenciesTypes.PROTONS}
+				onclick={() => selectedCurrency = CurrenciesTypes.PROTONS}
 			>
 				<Currency name={CurrenciesTypes.PROTONS} />
 			</button>
@@ -76,7 +78,7 @@
 			<button
 				class="currency-tab flex items-center bg-white/5 border-none rounded-lg cursor-pointer p-2 transition-all duration-200 hover:bg-white/10 active:bg-white/[0.15] active:shadow-[0_0_10px_rgba(255,255,255,0.1)] xl:p-2 lg:p-1.5"
 				class:active={selectedCurrency === CurrenciesTypes.ELECTRONS}
-				on:click={() => selectedCurrency = CurrenciesTypes.ELECTRONS}
+				onclick={() => selectedCurrency = CurrenciesTypes.ELECTRONS}
 			>
 				<Currency name={CurrenciesTypes.ELECTRONS} />
 			</button>
@@ -89,7 +91,7 @@
 			{@const wasAutoPurchased = $recentlyAutoPurchased.has(upgrade.id)}
 			<div
 				class="relative bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer p-2 transition-all duration-200 {affordable ? '' : 'opacity-50 cursor-not-allowed'}"
-				on:click={() => {
+				onclick={() => {
 					if (affordable) gameManager.purchaseUpgrade(upgrade.id);
 				}}
 			>

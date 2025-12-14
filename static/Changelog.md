@@ -1,3 +1,15 @@
+# What's new 14-12-2025
+
+- **Enhanced Leaderboard**: Search players, filter by rank (Top 10/50/100), quick jump to your position
+- Virtual scrolling for smooth performance with hundreds of players
+- Top 3 players get special badges (crown, trophy, medal)
+- Shows percentile ranking on hover and last activity time
+
+# What's new 11-12-2025
+
+- Added a compact footer with icon links to Discord, GitHub, ayfri.com, and Buy Me a Coffee support.
+- Enable vertical scrolling on desktop views (main layout and realms) so long pages stay accessible.
+
 # What's new 06-10-2025
 
 - Add login button to Cloud Save modal if not logged in.

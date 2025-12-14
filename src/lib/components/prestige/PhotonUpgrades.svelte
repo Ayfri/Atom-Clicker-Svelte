@@ -5,22 +5,18 @@
 	import Value from '@components/ui/Value.svelte';
 	import { CurrenciesTypes } from '$data/currencies';
 
-	$: currentState = getCurrentState();
-	$: availableUpgrades = Object.values(PHOTON_UPGRADES).filter(upgrade => {
+	const currentState = $derived(getCurrentState());
+	const availableUpgrades = $derived(Object.values(PHOTON_UPGRADES).filter(upgrade => {
 		const currentLevel = $photonUpgrades[upgrade.id] || 0;
 		const hasLevelsRemaining = currentLevel < upgrade.maxLevel;
 		const meetsCondition = !upgrade.condition || upgrade.condition(currentState);
 		return hasLevelsRemaining && meetsCondition;
-	});
+	}));
 
-	$: affordableUpgrades = availableUpgrades.filter(upgrade => {
+	const affordableUpgrades = $derived(availableUpgrades.filter(upgrade => {
 		const currentLevel = $photonUpgrades[upgrade.id] || 0;
 		return canAffordPhotonUpgrade(upgrade, currentLevel, $photons);
-	});
-
-	function handleUpgradeClick(upgradeId: string) {
-		gameManager.purchasePhotonUpgrade(upgradeId);
-	}
+	}));
 </script>
 
 <div id="photon-upgrades" class="bg-black/10 backdrop-blur-xs rounded-lg p-3 flex flex-col gap-2">
@@ -35,8 +31,8 @@
 			{@const affordable = affordableUpgrades.includes(upgrade)}
 			<div
 				class="upgrade bg-realm-900/20 hover:bg-realm-900/30 border border-realm-500/20 hover:border-realm-500/40 rounded-sm cursor-pointer p-2 transition-all duration-200 {affordable ? '' : 'opacity-50 cursor-not-allowed'}"
-				on:click={() => {
-					if (affordable) handleUpgradeClick(upgrade.id);
+				onclick={() => {
+					if (affordable) gameManager.purchasePhotonUpgrade(upgrade.id);
 				}}
 			>
 				<div class="flex justify-between items-start mb-0.5">

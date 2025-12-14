@@ -4,6 +4,13 @@
 	import Analytics from '@components/system/Analytics.svelte';
 	import SEO from '@components/system/SEO.svelte';
 	import {LoaderCircle} from 'lucide-svelte';
+	import type { Snippet } from 'svelte';
+	
+	interface Props {
+		children?: Snippet;
+	}
+
+	let { children }: Props = $props();
 </script>
 
 <style>
@@ -32,5 +39,5 @@
 		<LoaderCircle size={64} class="loading-action rotate-115"/>
 	</div>
 {:else}
-	<slot/>
+	{@render children?.()}
 {/if}
