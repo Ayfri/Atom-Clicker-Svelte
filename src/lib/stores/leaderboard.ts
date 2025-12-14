@@ -10,8 +10,26 @@ const MIN_UPDATE_INTERVAL = 30_000; // 30 seconds minimum between updates
 
 const MIN_ATOMS_CHANGE_PERCENT = 0.05; // 5% minimum change in atoms
 
+interface LeaderboardStats {
+	totalUsers: number;
+	totalAtoms: number;
+	averageAtoms: number;
+	medianAtoms: number;
+}
+
+interface LeaderboardData {
+	entries: LeaderboardEntry[];
+	stats: LeaderboardStats;
+}
+
 function createLeaderboardStore() {
 	const { subscribe, set } = writable<LeaderboardEntry[]>([]);
+	const { subscribe: subscribeStats, set: setStats } = writable<LeaderboardStats>({
+		totalUsers: 0,
+		totalAtoms: 0,
+		averageAtoms: 0,
+		medianAtoms: 0
+	});
 
 	// Update control variables
 	let isUpdating = false;
@@ -23,8 +41,9 @@ function createLeaderboardStore() {
 			const userId = authState.isAuthenticated ? authState.user?.id : '';
 			const response = await fetch(`/api/leaderboard?userId=${userId}`);
 			if (!response.ok) throw new Error('Failed to fetch leaderboard');
-			const data = await response.json();
-			set(data);
+			const data: LeaderboardData = await response.json();
+			set(data.entries);
+			setStats(data.stats);
 		} catch (error) {
 			console.error('Error fetching leaderboard:', error);
 		}
@@ -83,13 +102,19 @@ function createLeaderboardStore() {
 	}
 
 	return {
-		subscribe,
+		entries: { subscribe },
 		fetchLeaderboard,
+		stats: { subscribe: subscribeStats },
 		updateScore
 	};
 }
 
-export const leaderboard = createLeaderboardStore();
+const leaderboardStore = createLeaderboardStore();
+
+export const leaderboard = leaderboardStore.entries;
+export const leaderboardStats = leaderboardStore.stats;
+export const fetchLeaderboard = leaderboardStore.fetchLeaderboard;
+export const updateLeaderboardScore = leaderboardStore.updateScore;
 
 if (browser) {
 	let lastAtoms = 0;
@@ -113,7 +138,7 @@ if (browser) {
 				lastAtoms = atoms;
 				lastLevel = level;
 				lastUpdate = now;
-				leaderboard.updateScore(atoms, level);
+				updateLeaderboardScore(atoms, level);
 			}
 		});
 }
