@@ -40,7 +40,7 @@
 		},
 		{
 			name: 'Discord',
-			url: 'https://discord.gg/BySjRNQ9Je',
+			url: 'https://discord.ayfri.com',
 			description: 'Join our community',
 			icon: Discord,
 		},

@@ -3,9 +3,9 @@
 Welcome to Atom Clicker, an engaging incremental game where you'll build your own atomic empire! Start small with individual atoms and work your way up to cosmic structures.
 
 [![GitHub](https://img.shields.io/github/stars/Ayfri/Atom-Clicker-Svelte?style=social)](https://github.com/Ayfri/Atom-Clicker-Svelte)
-[![Discord](https://img.shields.io/discord/493478524133572610?style=flat&logo=discord&logoColor=white&label=discord&color=5865F2)](https://discord.gg/BySjRNQ9Je)
+[![Discord](https://img.shields.io/discord/493478524133572610?style=flat&logo=discord&logoColor=white&label=discord&color=5865F2)](https://discord.ayfri.com)
 
-🎮 [Play Now](https://atom-clicker.ayfri.com) | 💬 [Discord](https://discord.gg/BySjRNQ9Je)
+🎮 [Play Now](https://atom-clicker.ayfri.com) | 💬 [Discord](https://discord.ayfri.com)
 
 ## ⚛️ Features
 

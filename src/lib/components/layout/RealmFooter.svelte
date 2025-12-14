@@ -22,7 +22,7 @@
 		<div class="flex flex-wrap items-center justify-center gap-3">
 			<a
 				class="group flex items-center gap-1 transition-colors {footerTheme.hoverClass}"
-				href="https://discord.gg/BySjRNQ9Je"
+				href="https://discord.ayfri.com"
 				rel="noopener noreferrer"
 				target="_blank"
 				title="Join our Discord community"

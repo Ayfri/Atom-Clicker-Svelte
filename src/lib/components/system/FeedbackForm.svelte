@@ -24,7 +24,7 @@
 	<div class="flex items-center gap-3 flex-1">
 		<h2 class="flex-1 text-2xl font-bold text-white">Feedback</h2>
 		<a
-			href="https://discord.gg/BySjRNQ9Je"
+			href="https://discord.ayfri.com"
 			target="_blank"
 			rel="noopener noreferrer"
 			class="flex items-center justify-center size-10 rounded-lg hover:bg-white/10 transition-colors"
