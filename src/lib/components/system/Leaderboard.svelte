@@ -165,7 +165,7 @@
 
 	<div>
 		{#if !$supabaseAuth.isAuthenticated}
-			<div class="flex flex-col gap-4 text-center">
+			<div class="flex flex-col gap-2 text-center mb-3">
 				<h3 class="text-lg font-bold text-accent">Login Required</h3>
 				<p class="text-white/60">
 					Please log in to participate in the global leaderboard.
