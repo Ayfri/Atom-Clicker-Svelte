@@ -4,7 +4,7 @@ import { leaderboardService } from '$lib/server/supabase.server';
 import { verifyAndDecryptClientData } from '$lib/server/obfuscation.server';
 import { addRankToLeaderboard } from '$lib/utils/number-parser';
 
-const UPDATE_INTERVAL = 60 * 1000; // 1 minute minimum between updates
+const UPDATE_INTERVAL = 25 * 1000; // 25 seconds minimum between updates
 
 // Cache for rate limiting
 const userLastUpdate = new Map<string, number>();
