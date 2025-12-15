@@ -3,12 +3,24 @@
 	import { marked } from 'marked';
 	import Modal from '@components/ui/Modal.svelte';
 	import { changelog } from '$stores/changelog';
+	import { gameManager } from '$helpers/gameManager';
+	import { achievements } from '$stores/gameStore';
 
 	interface Props {
 		onClose: () => void;
 	}
 
 	let { onClose }: Props = $props();
+
+	// Check if achievement is already unlocked
+	let isAlreadyUnlocked = $derived($achievements.includes('changelog_modal_opener'));
+
+	// Unlock achievement when modal opens
+	$effect(() => {
+		if (!isAlreadyUnlocked) {
+			gameManager.unlockAchievement('changelog_modal_opener');
+		}
+	});
 
 	let changelogContent = $state('');
 

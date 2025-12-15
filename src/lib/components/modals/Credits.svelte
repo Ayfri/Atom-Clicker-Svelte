@@ -7,6 +7,29 @@
 	import { achievements } from '$stores/gameStore';
 	import Modal from '@components/ui/Modal.svelte';
 
+	// Check if achievements are already unlocked
+	let isWebsiteUnlocked = $derived($achievements.includes('website_click'));
+	let isDiscordUnlocked = $derived($achievements.includes('discord_click'));
+	let isGitHubUnlocked = $derived($achievements.includes('github_click'));
+
+	function handleWebsiteClick() {
+		if (!isWebsiteUnlocked) {
+			gameManager.unlockAchievement('website_click');
+		}
+	}
+
+	function handleDiscordClick() {
+		if (!isDiscordUnlocked) {
+			gameManager.unlockAchievement('discord_click');
+		}
+	}
+
+	function handleGitHubClick() {
+		if (!isGitHubUnlocked) {
+			gameManager.unlockAchievement('github_click');
+		}
+	}
+
 	interface Props {
 		onClose: () => void;
 	}
@@ -93,6 +116,7 @@
 					target="_blank"
 					rel="noopener noreferrer"
 					class="group flex flex-row items-baseline gap-2 rounded-lg bg-black/20 p-4 transition-colors hover:bg-black/30 w-full"
+					onclick={handleWebsiteClick}
 				>
 					<span class="text-lg font-semibold text-white group-hover:text-accent">{creator.name}</span>
 					<span class="text-sm text-white/60 flex-1">{creator.description}</span>
@@ -107,6 +131,7 @@
 							target="_blank"
 							rel="noopener noreferrer"
 							class="group flex items-baseline gap-2 rounded-lg bg-black/20 p-4 transition-colors hover:bg-black/30"
+							onclick={() => social.name === 'Discord' ? handleDiscordClick() : social.name === 'GitHub' ? handleGitHubClick() : undefined}
 						>
 							<social.icon class="size-6 self-center mr-1" />
 							<span class="text-lg font-semibold text-white group-hover:text-accent">{social.name}</span>
