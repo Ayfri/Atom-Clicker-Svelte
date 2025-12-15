@@ -1,5 +1,6 @@
 # What's new 15-12-2025
 
+- Fixed bonus teleportation and made it non-clickable during fade-out.
 - **Save Recovery System**: Added fail-safes to prevent save data loss from minor errors.
 - Automatic backup of corrupted saves before attempting recovery.
 - Smart repair of invalid or missing save fields when possible.
