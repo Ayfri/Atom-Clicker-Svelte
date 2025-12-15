@@ -1,5 +1,8 @@
-# What's new 15-12-2025
+# What's new 16-12-2025
 
+- **Achievement notifications improved**: Smaller, more compact design with better padding, now displays both achievement name and description.
+- **Number formatting fix**: Small numbers now display without unnecessary decimals (1 instead of 1.00).
+- **New achievements**: Total playtime, in-game playtime, opening the changelog, and many new secrets ones, clicking on links may do something...
 - Fixed bonus teleportation and made it non-clickable during fade-out.
 - **Save Recovery System**: Added fail-safes to prevent save data loss from minor errors.
 - Automatic backup of corrupted saves before attempting recovery.

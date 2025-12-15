@@ -100,7 +100,7 @@ export const gameManager = {
 			Object.entries(ACHIEVEMENTS).forEach(([id, achievement]) => {
 				if (!currentAchievements.includes(id) && achievement.condition(state)) {
 					achievements.push(id);
-					info("Achievement unlocked", achievement.name);
+					info("Achievement unlocked", `<strong>${achievement.name}</strong><br>${achievement.description}`);
 				}
 			});
 		}, 1000);
