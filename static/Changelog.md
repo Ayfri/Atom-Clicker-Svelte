@@ -1,5 +1,9 @@
 # What's new 15-12-2025
 
+- **Save Recovery System**: Added fail-safes to prevent save data loss from minor errors.
+- Automatic backup of corrupted saves before attempting recovery.
+- Smart repair of invalid or missing save fields when possible.
+- Recovery popup offers to load from cloud save or start fresh if local save is corrupted.
 - **Redesigned Statistics Menu**: Improved layout and added many new stats.
 - New stats: highest APS, total atoms/clicks (all time), buildings/upgrades purchased, power-ups collected, time since start, in-game time, duration multiplier, effect multiplier.
 - Hover over abbreviated stats to see exact numbers.

@@ -3,18 +3,20 @@
 	import '$stores/autoUpgrade';
 	import { RotateCcw } from 'lucide-svelte';
 	import {onDestroy, onMount} from 'svelte';
+	import AutoSaveIndicator from '@components/system/AutoSaveIndicator.svelte';
 	import HardReset from '@components/system/HardReset.svelte';
 	import Levels from '@components/game/Levels.svelte';
 	import NavBar from '@components/layout/NavBar.svelte';
 	import RealmFooter from '@components/layout/RealmFooter.svelte';
+	import SaveRecovery from '@components/system/SaveRecovery.svelte';
 	import Toaster from '@components/layout/Toaster.svelte';
-	import AutoSaveIndicator from '@components/system/AutoSaveIndicator.svelte';
-	import {realmManager} from '$helpers/realmManager';
 	import {gameManager} from '$helpers/gameManager';
+	import {realmManager} from '$helpers/realmManager';
 	import {setGlobals} from '$lib/globals';
 	import {formatNumber} from '$lib/utils';
 	import {atomsPerSecond, upgrades} from '$stores/gameStore';
 	import {app} from '$stores/pixi';
+	import {saveRecovery} from '$stores/saveRecovery';
 	import {supabaseAuth} from '$stores/supabaseAuth';
 	import {mobile} from '$stores/window';
 
@@ -130,6 +132,10 @@
 
 		{#if showHardReset}
 			<HardReset onClose={() => showHardReset = false} />
+		{/if}
+
+		{#if $saveRecovery.hasError}
+			<SaveRecovery onClose={() => saveRecovery.clearError()} />
 		{/if}
 	</main>
 </div>

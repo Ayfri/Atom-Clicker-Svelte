@@ -6,7 +6,8 @@ import { PHOTON_UPGRADES, getPhotonUpgradeCost } from '$data/photonUpgrades';
 import { protoniseProtonsGain } from '$stores/protons';
 import { electronizeElectronsGain } from '$stores/electrons';
 import { BUILDING_COST_MULTIPLIER, PROTONS_ATOMS_REQUIRED, ELECTRONS_PROTONS_REQUIRED } from '$lib/constants';
-import { SAVE_KEY } from '$helpers/saves';
+import { loadSavedState, SAVE_KEY } from '$helpers/saves';
+import { saveRecovery } from '$stores/saveRecovery';
 import { LAYERS, STATS, type NumberStatName } from '$helpers/statConstants';
 import { info } from '$stores/toasts';
 import { get } from 'svelte/store';
@@ -54,19 +55,36 @@ export const gameManager = {
 	},
 
 	loadGame() {
-		try {
-			const saved = localStorage.getItem(SAVE_KEY);
-			if (saved) {
-				const savedData = JSON.parse(saved);
-				if (statManager.isValidSaveData(savedData)) {
-					statManager.loadSaveData(savedData);
-					console.log('Game loaded successfully');
+		const result = loadSavedState();
+
+		if (result.success && result.state) {
+			// Successfully loaded and validated/repaired
+			if (statManager.isValidSaveData(result.state)) {
+				statManager.loadSaveData(result.state);
+				console.log('Game loaded successfully');
+				this.save();
+			} else {
+				// State was validated by saves.ts but not by statManager
+				// Try to load anyway with best effort
+				console.warn('StatManager validation failed, attempting best-effort load');
+				try {
+					statManager.loadSaveData(result.state);
 					this.save();
+				} catch (e) {
+					console.error('Best-effort load failed:', e);
+					saveRecovery.setError('validation_failed', 'Save data validation failed', JSON.stringify(result.state));
 				}
 			}
-		} catch (e) {
-			console.error('Failed to load saved game:', e);
+		} else if (!result.success && result.errorType) {
+			// Loading failed - error already set in saveRecovery by loadSavedState
+			saveRecovery.setError(
+				result.errorType,
+				result.errorDetails || 'Unknown error loading save',
+				result.rawData ?? null
+			);
+			console.error('Save load failed:', result.errorType, result.errorDetails);
 		}
+		// If result.success but no state, it means no save exists - that's fine
 	},
 
 	setupAchievementChecking() {
