@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { onDestroy, onMount } from 'svelte';
+	import { POWER_UPS } from '$data/powerUp';
 	import { gameManager } from '$helpers/gameManager';
-	import { powerUpInterval, powerUpDurationMultiplier, powerUpEffectMultiplier } from '$stores/gameStore';
 	import type { PowerUp } from '$lib/types';
 	import { randomBetween, randomValue, formatNumber } from '$lib/utils';
-	import { POWER_UPS } from '@/lib/data/powerUp';
+	import { powerUpInterval, powerUpDurationMultiplier, powerUpEffectMultiplier } from '$stores/gameStore';
+	import { onDestroy, onMount } from 'svelte';
 
 	// Constants
 	const VISIBLE_DURATION = 25000;

@@ -4,11 +4,11 @@
 	import { RotateCcw } from 'lucide-svelte';
 	import {onDestroy, onMount} from 'svelte';
 	import AutoSaveIndicator from '@components/system/AutoSaveIndicator.svelte';
-	import HardReset from '@components/system/HardReset.svelte';
+	import HardReset from '@components/modals/HardReset.svelte';
 	import Levels from '@components/game/Levels.svelte';
 	import NavBar from '@components/layout/NavBar.svelte';
 	import RealmFooter from '@components/layout/RealmFooter.svelte';
-	import SaveRecovery from '@components/system/SaveRecovery.svelte';
+	import SaveRecovery from '@components/modals/SaveRecovery.svelte';
 	import Toaster from '@components/layout/Toaster.svelte';
 	import {gameManager} from '$helpers/gameManager';
 	import {realmManager} from '$helpers/realmManager';

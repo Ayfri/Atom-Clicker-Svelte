@@ -1,15 +1,15 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { AlertCircle, Clock, CloudDownload, CloudUpload } from 'lucide-svelte';
-	import type { GameState } from '$lib/types';
-	import { CurrenciesTypes } from '$data/currencies';
-	import { autoSaveEnabled, autoSaveState, shouldAutoSave } from '$stores/autoSave';
-	import { error as errorToast, info } from '$stores/toasts';
-	import { getLevelFromTotalXP } from '$stores/gameStore';
-	import { supabaseAuth } from '$stores/supabaseAuth';
-	import Login from '@components/system/Login.svelte';
+	import Login from '@components/modals/Login.svelte';
 	import Modal from '@components/ui/Modal.svelte';
 	import Value from '@components/ui/Value.svelte';
+	import { CurrenciesTypes } from '$data/currencies';
+	import type { GameState } from '$lib/types';
+	import { autoSaveEnabled, autoSaveState, shouldAutoSave } from '$stores/autoSave';
+	import { getLevelFromTotalXP } from '$stores/gameStore';
+	import { supabaseAuth } from '$stores/supabaseAuth';
+	import { error as errorToast, info } from '$stores/toasts';
+	import { AlertCircle, Clock, CloudDownload, CloudUpload } from 'lucide-svelte';
+	import { onMount } from 'svelte';
 
 	interface Props {
 		onClose: () => void;

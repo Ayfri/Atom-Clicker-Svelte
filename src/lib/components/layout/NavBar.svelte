@@ -1,23 +1,23 @@
 <script lang="ts">
-	import { mobile } from '$stores/window';
-	import NotificationDot from '@components/ui/NotificationDot.svelte';
-	import GlobalStats from '@components/system/GlobalStats.svelte';
-	import SkillTree from '@components/game/SkillTree.svelte';
-	import Credits from '@components/system/Credits.svelte';
-	import Protonise from '@components/prestige/Protonise.svelte';
+	import Changelog from '@components/modals/Changelog.svelte';
+	import CloudSave from '@components/modals/CloudSave.svelte';
+	import Credits from '@components/modals/Credits.svelte';
+	import FeedbackForm from '@components/modals/FeedbackForm.svelte';
+	import GlobalStats from '@components/modals/GlobalStats.svelte';
+	import Leaderboard from '@components/modals/Leaderboard.svelte';
+	import SkillTree from '@components/modals/SkillTree.svelte';
 	import Electronize from '@components/prestige/Electronize.svelte';
-	import Leaderboard from '@components/system/Leaderboard.svelte';
-	import { ChartNoAxesColumn, Network, Info, Atom, Trophy, MessageSquare, Orbit, FileText, Cloud } from 'lucide-svelte';
-	import { onDestroy, onMount, type Component } from 'svelte';
-	import type { Icon as IconType } from 'lucide-svelte';
-	import { protons, atoms, electrons, skillPointsTotal, hasAvailableSkillUpgrades } from '$stores/gameStore';
-	import { protoniseProtonsGain } from '$stores/protons';
-	import { electronizeElectronsGain } from '$stores/electrons';
+	import Protonise from '@components/prestige/Protonise.svelte';
+	import NotificationDot from '@components/ui/NotificationDot.svelte';
 	import { PROTONS_ATOMS_REQUIRED, ELECTRONS_PROTONS_REQUIRED } from '$lib/constants';
-	import FeedbackForm from '@components/system/FeedbackForm.svelte';
 	import { changelog } from '$stores/changelog';
-	import Changelog from '@components/system/Changelog.svelte';
-	import CloudSave from '@components/system/CloudSave.svelte';
+	import { electronizeElectronsGain } from '$stores/electrons';
+	import { protons, atoms, electrons, hasAvailableSkillUpgrades, skillPointsTotal } from '$stores/gameStore';
+	import { protoniseProtonsGain } from '$stores/protons';
+	import { mobile } from '$stores/window';
+	import { ChartNoAxesColumn, Network, Info, Atom, Trophy, MessageSquare, Orbit, FileText, Cloud, type Icon as IconType } from 'lucide-svelte';
+	import { onDestroy, onMount, type Component } from 'svelte';
+
 
 	type NavBarComponent = Component<{ onClose: () => void }>;
 

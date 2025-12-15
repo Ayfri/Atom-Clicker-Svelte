@@ -1,15 +1,15 @@
 <script lang="ts">
+	import Login, {getAuthConnection} from '@components/modals/Login.svelte';
+	import Modal from '@components/ui/Modal.svelte';
+	import type { LeaderboardEntry } from '$lib/types/leaderboard';
 	import {capitalize, formatNumber} from '$lib/utils';
-	import {supabaseAuth} from '$stores/supabaseAuth';
-	import {leaderboard, leaderboardStats, fetchLeaderboard} from '$stores/leaderboard';
 	import {startDate} from '$stores/gameStore';
-	import Login, {getAuthConnection} from '@components/system/Login.svelte';
+	import {leaderboard, leaderboardStats, fetchLeaderboard} from '$stores/leaderboard';
+	import {supabaseAuth} from '$stores/supabaseAuth';
 	import {Info, LogOut, Edit2, Save, Search, Users, Trophy, Medal, Crown} from 'lucide-svelte';
 	import {onDestroy, onMount} from 'svelte';
-	import type { LeaderboardEntry } from '$lib/types/leaderboard';
-	import Modal from '@components/ui/Modal.svelte';
-	import { fade } from 'svelte/transition';
-	import { VList } from 'virtua/svelte';
+	import {fade} from 'svelte/transition';
+	import {VList} from 'virtua/svelte';
 
 	interface Props {
 		onClose: () => void;
@@ -345,7 +345,7 @@
 				data={filteredLeaderboard}
 				style="height: 450px;"
 			>
-				{#snippet children(entry, index)}
+				{#snippet children(entry: LeaderboardEntry, index: number)}
 					{@const isCurrentUser = entry.self === true}
 					{@const RankIcon = getRankIcon(entry.rank)}
 					{@const rankColor = getRankColor(entry.rank)}

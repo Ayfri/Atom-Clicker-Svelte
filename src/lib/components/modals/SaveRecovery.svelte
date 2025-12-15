@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { AlertTriangle, CloudDownload, Database, RefreshCw, Trash2 } from 'lucide-svelte';
+	import Login from '@components/modals/Login.svelte';
+	import Modal from '@components/ui/Modal.svelte';
 	import { gameManager } from '$helpers/gameManager';
 	import { saveRecovery } from '$stores/saveRecovery';
 	import { supabaseAuth } from '$stores/supabaseAuth';
 	import { error as errorToast, info, success } from '$stores/toasts';
-	import Login from '@components/system/Login.svelte';
-	import Modal from '@components/ui/Modal.svelte';
+	import { AlertTriangle, CloudDownload, Database, RefreshCw, Trash2 } from 'lucide-svelte';
 
 	interface Props {
 		onClose: () => void;

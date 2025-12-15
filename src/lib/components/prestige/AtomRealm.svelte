@@ -1,10 +1,10 @@
 <script lang="ts">
-	import BonusPhoton from '@components/prestige/BonusPhoton.svelte';
-	import Canvas from '@components/game/Canvas.svelte';
-	import Counter from '@components/game/Counter.svelte';
 	import Achievements from '@components/game/Achievements.svelte';
 	import Atom from '@components/game/Atom.svelte';
+	import BonusPhoton from '@components/game/BonusPhoton.svelte';
 	import Buildings from '@components/game/Buildings.svelte';
+	import Canvas from '@components/game/Canvas.svelte';
+	import Counter from '@components/game/Counter.svelte';
 	import Upgrades from '@components/game/Upgrades.svelte';
 	import { app } from '$stores/pixi';
 	import { mobile } from '$stores/window';
