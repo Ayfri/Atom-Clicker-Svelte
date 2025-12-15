@@ -26,10 +26,11 @@ declare global {
 
 	namespace NodeJS {
 		interface ProcessEnv {
-			PUBLIC_SUPABASE_URL: string;
-			PUBLIC_SUPABASE_ANON_KEY: string;
-			SUPABASE_SERVICE_ROLE: string;
+			DISCORD_ERROR_WEBHOOK_URL: string;
 			OBFUSCATION_KEY: string;
+			PUBLIC_SUPABASE_ANON_KEY: string;
+			PUBLIC_SUPABASE_URL: string;
+			SUPABASE_SERVICE_ROLE: string;
 		}
 	}
 }

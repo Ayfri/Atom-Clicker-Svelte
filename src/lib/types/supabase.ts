@@ -9,6 +9,47 @@ export type Json =
 export type Database = {
 	public: {
 		Tables: {
+			error_logs: {
+				Row: {
+					browser_info: Json | null
+					created_at: string | null
+					error_message: string
+					game_state: Json | null
+					id: string
+					stack_trace: string | null
+					url: string | null
+					user_id: string | null
+				}
+				Insert: {
+					browser_info?: Json | null
+					created_at?: string | null
+					error_message: string
+					game_state?: Json | null
+					id?: string
+					stack_trace?: string | null
+					url?: string | null
+					user_id?: string | null
+				}
+				Update: {
+					browser_info?: Json | null
+					created_at?: string | null
+					error_message?: string
+					game_state?: Json | null
+					id?: string
+					stack_trace?: string | null
+					url?: string | null
+					user_id?: string | null
+				}
+				Relationships: [
+					{
+						foreignKeyName: "error_logs_user_id_fkey"
+						columns: ["user_id"]
+						isOneToOne: false
+						referencedRelation: "profiles"
+						referencedColumns: ["id"]
+					}
+				]
+			}
 			profiles: {
 				Row: {
 					atoms: string
