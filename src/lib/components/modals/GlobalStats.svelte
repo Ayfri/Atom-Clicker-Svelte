@@ -74,7 +74,7 @@
 </script>
 
 <Modal title="Statistics" {onClose}>
-	<div class="flex flex-col gap-4 max-h-[70vh] overflow-y-auto pr-1 custom-scrollbar">
+	<div class="flex flex-col gap-4 overflow-y-auto pr-1 custom-scrollbar">
 		<!-- General & Production -->
 		<section>
 			<h3 class="mb-2 flex items-center gap-2 border-b border-white/20 pb-1.5 text-base font-semibold text-white/90">
@@ -292,46 +292,50 @@
 					<RotateCcw size={18} />
 					Prestige
 				</h3>
-				<div class="grid gap-1.5 sm:grid-cols-2">
-					<!-- Protons -->
-					{#if $protons > 0 || $totalProtonises > 0}
-						<div class="flex items-center gap-2 rounded-lg bg-white/5 p-2.5" title={formatNumberFull($protons)}>
-							<img src="/currencies/proton.png" alt="Protons" class="size-5" />
-							<span class="text-sm text-white/70">Protons</span>
-							<span class="ml-auto font-semibold text-yellow-400 tabular-nums">{formatNumber($protons)}</span>
+				<div class="grid gap-1.5 lg:grid-cols-2">
+					<!-- Protons Column -->
+					{#if $protons > 0 || $totalProtonises > 0 || $totalElectronizes > 0}
+						<div class="flex flex-col gap-1.5">
+							<div class="flex items-center gap-2 rounded-lg bg-white/5 p-2.5" title={formatNumberFull($protons)}>
+								<img src="/currencies/proton.png" alt="Protons" class="size-5" />
+								<span class="text-sm text-white/70">Protons</span>
+								<span class="ml-auto font-semibold text-yellow-400 tabular-nums">{formatNumber($protons)}</span>
+							</div>
+							<StatItem
+								fullValue={formatNumberFull($totalProtonsEarned)}
+								icon={Atom}
+								label="Protons Earned (Total)"
+								value={formatNumber($totalProtonsEarned)}
+							/>
+							<StatItem
+								fullValue={formatNumberFull($totalProtonises)}
+								icon={RotateCcw}
+								label="Times Protonised"
+								value={$totalProtonises}
+							/>
 						</div>
-						<StatItem
-							fullValue={formatNumberFull($totalProtonsEarned)}
-							icon={Atom}
-							label="Protons Earned (Total)"
-							value={formatNumber($totalProtonsEarned)}
-						/>
-						<StatItem
-							fullValue={formatNumberFull($totalProtonises)}
-							icon={RotateCcw}
-							label="Times Protonised"
-							value={$totalProtonises}
-						/>
 					{/if}
-					<!-- Electrons -->
+					<!-- Electrons Column -->
 					{#if $electrons > 0 || $totalElectronizes > 0}
-						<div class="flex items-center gap-2 rounded-lg bg-white/5 p-2.5" title={formatNumberFull($electrons)}>
-							<img src="/currencies/electron.png" alt="Electrons" class="size-5" />
-							<span class="text-sm text-white/70">Electrons</span>
-							<span class="ml-auto font-semibold text-green-400 tabular-nums">{formatNumber($electrons)}</span>
+						<div class="flex flex-col gap-1.5">
+							<div class="flex items-center gap-2 rounded-lg bg-white/5 p-2.5" title={formatNumberFull($electrons)}>
+								<img src="/currencies/electron.png" alt="Electrons" class="size-5" />
+								<span class="text-sm text-white/70">Electrons</span>
+								<span class="ml-auto font-semibold text-green-400 tabular-nums">{formatNumber($electrons)}</span>
+							</div>
+							<StatItem
+								fullValue={formatNumberFull($totalElectronsEarned)}
+								icon={Atom}
+								label="Electrons Earned (Total)"
+								value={formatNumber($totalElectronsEarned)}
+							/>
+							<StatItem
+								fullValue={formatNumberFull($totalElectronizes)}
+								icon={RotateCcw}
+								label="Times Electronized"
+								value={$totalElectronizes}
+							/>
 						</div>
-						<StatItem
-							fullValue={formatNumberFull($totalElectronsEarned)}
-							icon={Atom}
-							label="Electrons Earned (Total)"
-							value={formatNumber($totalElectronsEarned)}
-						/>
-						<StatItem
-							fullValue={formatNumberFull($totalElectronizes)}
-							icon={RotateCcw}
-							label="Times Electronized"
-							value={$totalElectronizes}
-						/>
 					{/if}
 				</div>
 			</section>
