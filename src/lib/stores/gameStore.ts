@@ -55,6 +55,22 @@ export const electrons = statManager.register({
 	description: 'Secondary currency from electronize'
 });
 
+export const highestAPS = statManager.register({
+	id: STATS.HIGHEST_APS,
+	defaultValue: 0,
+	layer: LAYERS.NEVER,
+	minVersion: 14,
+	description: 'Highest atoms per second achieved'
+});
+
+export const inGameTime = statManager.register({
+	id: STATS.IN_GAME_TIME,
+	defaultValue: 0,
+	layer: LAYERS.NEVER,
+	minVersion: 14,
+	description: 'Total time spent in-game (milliseconds)'
+});
+
 export const lastSave = statManager.register({
 	id: STATS.LAST_SAVE,
 	defaultValue: Date.now(),
@@ -77,6 +93,14 @@ export const photonUpgrades = statManager.register({
 	layer: LAYERS.PHOTON_REALM,
 	minVersion: 12,
 	description: 'Photon upgrade levels'
+});
+
+export const powerUpsCollected = statManager.register({
+	id: STATS.POWER_UPS_COLLECTED,
+	defaultValue: 0,
+	layer: LAYERS.NEVER,
+	minVersion: 14,
+	description: 'Total power-ups collected all time'
 });
 
 export const protons = statManager.register({
@@ -116,6 +140,22 @@ export const startDate = statManager.register({
 	description: 'Game start timestamp'
 });
 
+export const totalAtomsEarned = statManager.register({
+	id: STATS.TOTAL_ATOMS_EARNED,
+	defaultValue: 0,
+	layer: LAYERS.PROTONIZER,
+	minVersion: 14,
+	description: 'Total atoms earned this run'
+});
+
+export const totalAtomsEarnedAllTime = statManager.register({
+	id: STATS.TOTAL_ATOMS_EARNED_ALL_TIME,
+	defaultValue: 0,
+	layer: LAYERS.NEVER,
+	minVersion: 14,
+	description: 'Total atoms earned all time'
+});
+
 export const totalBonusPhotonsClicked = statManager.register({
 	id: STATS.TOTAL_BONUS_PHOTONS_CLICKED,
 	defaultValue: 0,
@@ -124,12 +164,28 @@ export const totalBonusPhotonsClicked = statManager.register({
 	description: 'Total bonus photons clicked'
 });
 
+export const totalBuildingsPurchased = statManager.register({
+	id: STATS.TOTAL_BUILDINGS_PURCHASED,
+	defaultValue: 0,
+	layer: LAYERS.NEVER,
+	minVersion: 14,
+	description: 'Total buildings purchased all time'
+});
+
 export const totalClicks = statManager.register({
 	id: STATS.TOTAL_CLICKS,
 	defaultValue: 0,
 	layer: LAYERS.PROTONIZER,
 	minVersion: 1,
-	description: 'Total clicks made'
+	description: 'Total clicks made this run'
+});
+
+export const totalClicksAllTime = statManager.register({
+	id: STATS.TOTAL_CLICKS_ALL_TIME,
+	defaultValue: 0,
+	layer: LAYERS.NEVER,
+	minVersion: 14,
+	description: 'Total clicks made all time'
 });
 
 export const totalElectronizes = statManager.register({
@@ -140,12 +196,36 @@ export const totalElectronizes = statManager.register({
 	description: 'Total number of electronizes performed'
 });
 
+export const totalElectronsEarned = statManager.register({
+	id: STATS.TOTAL_ELECTRONS_EARNED,
+	defaultValue: 0,
+	layer: LAYERS.NEVER,
+	minVersion: 14,
+	description: 'Total electrons earned all time'
+});
+
 export const totalProtonises = statManager.register({
 	id: STATS.TOTAL_PROTONISES,
 	defaultValue: 0,
 	layer: LAYERS.ELECTRONIZE,
 	minVersion: 4,
 	description: 'Total number of protonises performed'
+});
+
+export const totalProtonsEarned = statManager.register({
+	id: STATS.TOTAL_PROTONS_EARNED,
+	defaultValue: 0,
+	layer: LAYERS.NEVER,
+	minVersion: 14,
+	description: 'Total protons earned all time'
+});
+
+export const totalUpgradesPurchased = statManager.register({
+	id: STATS.TOTAL_UPGRADES_PURCHASED,
+	defaultValue: 0,
+	layer: LAYERS.NEVER,
+	minVersion: 14,
+	description: 'Total upgrades purchased all time'
 });
 
 export const totalXP = statManager.register({
@@ -213,18 +293,28 @@ export function getCurrentState() {
 		atoms: atoms.get(),
 		buildings: buildings.get(),
 		electrons: electrons.get(),
+		highestAPS: highestAPS.get(),
+		inGameTime: inGameTime.get(),
 		lastSave: lastSave.get(),
 		photons: photons.get(),
 		photonUpgrades: photonUpgrades.get(),
+		powerUpsCollected: powerUpsCollected.get(),
 		protons: protons.get(),
 		purpleRealmUnlocked: purpleRealmUnlocked.get(),
 		settings: settings.get(),
 		skillUpgrades: skillUpgrades.get(),
 		startDate: startDate.get(),
+		totalAtomsEarned: totalAtomsEarned.get(),
+		totalAtomsEarnedAllTime: totalAtomsEarnedAllTime.get(),
 		totalBonusPhotonsClicked: totalBonusPhotonsClicked.get(),
+		totalBuildingsPurchased: totalBuildingsPurchased.get(),
 		totalClicks: totalClicks.get(),
+		totalClicksAllTime: totalClicksAllTime.get(),
 		totalElectronizes: totalElectronizes.get(),
+		totalElectronsEarned: totalElectronsEarned.get(),
 		totalProtonises: totalProtonises.get(),
+		totalProtonsEarned: totalProtonsEarned.get(),
+		totalUpgradesPurchased: totalUpgradesPurchased.get(),
 		totalXP: totalXP.get(),
 		upgrades: upgrades.get(),
 		version: SAVE_VERSION

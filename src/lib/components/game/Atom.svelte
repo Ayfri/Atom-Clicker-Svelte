@@ -3,7 +3,7 @@
 	import {BUILDING_TYPES, BUILDING_COLORS, BUILDING_LEVEL_UP_COST} from '$data/buildings';
 	import {onDestroy} from 'svelte';
 	import {createClickParticle, createClickTextParticle, type Particle} from '$helpers/particles';
-	import {autoClicksPerSecond, buildings, clickPower, hasBonus, totalClicks} from '$stores/gameStore';
+	import {autoClicksPerSecond, buildings, clickPower, hasBonus} from '$stores/gameStore';
 	import {formatNumber} from '$lib/utils';
 	import {shouldCreateParticles, addParticles} from '$stores/canvas';
 	import {app} from '$stores/pixi';
@@ -36,7 +36,7 @@
 
 	async function handleClick(event: MouseEvent) {
 		gameManager.addAtoms($clickPower);
-		$totalClicks++;
+		gameManager.incrementClicks();
 
 		// TODO: Re-add main atom click animation
 

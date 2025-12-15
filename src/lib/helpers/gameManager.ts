@@ -14,13 +14,24 @@ import type { Building, PowerUp, Price } from '$lib/types';
 import {
 	statManager,
 	achievements,
+	atomsPerSecond,
 	atoms,
 	buildings,
 	electrons,
+	highestAPS,
+	inGameTime,
 	photons,
 	photonUpgrades,
+	powerUpsCollected,
 	protons,
 	purpleRealmUnlocked,
+	totalAtomsEarned,
+	totalAtomsEarnedAllTime,
+	totalBuildingsPurchased,
+	totalClicksAllTime,
+	totalElectronsEarned,
+	totalProtonsEarned,
+	totalUpgradesPurchased,
 	upgrades,
 	xpGainMultiplier,
 	getCurrentState,
@@ -30,11 +41,15 @@ import {
 // Store interval references outside the object to avoid TypeScript issues
 let achievementInterval: ReturnType<typeof setInterval> | null = null;
 let xpInterval: ReturnType<typeof setInterval> | null = null;
+let highestAPSInterval: ReturnType<typeof setInterval> | null = null;
+let inGameTimeInterval: ReturnType<typeof setInterval> | null = null;
 
 export const gameManager = {
 	initialize() {
 		this.loadGame();
 		this.setupAchievementChecking();
+		this.setupHighestAPSTracking();
+		this.setupInGameTimeTracking();
 		this.setupXPGeneration();
 	},
 
@@ -70,6 +85,33 @@ export const gameManager = {
 					info("Achievement unlocked", achievement.name);
 				}
 			});
+		}, 1000);
+	},
+
+	setupHighestAPSTracking() {
+		// Clear existing interval if any
+		if (highestAPSInterval) {
+			clearInterval(highestAPSInterval);
+		}
+
+		highestAPSInterval = setInterval(() => {
+			const currentAPS = get(atomsPerSecond);
+			const currentHighest = highestAPS.get();
+			if (currentAPS > currentHighest) {
+				highestAPS.set(currentAPS);
+			}
+		}, 1000);
+	},
+
+	setupInGameTimeTracking() {
+		// Clear existing interval if any
+		if (inGameTimeInterval) {
+			clearInterval(inGameTimeInterval);
+		}
+
+		// Increment in-game time every second (1000ms)
+		inGameTimeInterval = setInterval(() => {
+			inGameTime.add(1000);
 		}, 1000);
 	},
 
@@ -164,6 +206,9 @@ export const gameManager = {
 			[type]: newBuilding
 		}));
 
+		// Track total buildings purchased
+		this.addStat(STATS.TOTAL_BUILDINGS_PURCHASED, amount);
+
 		return true;
 	},
 
@@ -195,6 +240,9 @@ export const gameManager = {
 			if (id === 'feature_purple_realm') {
 				purpleRealmUnlocked.set(true);
 			}
+
+			// Track total upgrades purchased
+			this.addStat(STATS.TOTAL_UPGRADES_PURCHASED, 1);
 
 			return true;
 		}
@@ -238,6 +286,8 @@ export const gameManager = {
 
 			// Increment protonise counter before reset
 			this.addStat(STATS.TOTAL_PROTONISES, 1);
+			// Track total protons earned
+			this.addStat(STATS.TOTAL_PROTONS_EARNED, protonGain);
 			// Reset all stats at protonizer layer and above
 			statManager.resetLayer(LAYERS.PROTONIZER);
 			// Restore persistent upgrades
@@ -266,6 +316,8 @@ export const gameManager = {
 
 			// Increment electronize counter before reset
 			this.addStat(STATS.TOTAL_ELECTRONIZES, 1);
+			// Track total electrons earned
+			this.addStat(STATS.TOTAL_ELECTRONS_EARNED, electronGain);
 			// Reset protonise counter
 			statManager.getNumber(STATS.TOTAL_PROTONISES)?.reset();
 			// Reset all stats at electronize layer and above
@@ -286,6 +338,9 @@ export const gameManager = {
 
 	addPowerUp(powerUp: PowerUp) {
 		statManager.getArray<PowerUp>(STATS.ACTIVE_POWER_UPS)?.push(powerUp);
+
+		// Track power-ups collected
+		this.addStat(STATS.POWER_UPS_COLLECTED, 1);
 
 		setTimeout(() => {
 			this.removePowerUp(powerUp.id);
@@ -320,9 +375,18 @@ export const gameManager = {
 		stat?.multiply(factor);
 	},
 
-	addAtoms: (amount: number) => gameManager.addStat(STATS.ATOMS, amount),
+	addAtoms(amount: number) {
+		gameManager.addStat(STATS.ATOMS, amount);
+		if (amount > 0) {
+			gameManager.addStat(STATS.TOTAL_ATOMS_EARNED, amount);
+			gameManager.addStat(STATS.TOTAL_ATOMS_EARNED_ALL_TIME, amount);
+		}
+	},
 	addPhotons: (amount: number) => gameManager.addStat(STATS.PHOTONS, amount),
-	incrementClicks: () => gameManager.addStat(STATS.TOTAL_CLICKS, 1),
+	incrementClicks() {
+		gameManager.addStat(STATS.TOTAL_CLICKS, 1);
+		gameManager.addStat(STATS.TOTAL_CLICKS_ALL_TIME, 1);
+	},
 	incrementBonusPhotonClicks: () => gameManager.addStat(STATS.TOTAL_BONUS_PHOTONS_CLICKED, 1),
 
 	toggleAutomation(buildingType: BuildingType) {
@@ -368,6 +432,14 @@ export const gameManager = {
 		if (achievementInterval) {
 			clearInterval(achievementInterval);
 			achievementInterval = null;
+		}
+		if (highestAPSInterval) {
+			clearInterval(highestAPSInterval);
+			highestAPSInterval = null;
+		}
+		if (inGameTimeInterval) {
+			clearInterval(inGameTimeInterval);
+			inGameTimeInterval = null;
 		}
 		if (xpInterval) {
 			clearInterval(xpInterval);

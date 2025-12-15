@@ -1,3 +1,9 @@
+# What's new 15-12-2025
+
+- **Redesigned Statistics Menu**: Improved layout and added many new stats.
+- New stats: highest APS, total atoms/clicks (all time), buildings/upgrades purchased, power-ups collected, time since start, in-game time, duration multiplier, effect multiplier.
+- Hover over abbreviated stats to see exact numbers.
+
 # What's new 14-12-2025
 
 - **Enhanced Leaderboard**: Search players, filter by rank (Top 10/50/100), quick jump to your position

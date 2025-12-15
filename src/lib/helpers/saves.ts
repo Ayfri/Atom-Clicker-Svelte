@@ -3,7 +3,7 @@ import {CurrenciesTypes} from '$data/currencies';
 import type {Building, GameState} from '$lib/types';
 
 export const SAVE_KEY = 'atomic-clicker-save';
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 14;
 
 // Helper functions for state management
 export function loadSavedState(): GameState | null {
@@ -48,6 +48,14 @@ export function isValidGameState(state: any): state is GameState {
 			(v: any) => typeof v === 'number',
 		],
 		[
+			'highestAPS',
+			(v: any) => typeof v === 'number',
+		],
+		[
+			'inGameTime',
+			(v: any) => typeof v === 'number',
+		],
+		[
 			'lastSave',
 			(v: any) => typeof v === 'number',
 		],
@@ -58,6 +66,10 @@ export function isValidGameState(state: any): state is GameState {
 		[
 			'photonUpgrades',
 			(v: any) => typeof v === 'object',
+		],
+		[
+			'powerUpsCollected',
+			(v: any) => typeof v === 'number',
 		],
 		[
 			'protons',
@@ -79,7 +91,19 @@ export function isValidGameState(state: any): state is GameState {
 			(v: any) => typeof v === 'number',
 		],
 		[
+			'totalAtomsEarned',
+			(v: any) => typeof v === 'number',
+		],
+		[
+			'totalAtomsEarnedAllTime',
+			(v: any) => typeof v === 'number',
+		],
+		[
 			'totalBonusPhotonsClicked',
+			(v: any) => typeof v === 'number',
+		],
+		[
+			'totalBuildingsPurchased',
 			(v: any) => typeof v === 'number',
 		],
 		[
@@ -87,11 +111,27 @@ export function isValidGameState(state: any): state is GameState {
 			(v: any) => typeof v === 'number',
 		],
 		[
+			'totalClicksAllTime',
+			(v: any) => typeof v === 'number',
+		],
+		[
 			'totalElectronizes',
 			(v: any) => typeof v === 'number',
 		],
 		[
+			'totalElectronsEarned',
+			(v: any) => typeof v === 'number',
+		],
+		[
 			'totalProtonises',
+			(v: any) => typeof v === 'number',
+		],
+		[
+			'totalProtonsEarned',
+			(v: any) => typeof v === 'number',
+		],
+		[
+			'totalUpgradesPurchased',
 			(v: any) => typeof v === 'number',
 		],
 		[
@@ -207,6 +247,26 @@ function migrateSavedState(savedState: any): GameState | undefined {
 		// Add purpleRealmUnlocked
 		savedState.purpleRealmUnlocked = false;
 		savedState.version = 13;
+	}
+	if (savedState.version === 13) {
+		// Add new stats tracking - initialize from current values
+		savedState.highestAPS = 0;
+		savedState.inGameTime = 0;
+		savedState.powerUpsCollected = 0;
+		// Initialize earned stats from current balance as a baseline
+		savedState.totalAtomsEarned = savedState.atoms || 0;
+		savedState.totalAtomsEarnedAllTime = savedState.atoms || 0;
+		// Count total buildings currently owned as baseline
+		const buildingsOwned = Object.values(savedState.buildings || {}).reduce((acc: number, b: any) => acc + (b?.count || 0), 0);
+		savedState.totalBuildingsPurchased = buildingsOwned;
+		// Initialize clicks all time from current run
+		savedState.totalClicksAllTime = savedState.totalClicks || 0;
+		// Initialize currency earned from current balance
+		savedState.totalElectronsEarned = savedState.electrons || 0;
+		savedState.totalProtonsEarned = savedState.protons || 0;
+		// Count upgrades owned as baseline
+		savedState.totalUpgradesPurchased = (savedState.upgrades?.length || 0) + (savedState.skillUpgrades?.length || 0);
+		savedState.version = 14;
 	}
 
 	return savedState;
