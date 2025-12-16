@@ -23,7 +23,8 @@ function getUserIdFromCookies(cookies: { get: (name: string) => string | undefin
 			// Try to decode JWT to get user ID (payload is base64)
 			const parts = authCookie.split('.');
 			if (parts.length === 3) {
-				const payload = JSON.parse(atob(parts[1]));
+				// Decode JWT payload (base64) without validating signature! Do not use for authorization.
+				const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
 				return payload.sub || null;
 			}
 		}
