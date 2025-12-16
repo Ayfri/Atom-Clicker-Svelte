@@ -34,7 +34,6 @@
 	let disappearTimeout: ReturnType<typeof setTimeout> | null = null;
 
 	function spawnBonusAtom() {
-		console.log('spawning bonus atom');
 		x = Math.random() * (window.innerWidth - MARGIN * 2) + MARGIN;
 		y = Math.random() * (window.innerHeight - MARGIN * 2) + MARGIN;
 

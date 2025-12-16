@@ -120,7 +120,6 @@ export function formatNumber(num: number, precision = 2): string {
 	const absNum = Math.abs(num);
 
 	if (absNum < 1000) {
-		// Pour les nombres < 1000, n'afficher les décimales que si nécessaire
 		if (Number.isInteger(num)) {
 			return `${num}`;
 		} else {

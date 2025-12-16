@@ -216,6 +216,7 @@
 									onsubmit={handleUsernameUpdate}
 									class="flex items-center gap-2"
 								>
+									<!-- svelte-ignore a11y_autofocus -->
 									<input
 										type="text"
 										bind:value={newUsername}
@@ -224,6 +225,7 @@
 										placeholder="Enter new username"
 										maxlength="30"
 										minlength="3"
+										autofocus
 									/>
 									<button
 										type="submit"
