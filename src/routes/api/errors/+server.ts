@@ -2,6 +2,29 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { logError } from '$lib/server/errorHandler.server';
 
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+	'https://atom-clicker.ayfri.com', // Production domain
+	'https://dev-atom-clicker.ayfri.workers.dev', // Dev domain
+];
+
+function isValidOrigin(origin: string | null): boolean {
+	if (!origin) return false;
+	return ALLOWED_ORIGINS.includes(origin);
+}
+
+function createCorsResponse(data: any, options: { status?: number } = {}) {
+	return json(data, {
+		status: options.status || 200,
+		headers: {
+			'Access-Control-Allow-Origin': '*',
+			'Access-Control-Allow-Methods': 'POST, OPTIONS',
+			'Access-Control-Allow-Headers': 'Content-Type',
+			'Access-Control-Max-Age': '86400'
+		}
+	});
+}
+
 // Rate limiting to prevent spam - sliding window implementation
 const errorRateLimit = new Map<string, number[]>();
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
@@ -51,20 +74,37 @@ function isRateLimited(clientIp: string): boolean {
 	return false; // Not rate limited
 }
 
+export const OPTIONS: RequestHandler = async ({ request }) => {
+	const origin = request.headers.get('origin');
+
+	if (!isValidOrigin(origin)) {
+		return json({ error: 'Origin not allowed' }, { status: 403 });
+	}
+
+	return createCorsResponse({ success: true });
+};
+
 export const POST: RequestHandler = async ({ request, getClientAddress }) => {
 	try {
+		const origin = request.headers.get('origin');
+
+		// Validate origin
+		if (!isValidOrigin(origin)) {
+			return createCorsResponse({ error: 'Origin not allowed' }, { status: 403 });
+		}
+
 		const clientIp = getClientAddress();
 
 		// Check rate limiting
 		if (isRateLimited(clientIp)) {
-			return json({ error: 'Rate limit exceeded' }, { status: 429 });
+			return createCorsResponse({ error: 'Rate limit exceeded' }, { status: 429 });
 		}
 
 		const body = await request.json();
 
 		// Validate required fields
 		if (!body.errorMessage || typeof body.errorMessage !== 'string') {
-			return json({ error: 'Missing error message' }, { status: 400 });
+			return createCorsResponse({ error: 'Missing error message' }, { status: 400 });
 		}
 
 		// Log the error
@@ -77,9 +117,9 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
 			userId: body.userId || null
 		});
 
-		return json({ id: result?.id ?? null, success: true });
+		return createCorsResponse({ id: result?.id ?? null, success: true });
 	} catch (error) {
 		console.error('[ErrorAPI] Failed to process error report:', error);
-		return json({ error: 'Failed to log error' }, { status: 500 });
+		return createCorsResponse({ error: 'Failed to log error' }, { status: 500 });
 	}
 };
