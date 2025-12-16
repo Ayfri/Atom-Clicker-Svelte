@@ -9,9 +9,9 @@
 	}
 
 	let { name, icon = true, class: className = '', ...rest }: Props = $props();
-	
 
-	const currency = CURRENCIES[name];
+
+	const currency = $derived(CURRENCIES[name]);
 </script>
 
 {#if icon}

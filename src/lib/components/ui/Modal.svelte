@@ -38,13 +38,20 @@
 <svelte:window onkeydown={onKeydown} />
 
 <div
+	aria-modal="true"
 	class="overlay fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs"
 	onclick={onClose}
+	onkeydown={onKeydown}
+	role="dialog"
+	tabindex="0"
 	transition:fade={{ duration: 200 }}
 >
 	<div
 		class="modal flex h-dvh w-screen md:h-[85vh] md:w-[85vw] {widthClasses} flex-col overflow-hidden md:rounded-2xl shadow-2xl bg-linear-to-br from-accent-900 to-accent-800"
 		onclick={(e) => e.stopPropagation()}
+		onkeydown={onKeydown}
+		role="dialog"
+		tabindex="0"
 		transition:fly={{ y: -100, duration: 300 }}
 	>
 		<div class="flex items-center justify-between gap-4 border-b border-white/10 bg-black/40 p-4 sm:px-6">

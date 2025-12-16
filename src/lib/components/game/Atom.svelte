@@ -9,7 +9,7 @@
 	import {app} from '$stores/pixi';
 	import { CurrenciesTypes } from '$data/currencies';
 
-	let atomElement = $state<HTMLDivElement>();
+	let atomElement = $state<HTMLButtonElement>();
 
 	export function simulateClick() {
 		if (!atomElement) return;
@@ -59,7 +59,7 @@
 	onDestroy(() => clearInterval(interval));
 </script>
 
-<div
+<button
 	class="atom relative mt-20 flex size-[450px] items-center justify-center cursor-pointer bg-transparent md:size-[360px] sm:size-[300px]"
 	class:bonus={$hasBonus}
 	onclick={async e => await handleClick(e)}
@@ -78,7 +78,7 @@
 		{/if}
 	{/each}
 	<div class="nucleus h-[60px] w-[60px] rounded-full md:h-[50px] md:w-[50px]"></div>
-</div>
+</button>
 
 <style>
 	.atom {

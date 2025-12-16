@@ -224,7 +224,6 @@
 										placeholder="Enter new username"
 										maxlength="30"
 										minlength="3"
-										autofocus
 									/>
 									<button
 										type="submit"
