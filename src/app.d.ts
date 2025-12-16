@@ -26,7 +26,6 @@ declare global {
 
 	namespace NodeJS {
 		interface ProcessEnv {
-			DISCORD_ERROR_WEBHOOK_URL: string;
 			OBFUSCATION_KEY: string;
 			PUBLIC_SUPABASE_ANON_KEY: string;
 			PUBLIC_SUPABASE_URL: string;
