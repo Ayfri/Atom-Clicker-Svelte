@@ -1,4 +1,5 @@
 <script lang="ts">
+	import HardReset from '@components/modals/HardReset.svelte';
 	import Login from '@components/modals/Login.svelte';
 	import Modal from '@components/ui/Modal.svelte';
 	import Value from '@components/ui/Value.svelte';
@@ -8,7 +9,7 @@
 	import { getLevelFromTotalXP } from '$stores/gameStore';
 	import { supabaseAuth } from '$stores/supabaseAuth';
 	import { error as errorToast, info } from '$stores/toasts';
-	import { AlertCircle, Clock, CloudDownload, CloudUpload } from 'lucide-svelte';
+	import { AlertCircle, Clock, CloudDownload, CloudUpload, RotateCcw } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 
 	interface Props {
@@ -31,6 +32,7 @@
 	let lastManualSaveTime = $state(0);
 	let loading = $state(false);
 	let progressInterval: ReturnType<typeof setInterval> | null = null;
+	let showHardReset = $state(false);
 	let showLoginModal = $state(false);
 
 	function updateProgress() {
@@ -296,6 +298,16 @@
                     <CloudDownload class="size-5" />
                     Load from Cloud
                 </button>
+
+                <div class="h-px bg-white/10 my-2"></div>
+
+                <button
+                    class="flex items-center justify-center gap-2 rounded-lg bg-red-900/40 px-6 py-3 font-semibold text-red-200 transition-colors hover:bg-red-900/60"
+                    onclick={() => showHardReset = true}
+                >
+                    <RotateCcw class="size-5" />
+                    Hard Reset
+                </button>
             </div>
 
             <div class="mt-4 rounded-lg bg-black/20 p-4 text-sm text-white/80">
@@ -312,4 +324,8 @@
 
 {#if showLoginModal}
     <Login onClose={() => showLoginModal = false}/>
+{/if}
+
+{#if showHardReset}
+	<HardReset onClose={() => showHardReset = false} />
 {/if}

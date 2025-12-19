@@ -1,10 +1,8 @@
 <script lang="ts">
 	import '$stores/autoBuy';
 	import '$stores/autoUpgrade';
-	import { RotateCcw } from 'lucide-svelte';
 	import {onDestroy, onMount} from 'svelte';
 	import AutoSaveIndicator from '@components/system/AutoSaveIndicator.svelte';
-	import HardReset from '@components/modals/HardReset.svelte';
 	import Levels from '@components/game/Levels.svelte';
 	import NavBar from '@components/layout/NavBar.svelte';
 	import RealmFooter from '@components/layout/RealmFooter.svelte';
@@ -25,7 +23,6 @@
 	const SAVE_INTERVAL = 1000;
 	let saveLoop: ReturnType<typeof setInterval>;
 	let gameUpdateInterval: ReturnType<typeof setInterval> | null = null;
-	let showHardReset = $state(false);
 
 	function update(ticker: any) {
 		gameManager.addAtoms(($atomsPerSecond * ticker.deltaMS) / 1000);
@@ -82,16 +79,6 @@
 	<Toaster/>
 	<AutoSaveIndicator/>
 
-	<button
-		class="fixed right-4 z-40 flex gap-2 py-1.5 px-3 items-center justify-center rounded-lg bg-red-900/30 text-white transition-all duration-300 hover:bg-red-900/50"
-		style="top: {$remoteMessage.message && $remoteMessage.isVisible ? 'calc(1.5rem + 1rem)' : '1rem'}"
-		onclick={() => showHardReset = true}
-		title="Hard Reset"
-	>
-		<RotateCcw class="size-5" />
-		Reset
-	</button>
-
 	{#if $realmManager.availableRealms.length > 1}
 		<div
 			class="fixed right-4 z-30 bg-black/10 backdrop-blur-xs border border-white/10 rounded-lg p-1 transition-all duration-300"
@@ -139,10 +126,6 @@
 				</div>
 			</div>
 		{/each}
-
-		{#if showHardReset}
-			<HardReset onClose={() => showHardReset = false} />
-		{/if}
 
 		{#if $saveRecovery.hasError}
 			<SaveRecovery onClose={() => saveRecovery.clearError()} />

@@ -1,6 +1,7 @@
 # What's new 19-12-2025
 
 - **Remote Messaging System**: Added a new banner system that allows displaying important messages or announcements directly in-game.
+- **Cloud Save Modal**: Moved the "Hard Reset" button into the cloud save menu to declutter the main interface.
 
 # What's new 16-12-2025
 
