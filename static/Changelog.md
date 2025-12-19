@@ -1,3 +1,7 @@
+# What's new 19-12-2025
+
+- **Remote Messaging System**: Added a new banner system that allows displaying important messages or announcements directly in-game.
+
 # What's new 16-12-2025
 
 - **Achievement notifications improved**: Smaller, more compact design with better padding, now displays both achievement name and description.

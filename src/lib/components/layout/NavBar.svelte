@@ -14,10 +14,10 @@
 	import { electronizeElectronsGain } from '$stores/electrons';
 	import { protons, atoms, electrons, hasAvailableSkillUpgrades, skillPointsTotal } from '$stores/gameStore';
 	import { protoniseProtonsGain } from '$stores/protons';
+	import { remoteMessage } from '$stores/remoteMessage';
 	import { mobile } from '$stores/window';
 	import { ChartNoAxesColumn, Network, Info, Atom, Trophy, MessageSquare, Orbit, FileText, Cloud, type Icon as IconType } from 'lucide-svelte';
 	import { onDestroy, onMount, type Component } from 'svelte';
-
 
 	type NavBarComponent = Component<{ onClose: () => void }>;
 
@@ -121,7 +121,10 @@
 		{/each}
 	</div>
 {:else}
-	<nav class="fixed left-0 top-0 z-50 flex h-full flex-col items-center gap-5 bg-black/20 px-3 py-6 backdrop-blur-xs">
+	<nav
+		class="fixed left-0 z-50 flex h-full flex-col items-center gap-5 bg-black/20 px-3 py-6 backdrop-blur-xs transition-all duration-300"
+		style="top: {$remoteMessage.message && $remoteMessage.isVisible ? '1.5rem' : '0'}"
+	>
 		{#each visibleComponents as link}
 			<NotificationDot hasNotification={link.notification ? link.notification() : false}>
 				<button

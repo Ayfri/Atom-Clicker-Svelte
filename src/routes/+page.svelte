@@ -8,6 +8,7 @@
 	import Levels from '@components/game/Levels.svelte';
 	import NavBar from '@components/layout/NavBar.svelte';
 	import RealmFooter from '@components/layout/RealmFooter.svelte';
+	import RemoteBanner from '@components/layout/RemoteBanner.svelte';
 	import SaveRecovery from '@components/modals/SaveRecovery.svelte';
 	import Toaster from '@components/layout/Toaster.svelte';
 	import {gameManager} from '$helpers/gameManager';
@@ -15,6 +16,7 @@
 	import {setGlobals} from '$lib/globals';
 	import {formatNumber} from '$lib/utils';
 	import {atomsPerSecond, upgrades} from '$stores/gameStore';
+	import {remoteMessage} from '$stores/remoteMessage';
 	import {app} from '$stores/pixi';
 	import {saveRecovery} from '$stores/saveRecovery';
 	import {supabaseAuth} from '$stores/supabaseAuth';
@@ -75,12 +77,14 @@
 />
 
 <div class="flex flex-col min-h-screen">
+	<RemoteBanner/>
 	<NavBar/>
 	<Toaster/>
 	<AutoSaveIndicator/>
 
 	<button
-		class="fixed right-4 top-4 z-40 flex gap-2 py-1.5 px-3 items-center justify-center rounded-lg bg-red-900/30 text-white transition-colors hover:bg-red-900/50"
+		class="fixed right-4 z-40 flex gap-2 py-1.5 px-3 items-center justify-center rounded-lg bg-red-900/30 text-white transition-all duration-300 hover:bg-red-900/50"
+		style="top: {$remoteMessage.message && $remoteMessage.isVisible ? 'calc(1.5rem + 1rem)' : '1rem'}"
 		onclick={() => showHardReset = true}
 		title="Hard Reset"
 	>
@@ -89,7 +93,10 @@
 	</button>
 
 	{#if $realmManager.availableRealms.length > 1}
-		<div class="fixed right-4 top-20 z-30 bg-black/10 backdrop-blur-xs border border-white/10 rounded-lg p-1">
+		<div
+			class="fixed right-4 z-30 bg-black/10 backdrop-blur-xs border border-white/10 rounded-lg p-1 transition-all duration-300"
+			style="top: {$remoteMessage.message && $remoteMessage.isVisible ? 'calc(1.5rem + 5rem)' : '5rem'}"
+		>
 			<div class="flex flex-col gap-1">
 				{#each $realmManager.availableRealms as realm (realm.id)}
 					<button
@@ -105,7 +112,10 @@
 		</div>
 	{/if}
 
-	<main class="relative flex-1 py-12 {$mobile ? 'overflow-y-auto' : 'overflow-hidden'} lg:pb-4">
+	<main
+		class="relative flex-1 {$mobile ? 'overflow-y-auto' : 'overflow-hidden'} lg:pb-4 transition-all duration-300"
+		style="padding-top: {$remoteMessage.message && $remoteMessage.isVisible ? 'calc(3rem + 1.5rem)' : '3rem'}; padding-bottom: 3rem;"
+	>
 		{#if $upgrades.includes('feature_levels')}
 			<Levels/>
 		{/if}
