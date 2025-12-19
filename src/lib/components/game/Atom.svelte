@@ -3,13 +3,13 @@
 	import {BUILDING_TYPES, BUILDING_COLORS, BUILDING_LEVEL_UP_COST} from '$data/buildings';
 	import {onDestroy} from 'svelte';
 	import {createClickParticle, createClickTextParticle, type Particle} from '$helpers/particles';
-	import {autoClicksPerSecond, buildings, clickPower, hasBonus, totalClicks} from '$stores/gameStore';
+	import {autoClicksPerSecond, buildings, clickPower, hasBonus} from '$stores/gameStore';
 	import {formatNumber} from '$lib/utils';
 	import {shouldCreateParticles, addParticles} from '$stores/canvas';
 	import {app} from '$stores/pixi';
 	import { CurrenciesTypes } from '$data/currencies';
 
-	let atomElement = $state<HTMLDivElement>();
+	let atomElement = $state<HTMLButtonElement>();
 
 	export function simulateClick() {
 		if (!atomElement) return;
@@ -36,7 +36,7 @@
 
 	async function handleClick(event: MouseEvent) {
 		gameManager.addAtoms($clickPower);
-		$totalClicks++;
+		gameManager.incrementClicks();
 
 		// TODO: Re-add main atom click animation
 
@@ -59,7 +59,7 @@
 	onDestroy(() => clearInterval(interval));
 </script>
 
-<div
+<button
 	class="atom relative mt-20 flex size-[450px] items-center justify-center cursor-pointer bg-transparent md:size-[360px] sm:size-[300px]"
 	class:bonus={$hasBonus}
 	onclick={async e => await handleClick(e)}
@@ -78,7 +78,7 @@
 		{/if}
 	{/each}
 	<div class="nucleus h-[60px] w-[60px] rounded-full md:h-[50px] md:w-[50px]"></div>
-</div>
+</button>
 
 <style>
 	.atom {

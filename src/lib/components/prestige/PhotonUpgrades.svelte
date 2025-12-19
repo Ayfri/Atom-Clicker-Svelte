@@ -29,8 +29,8 @@
 			{@const currentLevel = $photonUpgrades[upgrade.id] || 0}
 			{@const cost = getPhotonUpgradeCost(upgrade, currentLevel)}
 			{@const affordable = affordableUpgrades.includes(upgrade)}
-			<div
-				class="upgrade bg-realm-900/20 hover:bg-realm-900/30 border border-realm-500/20 hover:border-realm-500/40 rounded-sm cursor-pointer p-2 transition-all duration-200 {affordable ? '' : 'opacity-50 cursor-not-allowed'}"
+			<button
+				class="upgrade text-start bg-realm-900/20 hover:bg-realm-900/30 border border-realm-500/20 hover:border-realm-500/40 rounded-sm cursor-pointer p-2 transition-all duration-200 {affordable ? '' : 'opacity-50 cursor-not-allowed'}"
 				onclick={() => {
 					if (affordable) gameManager.purchasePhotonUpgrade(upgrade.id);
 				}}
@@ -45,7 +45,7 @@
 				<div class="text-xs text-realm-300">
 					<Value value={cost} currency={CurrenciesTypes.PHOTONS}/>
 				</div>
-			</div>
+			</button>
 		{/each}
 
 		{#if availableUpgrades.length === 0}

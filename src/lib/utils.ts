@@ -120,7 +120,11 @@ export function formatNumber(num: number, precision = 2): string {
 	const absNum = Math.abs(num);
 
 	if (absNum < 1000) {
-		return `${num.toFixed(precision)}`;
+		if (Number.isInteger(num)) {
+			return `${num}`;
+		} else {
+			return `${num.toFixed(precision)}`;
+		}
 	}
 
 	const exponent = Math.floor(Math.log(absNum) / Math.log(1000));
@@ -129,6 +133,32 @@ export function formatNumber(num: number, precision = 2): string {
 	const scaled = num / Math.pow(1000, suffixIndex);
 
 	return `${scaled.toFixed(precision)}${suffix}`;
+}
+
+export function formatNumberFull(num: number): string {
+	if (!Number.isFinite(num)) {
+		return "∞";
+	}
+
+	return num.toLocaleString('en-US', { maximumFractionDigits: 2 });
+}
+
+export function formatDuration(ms: number): string {
+	const seconds = Math.floor(ms / 1000);
+	const minutes = Math.floor(seconds / 60);
+	const hours = Math.floor(minutes / 60);
+	const days = Math.floor(hours / 24);
+
+	if (days > 0) {
+		return `${days}d ${hours % 24}h ${minutes % 60}m`;
+	}
+	if (hours > 0) {
+		return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
+	}
+	if (minutes > 0) {
+		return `${minutes}m ${seconds % 60}s`;
+	}
+	return `${seconds}s`;
 }
 
 export function shortNumberText(num: number): string {

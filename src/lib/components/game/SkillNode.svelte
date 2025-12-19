@@ -9,7 +9,7 @@
 	}
 
 	let { data, id }: NodeProps = $props();
-	
+
 	// Use $derived to make skillData reactive
 	const skillData = $derived(data as unknown as SkillNode);
 </script>
@@ -26,7 +26,21 @@
 <Handle id="{id}-{Position.Right}" type="source" position={Position.Right} class="hidden-handle" />
 <Handle id="{id}-{Position.Right}" type="target" position={Position.Right} class="hidden-handle" />
 
-<div class="skill-node" class:unlocked={skillData.unlocked} class:available={skillData.available} onclick={() => skillData.onClick?.()}>
+<div
+	aria-label="Unlock {skillData.name}"
+	title="Unlock {skillData.name}"
+	class="skill-node"
+	class:unlocked={skillData.unlocked}
+	class:available={skillData.available}
+	onclick={() => skillData.onClick?.()}
+	onkeydown={(e) => {
+		if (e.key === 'Enter' || e.key === ' ') {
+			skillData.onClick?.();
+		}
+	}}
+	tabindex="0"
+	role="button"
+>
 	<div class="skill-content">
 		<h3>{skillData.name}</h3>
 		<p>{skillData.description}</p>

@@ -15,7 +15,6 @@ export const loadParticleAssets = async (): Promise<void> => {
 			alias: icon,
 			src: `currencies/${icon}.png`
 		})));
-		console.log('Particle assets loaded');
 	} catch (error) {
 		console.warn('Failed to load particle assets:', error);
 	}

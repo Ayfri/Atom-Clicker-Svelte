@@ -205,8 +205,8 @@ import { fade, fly, scale } from 'svelte/transition';
 			{@const hasAutomation = getUpgradesWithEffects($currentUpgradesBought, { type: 'auto_buy', target: type }).length > 0}
 			{@const autoPurchasedCount = $recentlyAutoPurchasedBuildings.get(type) || 0}
 
-			<div
-				class="relative bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer p-2 transition-all duration-200 {unaffordable ? 'opacity-50 cursor-not-allowed' : ''}"
+			<button
+				class="relative text-start bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer p-2 transition-all duration-200 {unaffordable ? 'opacity-50 cursor-not-allowed' : ''}"
 				style="--color: {color};"
 				onclick={() => handlePurchase(type)}
 				transition:fade
@@ -257,7 +257,7 @@ import { fade, fly, scale } from 'svelte/transition';
 						/>
 					{/if}
 				</div>
-			</div>
+			</button>
 		{/each}
 	</div>
 </div>

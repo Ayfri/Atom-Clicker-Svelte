@@ -1,3 +1,17 @@
+# What's new 16-12-2025
+
+- **Achievement notifications improved**: Smaller, more compact design with better padding, now displays both achievement name and description.
+- **Number formatting fix**: Small numbers now display without unnecessary decimals (1 instead of 1.00).
+- **New achievements**: Total playtime, in-game playtime, opening the changelog, and many new secrets ones, clicking on links may do something...
+- Fixed bonus teleportation and made it non-clickable during fade-out.
+- **Save Recovery System**: Added fail-safes to prevent save data loss from minor errors.
+- Automatic backup of corrupted saves before attempting recovery.
+- Smart repair of invalid or missing save fields when possible.
+- Recovery popup offers to load from cloud save or start fresh if local save is corrupted.
+- **Redesigned Statistics Menu**: Improved layout and added many new stats.
+- New stats: highest APS, total atoms/clicks (all time), buildings/upgrades purchased, power-ups collected, time since start, in-game time, duration multiplier, effect multiplier.
+- Hover over abbreviated stats to see exact numbers.
+
 # What's new 14-12-2025
 
 - **Enhanced Leaderboard**: Search players, filter by rank (Top 10/50/100), quick jump to your position

@@ -23,10 +23,10 @@
 		...rest
 	}: Props = $props();
 
-	let currencyObject = currency ? CURRENCIES[currency] : undefined;
+	const currencyObject = $derived(currency ? CURRENCIES[currency] : undefined);
 </script>
 
-<span title={currencyObject ? currencyObject.name : ''} {...rest}>
+<span title={currencyObject?.name ?? ''} {...rest}>
 	{prefix}{formatNumber(value, precision)}
 	{#if currency}
 		<Currency name={currency} icon={true} class={currencyClass} />

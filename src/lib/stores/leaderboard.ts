@@ -82,7 +82,7 @@ function createLeaderboardStore() {
 			if (!response.ok) {
 				const errorData = await response.json();
 				if (response.status === 429) {
-					console.log(`Rate limited. Next update in ${errorData.nextUpdateIn} seconds`);
+					console.log(`Leaderboard rate limited. Next update in ${errorData.nextUpdateIn} seconds`);
 					return;
 				}
 				throw new Error('Failed to update leaderboard');

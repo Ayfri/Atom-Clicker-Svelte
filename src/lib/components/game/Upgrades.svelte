@@ -18,7 +18,7 @@
 	// Show proton upgrades if player has protons, has protonised before, or has purchased any proton upgrade
 	const hasProtonUpgrades = $derived($upgrades.some(id => id.startsWith('proton')));
 	const showProtons = $derived($protons > 0 || $totalProtonises > 0 || hasProtonUpgrades);
-	
+
 	// Show electron upgrades if player has electrons or has purchased any electron upgrade
 	const hasElectronUpgrades = $derived($upgrades.some(id => id.startsWith('electron')));
 	const showElectrons = $derived($electrons > 0 || hasElectronUpgrades);
@@ -59,7 +59,7 @@
 
 	<div class="currency-tabs flex gap-1">
 		<button
-			class="currency-tab flex items-center bg-white/5 border-none rounded-lg cursor-pointer p-2 transition-all duration-200 hover:bg-white/10 active:bg-white/[0.15] active:shadow-[0_0_10px_rgba(255,255,255,0.1)] xl:p-2 lg:p-1.5"
+			class="currency-tab flex items-center bg-white/5 border-none rounded-lg cursor-pointer p-2 transition-all duration-200 hover:bg-white/10 active:bg-white/15 active:shadow-[0_0_10px_rgba(255,255,255,0.1)] xl:p-2 lg:p-1.5"
 			class:active={selectedCurrency === CurrenciesTypes.ATOMS}
 			onclick={() => selectedCurrency = CurrenciesTypes.ATOMS}
 		>
@@ -67,7 +67,7 @@
 		</button>
 		{#if showProtons}
 			<button
-				class="currency-tab flex items-center bg-white/5 border-none rounded-lg cursor-pointer p-2 transition-all duration-200 hover:bg-white/10 active:bg-white/[0.15] active:shadow-[0_0_10px_rgba(255,255,255,0.1)] xl:p-2 lg:p-1.5"
+				class="currency-tab flex items-center bg-white/5 border-none rounded-lg cursor-pointer p-2 transition-all duration-200 hover:bg-white/10 active:bg-white/15 active:shadow-[0_0_10px_rgba(255,255,255,0.1)] xl:p-2 lg:p-1.5"
 				class:active={selectedCurrency === CurrenciesTypes.PROTONS}
 				onclick={() => selectedCurrency = CurrenciesTypes.PROTONS}
 			>
@@ -76,7 +76,7 @@
 		{/if}
 		{#if showElectrons}
 			<button
-				class="currency-tab flex items-center bg-white/5 border-none rounded-lg cursor-pointer p-2 transition-all duration-200 hover:bg-white/10 active:bg-white/[0.15] active:shadow-[0_0_10px_rgba(255,255,255,0.1)] xl:p-2 lg:p-1.5"
+				class="currency-tab flex items-center bg-white/5 border-none rounded-lg cursor-pointer p-2 transition-all duration-200 hover:bg-white/10 active:bg-white/15 active:shadow-[0_0_10px_rgba(255,255,255,0.1)] xl:p-2 lg:p-1.5"
 				class:active={selectedCurrency === CurrenciesTypes.ELECTRONS}
 				onclick={() => selectedCurrency = CurrenciesTypes.ELECTRONS}
 			>
@@ -89,15 +89,15 @@
 		{#each availableUpgrades.slice(0, 10) as upgrade (upgrade.id)}
 			{@const affordable = affordableUpgrades.includes(upgrade)}
 			{@const wasAutoPurchased = $recentlyAutoPurchased.has(upgrade.id)}
-			<div
-				class="relative bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer p-2 transition-all duration-200 {affordable ? '' : 'opacity-50 cursor-not-allowed'}"
+			<button
+				class="relative text-start bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer p-2 transition-all duration-200 {affordable ? '' : 'opacity-50 cursor-not-allowed'}"
 				onclick={() => {
 					if (affordable) gameManager.purchaseUpgrade(upgrade.id);
 				}}
 			>
 				{#if wasAutoPurchased}
 					<div
-						class="absolute top-1 right-1 bg-gradient-to-br from-green-500 to-green-700 text-white font-bold text-xs px-1.5 py-0.5 rounded shadow-lg shadow-green-500/40 z-10 pointer-events-none"
+						class="absolute top-1 right-1 bg-linear-to-br from-green-500 to-green-700 text-white font-bold text-xs px-1.5 py-0.5 rounded shadow-lg shadow-green-500/40 z-10 pointer-events-none"
 						in:scale={{ duration: 200, start: 0.3 }}
 						out:fly={{ y: -30, duration: 500, opacity: 0 }}
 					>
@@ -109,8 +109,7 @@
 				<div class="text-xs mt-1" style="color: {CURRENCIES[upgrade.cost.currency].color}">
 					Cost: <Value value={upgrade.cost.amount} currency={upgrade.cost.currency}/>
 				</div>
-			</div>
+			</button>
 		{/each}
 	</div>
 </div>
-

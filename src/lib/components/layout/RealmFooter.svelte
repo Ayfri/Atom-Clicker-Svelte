@@ -2,6 +2,8 @@
 	import Discord from '@components/icons/Discord.svelte';
 	import GitHub from '@components/icons/GitHub.svelte';
 	import { Coffee } from 'lucide-svelte';
+	import { gameManager } from '$helpers/gameManager';
+	import { achievements } from '$stores/gameStore';
 
 	export interface FooterTheme {
 		baseClass: string;
@@ -15,6 +17,30 @@
 	}
 
 	let { footerTheme }: Props = $props();
+
+	function handleWebsiteClick() {
+		if (!$achievements.includes('website_click')) {
+			gameManager.unlockAchievement('website_click');
+		}
+	}
+
+	function handleCoffeeClick() {
+		if (!$achievements.includes('coffee_click')) {
+			gameManager.unlockAchievement('coffee_click');
+		}
+	}
+
+	function handleDiscordClick() {
+		if (!$achievements.includes('discord_click')) {
+			gameManager.unlockAchievement('discord_click');
+		}
+	}
+
+	function handleGitHubClick() {
+		if (!$achievements.includes('github_click')) {
+			gameManager.unlockAchievement('github_click');
+		}
+	}
 </script>
 
 <footer class="px-4 py-2 text-xs {footerTheme.baseClass}">
@@ -26,6 +52,7 @@
 				rel="noopener noreferrer"
 				target="_blank"
 				title="Join our Discord community"
+				onclick={handleDiscordClick}
 			>
 				<Discord class="w-3.5 h-3.5" />
 			</a>
@@ -35,6 +62,7 @@
 				rel="noopener noreferrer"
 				target="_blank"
 				title="View source code on GitHub"
+				onclick={handleGitHubClick}
 			>
 				<GitHub class="w-3.5 h-3.5" />
 			</a>
@@ -44,6 +72,7 @@
 				rel="noopener noreferrer"
 				target="_blank"
 				title="Visit creator's website"
+				onclick={handleWebsiteClick}
 			>
 				ayfri.com
 			</a>
@@ -53,6 +82,7 @@
 				rel="noopener noreferrer"
 				target="_blank"
 				title="Support the creator"
+				onclick={handleCoffeeClick}
 			>
 				<Coffee class="w-3 h-3 fill-transparent group-hover:fill-black duration-200 transition-all" />
 				<span>Buy me a coffee</span>
@@ -65,6 +95,7 @@
 				class="transition-colors {footerTheme.mutedHoverClass}"
 				target="_blank"
 				rel="noopener noreferrer"
+				onclick={handleWebsiteClick}
 			>
 				Ayfri
 			</a>

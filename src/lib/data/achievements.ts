@@ -1,5 +1,5 @@
 import {get} from 'svelte/store';
-import {atomsPerSecond, playerLevel} from '$stores/gameStore';
+import {atomsPerSecond, playerLevel, startDate} from '$stores/gameStore';
 import type {Achievement, GameState} from '$lib/types';
 import {formatNumber} from '$lib/utils';
 import {BUILDING_TYPES, BUILDINGS, type BuildingType} from '$data/buildings';
@@ -41,6 +41,84 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
 			const totalSkillUpgrades = Object.keys(SKILL_UPGRADES).length;
 			return state.skillUpgrades.length >= totalSkillUpgrades;
 		},
+	},
+	{
+		id: 'reset_modal_opener',
+		name: 'Curious Explorer',
+		description: 'Found the reset button... but decided not to press it',
+		hiddenCondition: (state: GameState) => !state.achievements.includes('reset_modal_opener'),
+		condition: (state: GameState) => state.achievements.includes('reset_modal_opener'),
+	},
+	{
+		id: 'play_time_10min',
+		name: 'Getting Started',
+		description: 'Play for 10 minutes',
+		condition: (state: GameState) => state.inGameTime >= 600000, // 10 minutes in ms
+	},
+	{
+		id: 'play_time_2h',
+		name: 'Dedicated Player',
+		description: 'Play for 2 hours',
+		condition: (state: GameState) => state.inGameTime >= 7200000, // 2 hours in ms
+	},
+	{
+		id: 'play_time_30h',
+		name: 'Atomic Addict',
+		description: 'Play for 30 hours',
+		condition: (state: GameState) => state.inGameTime >= 108000000, // 30 hours in ms
+	},
+	{
+		id: 'play_time_123h',
+		name: 'Time Lord',
+		description: 'Play for 123 hours',
+		condition: (state: GameState) => state.inGameTime >= 442800000, // 123 hours in ms
+	},
+	{
+		id: 'time_since_start_10d',
+		name: 'Decade Player',
+		description: 'Play for 10 days total',
+		condition: (state: GameState) => Date.now() - get(startDate) >= 864000000, // 10 days in ms
+	},
+	{
+		id: 'time_since_start_123d',
+		name: 'Century Gamer',
+		description: 'Play for 123 days total',
+		condition: (state: GameState) => Date.now() - get(startDate) >= 10627200000, // 123 days in ms
+	},
+	{
+		id: 'website_click',
+		name: 'Website Visitor',
+		description: 'Visited the creator\'s website',
+		hiddenCondition: (state: GameState) => !state.achievements.includes('website_click'),
+		condition: (state: GameState) => state.achievements.includes('website_click'),
+	},
+	{
+		id: 'coffee_click',
+		name: 'Coffee Supporter',
+		description: 'Clicked on the Buy me a coffee link',
+		hiddenCondition: (state: GameState) => !state.achievements.includes('coffee_click'),
+		condition: (state: GameState) => state.achievements.includes('coffee_click'),
+	},
+	{
+		id: 'discord_click',
+		name: 'Community Member',
+		description: 'Joined the Discord community',
+		hiddenCondition: (state: GameState) => !state.achievements.includes('discord_click'),
+		condition: (state: GameState) => state.achievements.includes('discord_click'),
+	},
+	{
+		id: 'github_click',
+		name: 'Open Source Contributor',
+		description: 'Visited the GitHub repository',
+		hiddenCondition: (state: GameState) => !state.achievements.includes('github_click'),
+		condition: (state: GameState) => state.achievements.includes('github_click'),
+	},
+	{
+		id: 'changelog_modal_opener',
+		name: 'Changelog Reader',
+		description: 'Checked what\'s new in the game',
+		hiddenCondition: (state: GameState) => !state.achievements.includes('changelog_modal_opener'),
+		condition: (state: GameState) => state.achievements.includes('changelog_modal_opener'),
 	},
 ];
 
@@ -179,9 +257,9 @@ function createBonusPhotonClicksAchievements(): Achievement[] {
 		const countNames: Record<number, string> = {
 			1: 'First',
 			10: 'Ten',
-			64: 'Sixty-Four',
-			512: 'Five Hundred Twelve',
-			4000: 'Four Thousand'
+			64: '64',
+			512: '512',
+			4096: '4096'
 		};
 
 		return {
