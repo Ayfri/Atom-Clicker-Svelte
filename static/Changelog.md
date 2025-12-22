@@ -1,3 +1,7 @@
+# What's new 22-12-2025
+
+- **Visual Progression**: Added dynamic yellow and green blurred background blobs in the Atom Realm that appear after your first Protonise and Electronise.
+
 # What's new 19-12-2025
 
 - **Remote Messaging System**: Added a new banner system that allows displaying important messages or announcements directly in-game.
