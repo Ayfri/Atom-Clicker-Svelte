@@ -55,21 +55,15 @@ export class GameManager {
 	private statsConfig = statsConfig;
 
 	// Intervals
-	private achievementInterval: ReturnType<typeof setInterval> | null = null;
-	private highestAPSInterval: ReturnType<typeof setInterval> | null = null;
-	private inGameTimeInterval: ReturnType<typeof setInterval> | null = null;
+	private gameInterval: ReturnType<typeof setInterval> | null = null;
 
 	initialize() {
 		this.loadGame();
-		this.setupAchievementChecking();
-		this.setupHighestAPSTracking();
-		this.setupInGameTimeTracking();
+		this.setupInterval();
 	}
 
 	cleanup() {
-		if (this.achievementInterval) clearInterval(this.achievementInterval);
-		if (this.highestAPSInterval) clearInterval(this.highestAPSInterval);
-		if (this.inGameTimeInterval) clearInterval(this.inGameTimeInterval);
+		if (this.gameInterval) clearInterval(this.gameInterval);
 	}
 
 	// Derived values (Getters)
@@ -603,34 +597,22 @@ export class GameManager {
 	}
 
 	// Intervals setup
-	setupAchievementChecking() {
-		if (this.achievementInterval) clearInterval(this.achievementInterval);
+	setupInterval() {
+		if (this.gameInterval) clearInterval(this.gameInterval);
 
-		this.achievementInterval = setInterval(() => {
+		this.gameInterval = setInterval(() => {
+			this.inGameTime += 1000;
+
+			if (this.atomsPerSecond > this.highestAPS) {
+				this.highestAPS = this.atomsPerSecond;
+			}
+
 			Object.entries(ACHIEVEMENTS).forEach(([id, achievement]) => {
 				if (!this.achievements.includes(id) && achievement.condition(this)) {
 					this.achievements = [...this.achievements, id];
 					info("Achievement unlocked", `<strong>${achievement.name}</strong><br>${achievement.description}`);
 				}
 			});
-		}, 1000);
-	}
-
-	setupHighestAPSTracking() {
-		if (this.highestAPSInterval) clearInterval(this.highestAPSInterval);
-
-		this.highestAPSInterval = setInterval(() => {
-			if (this.atomsPerSecond > this.highestAPS) {
-				this.highestAPS = this.atomsPerSecond;
-			}
-		}, 1000);
-	}
-
-	setupInGameTimeTracking() {
-		if (this.inGameTimeInterval) clearInterval(this.inGameTimeInterval);
-
-		this.inGameTimeInterval = setInterval(() => {
-			this.inGameTime += 1000;
 		}, 1000);
 	}
 }
