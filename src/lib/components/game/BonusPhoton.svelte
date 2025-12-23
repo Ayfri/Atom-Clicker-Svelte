@@ -4,6 +4,7 @@
 	import type { PowerUp } from '$lib/types';
 	import { randomBetween, randomValue, formatNumber } from '$lib/utils';
 	import { onDestroy, onMount } from 'svelte';
+	import { innerWidth, innerHeight } from 'svelte/reactivity/window';
 
 	// Constants
 	const VISIBLE_DURATION = 25000;
@@ -33,8 +34,8 @@
 	let disappearTimeout: ReturnType<typeof setTimeout> | null = null;
 
 	function spawnBonusAtom() {
-		x = Math.random() * (window.innerWidth - MARGIN * 2) + MARGIN;
-		y = Math.random() * (window.innerHeight - MARGIN * 2) + MARGIN;
+		x = Math.random() * ((innerWidth.current ?? window.innerWidth) - MARGIN * 2) + MARGIN;
+		y = Math.random() * ((innerHeight.current ?? window.innerHeight) - MARGIN * 2) + MARGIN;
 
 		const randomPowerUp = randomValue(POWER_UPS);
 		powerUp.multiplier = randomPowerUp.multiplier * gameManager.powerUpEffectMultiplier;

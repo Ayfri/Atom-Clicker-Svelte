@@ -13,7 +13,7 @@
 	import { changelog } from '$stores/changelog';
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { remoteMessage } from '$stores/remoteMessage';
-	import { mobile } from '$stores/window';
+	import { mobile } from '$stores/window.svelte';
 	import { ChartNoAxesColumn, Network, Info, Atom, Trophy, MessageSquare, Orbit, FileText, Cloud, type Icon as IconType } from 'lucide-svelte';
 	import { onDestroy, onMount, type Component } from 'svelte';
 
@@ -99,7 +99,7 @@
 	});
 </script>
 
-{#if $mobile}
+{#if mobile.current}
 	<div
 		class="absolute top-[33vh] -translate-y-1/2 z-10 grid gap-3.5 w-full justify-between pointer-events-none"
 		class:grid-cols-2={visibleComponents.length > 5}

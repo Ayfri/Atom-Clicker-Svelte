@@ -1,6 +1,6 @@
 <script lang="ts">
 	import '@xyflow/svelte/dist/style.css';
-	import { mobile } from '$stores/window';
+	import { mobile } from '$stores/window.svelte';
 	import { onDestroy, onMount } from 'svelte';
 	import { SKILL_UPGRADES } from '$data/skillTree';
 	import { gameManager } from '$helpers/GameManager.svelte';
@@ -129,7 +129,7 @@
 		colorMode="dark"
 		minZoom={0.3}
 		maxZoom={2}
-		initialViewport={{ x: $mobile ? 100 : 500, y: 200, zoom: 0.8 }}
+		initialViewport={{ x: mobile.current ? 100 : 500, y: 200, zoom: 0.8 }}
 		translateExtent={[
 			[-10000, -10000],
 			[10000, 10000],
@@ -148,7 +148,7 @@
 		}}
 	>
 		<Background gap={35} lineWidth={1} />
-		{#if !$mobile}
+		{#if !mobile.current}
 			<Controls showZoom={true} showFitView={false} showLock={false} position="bottom-right" />
 		{/if}
 	</SvelteFlow>

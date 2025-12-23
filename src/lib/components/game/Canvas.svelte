@@ -3,15 +3,26 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { particles, shouldCreateParticles } from '$stores/canvas';
 	import { app } from '$stores/pixi';
+	import { innerWidth, innerHeight } from 'svelte/reactivity/window';
 
 	let particlesContainer: any;
-	let pixiApp: {
+	let pixiApp = $state<{
 		canvas: HTMLCanvasElement;
 		destroy: () => void;
 		renderer: any;
 		stage: any;
 		ticker: any;
-	} | null = null;
+	} | null>(null);
+
+	$effect(() => {
+		if (pixiApp && (innerWidth.current || innerHeight.current)) {
+			try {
+				pixiApp.renderer.resize(innerWidth.current, innerHeight.current);
+			} catch (error) {
+				console.warn('Error during resize:', error);
+			}
+		}
+	});
 
 	const animate = (deltaTime: number) => {
 		if (!pixiApp) return;
@@ -58,8 +69,8 @@
 			const renderer = await PIXI.autoDetectRenderer({
 				backgroundAlpha: 0,
 				antialias: true,
-				width: window.innerWidth,
-				height: window.innerHeight,
+				width: innerWidth.current ?? window.innerWidth,
+				height: innerHeight.current ?? window.innerHeight,
 				preference: 'webgpu', // Will fallback to webgl automatically
 			});
 
@@ -125,7 +136,7 @@
 				queueResize: () => {
 					// Resize the renderer to match current window size
 					try {
-						renderer.resize(window.innerWidth, window.innerHeight);
+						renderer.resize(innerWidth.current ?? window.innerWidth, innerHeight.current ?? window.innerHeight);
 					} catch (error) {
 						console.warn('Error during resize:', error);
 					}

@@ -6,18 +6,13 @@
 	import Canvas from '@components/game/Canvas.svelte';
 	import Counter from '@components/game/Counter.svelte';
 	import Upgrades from '@components/game/Upgrades.svelte';
-	import { app } from '$stores/pixi';
-	import { mobile } from '$stores/window';
+	import { mobile } from '$stores/window.svelte';
 	import { gameManager } from '$helpers/GameManager.svelte';
 
 	let activeTab: 'achievements' | 'buildings' | 'upgrades' = $state('upgrades');
-
-	$effect(() => {
-		if ($mobile && activeTab) $app?.queueResize?.();
-	});
 </script>
 
-<div class="relative pt-12 transition-all duration-1000 ease-in-out lg:pt-4 {$mobile ? 'min-h-screen pb-8' : ''}">
+<div class="relative pt-12 transition-all duration-1000 ease-in-out lg:pt-4 {mobile.current ? 'min-h-screen pb-8' : ''}">
 	<div class="-z-10 absolute inset-0 overflow-hidden pointer-events-none">
 		{#if gameManager.totalProtonises > 0}
 			<div class="absolute bg-yellow-400/15 blur-[160px] h-64 right-[20%] rounded-full top-[10%] w-64"></div>
@@ -39,7 +34,7 @@
 						: 'bg-white/5 hover:bg-white/10'}"
 					onclick={() => (activeTab = 'upgrades')}>Upgrades</button
 				>
-				{#if $mobile}
+				{#if mobile.current}
 					<button
 						class="backdrop-blur-xs rounded-lg p-2 w-full whitespace-nowrap border-none text-inherit cursor-pointer transition-all duration-200 {activeTab === 'buildings'
 							? 'bg-accent-400 text-white'
@@ -56,7 +51,7 @@
 					Achievements
 				</button>
 			</div>
-			<div class="flex-1 overflow-y-auto {$mobile ? 'max-h-[60vh]' : ''}">
+			<div class="flex-1 overflow-y-auto {mobile.current ? 'max-h-[60vh]' : ''}">
 				{#if activeTab === 'upgrades'}
 					<Upgrades />
 				{:else if activeTab === 'achievements'}
@@ -70,7 +65,7 @@
 			<Counter />
 			<Atom />
 		</div>
-		{#if !$mobile}
+		{#if !mobile.current}
 			<div class="right-panel">
 				<Buildings />
 			</div>

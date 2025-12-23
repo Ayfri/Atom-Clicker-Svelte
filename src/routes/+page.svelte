@@ -17,7 +17,7 @@
 	import {app} from '$stores/pixi';
 	import {saveRecovery} from '$stores/saveRecovery';
 	import {supabaseAuth} from '$stores/supabaseAuth';
-	import {mobile} from '$stores/window';
+	import {mobile} from '$stores/window.svelte';
 
 	autoBuyManager.init();
 	autoUpgradeManager.init();
@@ -31,7 +31,6 @@
 	}
 
 	onMount(async () => {
-		$mobile = window.innerWidth <= 900;
 		gameManager.initialize();
 		await supabaseAuth.init();
 
@@ -63,17 +62,7 @@
 		if (gameUpdateInterval) clearInterval(gameUpdateInterval);
 		gameManager.cleanup();
 	});
-
-	$effect(() => {
-		if ($mobile) $app?.queueResize?.();
-	});
 </script>
-
-<svelte:window
-	onresize={() => {
-    $mobile = window.innerWidth <= 900
-  }}
-/>
 
 <div class="flex flex-col min-h-screen">
 	<RemoteBanner/>
@@ -102,7 +91,7 @@
 	{/if}
 
 	<main
-		class="relative flex-1 {$mobile ? 'overflow-y-auto' : 'overflow-hidden'} lg:pb-4 transition-all duration-300"
+		class="relative flex-1 {mobile.current ? 'overflow-y-auto' : 'overflow-hidden'} lg:pb-4 transition-all duration-300"
 		style="padding-top: {$remoteMessage.message && $remoteMessage.isVisible ? 'calc(3rem + 1.5rem)' : '3rem'}; padding-bottom: 3rem;"
 	>
 		{#if gameManager.upgrades.includes('feature_levels')}

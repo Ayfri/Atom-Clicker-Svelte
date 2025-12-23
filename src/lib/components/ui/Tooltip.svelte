@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { innerWidth, innerHeight } from 'svelte/reactivity/window';
 
 	interface Props {
 		children: Snippet;
@@ -44,8 +45,8 @@
 		}
 
 		// Keep tooltip within viewport
-		top = Math.max(8, Math.min(top, window.innerHeight - tooltipRect.height - 8));
-		left = Math.max(8, Math.min(left, window.innerWidth - tooltipRect.width - 8));
+		top = Math.max(8, Math.min(top, (innerHeight.current ?? window.innerHeight) - tooltipRect.height - 8));
+		left = Math.max(8, Math.min(left, (innerWidth.current ?? window.innerWidth) - tooltipRect.width - 8));
 
 		tooltip.style.top = `${top}px`;
 		tooltip.style.left = `${left}px`;
