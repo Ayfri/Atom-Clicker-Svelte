@@ -1,5 +1,5 @@
 import {SKILL_UPGRADES} from '$data/skillTree';
-import {gameManager} from '$helpers/gameManager';
+import {gameManager} from '$helpers/GameManager.svelte';
 import {ACHIEVEMENTS} from '$data/achievements';
 import {BUILDINGS} from '$data/buildings';
 import {UPGRADES} from '$data/upgrades';

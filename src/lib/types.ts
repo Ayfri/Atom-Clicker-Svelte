@@ -1,5 +1,6 @@
 import type {BuildingType} from '$data/buildings';
 import type {CurrencyName} from '$data/currencies';
+import type {GameManager} from '$helpers/GameManager.svelte';
 
 export interface Building {
 	count: number;
@@ -12,7 +13,7 @@ export interface Building {
 export interface Upgrade {
 	id: string;
 	name: string;
-	condition?: (state: GameState) => boolean;
+	condition?: (state: GameManager) => boolean;
 	description: string;
 	effects: Effect[];
 	cost: Price;
@@ -21,14 +22,14 @@ export interface Upgrade {
 export interface Effect {
 	target?: string;
 	type: 'auto_buy' | 'auto_click' | 'auto_speed' | 'auto_upgrade' | 'building' | 'click' | 'electron_gain' | 'global' | 'power_up_duration' | 'power_up_interval' | 'power_up_multiplier' | 'proton_gain' | 'xp_gain';
-	apply: (currentValue: number, state: GameState) => number;
+	apply: (currentValue: number, manager: GameManager) => number;
 	description: string;
 }
 
 export interface Achievement {
-	condition: (state: GameState) => boolean;
+	condition: (manager: GameManager) => boolean;
 	description: string;
-	hiddenCondition?: (state: GameState) => boolean;
+	hiddenCondition?: (manager: GameManager) => boolean;
 	id: string;
 	name: string;
 }
@@ -89,7 +90,7 @@ export interface SkillUpgrade {
 	name: string;
 	description: string;
 	position: { x: number; y: number };
-	condition?: (state: GameState) => boolean;
+	condition?: (manager: GameManager) => boolean;
 	effects: Effect[];
 	requires?: string[];
 }
