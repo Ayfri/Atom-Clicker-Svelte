@@ -1,9 +1,6 @@
 <script lang="ts">
 import { BUILDING_COLORS, BUILDINGS, type BuildingData, type BuildingType } from '$data/buildings';
-import { CurrenciesTypes } from '$data/currencies';
-import { BUILDING_COST_MULTIPLIER } from '$lib/constants';
 import { getUpgradesWithEffects } from '$lib/helpers/effects';
-import type { Building, Price } from '$lib/types';
 import { gameManager } from '$helpers/GameManager.svelte';
 import { autoBuyManager } from '$stores/autoBuy.svelte';
 import AutoButton from '@components/ui/AutoButton.svelte';
@@ -24,146 +21,53 @@ import { fade, fly, scale } from 'svelte/transition';
 
 	let selectedPurchaseMode: PurchaseMode = $state('x1');
 
-	// Use $derived for computed values instead of $effect with state updates
-	const unaffordableRootBuildings = $derived(
-		buildingsEntries.filter(([, building]) => canAfford(building.cost) === false)
-	);
-
-	const unlockedBuildings = $derived(
-		Object.entries(gameManager.buildings).filter(([, { unlocked }]) => unlocked) as [BuildingType, Building][]
-	);
 
 	const hiddenBuildings = $derived(
 		buildingsEntries.filter(
-			([type]) =>
-				unlockedBuildings.map((u) => u[0]).indexOf(type) === -1 &&
-				unaffordableRootBuildings.map((u) => u[0]).indexOf(type) !== -1,
+			([type, building]) =>
+				!gameManager.buildings[type]?.unlocked &&
+				!gameManager.canAfford(building.cost)
 		)
 	);
 
 	const purchaseAmounts = $derived(
 		Object.fromEntries(
-			buildingsEntries.map(([type]) => [type, getPurchaseAmount(type)])
+			buildingsEntries.map(([type]) => {
+				if (selectedPurchaseMode === 'max') {
+					return [type, gameManager.getMaxAffordableBuilding(type)];
+				}
+				return [type, PurchaseModes[selectedPurchaseMode]];
+			})
 		) as Record<BuildingType, number>
 	);
 
 	const affordableBuildings = $derived(
-		Object.entries(gameManager.buildings).filter(([type, building]) => {
-			const buildingType = type as BuildingType;
-
-			// Check if we can afford at least 1 building
-			const currentCount = building.count;
-			const baseCost = BUILDINGS[buildingType].cost.amount;
-			const actualCost = baseCost * (BUILDING_COST_MULTIPLIER ** currentCount);
-			const canAffordOne = canAfford({
-				amount: Math.round(actualCost),
-				currency: building.cost.currency
-			});
-
-			if (!canAffordOne) return false;
-
-			// For max mode, check if purchaseAmounts[type] > 0
-			if (selectedPurchaseMode === 'max') {
-				return purchaseAmounts[buildingType] > 0;
-			}
-
-			// For other modes, check if we can afford the bulk purchase
-			const bulkCost = {
-				amount: getBulkBuyCost(buildingType, purchaseAmounts[buildingType]),
-				currency: building.cost.currency
-			};
-			return canAfford(bulkCost);
-		}) as [BuildingType, Building][]
+		buildingsEntries.filter(([type]) => {
+			const amount = purchaseAmounts[type];
+			if (amount <= 0) return false;
+			const cost = gameManager.getBuildingCost(type, amount);
+			return gameManager.canAfford({ amount: cost, currency: BUILDINGS[type].cost.currency });
+		}).map(([type]) => type)
 	);
 
 	function handlePurchase(type: BuildingType) {
-		if (!affordableBuildings.some(([t]) => t === type)) return;
+		if (!affordableBuildings.includes(type)) return;
 		const amount = purchaseAmounts[type];
 		if (amount > 0) {
 			gameManager.purchaseBuilding(type, amount);
 		}
 	}
 
-	function getMaxAffordable(price: Price, type: BuildingType): number {
-		const currency = getCurrencyAmount(price);
-		const baseCost = price.amount;
-		const currentCount = gameManager.buildings[type]?.count ?? 0;
-		const actualFirstCost = baseCost * (BUILDING_COST_MULTIPLIER ** currentCount);
-
-		// If we can't afford even one, return 0
-		if (currency < actualFirstCost) return 0;
-
-		// Binary search for max affordable amount
-		let left = 1;
-		let right = 1000; // Reasonable upper limit
-
-		while (left <= right) {
-			const mid = Math.floor((left + right) / 2);
-			const cost = getBulkBuyCost(type, mid);
-
-			if (cost <= currency) {
-				left = mid + 1;
-			} else {
-				right = mid - 1;
-			}
-		}
-
-		return right;
-	}
-
-	function getPurchaseAmount(type: BuildingType): number {
-		if (selectedPurchaseMode !== 'max') {
-			return PurchaseModes[selectedPurchaseMode];
-		}
-
-		const building = BUILDINGS[type];
-		return getMaxAffordable(building.cost, type);
-	}
-
-
-	function getBulkBuyCost(type: BuildingType, amount: number): number {
-		const currentCount = gameManager.buildings[type]?.count ?? 0;
-		const baseCost = BUILDINGS[type].cost.amount;
-
-		let totalCost = 0;
-		for (let i = 0; i < amount; i++) {
-			totalCost += baseCost * (BUILDING_COST_MULTIPLIER ** (currentCount + i));
-		}
-
-		return Math.round(totalCost);
-	}
-
-
 	$effect(() => {
 		// Auto-unlock buildings that are affordable but not yet unlocked
 		buildingsEntries
-			.filter(([type]) => {
-				const isUnlocked = unlockedBuildings.some(([t]) => t === type);
-				const isAffordable = !unaffordableRootBuildings.some(([t]) => t === type);
+			.filter(([type, building]) => {
+				const isUnlocked = gameManager.buildings[type]?.unlocked;
+				const isAffordable = gameManager.canAfford(building.cost);
 				return !isUnlocked && isAffordable;
 			})
 			.forEach(([type]) => gameManager.unlockBuilding(type));
 	});
-
-	function canAfford(price: Price): boolean {
-		return getCurrencyAmount(price) >= price.amount;
-	}
-
-	function getCurrencyAmount(price: Price): number {
-		if (price.currency === CurrenciesTypes.ATOMS) {
-			return gameManager.atoms;
-		}
-		if (price.currency === CurrenciesTypes.ELECTRONS) {
-			return gameManager.electrons;
-		}
-		if (price.currency === CurrenciesTypes.PHOTONS) {
-			return gameManager.photons;
-		}
-		if (price.currency === CurrenciesTypes.PROTONS) {
-			return gameManager.protons;
-		}
-		return 0;
-	}
 </script>
 
 <div class="bg-black/10 backdrop-blur-xs rounded-lg p-3 buildings flex flex-col gap-2">
@@ -182,13 +86,13 @@ import { fade, fly, scale } from 'svelte/transition';
 	<div class="flex flex-col gap-1.5 overflow-y-auto">
 		{#each buildingsEntries as [type, building], i}
 			{@const saveData = gameManager.buildings[type]}
-			{@const unaffordable = !affordableBuildings.some(([t]) => t === type)}
+			{@const unaffordable = !affordableBuildings.includes(type)}
 			{@const obfuscated = hiddenBuildings.some(([t]) => t === type)}
 			{@const hidden = hiddenBuildings.slice(1).some(([t]) => t === type)}
 			{@const level = saveData?.level ?? 0}
 			{@const color = BUILDING_COLORS[level]}
 			{@const purchaseAmount = purchaseAmounts[type]}
-			{@const totalCost = getBulkBuyCost(type, purchaseAmount || 1)}
+			{@const totalCost = gameManager.getBuildingCost(type, purchaseAmount || 1)}
 			{@const isAutomated = gameManager.settings.automation.buildings.includes(type)}
 			{@const hasAutomation = getUpgradesWithEffects(gameManager.currentUpgradesBought, { type: 'auto_buy', target: type }).length > 0}
 			{@const autoPurchasedCount = autoBuyManager.recentlyAutoPurchasedBuildings.get(type) || 0}

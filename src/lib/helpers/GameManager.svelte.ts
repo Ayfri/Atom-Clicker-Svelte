@@ -1,6 +1,6 @@
 import { type BuildingType, BUILDINGS, BUILDING_LEVEL_UP_COST } from '$data/buildings';
 import { type Building, type PowerUp, type Settings, type GameState, type Price } from '$lib/types';
-import { LAYERS, STATS, type LayerType, type NumberStatName } from '$helpers/statConstants';
+import { LAYERS, STATS, type LayerType } from '$helpers/statConstants';
 import { SAVE_VERSION, loadSavedState, SAVE_KEY } from '$helpers/saves';
 import { UPGRADES } from '$data/upgrades';
 import { SKILL_UPGRADES } from '$data/skillTree';
@@ -373,6 +373,30 @@ export class GameManager {
 		return true;
 	}
 
+	getBuildingCost(type: BuildingType, amount: number): number {
+		const building = BUILDINGS[type];
+		const currentCount = this.buildings[type]?.count ?? 0;
+		const baseCost = building.cost.amount;
+		const r = BUILDING_COST_MULTIPLIER;
+		const a = baseCost * (r ** currentCount);
+		const cost = a * (Math.pow(r, amount) - 1) / (r - 1);
+		return Math.round(cost);
+	}
+
+	getMaxAffordableBuilding(type: BuildingType): number {
+		const building = BUILDINGS[type];
+		const currency = this.getCurrency(building.cost);
+		const currentCount = this.buildings[type]?.count ?? 0;
+		const baseCost = building.cost.amount;
+		const r = BUILDING_COST_MULTIPLIER;
+		const a = baseCost * (r ** currentCount);
+
+		if (currency < a) return 0;
+
+		const n = Math.log((currency * (r - 1) / a) + 1) / Math.log(r);
+		return Math.floor(n);
+	}
+
 	purchaseBuilding(type: BuildingType, amount: number = 1) {
 		const building = BUILDINGS[type];
 		const currentBuilding = this.buildings[type] ?? {
@@ -383,27 +407,24 @@ export class GameManager {
 			unlocked: true,
 		} as Building;
 
-		const baseCost = building.cost.amount;
-		let totalCost = 0;
-		for (let i = 0; i < amount; i++) {
-			totalCost += baseCost * (BUILDING_COST_MULTIPLIER ** (currentBuilding.count + i));
-		}
+		const totalCost = this.getBuildingCost(type, amount);
 
 		const cost = {
-			amount: Math.round(totalCost),
+			amount: totalCost,
 			currency: currentBuilding.cost.currency
 		};
 
 		if (!this.spendCurrency(cost)) return false;
 
+		const newCount = currentBuilding.count + amount;
 		const newBuilding = {
 			...currentBuilding,
 			cost: {
-				amount: Math.round(baseCost * (BUILDING_COST_MULTIPLIER ** (currentBuilding.count + amount))),
+				amount: this.getBuildingCost(type, 1), // Cost of the NEXT one
 				currency: cost.currency
 			},
-			count: currentBuilding.count + amount,
-			level: Math.floor((currentBuilding.count + amount) / BUILDING_LEVEL_UP_COST)
+			count: newCount,
+			level: Math.floor(newCount / BUILDING_LEVEL_UP_COST)
 		};
 
 		this.buildings = {
