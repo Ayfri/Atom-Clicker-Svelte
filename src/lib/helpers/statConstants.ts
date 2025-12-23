@@ -12,6 +12,48 @@ export const LAYERS = {
 	SPECIAL: -1
 } as const;
 
+export type LayerType = typeof LAYERS[keyof typeof LAYERS];
+
+export interface StatConfig<T = any> {
+	defaultValue: T;
+	description?: string;
+	layer: LayerType;
+	minVersion: number;
+	saveable?: boolean;
+}
+
+export const statsConfig: Record<string, StatConfig> = {
+	achievements: { defaultValue: [], layer: LAYERS.NEVER, minVersion: 1 },
+	activePowerUps: { defaultValue: [], layer: LAYERS.PROTONIZER, minVersion: 1, saveable: true },
+	atoms: { defaultValue: 0, layer: LAYERS.PROTONIZER, minVersion: 1 },
+	buildings: { defaultValue: {}, layer: LAYERS.PROTONIZER, minVersion: 1 },
+	electrons: { defaultValue: 0, layer: LAYERS.SPECIAL, minVersion: 6 },
+	highestAPS: { defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
+	inGameTime: { defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
+	lastSave: { defaultValue: Date.now(), layer: LAYERS.SPECIAL, minVersion: 1 },
+	photons: { defaultValue: 0, layer: LAYERS.PHOTON_REALM, minVersion: 11 },
+	photonUpgrades: { defaultValue: {}, layer: LAYERS.PHOTON_REALM, minVersion: 12 },
+	powerUpsCollected: { defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
+	protons: { defaultValue: 0, layer: LAYERS.ELECTRONIZE, minVersion: 4 },
+	purpleRealmUnlocked: { defaultValue: false, layer: LAYERS.PHOTON_REALM, minVersion: 13 },
+	settings: { defaultValue: { automation: { buildings: [], upgrades: false } }, layer: LAYERS.NEVER, minVersion: 8 },
+	skillUpgrades: { defaultValue: [], layer: LAYERS.PROTONIZER, minVersion: 3 },
+	startDate: { defaultValue: Date.now(), layer: LAYERS.NEVER, minVersion: 5 },
+	totalAtomsEarned: { defaultValue: 0, layer: LAYERS.PROTONIZER, minVersion: 14 },
+	totalAtomsEarnedAllTime: { defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
+	totalBonusPhotonsClicked: { defaultValue: 0, layer: LAYERS.PROTONIZER, minVersion: 10 },
+	totalBuildingsPurchased: { defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
+	totalClicks: { defaultValue: 0, layer: LAYERS.PROTONIZER, minVersion: 1 },
+	totalClicksAllTime: { defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
+	totalElectronizes: { defaultValue: 0, layer: LAYERS.SPECIAL, minVersion: 9 },
+	totalElectronsEarned: { defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
+	totalProtonises: { defaultValue: 0, layer: LAYERS.ELECTRONIZE, minVersion: 4 },
+	totalProtonsEarned: { defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
+	totalUpgradesPurchased: { defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
+	totalXP: { defaultValue: 0, layer: LAYERS.PROTONIZER, minVersion: 3 },
+	upgrades: { defaultValue: [], layer: LAYERS.PROTONIZER, minVersion: 1 }
+};
+
 export const STATS = {
 	ACHIEVEMENTS: 'achievements',
 	ACTIVE_POWER_UPS: 'activePowerUps',
@@ -44,7 +86,6 @@ export const STATS = {
 	UPGRADES: 'upgrades'
 } as const;
 
-export type LayerType = typeof LAYERS[keyof typeof LAYERS];
 export type StatName = typeof STATS[keyof typeof STATS];
 
 export const NUMBER_STATS = [

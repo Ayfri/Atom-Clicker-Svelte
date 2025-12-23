@@ -1,26 +1,18 @@
 import { type BuildingType, BUILDINGS, BUILDING_LEVEL_UP_COST } from '$data/buildings';
 import { type Building, type PowerUp, type Settings, type GameState, type Price } from '$lib/types';
-import { LAYERS, STATS, type LayerType } from '$helpers/statConstants';
+import { LAYERS, type LayerType } from '$helpers/statConstants';
 import { SAVE_VERSION, loadSavedState, SAVE_KEY } from '$helpers/saves';
-import { UPGRADES } from '$data/upgrades';
-import { SKILL_UPGRADES } from '$data/skillTree';
-import { PHOTON_UPGRADES, getPhotonUpgradeCost } from '$data/photonUpgrades';
+import { ACHIEVEMENTS } from '$data/achievements';
 import { CurrenciesTypes } from '$data/currencies';
+import { PHOTON_UPGRADES, getPhotonUpgradeCost } from '$data/photonUpgrades';
+import { SKILL_UPGRADES } from '$data/skillTree';
+import { statsConfig } from '$helpers/statConstants';
+import { UPGRADES } from '$data/upgrades';
 import { BUILDING_COST_MULTIPLIER, PROTONS_ATOMS_REQUIRED, ELECTRONS_PROTONS_REQUIRED } from '$lib/constants';
 import { calculateEffects, getUpgradesWithEffects } from '$helpers/effects';
 import { POWER_UP_DEFAULT_INTERVAL } from '$data/powerUp';
-import { ACHIEVEMENTS } from '$data/achievements';
 import { info } from '$stores/toasts';
 import { saveRecovery } from '$stores/saveRecovery';
-
-interface StatConfig<T = any> {
-	defaultValue: T;
-	description?: string;
-	id: string;
-	layer: LayerType;
-	minVersion: number;
-	saveable?: boolean;
-}
 
 export class GameManager {
 	// Stats
@@ -60,37 +52,7 @@ export class GameManager {
 	upgrades = $state<string[]>([]);
 
 	// Configuration for stats (for saving/loading/resetting)
-	private statsConfig: Record<string, StatConfig> = {
-		achievements: { id: STATS.ACHIEVEMENTS, defaultValue: [], layer: LAYERS.NEVER, minVersion: 1 },
-		activePowerUps: { id: STATS.ACTIVE_POWER_UPS, defaultValue: [], layer: LAYERS.PROTONIZER, minVersion: 1, saveable: true },
-		atoms: { id: STATS.ATOMS, defaultValue: 0, layer: LAYERS.PROTONIZER, minVersion: 1 },
-		buildings: { id: STATS.BUILDINGS, defaultValue: {}, layer: LAYERS.PROTONIZER, minVersion: 1 },
-		electrons: { id: STATS.ELECTRONS, defaultValue: 0, layer: LAYERS.SPECIAL, minVersion: 6 },
-		highestAPS: { id: STATS.HIGHEST_APS, defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
-		inGameTime: { id: STATS.IN_GAME_TIME, defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
-		lastSave: { id: STATS.LAST_SAVE, defaultValue: Date.now(), layer: LAYERS.SPECIAL, minVersion: 1 },
-		photons: { id: STATS.PHOTONS, defaultValue: 0, layer: LAYERS.PHOTON_REALM, minVersion: 11 },
-		photonUpgrades: { id: STATS.PHOTON_UPGRADES, defaultValue: {}, layer: LAYERS.PHOTON_REALM, minVersion: 12 },
-		powerUpsCollected: { id: STATS.POWER_UPS_COLLECTED, defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
-		protons: { id: STATS.PROTONS, defaultValue: 0, layer: LAYERS.ELECTRONIZE, minVersion: 4 },
-		purpleRealmUnlocked: { id: STATS.PURPLE_REALM_UNLOCKED, defaultValue: false, layer: LAYERS.PHOTON_REALM, minVersion: 13 },
-		settings: { id: STATS.SETTINGS, defaultValue: { automation: { buildings: [], upgrades: false } }, layer: LAYERS.NEVER, minVersion: 8 },
-		skillUpgrades: { id: STATS.SKILL_UPGRADES, defaultValue: [], layer: LAYERS.PROTONIZER, minVersion: 3 },
-		startDate: { id: STATS.START_DATE, defaultValue: Date.now(), layer: LAYERS.NEVER, minVersion: 5 },
-		totalAtomsEarned: { id: STATS.TOTAL_ATOMS_EARNED, defaultValue: 0, layer: LAYERS.PROTONIZER, minVersion: 14 },
-		totalAtomsEarnedAllTime: { id: STATS.TOTAL_ATOMS_EARNED_ALL_TIME, defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
-		totalBonusPhotonsClicked: { id: STATS.TOTAL_BONUS_PHOTONS_CLICKED, defaultValue: 0, layer: LAYERS.PROTONIZER, minVersion: 10 },
-		totalBuildingsPurchased: { id: STATS.TOTAL_BUILDINGS_PURCHASED, defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
-		totalClicks: { id: STATS.TOTAL_CLICKS, defaultValue: 0, layer: LAYERS.PROTONIZER, minVersion: 1 },
-		totalClicksAllTime: { id: STATS.TOTAL_CLICKS_ALL_TIME, defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
-		totalElectronizes: { id: STATS.TOTAL_ELECTRONIZES, defaultValue: 0, layer: LAYERS.SPECIAL, minVersion: 9 },
-		totalElectronsEarned: { id: STATS.TOTAL_ELECTRONS_EARNED, defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
-		totalProtonises: { id: STATS.TOTAL_PROTONISES, defaultValue: 0, layer: LAYERS.ELECTRONIZE, minVersion: 4 },
-		totalProtonsEarned: { id: STATS.TOTAL_PROTONS_EARNED, defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
-		totalUpgradesPurchased: { id: STATS.TOTAL_UPGRADES_PURCHASED, defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
-		totalXP: { id: STATS.TOTAL_XP, defaultValue: 0, layer: LAYERS.PROTONIZER, minVersion: 3 },
-		upgrades: { id: STATS.UPGRADES, defaultValue: [], layer: LAYERS.PROTONIZER, minVersion: 1 }
-	};
+	private statsConfig = statsConfig;
 
 	// Intervals
 	private achievementInterval: ReturnType<typeof setInterval> | null = null;

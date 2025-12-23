@@ -2,6 +2,7 @@ import {BUILDING_LEVEL_UP_COST, type BuildingType} from '$data/buildings';
 import {CurrenciesTypes} from '$data/currencies';
 import type {Building, GameState} from '$lib/types';
 import {saveRecovery, type SaveErrorType} from '$stores/saveRecovery';
+import { statsConfig } from '$helpers/statConstants';
 
 export const SAVE_KEY = 'atomic-clicker-save';
 export const SAVE_VERSION = 14;
@@ -134,49 +135,36 @@ function validateAndRepairGameState(state: any): ValidationResult {
 		return { errors: ['State is not an object'], repaired: false, repairs: [], state: null, valid: false };
 	}
 
-	// Define checks with default values for repair
-	const checks: Array<{
-		defaultValue: any;
-		key: string;
-		validator: (v: any) => boolean;
-	}> = [
-		{ defaultValue: [], key: 'achievements', validator: Array.isArray },
-		{ defaultValue: [], key: 'activePowerUps', validator: Array.isArray },
-		{ defaultValue: 0, key: 'atoms', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: {}, key: 'buildings', validator: (v: any) => typeof v === 'object' && v !== null },
-		{ defaultValue: 0, key: 'electrons', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'highestAPS', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'inGameTime', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: Date.now(), key: 'lastSave', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'photons', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: {}, key: 'photonUpgrades', validator: (v: any) => typeof v === 'object' && v !== null },
-		{ defaultValue: 0, key: 'powerUpsCollected', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'protons', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: false, key: 'purpleRealmUnlocked', validator: (v: any) => typeof v === 'boolean' },
-		{
-			defaultValue: { automation: { buildings: [], upgrades: false } },
-			key: 'settings',
-			validator: (v: any) => typeof v === 'object' && v !== null &&
-				typeof v.automation === 'object' &&
-				Array.isArray(v.automation?.buildings) &&
-				typeof v.automation?.upgrades === 'boolean'
-		},
-		{ defaultValue: [], key: 'skillUpgrades', validator: Array.isArray },
-		{ defaultValue: Date.now(), key: 'startDate', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalAtomsEarned', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalAtomsEarnedAllTime', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalBonusPhotonsClicked', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalBuildingsPurchased', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalClicks', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalClicksAllTime', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalElectronizes', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalElectronsEarned', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalProtonises', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalProtonsEarned', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalUpgradesPurchased', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalXP', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: [], key: 'upgrades', validator: Array.isArray },
-	];
+	// Define custom validators for complex types
+	const customValidators: Record<string, (v: any) => boolean> = {
+		settings: (v: any) => typeof v === 'object' && v !== null &&
+			typeof v.automation === 'object' &&
+			Array.isArray(v.automation?.buildings) &&
+			typeof v.automation?.upgrades === 'boolean'
+	};
+
+	// Generate checks from statsConfig
+	const checks = Object.entries(statsConfig).map(([key, config]) => {
+		let validator = (v: any) => true;
+
+		if (key in customValidators) {
+			validator = customValidators[key];
+		} else if (Array.isArray(config.defaultValue)) {
+			validator = Array.isArray;
+		} else if (typeof config.defaultValue === 'number') {
+			validator = (v: any) => typeof v === 'number' && !isNaN(v);
+		} else if (typeof config.defaultValue === 'boolean') {
+			validator = (v: any) => typeof v === 'boolean';
+		} else if (typeof config.defaultValue === 'object' && config.defaultValue !== null) {
+			validator = (v: any) => typeof v === 'object' && v !== null;
+		}
+
+		return {
+			defaultValue: config.defaultValue,
+			key,
+			validator
+		};
+	});
 
 	// Try to repair each field
 	for (const check of checks) {
@@ -200,13 +188,9 @@ function validateAndRepairGameState(state: any): ValidationResult {
 	}
 
 	// Repair NaN/Infinity values in numeric fields
-	const numericFields = [
-		'atoms', 'electrons', 'highestAPS', 'inGameTime', 'lastSave', 'photons',
-		'powerUpsCollected', 'protons', 'startDate', 'totalAtomsEarned', 'totalAtomsEarnedAllTime',
-		'totalBonusPhotonsClicked', 'totalBuildingsPurchased', 'totalClicks', 'totalClicksAllTime',
-		'totalElectronizes', 'totalElectronsEarned', 'totalProtonises', 'totalProtonsEarned',
-		'totalUpgradesPurchased', 'totalXP'
-	];
+	const numericFields = Object.entries(statsConfig)
+		.filter(([_, config]) => typeof config.defaultValue === 'number')
+		.map(([key]) => key);
 
 	for (const field of numericFields) {
 		if (typeof state[field] === 'number' && (isNaN(state[field]) || !isFinite(state[field]))) {
@@ -261,98 +245,62 @@ function migrateSavedState(savedState: any): GameState | undefined {
 		return undefined;
 	}
 
-	if (savedState.version === 2) {
-		Object.entries<Partial<Building>>(savedState.buildings)?.forEach(([key, building]) => {
-			building.level = Math.floor((building.count ?? 0) / BUILDING_LEVEL_UP_COST);
-			savedState[key] = building;
-		});
-		savedState.version = 3;
-	}
-	if (savedState.version === 3) {
-		// Add skillUpgrades
-		savedState.skillUpgrades = [];
-		savedState.totalXP = 0;
-		savedState.version = 4;
-	}
-	if (savedState.version === 4) {
-		// Add totalProtonises
-		Object.entries<Partial<Building>>(savedState.buildings)?.forEach(([key, building]) => {
-			savedState[key].cost = {
-				amount: typeof building.cost === 'number' ? building.cost : building.cost?.amount,
-				currency: CurrenciesTypes.ATOMS,
+	while ((savedState.version || 0) < SAVE_VERSION) {
+		if (!savedState.version) break;
+
+		const nextVersion = savedState.version + 1;
+
+		// Generic Migration
+		for (const [key, config] of Object.entries(statsConfig)) {
+			if (config.minVersion <= nextVersion) {
+				if (!(key in savedState)) {
+					savedState[key] = typeof config.defaultValue === 'object' && config.defaultValue !== null
+						? structuredClone(config.defaultValue)
+						: config.defaultValue;
+				}
 			}
-		});
-		savedState.protons = 0;
-		savedState.totalProtonises = 0;
-		savedState.version = 5;
-	}
-	if (savedState.version === 5) {
-		// Add startDate
-		savedState.startDate = Date.now();
-		savedState.version = 6;
-	}
-	if (savedState.version === 6) {
-		// Add electrons
-		savedState.electrons = 0;
-		savedState.version = 7;
-	}
-	if (savedState.version === 7) {
-		// Add settings
-		savedState.settings = {
-			automation: {
-				buildings: [],
-				upgrades: false
-			}
-		};
-		savedState.version = 8;
-	}
-	if (savedState.version === 8) {
-		// Add totalElectronizes
-		savedState.totalElectronizes = 0;
-		if (savedState.electrons > 0) {
-			savedState.totalElectronizes = 1;
 		}
-		savedState.version = 9;
-	}
-	if (savedState.version === 9) {
-		// Add totalBonusPhotonsClicked
-		savedState.totalBonusPhotonsClicked = 0;
-		savedState.version = 10;
-	}
-	if (savedState.version === 10) {
-		// Add photons
-		savedState.photons = 0;
-		savedState.version = 11;
-	}
-	if (savedState.version === 11) {
-		// Add photonUpgrades
-		savedState.photonUpgrades = {};
-		savedState.version = 12;
-	}
-	if (savedState.version === 12) {
-		// Add purpleRealmUnlocked
-		savedState.purpleRealmUnlocked = false;
-		savedState.version = 13;
-	}
-	if (savedState.version === 13) {
-		// Add new stats tracking - initialize from current values
-		savedState.highestAPS = 0;
-		savedState.inGameTime = 0;
-		savedState.powerUpsCollected = 0;
-		// Initialize earned stats from current balance as a baseline
-		savedState.totalAtomsEarned = savedState.atoms || 0;
-		savedState.totalAtomsEarnedAllTime = savedState.atoms || 0;
-		// Count total buildings currently owned as baseline
-		const buildingsOwned = Object.values(savedState.buildings || {}).reduce((acc: number, b: any) => acc + (b?.count || 0), 0);
-		savedState.totalBuildingsPurchased = buildingsOwned;
-		// Initialize clicks all time from current run
-		savedState.totalClicksAllTime = savedState.totalClicks || 0;
-		// Initialize currency earned from current balance
-		savedState.totalElectronsEarned = savedState.electrons || 0;
-		savedState.totalProtonsEarned = savedState.protons || 0;
-		// Count upgrades owned as baseline
-		savedState.totalUpgradesPurchased = (savedState.upgrades?.length || 0) + (savedState.skillUpgrades?.length || 0);
-		savedState.version = 14;
+
+		// Specific Migrations
+		if (savedState.version === 2) {
+			Object.entries<Partial<Building>>(savedState.buildings)?.forEach(([key, building]) => {
+				building.level = Math.floor((building.count ?? 0) / BUILDING_LEVEL_UP_COST);
+				savedState[key] = building;
+			});
+		}
+
+		if (savedState.version === 4) {
+			Object.entries<Partial<Building>>(savedState.buildings)?.forEach(([key, building]) => {
+				savedState[key].cost = {
+					amount: typeof building.cost === 'number' ? building.cost : building.cost?.amount,
+					currency: CurrenciesTypes.ATOMS,
+				}
+			});
+		}
+
+		if (savedState.version === 8) {
+			if (savedState.electrons > 0) {
+				savedState.totalElectronizes = 1;
+			}
+		}
+
+		if (savedState.version === 13) {
+			// Initialize earned stats from current balance as a baseline
+			savedState.totalAtomsEarned = savedState.atoms || 0;
+			savedState.totalAtomsEarnedAllTime = savedState.atoms || 0;
+			// Count total buildings currently owned as baseline
+			const buildingsOwned = Object.values(savedState.buildings || {}).reduce((acc: number, b: any) => acc + (b?.count || 0), 0);
+			savedState.totalBuildingsPurchased = buildingsOwned;
+			// Initialize clicks all time from current run
+			savedState.totalClicksAllTime = savedState.totalClicks || 0;
+			// Initialize currency earned from current balance
+			savedState.totalElectronsEarned = savedState.electrons || 0;
+			savedState.totalProtonsEarned = savedState.protons || 0;
+			// Count upgrades owned as baseline
+			savedState.totalUpgradesPurchased = (savedState.upgrades?.length || 0) + (savedState.skillUpgrades?.length || 0);
+		}
+
+		savedState.version = nextVersion;
 	}
 
 	return savedState;
