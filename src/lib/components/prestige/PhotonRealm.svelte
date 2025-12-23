@@ -164,7 +164,7 @@
 	}
 
 	async function clickCircle(circle: Circle, event: MouseEvent) {
-		gameManager.addStat(STATS.PHOTONS, circle.photons);
+		gameManager.addPhotons(circle.photons);
 		circles = circles.filter((c) => c.id !== circle.id);
 
 		const particleCount = Math.floor(circle.photons / 2) + 1;

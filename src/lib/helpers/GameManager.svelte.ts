@@ -73,7 +73,7 @@ export class GameManager {
 		photonUpgrades: { id: STATS.PHOTON_UPGRADES, defaultValue: {}, layer: LAYERS.PHOTON_REALM, minVersion: 12 },
 		powerUpsCollected: { id: STATS.POWER_UPS_COLLECTED, defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
 		protons: { id: STATS.PROTONS, defaultValue: 0, layer: LAYERS.ELECTRONIZE, minVersion: 4 },
-		purpleRealmUnlocked: { id: 'purpleRealmUnlocked', defaultValue: false, layer: LAYERS.PHOTON_REALM, minVersion: 13 },
+		purpleRealmUnlocked: { id: STATS.PURPLE_REALM_UNLOCKED, defaultValue: false, layer: LAYERS.PHOTON_REALM, minVersion: 13 },
 		settings: { id: STATS.SETTINGS, defaultValue: { automation: { buildings: [], upgrades: false } }, layer: LAYERS.NEVER, minVersion: 8 },
 		skillUpgrades: { id: STATS.SKILL_UPGRADES, defaultValue: [], layer: LAYERS.PROTONIZER, minVersion: 3 },
 		startDate: { id: STATS.START_DATE, defaultValue: Date.now(), layer: LAYERS.NEVER, minVersion: 5 },
@@ -94,27 +94,20 @@ export class GameManager {
 
 	// Intervals
 	private achievementInterval: ReturnType<typeof setInterval> | null = null;
-	private xpInterval: ReturnType<typeof setInterval> | null = null;
 	private highestAPSInterval: ReturnType<typeof setInterval> | null = null;
 	private inGameTimeInterval: ReturnType<typeof setInterval> | null = null;
-
-	constructor() {
-		// Initialize logic
-	}
 
 	initialize() {
 		this.loadGame();
 		this.setupAchievementChecking();
 		this.setupHighestAPSTracking();
 		this.setupInGameTimeTracking();
-		this.setupXPGeneration();
 	}
 
 	cleanup() {
 		if (this.achievementInterval) clearInterval(this.achievementInterval);
 		if (this.highestAPSInterval) clearInterval(this.highestAPSInterval);
 		if (this.inGameTimeInterval) clearInterval(this.inGameTimeInterval);
-		if (this.xpInterval) clearInterval(this.xpInterval);
 	}
 
 	// Derived values (Getters)
@@ -358,23 +351,6 @@ export class GameManager {
 		}
 	}
 
-	addStat(statName: NumberStatName, amount: number) {
-		// Map statName to property name if they differ (they match in statsConfig keys)
-		// @ts-ignore
-		if (typeof this[statName] === 'number') {
-			// @ts-ignore
-			this[statName] += amount;
-		}
-	}
-
-	multiplyStat(statName: NumberStatName, factor: number) {
-		// @ts-ignore
-		if (typeof this[statName] === 'number') {
-			// @ts-ignore
-			this[statName] *= factor;
-		}
-	}
-
 	canAfford(price: Price): boolean {
 		return this.getCurrency(price) >= price.amount;
 	}
@@ -578,6 +554,11 @@ export class GameManager {
 		if (amount > 0) {
 			this.totalAtomsEarned += amount;
 			this.totalAtomsEarnedAllTime += amount;
+
+			if (this.upgrades.includes('feature_levels')) {
+				const xpPerAtom = 0.1;
+				this.totalXP += amount * xpPerAtom * this.xpGainMultiplier;
+			}
 		}
 	}
 
@@ -659,23 +640,6 @@ export class GameManager {
 		this.inGameTimeInterval = setInterval(() => {
 			this.inGameTime += 1000;
 		}, 1000);
-	}
-
-	setupXPGeneration() {
-		if (this.xpInterval) clearInterval(this.xpInterval);
-
-		let previousAtoms = this.atoms;
-		this.xpInterval = setInterval(() => {
-			const currentAtoms = this.atoms;
-			const deltaAtoms = currentAtoms - previousAtoms;
-			const xpPerAtom = 0.1;
-			const xp = deltaAtoms * xpPerAtom;
-
-			if (xp > 0 && this.upgrades.includes('feature_levels')) {
-				this.totalXP += xp * this.xpGainMultiplier;
-			}
-			previousAtoms = currentAtoms;
-		}, 100);
 	}
 }
 
