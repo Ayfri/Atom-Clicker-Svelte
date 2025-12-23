@@ -1,11 +1,11 @@
 <script lang="ts">
+	import type { HTMLImgAttributes } from 'svelte/elements';
 	import {CURRENCIES, type CurrencyName} from '$data/currencies';
 
-	interface Props {
+	interface Props extends HTMLImgAttributes {
 		class?: string;
 		icon?: boolean;
 		name: CurrencyName;
-		[key: string]: any
 	}
 
 	let { name, icon = true, class: className = '', ...rest }: Props = $props();
