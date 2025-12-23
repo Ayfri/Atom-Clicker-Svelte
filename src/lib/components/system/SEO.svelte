@@ -1,4 +1,6 @@
 <script>
+	import { VERSION } from "@sveltejs/kit";
+
 	const site = 'https://atom-clicker.ayfri.com';
 	const name = 'Atom Clicker';
 	const author = 'Ayfri';
@@ -33,6 +35,7 @@
 	<meta name="keywords" content="clicker,incremental,game,atoms" />
 	<meta name="author" content={author} />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta name="generator" content={`SvelteKit ${VERSION}`} />
 	<meta name="theme-color" content="#4a90e2" />
 
 	<link rel="icon" type="image/png" href="/atom.png" />
@@ -55,6 +58,6 @@
 	<meta name="language" content="en" />
 
 	<title>{name}</title>
-	
+
 	{@html `<script type="application/ld+json">${JSON.stringify(structuredData)}</script>`}
 </svelte:head>
