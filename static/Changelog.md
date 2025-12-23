@@ -1,3 +1,7 @@
+# What's new 23-12-2025
+
+- **New Upgrade**: Added "Community Power" upgrade that boosts atom production based on the total number of players.
+
 # What's new 22-12-2025
 
 - **Visual Progression**: Added dynamic yellow and green blurred background blobs in the Atom Realm that appear after your first Protonise and Electronise.

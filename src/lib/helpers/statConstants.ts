@@ -50,6 +50,7 @@ export const statsConfig: Record<string, StatConfig> = {
 	totalProtonises: { defaultValue: 0, layer: LAYERS.ELECTRONIZE, minVersion: 4 },
 	totalProtonsEarned: { defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
 	totalUpgradesPurchased: { defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
+	totalUsers: { defaultValue: 0, layer: LAYERS.NEVER, minVersion: 15, saveable: false },
 	totalXP: { defaultValue: 0, layer: LAYERS.PROTONIZER, minVersion: 3 },
 	upgrades: { defaultValue: [], layer: LAYERS.PROTONIZER, minVersion: 1 }
 };
@@ -82,6 +83,7 @@ export const STATS = {
 	TOTAL_PROTONS_EARNED: 'totalProtonsEarned',
 	TOTAL_PROTONISES: 'totalProtonises',
 	TOTAL_UPGRADES_PURCHASED: 'totalUpgradesPurchased',
+	TOTAL_USERS: 'totalUsers',
 	TOTAL_XP: 'totalXP',
 	UPGRADES: 'upgrades'
 } as const;
@@ -109,6 +111,7 @@ export const NUMBER_STATS = [
 	STATS.TOTAL_PROTONS_EARNED,
 	STATS.TOTAL_PROTONISES,
 	STATS.TOTAL_UPGRADES_PURCHASED,
+	STATS.TOTAL_USERS,
 	STATS.TOTAL_XP
 ] as const;
 

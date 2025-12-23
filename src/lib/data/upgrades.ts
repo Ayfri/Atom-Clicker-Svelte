@@ -388,6 +388,27 @@ function createProtonUpgrades() {
 		}),
 	);
 
+	// Community boost
+	upgrades.push({
+		id: 'proton_community_boost',
+		name: 'Community Power',
+		description: '1% atom boost per thousand registered players',
+		cost: {
+			amount: 10,
+			currency: CurrenciesTypes.PROTONS,
+		},
+		effects: [
+			{
+				type: 'global',
+				description: '1% atom boost per thousand players',
+				apply: (currentValue, manager) => {
+					const boost = (manager.totalUsers / 1000) * 0.01;
+					return currentValue * (1 + boost);
+				},
+			},
+		],
+	} as Upgrade);
+
 	// Auto-clicker upgrade
 	upgrades.push(
 		...createUpgrades({

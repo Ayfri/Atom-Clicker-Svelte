@@ -13,6 +13,8 @@ import { calculateEffects, getUpgradesWithEffects } from '$helpers/effects';
 import { POWER_UP_DEFAULT_INTERVAL } from '$data/powerUp';
 import { info } from '$stores/toasts';
 import { saveRecovery } from '$stores/saveRecovery';
+import { leaderboardStats } from '$stores/leaderboard.svelte';
+import { browser } from '$app/environment';
 
 export class GameManager {
 	// Stats
@@ -48,6 +50,7 @@ export class GameManager {
 	totalProtonises = $state(0);
 	totalProtonsEarned = $state(0);
 	totalUpgradesPurchased = $state(0);
+	totalUsers = $state(0);
 	totalXP = $state(0);
 	upgrades = $state<string[]>([]);
 
@@ -60,6 +63,12 @@ export class GameManager {
 	initialize() {
 		this.loadGame();
 		this.setupInterval();
+
+		if (browser) {
+			leaderboardStats.subscribe(stats => {
+				this.totalUsers = stats.totalUsers;
+			});
+		}
 	}
 
 	cleanup() {
@@ -231,6 +240,7 @@ export class GameManager {
 			totalProtonises: this.totalProtonises,
 			totalProtonsEarned: this.totalProtonsEarned,
 			totalUpgradesPurchased: this.totalUpgradesPurchased,
+			totalUsers: this.totalUsers,
 			totalXP: this.totalXP,
 			upgrades: this.upgrades,
 			version: SAVE_VERSION

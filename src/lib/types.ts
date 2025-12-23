@@ -78,6 +78,7 @@ export interface GameState {
 	totalProtonises: number;
 	totalProtonsEarned: number;
 	totalUpgradesPurchased: number;
+	totalUsers: number;
 	totalXP: number;
 	upgrades: string[];
 	version: number;
