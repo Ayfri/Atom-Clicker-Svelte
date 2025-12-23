@@ -126,7 +126,7 @@ interface ValidationResult {
 	valid: boolean;
 }
 
-function validateAndRepairGameState(state: any): ValidationResult {
+function validateAndRepairGameState(state: unknown): ValidationResult {
 	const errors: string[] = [];
 	const repairs: string[] = [];
 	let repaired = false;
@@ -135,28 +135,33 @@ function validateAndRepairGameState(state: any): ValidationResult {
 		return { errors: ['State is not an object'], repaired: false, repairs: [], state: null, valid: false };
 	}
 
+	const stateObj = state as Record<string, unknown>;
+
 	// Define custom validators for complex types
-	const customValidators: Record<string, (v: any) => boolean> = {
-		settings: (v: any) => typeof v === 'object' && v !== null &&
-			typeof v.automation === 'object' &&
-			Array.isArray(v.automation?.buildings) &&
-			typeof v.automation?.upgrades === 'boolean'
+	const customValidators: Record<string, (v: unknown) => boolean> = {
+		settings: (v: unknown) => {
+			const val = v as Record<string, any>;
+			return typeof val === 'object' && val !== null &&
+				typeof val.automation === 'object' &&
+				Array.isArray(val.automation?.buildings) &&
+				typeof val.automation?.upgrades === 'boolean';
+		}
 	};
 
 	// Generate checks from statsConfig
 	const checks = Object.entries(statsConfig).map(([key, config]) => {
-		let validator = (v: any) => true;
+		let validator = (v: unknown) => true;
 
 		if (key in customValidators) {
 			validator = customValidators[key];
 		} else if (Array.isArray(config.defaultValue)) {
 			validator = Array.isArray;
 		} else if (typeof config.defaultValue === 'number') {
-			validator = (v: any) => typeof v === 'number' && !isNaN(v);
+			validator = (v: unknown) => typeof v === 'number' && !isNaN(v as number);
 		} else if (typeof config.defaultValue === 'boolean') {
-			validator = (v: any) => typeof v === 'boolean';
+			validator = (v: unknown) => typeof v === 'boolean';
 		} else if (typeof config.defaultValue === 'object' && config.defaultValue !== null) {
-			validator = (v: any) => typeof v === 'object' && v !== null;
+			validator = (v: unknown) => typeof v === 'object' && v !== null;
 		}
 
 		return {
@@ -168,21 +173,21 @@ function validateAndRepairGameState(state: any): ValidationResult {
 
 	// Try to repair each field
 	for (const check of checks) {
-		if (!(check.key in state)) {
-			state[check.key] = check.defaultValue;
+		if (!(check.key in stateObj)) {
+			stateObj[check.key] = check.defaultValue;
 			repairs.push(`Added missing field: ${check.key}`);
 			repaired = true;
-		} else if (!check.validator(state[check.key])) {
-			const oldValue = state[check.key];
-			state[check.key] = check.defaultValue;
+		} else if (!check.validator(stateObj[check.key])) {
+			const oldValue = stateObj[check.key];
+			stateObj[check.key] = check.defaultValue;
 			repairs.push(`Repaired invalid ${check.key}: ${JSON.stringify(oldValue)} -> ${JSON.stringify(check.defaultValue)}`);
 			repaired = true;
 		}
 	}
 
 	// Handle version separately - we upgrade to current version
-	if (state.version !== SAVE_VERSION) {
-		state.version = SAVE_VERSION;
+	if (stateObj.version !== SAVE_VERSION) {
+		stateObj.version = SAVE_VERSION;
 		repairs.push(`Updated version to ${SAVE_VERSION}`);
 		repaired = true;
 	}
@@ -193,18 +198,18 @@ function validateAndRepairGameState(state: any): ValidationResult {
 		.map(([key]) => key);
 
 	for (const field of numericFields) {
-		if (typeof state[field] === 'number' && (isNaN(state[field]) || !isFinite(state[field]))) {
-			state[field] = 0;
+		if (typeof stateObj[field] === 'number' && (isNaN(stateObj[field]) || !isFinite(stateObj[field]))) {
+			stateObj[field] = 0;
 			repairs.push(`Fixed NaN/Infinity in ${field}`);
 			repaired = true;
 		}
 	}
 
 	// Verify repairs were successful
-	const allValid = checks.every(check => check.key in state && check.validator(state[check.key]));
+	const allValid = checks.every(check => check.key in stateObj && check.validator(stateObj[check.key]));
 
 	if (!allValid) {
-		const failedChecks = checks.filter(check => !(check.key in state) || !check.validator(state[check.key]));
+		const failedChecks = checks.filter(check => !(check.key in stateObj) || !check.validator(stateObj[check.key]));
 		for (const check of failedChecks) {
 			errors.push(`Field ${check.key} is still invalid after repair`);
 		}
@@ -214,24 +219,27 @@ function validateAndRepairGameState(state: any): ValidationResult {
 		errors,
 		repaired,
 		repairs,
-		state: allValid ? state as GameState : null,
+		state: allValid ? stateObj as unknown as GameState : null,
 		valid: allValid && errors.length === 0,
 	};
 }
 
 // Simple validation check (used by cloud save)
-export function isValidGameState(state: any): state is GameState {
+export function isValidGameState(state: unknown): state is GameState {
 	if (!state) return false;
 	const result = validateAndRepairGameState(structuredClone(state));
 	return result.valid || result.repaired;
 }
 
-function migrateSavedState(savedState: any): GameState | undefined {
-	if (!('buildings' in savedState)) return savedState;
+function migrateSavedState(savedState: unknown): GameState | undefined {
+	if (!savedState || typeof savedState !== 'object') return undefined;
+	const state = savedState as any;
 
-	if (!('version' in savedState)) {
+	if (!('buildings' in state)) return state;
+
+	if (!('version' in state)) {
 		// Migrate from old format
-		savedState.buildings = Object.entries(savedState.buildings as Partial<GameState['buildings']>).reduce((acc, [key, value]) => {
+		state.buildings = Object.entries(state.buildings as Partial<GameState['buildings']>).reduce((acc, [key, value]) => {
 			acc[key as BuildingType] = {
 				...value,
 				unlocked: true,
@@ -240,21 +248,21 @@ function migrateSavedState(savedState: any): GameState | undefined {
 		}, {} as GameState['buildings']);
 	}
 
-	if (savedState.version === 1) {
+	if (state.version === 1) {
 		// Hard reset due to balancing
 		return undefined;
 	}
 
-	while ((savedState.version || 0) < SAVE_VERSION) {
-		if (!savedState.version) break;
+	while ((state.version || 0) < SAVE_VERSION) {
+		if (!state.version) break;
 
-		const nextVersion = savedState.version + 1;
+		const nextVersion = state.version + 1;
 
 		// Generic Migration
 		for (const [key, config] of Object.entries(statsConfig)) {
 			if (config.minVersion <= nextVersion) {
-				if (!(key in savedState)) {
-					savedState[key] = typeof config.defaultValue === 'object' && config.defaultValue !== null
+				if (!(key in state)) {
+					state[key] = typeof config.defaultValue === 'object' && config.defaultValue !== null
 						? structuredClone(config.defaultValue)
 						: config.defaultValue;
 				}
@@ -262,46 +270,46 @@ function migrateSavedState(savedState: any): GameState | undefined {
 		}
 
 		// Specific Migrations
-		if (savedState.version === 2) {
-			Object.entries<Partial<Building>>(savedState.buildings)?.forEach(([key, building]) => {
+		if (state.version === 2) {
+			Object.entries<Partial<Building>>(state.buildings)?.forEach(([key, building]) => {
 				building.level = Math.floor((building.count ?? 0) / BUILDING_LEVEL_UP_COST);
-				savedState[key] = building;
+				state[key] = building;
 			});
 		}
 
-		if (savedState.version === 4) {
-			Object.entries<Partial<Building>>(savedState.buildings)?.forEach(([key, building]) => {
-				savedState[key].cost = {
+		if (state.version === 4) {
+			Object.entries<Partial<Building>>(state.buildings)?.forEach(([key, building]) => {
+				state[key].cost = {
 					amount: typeof building.cost === 'number' ? building.cost : building.cost?.amount,
 					currency: CurrenciesTypes.ATOMS,
 				}
 			});
 		}
 
-		if (savedState.version === 8) {
-			if (savedState.electrons > 0) {
-				savedState.totalElectronizes = 1;
+		if (state.version === 8) {
+			if (state.electrons > 0) {
+				state.totalElectronizes = 1;
 			}
 		}
 
-		if (savedState.version === 13) {
+		if (state.version === 13) {
 			// Initialize earned stats from current balance as a baseline
-			savedState.totalAtomsEarned = savedState.atoms || 0;
-			savedState.totalAtomsEarnedAllTime = savedState.atoms || 0;
+			state.totalAtomsEarned = state.atoms || 0;
+			state.totalAtomsEarnedAllTime = state.atoms || 0;
 			// Count total buildings currently owned as baseline
-			const buildingsOwned = Object.values(savedState.buildings || {}).reduce((acc: number, b: any) => acc + (b?.count || 0), 0);
-			savedState.totalBuildingsPurchased = buildingsOwned;
+			const buildingsOwned = Object.values(state.buildings || {}).reduce((acc: number, b: unknown) => acc + ((b as any)?.count || 0), 0);
+			state.totalBuildingsPurchased = buildingsOwned;
 			// Initialize clicks all time from current run
-			savedState.totalClicksAllTime = savedState.totalClicks || 0;
+			state.totalClicksAllTime = state.totalClicks || 0;
 			// Initialize currency earned from current balance
-			savedState.totalElectronsEarned = savedState.electrons || 0;
-			savedState.totalProtonsEarned = savedState.protons || 0;
+			state.totalElectronsEarned = state.electrons || 0;
+			state.totalProtonsEarned = state.protons || 0;
 			// Count upgrades owned as baseline
-			savedState.totalUpgradesPurchased = (savedState.upgrades?.length || 0) + (savedState.skillUpgrades?.length || 0);
+			state.totalUpgradesPurchased = (state.upgrades?.length || 0) + (state.skillUpgrades?.length || 0);
 		}
 
-		savedState.version = nextVersion;
+		state.version = nextVersion;
 	}
 
-	return savedState;
+	return state;
 }

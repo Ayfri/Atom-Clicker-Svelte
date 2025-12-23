@@ -264,11 +264,10 @@ export class GameManager {
 		}
 	}
 
-	loadSaveData(data: any) {
+	loadSaveData(data: Partial<GameState>) {
 		for (const [key, config] of Object.entries(this.statsConfig)) {
 			if (key in data) {
-				// @ts-ignore
-				this[key] = data[key];
+				this[key as keyof this] = data[key as keyof GameState] as any;
 			}
 		}
 	}
@@ -288,16 +287,14 @@ export class GameManager {
 
 	resetAll() {
 		for (const [key, config] of Object.entries(this.statsConfig)) {
-			// @ts-ignore
-			this[key] = config.defaultValue;
+			this[key as keyof this] = config.defaultValue;
 		}
 	}
 
 	resetLayer(layer: LayerType) {
 		for (const [key, config] of Object.entries(this.statsConfig)) {
 			if (config.layer >= layer) {
-				// @ts-ignore
-				this[key] = config.defaultValue;
+				this[key as keyof this] = config.defaultValue;
 			}
 		}
 	}

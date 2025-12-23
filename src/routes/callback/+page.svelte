@@ -13,9 +13,9 @@
 			// Supabase handles the callback automatically via onAuthStateChange
 			await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for auth state to settle
 			goto('/');
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error('Authentication callback error:', err);
-			error = err.message;
+			error = err instanceof Error ? err.message : 'Unknown error';
 		} finally {
 			isLoading = false;
 		}

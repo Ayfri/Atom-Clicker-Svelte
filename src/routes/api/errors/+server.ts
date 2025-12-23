@@ -13,7 +13,7 @@ function isValidOrigin(origin: string | null): boolean {
 	return ALLOWED_ORIGINS.includes(origin);
 }
 
-function createCorsResponse(data: any, options: { status?: number } = {}) {
+function createCorsResponse(data: unknown, options: { status?: number } = {}) {
 	return json(data, {
 		status: options.status || 200,
 		headers: {
