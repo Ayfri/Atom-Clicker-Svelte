@@ -56,7 +56,7 @@
 	const socials = [
 		{
 			name: 'GitHub',
-			url: 'https://github.com/Ayfri/Atom-Clicker-Svelte',
+			url: 'https://github.com/Ayfri/Atom-Clicker',
 			description: 'View source code',
 			icon: GitHub,
 		},

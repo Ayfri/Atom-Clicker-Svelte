@@ -57,7 +57,7 @@
 			</a>
 			<a
 				class="flex items-center gap-1 transition-colors {footerTheme.hoverClass}"
-				href="https://github.com/Ayfri/Atom-Clicker-Svelte"
+				href="https://github.com/Ayfri/Atom-Clicker"
 				rel="noopener noreferrer"
 				target="_blank"
 				title="View source code on GitHub"
