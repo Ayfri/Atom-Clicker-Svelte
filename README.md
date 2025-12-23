@@ -4,6 +4,7 @@ Welcome to Atom Clicker, an engaging incremental game where you'll build your ow
 
 [![GitHub](https://img.shields.io/github/stars/Ayfri/Atom-Clicker?style=social)](https://github.com/Ayfri/Atom-Clicker)
 [![Discord](https://img.shields.io/discord/493478524133572610?style=flat&logo=discord&logoColor=white&label=discord&color=5865F2)](https://discord.ayfri.com)
+[![Players](https://img.shields.io/badge/dynamic/json?label=Players&query=$.totalUsers&url=https://atom-clicker.ayfri.com/api/stats&color=blue)](https://atom-clicker.ayfri.com)
 
 🎮 [Play Now](https://atom-clicker.ayfri.com) | 💬 [Discord](https://discord.ayfri.com)
 
