@@ -1,3 +1,4 @@
+import { dev } from '$app/environment';
 import { supabaseAdmin } from './supabase.server';
 import type { Json } from '$lib/types/supabase';
 
@@ -34,6 +35,11 @@ async function isDuplicateError(errorMessage: string, stackTrace: string | null)
  * Logs an error to Supabase (Discord notification handled by PostgreSQL trigger)
  */
 export async function logError(report: ServerErrorReport): Promise<{ id: string } | null> {
+	if (dev) {
+		console.log('[ErrorHandler] Skipping error log in dev mode:', report.errorMessage.substring(0, 50));
+		return null;
+	}
+
 	const { browserInfo, errorMessage, gameState, stackTrace, url, userId } = report;
 
 	// Check for duplicate errors

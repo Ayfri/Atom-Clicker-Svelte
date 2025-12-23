@@ -1,4 +1,4 @@
-import { browser } from '$app/environment';
+import { browser, dev } from '$app/environment';
 import { gameManager } from '$helpers/GameManager.svelte';
 import { get } from 'svelte/store';
 import { supabaseAuth } from '$stores/supabaseAuth';
@@ -137,6 +137,11 @@ export function createErrorReport(error: Error | string): ErrorReport {
  */
 export async function reportError(error: Error | string): Promise<void> {
 	if (!browser) return;
+
+	if (dev) {
+		console.log('[ErrorReporting] Skipping error report in dev mode:', error);
+		return;
+	}
 
 	try {
 		const report = createErrorReport(error);
