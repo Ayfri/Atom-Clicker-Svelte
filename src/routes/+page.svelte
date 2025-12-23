@@ -1,6 +1,6 @@
 <script lang="ts">
-	import '$stores/autoBuy';
-	import '$stores/autoUpgrade';
+	import { autoBuyManager } from '$stores/autoBuy.svelte';
+	import { autoUpgradeManager } from '$stores/autoUpgrade.svelte';
 	import {onDestroy, onMount} from 'svelte';
 	import AutoSaveIndicator from '@components/system/AutoSaveIndicator.svelte';
 	import Levels from '@components/game/Levels.svelte';
@@ -9,23 +9,25 @@
 	import RemoteBanner from '@components/layout/RemoteBanner.svelte';
 	import SaveRecovery from '@components/modals/SaveRecovery.svelte';
 	import Toaster from '@components/layout/Toaster.svelte';
-	import {gameManager} from '$helpers/gameManager';
-	import {realmManager} from '$helpers/realmManager';
+	import {gameManager} from '$helpers/GameManager.svelte';
+	import {realmManager} from '$helpers/RealmManager.svelte';
 	import {setGlobals} from '$lib/globals';
 	import {formatNumber} from '$lib/utils';
-	import {atomsPerSecond, upgrades} from '$stores/gameStore';
 	import {remoteMessage} from '$stores/remoteMessage';
 	import {app} from '$stores/pixi';
 	import {saveRecovery} from '$stores/saveRecovery';
 	import {supabaseAuth} from '$stores/supabaseAuth';
 	import {mobile} from '$stores/window';
 
+	autoBuyManager.init();
+	autoUpgradeManager.init();
+
 	const SAVE_INTERVAL = 1000;
 	let saveLoop: ReturnType<typeof setInterval>;
 	let gameUpdateInterval: ReturnType<typeof setInterval> | null = null;
 
 	function update(ticker: any) {
-		gameManager.addAtoms(($atomsPerSecond * ticker.deltaMS) / 1000);
+		gameManager.addAtoms((gameManager.atomsPerSecond * ticker.deltaMS) / 1000);
 	}
 
 	onMount(async () => {
@@ -79,20 +81,20 @@
 	<Toaster/>
 	<AutoSaveIndicator/>
 
-	{#if $realmManager.availableRealms.length > 1}
+	{#if realmManager.availableRealms.length > 1}
 		<div
 			class="fixed right-4 z-30 bg-black/10 backdrop-blur-xs border border-white/10 rounded-lg p-1 transition-all duration-300"
 			style="top: {$remoteMessage.message && $remoteMessage.isVisible ? 'calc(1.5rem + 5rem)' : '5rem'}"
 		>
 			<div class="flex flex-col gap-1">
-				{#each $realmManager.availableRealms as realm (realm.id)}
+				{#each realmManager.availableRealms as realm (realm.id)}
 					<button
-						class="flex items-center gap-2 px-2 py-1.5 rounded-sm transition-all duration-200 hover:scale-105 {$realmManager.selectedRealm === realm.id ? realm.activeClasses : 'bg-white/5 hover:bg-white/10'}"
+						class="flex items-center gap-2 px-2 py-1.5 rounded-sm transition-all duration-200 hover:scale-105 {realmManager.selectedRealmId === realm.id ? realm.activeClasses : 'bg-white/5 hover:bg-white/10'}"
 						onclick={() => realmManager.selectRealm(realm.id)}
-						title="{realm.title} - {formatNumber($realmManager.realmValues[realm.id] ?? 0)} {realm.currency.name.toLowerCase()}"
+						title="{realm.title} - {formatNumber(realmManager.realmValues[realm.id] ?? 0)} {realm.currency.name.toLowerCase()}"
 					>
 						<img src="/currencies/{realm.currency.icon}.png" alt={realm.currency.name} class="w-4 h-4" />
-						<div class="text-xs text-white/80">{formatNumber($realmManager.realmValues[realm.id] ?? 0, 1)}</div>
+						<div class="text-xs text-white/80">{formatNumber(realmManager.realmValues[realm.id] ?? 0, 1)}</div>
 					</button>
 				{/each}
 			</div>
@@ -103,19 +105,19 @@
 		class="relative flex-1 {$mobile ? 'overflow-y-auto' : 'overflow-hidden'} lg:pb-4 transition-all duration-300"
 		style="padding-top: {$remoteMessage.message && $remoteMessage.isVisible ? 'calc(3rem + 1.5rem)' : '3rem'}; padding-bottom: 3rem;"
 	>
-		{#if $upgrades.includes('feature_levels')}
+		{#if gameManager.upgrades.includes('feature_levels')}
 			<Levels/>
 		{/if}
 
 		<!-- Use transform and opacity for virtual desktop swipe effect -->
-		{#each $realmManager.availableRealms as realm, i (realm.id)}
+		{#each realmManager.availableRealms as realm, i (realm.id)}
 			<div
 				class="absolute inset-0 overflow-y-auto transition-all duration-300 ease-in-out"
-				class:opacity-100={$realmManager.selectedRealm === realm.id}
-				class:translate-x-0={$realmManager.selectedRealm === realm.id}
-				class:opacity-0={$realmManager.selectedRealm !== realm.id}
-				class:pointer-events-none={$realmManager.selectedRealm !== realm.id}
-				style="transform: translateX({$realmManager.selectedRealm === realm.id ? '0' : (i > $realmManager.availableRealms.findIndex(r => r.id === $realmManager.selectedRealm) ? '100%' : '-100%')});"
+				class:opacity-100={realmManager.selectedRealm.id === realm.id}
+				class:translate-x-0={realmManager.selectedRealm.id === realm.id}
+				class:opacity-0={realmManager.selectedRealm.id !== realm.id}
+				class:pointer-events-none={realmManager.selectedRealm.id !== realm.id}
+				style="transform: translateX({realmManager.selectedRealm.id === realm.id ? '0' : (i > realmManager.availableRealms.findIndex(r => r.id === realmManager.selectedRealm.id) ? '100%' : '-100%')});"
 			>
 				<div class="relative min-h-full">
 					<realm.component />

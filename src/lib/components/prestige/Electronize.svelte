@@ -1,9 +1,7 @@
 <script lang="ts">
-	import { gameManager } from '$helpers/gameManager';
+	import { gameManager } from '$helpers/GameManager.svelte';
 	import { formatNumber } from '$lib/utils';
 	import Modal from '@components/ui/Modal.svelte';
-	import { electrons, protons } from '$stores/gameStore';
-	import { electronizeElectronsGain } from '$stores/electrons';
 	import { ELECTRONS_PROTONS_REQUIRED } from '$lib/constants';
 
 	interface Props {
@@ -12,7 +10,7 @@
 
 	let { onClose }: Props = $props();
 
-	let canElectronize = $derived($protons >= ELECTRONS_PROTONS_REQUIRED || $electronizeElectronsGain > 0);
+	let canElectronize = $derived(gameManager.protons >= ELECTRONS_PROTONS_REQUIRED || gameManager.electronizeElectronsGain > 0);
 
 	function handleElectronize() {
 		gameManager.electronize();
@@ -34,22 +32,22 @@
 		<div class="bg-black/20 rounded-lg p-4">
 			<div class="flex justify-between items-center mb-2">
 				<span>Current Protons:</span>
-				<span class="font-bold text-yellow-400">{formatNumber($protons)}</span>
+				<span class="font-bold text-yellow-400">{formatNumber(gameManager.protons)}</span>
 			</div>
 			<div class="flex justify-between items-center mb-4">
 				<span>Electrons to gain:</span>
-				<span class="font-bold text-green-400">{formatNumber($electronizeElectronsGain)}</span>
+				<span class="font-bold text-green-400">{formatNumber(gameManager.electronizeElectronsGain)}</span>
 			</div>
 			<div class="flex justify-between items-center">
 				<span>Current Electrons:</span>
-				<span class="font-bold text-green-400">{formatNumber($electrons ?? 0)}</span>
+				<span class="font-bold text-green-400">{formatNumber(gameManager.electrons ?? 0)}</span>
 			</div>
 		</div>
 
 		<button
 			class="electronize-button"
 			onclick={handleElectronize}
-			disabled={!canElectronize || $electronizeElectronsGain === 0}
+			disabled={!canElectronize || gameManager.electronizeElectronsGain === 0}
 		>
 			<div class="pulse-overlay"></div>
 			<span class="z-10 relative">Electronize</span>

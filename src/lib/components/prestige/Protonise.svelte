@@ -1,9 +1,7 @@
 <script lang="ts">
-	import { gameManager } from '$helpers/gameManager';
+	import { gameManager } from '$helpers/GameManager.svelte';
 	import { formatNumber } from '$lib/utils';
 	import Modal from '@components/ui/Modal.svelte';
-	import { atoms, protons } from '$stores/gameStore';
-	import { protoniseProtonsGain } from '$stores/protons';
 	import { PROTONS_ATOMS_REQUIRED } from '$lib/constants';
 
 	interface Props {
@@ -12,7 +10,7 @@
 
 	let { onClose }: Props = $props();
 
-	let canProtonise = $derived($atoms >= PROTONS_ATOMS_REQUIRED || $protons > 0);
+	let canProtonise = $derived(gameManager.atoms >= PROTONS_ATOMS_REQUIRED || gameManager.protons > 0);
 
 	function handleProtonise() {
 		gameManager.protonise();
@@ -34,15 +32,15 @@
 		<div class="bg-black/20 rounded-lg p-4">
 			<div class="flex justify-between items-center mb-2">
 				<span>Current Atoms:</span>
-				<span class="font-bold">{formatNumber($atoms)}</span>
+				<span class="font-bold">{formatNumber(gameManager.atoms)}</span>
 			</div>
 			<div class="flex justify-between items-center mb-4">
 				<span>Protons to gain:</span>
-				<span class="font-bold text-yellow-400">{formatNumber($protoniseProtonsGain)}</span>
+				<span class="font-bold text-yellow-400">{formatNumber(gameManager.protoniseProtonsGain)}</span>
 			</div>
 			<div class="flex justify-between items-center">
 				<span>Current Protons:</span>
-				<span class="font-bold text-yellow-400">{formatNumber($protons ?? 0)}</span>
+				<span class="font-bold text-yellow-400">{formatNumber(gameManager.protons ?? 0)}</span>
 			</div>
 		</div>
 
@@ -51,7 +49,7 @@
 				protonise-button group relative flex items-center justify-center w-full py-4 px-6 rounded-lg text-white font-bold text-lg shadow-lg overflow-hidden transition-all duration-300 transform border-2 border-transparent bg-clip-padding hover:scale-[1.02]
 				disabled:before:hidden disabled:opacity-50 disabled:cursor-not-allowed disabled:border-[var(--color-red-900)] disabled:bg-black/50 disabled:hover:scale-100
 			"
-			disabled={!canProtonise || $protoniseProtonsGain === 0}
+			disabled={!canProtonise || gameManager.protoniseProtonsGain === 0}
 			onclick={handleProtonise}
 		>
 			<div class="absolute inset-0.5 bg-gray-900 rounded transition-all duration-150 group-hover:inset-8 group-hover:rounded-3xl"></div>

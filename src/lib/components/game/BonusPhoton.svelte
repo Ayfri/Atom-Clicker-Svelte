@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { POWER_UPS } from '$data/powerUp';
-	import { gameManager } from '$helpers/gameManager';
+	import { gameManager } from '$helpers/GameManager.svelte';
 	import type { PowerUp } from '$lib/types';
 	import { randomBetween, randomValue, formatNumber } from '$lib/utils';
-	import { powerUpInterval, powerUpDurationMultiplier, powerUpEffectMultiplier } from '$stores/gameStore';
 	import { onDestroy, onMount } from 'svelte';
 
 	// Constants
@@ -38,8 +37,8 @@
 		y = Math.random() * (window.innerHeight - MARGIN * 2) + MARGIN;
 
 		const randomPowerUp = randomValue(POWER_UPS);
-		powerUp.multiplier = randomPowerUp.multiplier * $powerUpEffectMultiplier;
-		powerUp.duration = randomPowerUp.duration * $powerUpDurationMultiplier;
+		powerUp.multiplier = randomPowerUp.multiplier * gameManager.powerUpEffectMultiplier;
+		powerUp.duration = randomPowerUp.duration * gameManager.powerUpDurationMultiplier;
 		powerUp.description = `Multiplies atoms by ${formatNumber(powerUp.multiplier)} for ${formatNumber(powerUp.duration / 1000)} seconds`;
 		powerUp.id = Date.now().toString();
 
@@ -86,7 +85,7 @@
 
 	function scheduleNextSpawn() {
 		if (spawnTimeout) clearTimeout(spawnTimeout);
-		spawnTimeout = setTimeout(spawnBonusAtom, randomBetween($powerUpInterval[0], $powerUpInterval[1]));
+		spawnTimeout = setTimeout(spawnBonusAtom, randomBetween(gameManager.powerUpInterval[0], gameManager.powerUpInterval[1]));
 	}
 
 	onMount(scheduleNextSpawn);

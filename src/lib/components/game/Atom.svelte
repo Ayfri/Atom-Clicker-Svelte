@@ -1,9 +1,8 @@
 <script lang="ts">
-	import {gameManager} from '$helpers/gameManager';
+	import {gameManager} from '$helpers/GameManager.svelte';
 	import {BUILDING_TYPES, BUILDING_COLORS, BUILDING_LEVEL_UP_COST} from '$data/buildings';
 	import {onDestroy} from 'svelte';
 	import {createClickParticle, createClickTextParticle, type Particle} from '$helpers/particles';
-	import {autoClicksPerSecond, buildings, clickPower, hasBonus} from '$stores/gameStore';
 	import {formatNumber} from '$lib/utils';
 	import {shouldCreateParticles, addParticles} from '$stores/canvas';
 	import {app} from '$stores/pixi';
@@ -27,7 +26,8 @@
 	}
 
 	let interval: ReturnType<typeof setInterval>;
-	autoClicksPerSecond.subscribe(value => {
+	$effect(() => {
+		const value = gameManager.autoClicksPerSecond;
 		if (interval) clearInterval(interval);
 		if (value > 0) {
 			interval = setInterval(() => simulateClick(), 1000 / value);
@@ -35,7 +35,7 @@
 	});
 
 	async function handleClick(event: MouseEvent) {
-		gameManager.addAtoms($clickPower);
+		gameManager.addAtoms(gameManager.clickPower);
 		gameManager.incrementClicks();
 
 		// TODO: Re-add main atom click animation
@@ -44,7 +44,7 @@
 		if (shouldCreateParticles() && $app?.canvas) {
 			try {
 				const newParticles: Particle[] = [];
-				newParticles.push(await createClickTextParticle(event.clientX + Math.random() * 10, event.clientY + Math.random() * 10, `+${formatNumber($clickPower)}`));
+				newParticles.push(await createClickTextParticle(event.clientX + Math.random() * 10, event.clientY + Math.random() * 10, `+${formatNumber(gameManager.clickPower)}`));
 
 				for (let i = 0; i < 5; i++) {
 					newParticles.push(await createClickParticle(event.clientX + Math.random() * 10, event.clientY + Math.random() * 10, CurrenciesTypes.ATOMS));
@@ -61,12 +61,12 @@
 
 <button
 	class="atom relative mt-20 flex size-[450px] items-center justify-center cursor-pointer bg-transparent md:size-[360px] sm:size-[300px]"
-	class:bonus={$hasBonus}
+	class:bonus={gameManager.hasBonus}
 	onclick={async e => await handleClick(e)}
 	bind:this={atomElement}
 >
-	{#each BUILDING_TYPES.filter(name => name in $buildings) as name, i}
-		{@const data = $buildings[name]}
+	{#each BUILDING_TYPES.filter(name => name in gameManager.buildings) as name, i}
+		{@const data = gameManager.buildings[name]}
 
 		{#if data && data.count > 0}
 			{@const color = BUILDING_COLORS[data.level]}

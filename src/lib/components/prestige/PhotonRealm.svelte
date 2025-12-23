@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { gameManager } from '$helpers/gameManager';
+	import { gameManager } from '$helpers/GameManager.svelte';
 	import { createClickParticle, type Particle } from '$helpers/particles';
 	import { STATS } from '$helpers/statConstants';
 	import { onDestroy, onMount } from 'svelte';
@@ -7,9 +7,7 @@
 	import PhotonUpgrades from '@components/prestige/PhotonUpgrades.svelte';
 	import { particles } from '$stores/canvas';
 	import { CurrenciesTypes } from '$data/currencies';
-	import { photonUpgrades } from '$stores/gameStore';
 	import { PHOTON_UPGRADES } from '$data/photonUpgrades';
-	import { derived } from 'svelte/store';
 	import { mobile } from '$stores/window';
 
 	export function simulateClick() {
@@ -65,7 +63,7 @@
 
 	// Helper functions to get upgrade bonuses
 	function getSpawnRate() {
-		const level = $photonUpgrades['photon_spawn_rate'] || 0;
+		const level = gameManager.photonUpgrades['photon_spawn_rate'] || 0;
 		if (level === 0) return baseSpawnRate;
 
 		const upgrade = PHOTON_UPGRADES['photon_spawn_rate'];
@@ -73,14 +71,14 @@
 
 		return effects.reduce((rate, effect) => {
 			if (effect.type === 'power_up_interval') {
-				return effect.apply(rate, gameManager.getCurrentState());
+				return effect.apply(rate, gameManager);
 			}
 			return rate;
 		}, baseSpawnRate);
 	}
 
 	function getSizeMultiplier() {
-		const level = $photonUpgrades['circle_size'] || 0;
+		const level = gameManager.photonUpgrades['circle_size'] || 0;
 		if (level === 0) return baseSizeMultiplier;
 
 		const upgrade = PHOTON_UPGRADES['circle_size'];
@@ -88,14 +86,14 @@
 
 		return effects.reduce((multiplier, effect) => {
 			if (effect.type === 'global') {
-				return effect.apply(multiplier, gameManager.getCurrentState());
+				return effect.apply(multiplier, gameManager);
 			}
 			return multiplier;
 		}, baseSizeMultiplier);
 	}
 
 	function getPhotonValueBonus() {
-		const level = $photonUpgrades['photon_value'] || 0;
+		const level = gameManager.photonUpgrades['photon_value'] || 0;
 		if (level === 0) return 0;
 
 		const upgrade = PHOTON_UPGRADES['photon_value'];
@@ -103,14 +101,14 @@
 
 		return effects.reduce((bonus, effect) => {
 			if (effect.type === 'click') {
-				return effect.apply(bonus, gameManager.getCurrentState());
+				return effect.apply(bonus, gameManager);
 			}
 			return bonus;
 		}, 0);
 	}
 
 	function getLifetimeBonus() {
-		const level = $photonUpgrades['circle_lifetime'] || 0;
+		const level = gameManager.photonUpgrades['circle_lifetime'] || 0;
 		if (level === 0) return 0;
 
 		const upgrade = PHOTON_UPGRADES['circle_lifetime'];
@@ -118,14 +116,14 @@
 
 		return effects.reduce((bonus, effect) => {
 			if (effect.type === 'power_up_duration') {
-				return effect.apply(bonus, gameManager.getCurrentState());
+				return effect.apply(bonus, gameManager);
 			}
 			return bonus;
 		}, 0);
 	}
 
 	function getDoubleChance() {
-		const level = $photonUpgrades['double_chance'] || 0;
+		const level = gameManager.photonUpgrades['double_chance'] || 0;
 		if (level === 0) return 0;
 
 		// Simple calculation: 2% per level
@@ -192,8 +190,8 @@
 	}
 
 	// Calculate auto-clicks per second from photon upgrades
-	const photonAutoClicksPerSecond = derived(photonUpgrades, ($photonUpgrades) => {
-		const autoClickerLevel = $photonUpgrades['auto_clicker'] || 0;
+	const photonAutoClicksPerSecond = $derived.by(() => {
+		const autoClickerLevel = gameManager.photonUpgrades['auto_clicker'] || 0;
 		if (autoClickerLevel === 0) return 0;
 
 		const upgrade = PHOTON_UPGRADES['auto_clicker'];
@@ -202,7 +200,7 @@
 		// Apply the effect to get clicks per second
 		return effects.reduce((total, effect) => {
 			if (effect.type === 'auto_click') {
-				return effect.apply(total, gameManager.getCurrentState());
+				return effect.apply(total, gameManager);
 			}
 			return total;
 		}, 0);
@@ -213,7 +211,7 @@
 
 	// Set up auto-clicker subscription like in Atom.svelte
 	$effect(() => {
-		const clicksPerSecond = $photonAutoClicksPerSecond;
+		const clicksPerSecond = photonAutoClicksPerSecond;
 		if (autoClickInterval) clearInterval(autoClickInterval);
 		if (clicksPerSecond > 0) {
 			autoClickInterval = setInterval(() => simulateClick(), 5000 / clicksPerSecond);
@@ -257,10 +255,10 @@
 </script>
 
 <div
-	class="pt-12 lg:pt-4 transition-all duration-1000 ease-in-out min-h-dvh"
+	class="fixed inset-0 pt-12 lg:pt-4 transition-all duration-1000 ease-in-out {$mobile ? 'overflow-y-auto' : ''}"
 	style="background: linear-gradient(135deg, rgba(139, 69, 191, 0.1) 0%, rgba(75, 0, 130, 0.1) 50%, rgba(139, 69, 191, 0.1) 100%);"
 >
-	<div class="flex flex-col lg:flex-row px-4 pt-12 pb-16 max-w-7xl mx-auto gap-4">
+	<div class="h-full flex flex-col lg:flex-row px-4 pt-12 pb-6 max-w-7xl mx-auto gap-4 {$mobile ? 'min-h-screen' : ''}">
 		<!-- Game Area - Left side (2/3 on desktop, full width on mobile) -->
 		<div class="flex-1 lg:w-2/3 flex flex-col items-center">
 			<PhotonCounter />

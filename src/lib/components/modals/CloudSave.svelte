@@ -6,7 +6,7 @@
 	import { CurrenciesTypes } from '$data/currencies';
 	import type { GameState } from '$lib/types';
 	import { autoSaveEnabled, autoSaveState, shouldAutoSave } from '$stores/autoSave';
-	import { getLevelFromTotalXP } from '$stores/gameStore';
+	import { gameManager } from '$helpers/GameManager.svelte';
 	import { supabaseAuth } from '$stores/supabaseAuth';
 	import { error as errorToast, info } from '$stores/toasts';
 	import { AlertCircle, Clock, CloudDownload, CloudUpload, RotateCcw } from 'lucide-svelte';
@@ -210,7 +210,7 @@
                     <div class="flex flex-wrap gap-3 text-sm">
                         <div class="flex items-center gap-2">
                             <span class="text-white/60">Level</span>
-                            <span class="text-white font-semibold">{getLevelFromTotalXP(cloudSaveInfo.totalXP)}</span>
+                            <span class="text-white font-semibold">{gameManager.getLevelFromTotalXP(cloudSaveInfo.totalXP)}</span>
                         </div>
                         <div class="flex items-center gap-2">
                             <Value

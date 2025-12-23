@@ -4,20 +4,8 @@ import { CurrenciesTypes } from '$data/currencies';
 import { BUILDING_COST_MULTIPLIER } from '$lib/constants';
 import { getUpgradesWithEffects } from '$lib/helpers/effects';
 import type { Building, Price } from '$lib/types';
-import { gameManager } from '$helpers/gameManager';
-import { recentlyAutoPurchasedBuildings } from '$stores/autoBuy';
-import {
-	atoms,
-	bonusMultiplier,
-	buildingProductions,
-	buildings,
-	currentUpgradesBought,
-	electrons,
-	globalMultiplier,
-	photons,
-	protons,
-	settings
-} from '$stores/gameStore';
+import { gameManager } from '$helpers/GameManager.svelte';
+import { autoBuyManager } from '$stores/autoBuy.svelte';
 import AutoButton from '@components/ui/AutoButton.svelte';
 import Value from '@components/ui/Value.svelte';
 import { fade, fly, scale } from 'svelte/transition';
@@ -42,7 +30,7 @@ import { fade, fly, scale } from 'svelte/transition';
 	);
 
 	const unlockedBuildings = $derived(
-		Object.entries($buildings).filter(([, { unlocked }]) => unlocked) as [BuildingType, Building][]
+		Object.entries(gameManager.buildings).filter(([, { unlocked }]) => unlocked) as [BuildingType, Building][]
 	);
 
 	const hiddenBuildings = $derived(
@@ -60,7 +48,7 @@ import { fade, fly, scale } from 'svelte/transition';
 	);
 
 	const affordableBuildings = $derived(
-		Object.entries($buildings).filter(([type, building]) => {
+		Object.entries(gameManager.buildings).filter(([type, building]) => {
 			const buildingType = type as BuildingType;
 
 			// Check if we can afford at least 1 building
@@ -99,7 +87,7 @@ import { fade, fly, scale } from 'svelte/transition';
 	function getMaxAffordable(price: Price, type: BuildingType): number {
 		const currency = getCurrencyAmount(price);
 		const baseCost = price.amount;
-		const currentCount = $buildings[type]?.count ?? 0;
+		const currentCount = gameManager.buildings[type]?.count ?? 0;
 		const actualFirstCost = baseCost * (BUILDING_COST_MULTIPLIER ** currentCount);
 
 		// If we can't afford even one, return 0
@@ -134,7 +122,7 @@ import { fade, fly, scale } from 'svelte/transition';
 
 
 	function getBulkBuyCost(type: BuildingType, amount: number): number {
-		const currentCount = $buildings[type]?.count ?? 0;
+		const currentCount = gameManager.buildings[type]?.count ?? 0;
 		const baseCost = BUILDINGS[type].cost.amount;
 
 		let totalCost = 0;
@@ -163,16 +151,16 @@ import { fade, fly, scale } from 'svelte/transition';
 
 	function getCurrencyAmount(price: Price): number {
 		if (price.currency === CurrenciesTypes.ATOMS) {
-			return $atoms;
+			return gameManager.atoms;
 		}
 		if (price.currency === CurrenciesTypes.ELECTRONS) {
-			return $electrons;
+			return gameManager.electrons;
 		}
 		if (price.currency === CurrenciesTypes.PHOTONS) {
-			return $photons;
+			return gameManager.photons;
 		}
 		if (price.currency === CurrenciesTypes.PROTONS) {
-			return $protons;
+			return gameManager.protons;
 		}
 		return 0;
 	}
@@ -193,7 +181,7 @@ import { fade, fly, scale } from 'svelte/transition';
 
 	<div class="flex flex-col gap-1.5 overflow-y-auto">
 		{#each buildingsEntries as [type, building], i}
-			{@const saveData = $buildings[type]}
+			{@const saveData = gameManager.buildings[type]}
 			{@const unaffordable = !affordableBuildings.some(([t]) => t === type)}
 			{@const obfuscated = hiddenBuildings.some(([t]) => t === type)}
 			{@const hidden = hiddenBuildings.slice(1).some(([t]) => t === type)}
@@ -201,9 +189,9 @@ import { fade, fly, scale } from 'svelte/transition';
 			{@const color = BUILDING_COLORS[level]}
 			{@const purchaseAmount = purchaseAmounts[type]}
 			{@const totalCost = getBulkBuyCost(type, purchaseAmount || 1)}
-			{@const isAutomated = $settings.automation.buildings.includes(type)}
-			{@const hasAutomation = getUpgradesWithEffects($currentUpgradesBought, { type: 'auto_buy', target: type }).length > 0}
-			{@const autoPurchasedCount = $recentlyAutoPurchasedBuildings.get(type) || 0}
+			{@const isAutomated = gameManager.settings.automation.buildings.includes(type)}
+			{@const hasAutomation = getUpgradesWithEffects(gameManager.currentUpgradesBought, { type: 'auto_buy', target: type }).length > 0}
+			{@const autoPurchasedCount = autoBuyManager.recentlyAutoPurchasedBuildings.get(type) || 0}
 
 			<button
 				class="relative text-start bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer p-2 transition-all duration-200 {unaffordable ? 'opacity-50 cursor-not-allowed' : ''}"
@@ -231,10 +219,10 @@ import { fade, fly, scale } from 'svelte/transition';
 					</h3>
 					<p class="text-xs my-0.5">
 						{saveData && saveData.count > 0 ? '' : 'Will produce'}
-						<Value value={$buildingProductions[type] || building.rate * $globalMultiplier * $bonusMultiplier} currency="Atoms" postfix="/s" class="text-accent-300"/>
-						{#if $buildingProductions[type]}
+						<Value value={gameManager.buildingProductions[type] || building.rate * gameManager.globalMultiplier * gameManager.bonusMultiplier} currency="Atoms" postfix="/s" class="text-accent-300"/>
+						{#if gameManager.buildingProductions[type]}
 							<span class="opacity-60 text-[0.6rem] leading-3">
-								<Value value={$buildingProductions[type] / (saveData?.count ?? 1)} prefix="(" />
+								<Value value={gameManager.buildingProductions[type] / (saveData?.count ?? 1)} prefix="(" />
 								× {saveData?.count ?? 1})
 							</span>
 						{/if}

@@ -1,21 +1,19 @@
 <script lang="ts">
 	import { PHOTON_UPGRADES, getPhotonUpgradeCost, canAffordPhotonUpgrade } from '$data/photonUpgrades';
-	import { gameManager } from '$helpers/gameManager';
-	import { photons, photonUpgrades, getCurrentState } from '$stores/gameStore';
+	import { gameManager } from '$helpers/GameManager.svelte';
 	import Value from '@components/ui/Value.svelte';
 	import { CurrenciesTypes } from '$data/currencies';
 
-	const currentState = $derived(getCurrentState());
 	const availableUpgrades = $derived(Object.values(PHOTON_UPGRADES).filter(upgrade => {
-		const currentLevel = $photonUpgrades[upgrade.id] || 0;
+		const currentLevel = gameManager.photonUpgrades[upgrade.id] || 0;
 		const hasLevelsRemaining = currentLevel < upgrade.maxLevel;
-		const meetsCondition = !upgrade.condition || upgrade.condition(currentState);
+		const meetsCondition = !upgrade.condition || upgrade.condition(gameManager);
 		return hasLevelsRemaining && meetsCondition;
 	}));
 
 	const affordableUpgrades = $derived(availableUpgrades.filter(upgrade => {
-		const currentLevel = $photonUpgrades[upgrade.id] || 0;
-		return canAffordPhotonUpgrade(upgrade, currentLevel, $photons);
+		const currentLevel = gameManager.photonUpgrades[upgrade.id] || 0;
+		return canAffordPhotonUpgrade(upgrade, currentLevel, gameManager.photons);
 	}));
 </script>
 
@@ -26,7 +24,7 @@
 
 	<div class="grid gap-2 overflow-y-auto flex-1">
 		{#each availableUpgrades as upgrade (upgrade.id)}
-			{@const currentLevel = $photonUpgrades[upgrade.id] || 0}
+			{@const currentLevel = gameManager.photonUpgrades[upgrade.id] || 0}
 			{@const cost = getPhotonUpgradeCost(upgrade, currentLevel)}
 			{@const affordable = affordableUpgrades.includes(upgrade)}
 			<button

@@ -2,8 +2,7 @@
 	import Discord from '@components/icons/Discord.svelte';
 	import GitHub from '@components/icons/GitHub.svelte';
 	import { Coffee } from 'lucide-svelte';
-	import { gameManager } from '$helpers/gameManager';
-	import { achievements } from '$stores/gameStore';
+	import { gameManager } from '$helpers/GameManager.svelte';
 
 	export interface FooterTheme {
 		baseClass: string;
@@ -19,25 +18,25 @@
 	let { footerTheme }: Props = $props();
 
 	function handleWebsiteClick() {
-		if (!$achievements.includes('website_click')) {
+		if (!gameManager.achievements.includes('website_click')) {
 			gameManager.unlockAchievement('website_click');
 		}
 	}
 
 	function handleCoffeeClick() {
-		if (!$achievements.includes('coffee_click')) {
+		if (!gameManager.achievements.includes('coffee_click')) {
 			gameManager.unlockAchievement('coffee_click');
 		}
 	}
 
 	function handleDiscordClick() {
-		if (!$achievements.includes('discord_click')) {
+		if (!gameManager.achievements.includes('discord_click')) {
 			gameManager.unlockAchievement('discord_click');
 		}
 	}
 
 	function handleGitHubClick() {
-		if (!$achievements.includes('github_click')) {
+		if (!gameManager.achievements.includes('github_click')) {
 			gameManager.unlockAchievement('github_click');
 		}
 	}

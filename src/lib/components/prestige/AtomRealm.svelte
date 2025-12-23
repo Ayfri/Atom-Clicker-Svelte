@@ -8,7 +8,7 @@
 	import Upgrades from '@components/game/Upgrades.svelte';
 	import { app } from '$stores/pixi';
 	import { mobile } from '$stores/window';
-	import { totalElectronizes, totalProtonises } from '$stores/gameStore';
+	import { gameManager } from '$helpers/GameManager.svelte';
 
 	let activeTab: 'achievements' | 'buildings' | 'upgrades' = $state('upgrades');
 
@@ -19,10 +19,10 @@
 
 <div class="relative pt-12 transition-all duration-1000 ease-in-out lg:pt-4 {$mobile ? 'min-h-screen pb-8' : ''}">
 	<div class="-z-10 absolute inset-0 overflow-hidden pointer-events-none">
-		{#if $totalProtonises > 0}
+		{#if gameManager.totalProtonises > 0}
 			<div class="absolute bg-yellow-400/15 blur-[160px] h-64 right-[20%] rounded-full top-[10%] w-64"></div>
 		{/if}
-		{#if $totalElectronizes > 0}
+		{#if gameManager.totalElectronizes > 0}
 			<div class="absolute bg-green-500/15 blur-[180px] bottom-[20%] h-80 left-[10%] rounded-full w-80"></div>
 		{/if}
 	</div>

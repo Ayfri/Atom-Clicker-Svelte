@@ -1,38 +1,5 @@
 <script lang="ts">
-	import {
-		achievements,
-		atomsPerSecond,
-		atoms,
-		autoClicksPerSecond,
-		bonusMultiplier,
-		buildings,
-		clickPower,
-		electrons,
-		globalMultiplier,
-		highestAPS,
-		inGameTime,
-		photons,
-		playerLevel,
-		powerUpDurationMultiplier,
-		powerUpEffectMultiplier,
-		powerUpsCollected,
-		protons,
-		startDate,
-		totalAtomsEarned,
-		totalAtomsEarnedAllTime,
-		totalBonusPhotonsClicked,
-		totalBuildingsPurchased,
-		totalClicks,
-		totalClicksAllTime,
-		totalElectronizes,
-		totalElectronsEarned,
-		totalProtonises,
-		totalProtonsEarned,
-		totalUpgradesPurchased,
-		totalXP,
-		upgrades,
-		xpGainMultiplier,
-	} from '$stores/gameStore';
+	import { gameManager } from '$helpers/GameManager.svelte';
 	import { ACHIEVEMENTS } from '$data/achievements';
 	import { formatDuration, formatNumber, formatNumberFull } from '$lib/utils';
 	import StatItem from '@components/ui/StatItem.svelte';
@@ -61,13 +28,13 @@
 
 	let { onClose }: Props = $props();
 
-	let totalBuildings = $derived(Object.values($buildings).reduce((acc, b) => acc + (b?.count || 0), 0));
+	let totalBuildings = $derived(Object.values(gameManager.buildings).reduce((acc, b) => acc + (b?.count || 0), 0));
 
 	// Update time since start every second
-	let timeSinceStart = $state(formatDuration(Date.now() - $startDate));
+	let timeSinceStart = $state(formatDuration(Date.now() - gameManager.startDate));
 	$effect(() => {
 		const interval = setInterval(() => {
-			timeSinceStart = formatDuration(Date.now() - $startDate);
+			timeSinceStart = formatDuration(Date.now() - gameManager.startDate);
 		}, 1000);
 		return () => clearInterval(interval);
 	});
@@ -89,29 +56,29 @@
 					value={timeSinceStart}
 				/>
 				<StatItem
-					fullValue={formatDuration($inGameTime)}
+					fullValue={formatDuration(gameManager.inGameTime)}
 					icon={Timer}
 					label="In-Game Time"
-					value={formatDuration($inGameTime)}
+					value={formatDuration(gameManager.inGameTime)}
 				/>
 				<StatItem
-					fullValue={formatNumberFull($playerLevel)}
+					fullValue={formatNumberFull(gameManager.playerLevel)}
 					icon={Award}
 					label="Player Level"
-					value={$playerLevel}
+					value={formatNumber(gameManager.playerLevel)}
 				/>
 				<StatItem
-					fullValue={formatNumberFull($totalXP)}
-					icon={Sparkles}
+					fullValue={formatNumberFull(gameManager.totalXP)}
+					icon={TrendingUp}
 					label="Total XP"
-					value={formatNumber($totalXP)}
+					value={formatNumber(gameManager.totalXP)}
 				/>
 				<StatItem
-					fullValue={`${$achievements.length} / ${totalAchievements}`}
+					fullValue={`${gameManager.achievements.length} / ${totalAchievements}`}
 					icon={Award}
 					label="Achievements"
 					suffix={` / ${totalAchievements}`}
-					value={$achievements.length}
+					value={gameManager.achievements.length}
 				/>
 			</div>
 		</section>
@@ -124,52 +91,52 @@
 			</h3>
 			<div class="grid gap-1.5 sm:grid-cols-2">
 				<StatItem
-					fullValue={formatNumberFull($atomsPerSecond)}
+					fullValue={formatNumberFull(gameManager.atomsPerSecond)}
 					icon={Zap}
 					label="Atoms/sec"
-					value={formatNumber($atomsPerSecond)}
+					value={formatNumber(gameManager.atomsPerSecond)}
 				/>
 				<StatItem
 					description="Best achieved"
-					fullValue={formatNumberFull($highestAPS)}
+					fullValue={formatNumberFull(gameManager.highestAPS)}
 					icon={Flame}
 					label="Highest APS"
-					value={formatNumber($highestAPS)}
+					value={formatNumber(gameManager.highestAPS)}
 				/>
 				<StatItem
-					fullValue={formatNumberFull($clickPower)}
+					fullValue={formatNumberFull(gameManager.clickPower)}
 					icon={MousePointerClick}
 					label="Click Power"
-					value={formatNumber($clickPower)}
+					value={formatNumber(gameManager.clickPower)}
 				/>
 				<StatItem
-					fullValue={formatNumberFull($autoClicksPerSecond)}
+					fullValue={formatNumberFull(gameManager.autoClicksPerSecond)}
 					icon={Timer}
 					label="Auto Clicks/sec"
-					value={formatNumber($autoClicksPerSecond, 0)}
+					value={formatNumber(gameManager.autoClicksPerSecond, 0)}
 				/>
 				<StatItem
-					fullValue={`${$globalMultiplier.toFixed(2)}×`}
+					fullValue={`${gameManager.globalMultiplier.toFixed(2)}×`}
 					icon={TrendingUp}
 					label="Global Multiplier"
 					prefix="×"
-					value={formatNumber($globalMultiplier)}
+					value={formatNumber(gameManager.globalMultiplier)}
 				/>
-				{#if $bonusMultiplier > 1}
+				{#if gameManager.bonusMultiplier > 1}
 					<StatItem
-						fullValue={`${$bonusMultiplier.toFixed(2)}×`}
+						fullValue={`${gameManager.bonusMultiplier.toFixed(2)}×`}
 						icon={Zap}
 						label="Active Bonus"
 						prefix="×"
-						value={formatNumber($bonusMultiplier)}
+						value={formatNumber(gameManager.bonusMultiplier)}
 					/>
 				{/if}
 				<StatItem
-					fullValue={`${$xpGainMultiplier.toFixed(2)}×`}
+					fullValue={`${gameManager.xpGainMultiplier.toFixed(2)}×`}
 					icon={Sparkles}
 					label="XP Multiplier"
 					prefix="×"
-					value={formatNumber($xpGainMultiplier)}
+					value={formatNumber(gameManager.xpGainMultiplier)}
 				/>
 			</div>
 		</section>
@@ -183,36 +150,36 @@
 			<div class="grid gap-1.5 sm:grid-cols-2">
 				<StatItem
 					description="This run"
-					fullValue={formatNumberFull($totalClicks)}
+					fullValue={formatNumberFull(gameManager.totalClicks)}
 					icon={MousePointerClick}
 					label="Clicks"
-					value={formatNumber($totalClicks, 0)}
+					value={formatNumber(gameManager.totalClicks, 0)}
 				/>
 				<StatItem
 					description="All time"
-					fullValue={formatNumberFull($totalClicksAllTime)}
+					fullValue={formatNumberFull(gameManager.totalClicksAllTime)}
 					icon={MousePointerClick}
 					label="Clicks (Total)"
-					value={formatNumber($totalClicksAllTime, 0)}
+					value={formatNumber(gameManager.totalClicksAllTime, 0)}
 				/>
 				<StatItem
 					description="This run"
-					fullValue={formatNumberFull($totalAtomsEarned)}
+					fullValue={formatNumberFull(gameManager.totalAtomsEarned)}
 					icon={Zap}
 					label="Atoms Earned"
-					value={formatNumber($totalAtomsEarned)}
+					value={formatNumber(gameManager.totalAtomsEarned)}
 				/>
 				<StatItem
 					description="All time"
-					fullValue={formatNumberFull($totalAtomsEarnedAllTime)}
+					fullValue={formatNumberFull(gameManager.totalAtomsEarnedAllTime)}
 					icon={Zap}
 					label="Atoms (Total)"
-					value={formatNumber($totalAtomsEarnedAllTime)}
+					value={formatNumber(gameManager.totalAtomsEarnedAllTime)}
 				/>
-				<div class="flex items-center gap-2 rounded-lg bg-white/5 p-2.5" title={formatNumberFull($atoms)}>
+				<div class="flex items-center gap-2 rounded-lg bg-white/5 p-2.5" title={formatNumberFull(gameManager.atoms)}>
 					<img src="/currencies/atom.png" alt="Atoms" class="size-5" />
 					<span class="text-sm text-white/70">Current Atoms</span>
-					<span class="ml-auto font-semibold text-accent tabular-nums">{formatNumber($atoms)}</span>
+					<span class="ml-auto font-semibold text-accent tabular-nums">{formatNumber(gameManager.atoms)}</span>
 				</div>
 			</div>
 		</section>
@@ -233,24 +200,24 @@
 				/>
 				<StatItem
 					description="All time"
-					fullValue={formatNumberFull($totalBuildingsPurchased)}
+					fullValue={formatNumberFull(gameManager.totalBuildingsPurchased)}
 					icon={Building2}
 					label="Buildings Purchased"
-					value={formatNumber($totalBuildingsPurchased, 0)}
+					value={formatNumber(gameManager.totalBuildingsPurchased, 0)}
 				/>
 				<StatItem
 					description="Currently owned"
-					fullValue={$upgrades.length.toString()}
+					fullValue={gameManager.upgrades.length.toString()}
 					icon={Package}
 					label="Upgrades Owned"
-					value={$upgrades.length}
+					value={gameManager.upgrades.length}
 				/>
 				<StatItem
 					description="All time"
-					fullValue={formatNumberFull($totalUpgradesPurchased)}
+					fullValue={formatNumberFull(gameManager.totalUpgradesPurchased)}
 					icon={Package}
 					label="Upgrades Purchased"
-					value={formatNumber($totalUpgradesPurchased, 0)}
+					value={formatNumber(gameManager.totalUpgradesPurchased, 0)}
 				/>
 			</div>
 		</section>
@@ -263,30 +230,30 @@
 			</h3>
 			<div class="grid gap-1.5 sm:grid-cols-2">
 				<StatItem
-					fullValue={formatNumberFull($powerUpsCollected)}
+					fullValue={formatNumberFull(gameManager.powerUpsCollected)}
 					icon={Zap}
 					label="Power-ups Collected"
-					value={formatNumber($powerUpsCollected, 0)}
+					value={formatNumber(gameManager.powerUpsCollected, 0)}
 				/>
 				<StatItem
-					fullValue={`${$powerUpDurationMultiplier.toFixed(2)}×`}
+					fullValue={`${gameManager.powerUpDurationMultiplier.toFixed(2)}×`}
 					icon={Timer}
 					label="Duration Multiplier"
 					prefix="×"
-					value={formatNumber($powerUpDurationMultiplier)}
+					value={formatNumber(gameManager.powerUpDurationMultiplier)}
 				/>
 				<StatItem
-					fullValue={`${$powerUpEffectMultiplier.toFixed(2)}×`}
+					fullValue={`${gameManager.powerUpEffectMultiplier.toFixed(2)}×`}
 					icon={TrendingUp}
 					label="Effect Multiplier"
 					prefix="×"
-					value={formatNumber($powerUpEffectMultiplier)}
+					value={formatNumber(gameManager.powerUpEffectMultiplier)}
 				/>
 			</div>
 		</section>
 
 		<!-- Prestige Stats -->
-		{#if $protons > 0 || $electrons > 0 || $totalProtonises > 0 || $totalElectronizes > 0}
+		{#if gameManager.protons > 0 || gameManager.electrons > 0 || gameManager.totalProtonises > 0 || gameManager.totalElectronizes > 0}
 			<section>
 				<h3 class="mb-2 flex items-center gap-2 border-b border-white/20 pb-1.5 text-base font-semibold text-white/90">
 					<RotateCcw size={18} />
@@ -294,46 +261,46 @@
 				</h3>
 				<div class="grid gap-1.5 lg:grid-cols-2">
 					<!-- Protons Column -->
-					{#if $protons > 0 || $totalProtonises > 0 || $totalElectronizes > 0}
+					{#if gameManager.protons > 0 || gameManager.totalProtonises > 0 || gameManager.totalElectronizes > 0}
 						<div class="flex flex-col gap-1.5">
-							<div class="flex items-center gap-2 rounded-lg bg-white/5 p-2.5" title={formatNumberFull($protons)}>
+							<div class="flex items-center gap-2 rounded-lg bg-white/5 p-2.5" title={formatNumberFull(gameManager.protons)}>
 								<img src="/currencies/proton.png" alt="Protons" class="size-5" />
 								<span class="text-sm text-white/70">Protons</span>
-								<span class="ml-auto font-semibold text-yellow-400 tabular-nums">{formatNumber($protons)}</span>
+								<span class="ml-auto font-semibold text-yellow-400 tabular-nums">{formatNumber(gameManager.protons)}</span>
 							</div>
 							<StatItem
-								fullValue={formatNumberFull($totalProtonsEarned)}
+								fullValue={formatNumberFull(gameManager.totalProtonsEarned)}
 								icon={Atom}
 								label="Protons Earned (Total)"
-								value={formatNumber($totalProtonsEarned)}
+								value={formatNumber(gameManager.totalProtonsEarned)}
 							/>
 							<StatItem
-								fullValue={formatNumberFull($totalProtonises)}
+								fullValue={formatNumberFull(gameManager.totalProtonises)}
 								icon={RotateCcw}
 								label="Times Protonised"
-								value={$totalProtonises}
+								value={gameManager.totalProtonises}
 							/>
 						</div>
 					{/if}
 					<!-- Electrons Column -->
-					{#if $electrons > 0 || $totalElectronizes > 0}
+					{#if gameManager.electrons > 0 || gameManager.totalElectronizes > 0}
 						<div class="flex flex-col gap-1.5">
-							<div class="flex items-center gap-2 rounded-lg bg-white/5 p-2.5" title={formatNumberFull($electrons)}>
+							<div class="flex items-center gap-2 rounded-lg bg-white/5 p-2.5" title={formatNumberFull(gameManager.electrons)}>
 								<img src="/currencies/electron.png" alt="Electrons" class="size-5" />
 								<span class="text-sm text-white/70">Electrons</span>
-								<span class="ml-auto font-semibold text-green-400 tabular-nums">{formatNumber($electrons)}</span>
+								<span class="ml-auto font-semibold text-green-400 tabular-nums">{formatNumber(gameManager.electrons)}</span>
 							</div>
 							<StatItem
-								fullValue={formatNumberFull($totalElectronsEarned)}
+								fullValue={formatNumberFull(gameManager.totalElectronsEarned)}
 								icon={Atom}
 								label="Electrons Earned (Total)"
-								value={formatNumber($totalElectronsEarned)}
+								value={formatNumber(gameManager.totalElectronsEarned)}
 							/>
 							<StatItem
-								fullValue={formatNumberFull($totalElectronizes)}
+								fullValue={formatNumberFull(gameManager.totalElectronizes)}
 								icon={RotateCcw}
 								label="Times Electronized"
-								value={$totalElectronizes}
+								value={gameManager.totalElectronizes}
 							/>
 						</div>
 					{/if}
@@ -342,23 +309,23 @@
 		{/if}
 
 		<!-- Photon Realm Stats -->
-		{#if $photons > 0 || $totalBonusPhotonsClicked > 0}
+		{#if gameManager.photons > 0 || gameManager.totalBonusPhotonsClicked > 0}
 			<section>
 				<h3 class="mb-2 flex items-center gap-2 border-b border-white/20 pb-1.5 text-base font-semibold text-white/90">
 					<Sparkles size={18} />
 					Photon Realm
 				</h3>
 				<div class="grid gap-1.5 sm:grid-cols-2">
-					<div class="flex items-center gap-2 rounded-lg bg-white/5 p-2.5" title={formatNumberFull($photons)}>
+					<div class="flex items-center gap-2 rounded-lg bg-white/5 p-2.5" title={formatNumberFull(gameManager.photons)}>
 						<img src="/currencies/photon.png" alt="Photons" class="size-5" />
 						<span class="text-sm text-white/70">Photons</span>
-						<span class="ml-auto font-semibold text-purple-400 tabular-nums">{formatNumber($photons)}</span>
+						<span class="ml-auto font-semibold text-purple-400 tabular-nums">{formatNumber(gameManager.photons)}</span>
 					</div>
 					<StatItem
-						fullValue={formatNumberFull($totalBonusPhotonsClicked)}
+						fullValue={formatNumberFull(gameManager.totalBonusPhotonsClicked)}
 						icon={MousePointerClick}
 						label="Bonus Photons Clicked"
-						value={formatNumber($totalBonusPhotonsClicked, 0)}
+						value={formatNumber(gameManager.totalBonusPhotonsClicked, 0)}
 					/>
 				</div>
 			</section>
