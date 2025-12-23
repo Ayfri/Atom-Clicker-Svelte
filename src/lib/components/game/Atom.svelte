@@ -60,7 +60,7 @@
 </script>
 
 <button
-	class="atom relative mt-20 flex size-[450px] items-center justify-center cursor-pointer bg-transparent md:size-[360px] sm:size-[300px]"
+	class="atom relative mt-20 flex size-112.5 items-center justify-center cursor-pointer bg-transparent md:size-90 sm:size-75"
 	class:bonus={gameManager.hasBonus}
 	onclick={async e => await handleClick(e)}
 	bind:this={atomElement}
@@ -77,7 +77,7 @@
 			</div>
 		{/if}
 	{/each}
-	<div class="nucleus h-[60px] w-[60px] rounded-full md:h-[50px] md:w-[50px]"></div>
+	<div class="nucleus h-15 w-15 rounded-full md:h-12.5 md:w-12.5"></div>
 </button>
 
 <style>

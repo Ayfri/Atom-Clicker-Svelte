@@ -119,7 +119,7 @@
 
 {#if messageShown}
 	<p
-		class="absolute z-20 w-[300px] -translate-x-1/2 -translate-y-1/2 transform text-center font-bold text-lg text-white pointer-events-none drop-shadow-lg"
+		class="absolute z-20 w-75 -translate-x-1/2 -translate-y-1/2 transform text-center font-bold text-lg text-white pointer-events-none drop-shadow-lg"
 		style="left: {x}px; top: {y}px;"
 	>
 		{powerUp.description}

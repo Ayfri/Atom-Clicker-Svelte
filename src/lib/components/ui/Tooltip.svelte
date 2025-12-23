@@ -123,14 +123,14 @@
 	id={tooltipId}
 	popover="auto"
 	ontoggle={handleToggle}
-	class="fixed bg-black/95 backdrop-blur-xs rounded-lg p-3 border border-white/20 max-w-[90vw] min-w-[200px] text-white/90 text-sm"
+	class="fixed bg-black/95 backdrop-blur-xs rounded-lg p-3 border border-white/20 max-w-[90vw] min-w-50 text-white/90 text-sm"
 >
 	<div class="flex justify-between items-start">
 		<div>
 			{@render content()}
 		</div>
-		<button 
-			onclick={() => popoverElement?.hidePopover()} 
+		<button
+			onclick={() => popoverElement?.hidePopover()}
 			class="ml-2 text-white/60 hover:text-white/90 text-lg leading-none"
 			aria-label="Close tooltip"
 		>

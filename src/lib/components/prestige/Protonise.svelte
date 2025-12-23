@@ -47,7 +47,7 @@
 		<button
 			class="
 				protonise-button group relative flex items-center justify-center w-full py-4 px-6 rounded-lg text-white font-bold text-lg shadow-lg overflow-hidden transition-all duration-300 transform border-2 border-transparent bg-clip-padding hover:scale-[1.02]
-				disabled:before:hidden disabled:opacity-50 disabled:cursor-not-allowed disabled:border-[var(--color-red-900)] disabled:bg-black/50 disabled:hover:scale-100
+				disabled:before:hidden disabled:opacity-50 disabled:cursor-not-allowed disabled:border-red-900 disabled:bg-black/50 disabled:hover:scale-100
 			"
 			disabled={!canProtonise || gameManager.protoniseProtonsGain === 0}
 			onclick={handleProtonise}

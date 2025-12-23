@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { createClickParticle, type Particle } from '$helpers/particles';
-	import { STATS } from '$helpers/statConstants';
 	import { onDestroy, onMount } from 'svelte';
 	import PhotonCounter from '@components/prestige/PhotonCounter.svelte';
 	import PhotonUpgrades from '@components/prestige/PhotonUpgrades.svelte';
@@ -264,7 +263,7 @@
 			<PhotonCounter />
 
 			<div
-				class="relative w-full {$mobile ? 'h-[40vh] min-h-[300px]' : 'h-[350px] lg:h-[650px]'} overflow-hidden"
+				class="relative w-full {$mobile ? 'h-[40vh] min-h-75' : 'h-87.5 lg:h-162.5'} overflow-hidden"
 				data-photon-realm
 				bind:this={container}
 			>
