@@ -1,5 +1,5 @@
-import { writable, derived, get } from 'svelte/store';
-import { atoms, playerLevel } from '$stores/gameStore';
+import { writable, get } from 'svelte/store';
+import { gameManager } from '$helpers/GameManager.svelte';
 import { browser } from '$app/environment';
 import { supabaseAuth } from '$stores/supabaseAuth';
 import type { LeaderboardEntry } from '$lib/types/leaderboard';
@@ -121,8 +121,12 @@ if (browser) {
 	let lastLevel = 0;
 	let lastUpdate = 0;
 
-	derived([atoms, playerLevel, supabaseAuth], ([$atoms, $level, $auth]) => ({ atoms: $atoms, level: $level, auth: $auth }))
-		.subscribe(({ atoms, level, auth }) => {
+	$effect.root(() => {
+		$effect(() => {
+			const atoms = gameManager.atoms;
+			const level = gameManager.playerLevel;
+			const auth = get(supabaseAuth);
+
 			if (!auth.isAuthenticated) return;
 
 			const now = Date.now();
@@ -141,4 +145,5 @@ if (browser) {
 				updateLeaderboardScore(atoms, level);
 			}
 		});
+	});
 }

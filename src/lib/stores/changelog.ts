@@ -1,6 +1,5 @@
 import { writable } from 'svelte/store';
-import { lastSave } from '$stores/gameStore';
-import { get } from 'svelte/store';
+import { gameManager } from '$helpers/GameManager.svelte';
 
 function createChangelogStore() {
     const { subscribe, set, update } = writable({
@@ -14,7 +13,7 @@ function createChangelogStore() {
             update(state => ({ ...state, hasUnread: false, lastReadDate: new Date() }));
         },
         checkForUpdates: (lastChangelogDate: Date) => {
-            const lastSaveDate = new Date(get(lastSave));
+            const lastSaveDate = new Date(gameManager.lastSave);
             update(state => ({
                 ...state,
                 hasUnread: lastSaveDate < lastChangelogDate && state.lastReadDate < lastChangelogDate

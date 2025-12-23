@@ -1,7 +1,6 @@
-import {get} from 'svelte/store';
 import type {SkillUpgrade} from '$lib/types';
 import {BUILDINGS, type BuildingData, type BuildingType, BUILDING_TYPES} from '$data/buildings';
-import {playerLevel} from '$stores/gameStore';
+import type { GameManager } from '$helpers/GameManager.svelte';
 
 // Update constants for positioning
 export const GRID_SIZE = {
@@ -45,7 +44,7 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 				id: `${buildingType}Multiplier`,
 				name: `${building.name} Multiplier`,
 				description: `2x ${building.name} production`,
-				condition: state => (state.buildings[buildingType]?.count ?? 0) >= 100,
+				condition: manager => (manager.buildings[buildingType]?.count ?? 0) >= 100,
 				position: gridPos(-(i + 0.5), 1),
 				effects: [{
 					type: 'building',
@@ -161,8 +160,8 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		effects: [{
 			type: 'global',
 			description: 'Add 1% production per level',
-			apply: (currentValue, state) => {
-				const level = get(playerLevel);
+			apply: (currentValue, manager) => {
+				const level = manager.playerLevel;
 				return currentValue * (1 + level * 0.01);
 			}
 		}],
@@ -389,8 +388,8 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		effects: [{
 			type: 'global',
 			description: 'Add 1.5% production per level',
-			apply: (currentValue, state) => {
-				const level = get(playerLevel);
+			apply: (currentValue, manager) => {
+				const level = manager.playerLevel;
 				return currentValue * (1 + level * 0.015);
 			}
 		}],

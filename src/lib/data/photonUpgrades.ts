@@ -1,5 +1,5 @@
-import { CurrenciesTypes } from '$data/currencies';
-import type { Effect, GameState, Upgrade } from '$lib/types';
+import type { Effect } from '$lib/types';
+import type { GameManager } from '$helpers/GameManager.svelte';
 import { formatNumber } from '$lib/utils';
 
 export interface PhotonUpgrade {
@@ -10,7 +10,7 @@ export interface PhotonUpgrade {
 	costMultiplier: number;
 	maxLevel: number;
 	effects: (level: number) => Effect[];
-	condition?: (state: GameState) => boolean;
+	condition?: (manager: GameManager) => boolean;
 }
 
 export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
@@ -118,7 +118,7 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 				apply: (currentValue) => currentValue * (1 + (0.25 * level)),
 			},
 		],
-		condition: (state: GameState) => state.electrons > 0,
+		condition: (manager: GameManager) => manager.electrons > 0,
 	},
 	proton_boost: {
 		id: 'proton_boost',
@@ -134,7 +134,7 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 				apply: (currentValue) => currentValue * (1 + (0.15 * level)),
 			},
 		],
-		condition: (state: GameState) => state.protons > 0,
+		condition: (manager: GameManager) => manager.protons > 0,
 	},
 	electron_super_boost: {
 		id: 'electron_super_boost',
@@ -150,7 +150,7 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 				apply: (currentValue) => currentValue * (1 + (0.5 * level)),
 			},
 		],
-		condition: (state: GameState) => state.electrons >= 10,
+		condition: (manager: GameManager) => manager.electrons >= 10,
 	},
 	proton_super_boost: {
 		id: 'proton_super_boost',
@@ -166,7 +166,7 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 				apply: (currentValue) => currentValue * (1 + (0.4 * level)),
 			},
 		],
-		condition: (state: GameState) => state.protons >= 5,
+		condition: (manager: GameManager) => manager.protons >= 5,
 	},
 };
 

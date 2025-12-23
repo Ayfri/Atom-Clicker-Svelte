@@ -1,9 +1,8 @@
 import { BUILDING_TYPES, BUILDINGS, type BuildingType } from '$data/buildings';
 import { CurrenciesTypes, type CurrencyName } from '$data/currencies';
-import type { Effect, GameState, Upgrade } from '$lib/types';
+import type { Effect, Upgrade } from '$lib/types';
+import type { GameManager } from '$helpers/GameManager.svelte';
 import { capitalize, formatNumber, shortNumberText } from '$lib/utils';
-import { atomsPerSecond, playerLevel, totalProtonises } from '$stores/gameStore';
-import { get } from 'svelte/store';
 
 export const SPECIAL_UPGRADES: Upgrade[] = [
 	{
@@ -29,7 +28,7 @@ export const SPECIAL_UPGRADES: Upgrade[] = [
 ];
 
 interface CreateUpgradesOptions {
-	condition?: (index: number, state: GameState) => boolean;
+	condition?: (index: number, manager: GameManager) => boolean;
 	cost: (index: number) => number;
 	currency?: CurrencyName;
 	count: number;
@@ -134,7 +133,7 @@ function createClickPowerUpgrades() {
 				{
 					type: 'click' as const,
 					description: `Add ${Math.ceil(i / 2)}% of APS to click power`,
-					apply: currentValue => currentValue + (Math.ceil(i / 2) / 100) * get(atomsPerSecond),
+					apply: (currentValue, manager) => currentValue + (Math.ceil(i / 2) / 100) * (manager.atomsPerSecond ?? 0),
 				},
 			],
 		}),
@@ -183,9 +182,9 @@ function createGlobalUpgrades() {
 				{
 					type: 'global',
 					description: `Add ${Math.ceil(i / 5)}% production per achievement`,
-					apply: (currentValue, state) => {
+					apply: (currentValue, manager) => {
 						const perAchievement = Math.ceil(i / 5);
-						const achievements = state.achievements.length;
+						const achievements = manager.achievements.length;
 						const boost = (achievements * perAchievement) / 100;
 						return currentValue * (1 + boost);
 					},
@@ -237,8 +236,8 @@ function createLevelBoostUpgrades() {
 				{
 					type: 'global',
 					description: `Add ${1 + Math.ceil(i / 2)}% production per level`,
-					apply: currentValue => {
-						const level = get(playerLevel);
+					apply: (currentValue, manager) => {
+						const level = manager.playerLevel ?? 1;
 						return currentValue * (1 + (level * (1 + Math.ceil(i / 2))) / 100);
 					},
 				},
@@ -336,7 +335,7 @@ function createProtonUpgrades() {
 				{
 					type: 'electron_gain',
 					description: '+1 electron per protonise',
-					apply: currentValue => currentValue + get(totalProtonises),
+					apply: (currentValue, manager) => currentValue + (manager.totalProtonises || 0),
 				},
 			],
 		},
@@ -358,8 +357,8 @@ function createProtonUpgrades() {
 				{
 					type: 'global',
 					description: `Add ${25 * i}% production per protonise`,
-					apply: (currentValue, state) => {
-						const boost = (state.totalProtonises || 0) * (0.25 * i);
+					apply: (currentValue, manager) => {
+						const boost = (manager.totalProtonises || 0) * (0.25 * i);
 						return currentValue * (1 + boost);
 					},
 				},

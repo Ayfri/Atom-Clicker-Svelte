@@ -1,5 +1,5 @@
 import { browser } from '$app/environment';
-import { getCurrentState } from '$stores/gameStore';
+import { gameManager } from '$helpers/GameManager.svelte';
 import { get } from 'svelte/store';
 import { supabaseAuth } from '$stores/supabaseAuth';
 
@@ -75,7 +75,7 @@ export function captureGameState(): Record<string, unknown> | null {
 	if (!browser) return null;
 
 	try {
-		const state = getCurrentState();
+		const state = gameManager.getCurrentState();
 
 		const safeState: Record<string, unknown> = {
 			...state,

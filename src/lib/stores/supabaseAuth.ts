@@ -3,8 +3,7 @@ import { browser } from '$app/environment';
 import { writable, derived } from 'svelte/store';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import type { Database } from '$lib/types/supabase';
-import { gameManager } from '$helpers/gameManager';
-import { statManager } from '$stores/gameStore';
+import { gameManager } from '$helpers/GameManager.svelte';
 import { isValidGameState, SAVE_VERSION } from '$helpers/saves';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -281,7 +280,7 @@ function createSupabaseAuthStore() {
 
 			const savedState = profile.save as any;
 			if (savedState && isValidGameState(savedState)) {
-				statManager.loadSaveData(savedState);
+				gameManager.loadSaveData(savedState);
 				return true;
 			}
 			return false;
