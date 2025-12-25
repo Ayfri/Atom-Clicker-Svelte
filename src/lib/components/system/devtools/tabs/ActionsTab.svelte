@@ -143,19 +143,6 @@
 				<Factory size={16} />
 				<span>Max Buildings</span>
 			</button>
-			<button
-				class="flex items-center justify-center gap-2 bg-realm-600/80 hover:bg-realm-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer shadow-lg"
-				onclick={() => {
-					gameManager.purpleRealmUnlocked = true;
-					if (!gameManager.upgrades.includes('feature_purple_realm')) {
-						gameManager.upgrades = [...gameManager.upgrades, 'feature_purple_realm'];
-					}
-					alert('Purple Realm unlocked!');
-				}}
-			>
-				<Orbit size={16} />
-				<span>Unlock Purple Realm</span>
-			</button>
 		</div>
 	</div>
 
