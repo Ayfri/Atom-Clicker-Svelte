@@ -7,9 +7,10 @@
 		content: Snippet;
 		position?: 'top' | 'bottom' | 'left' | 'right';
 		size?: 'sm' | 'md' | 'lg';
+		class?: string;
 	}
 
-	let { children, content, position = 'top', size = 'md' }: Props = $props();
+	let { children, content, position = 'top', size = 'md', class: className = '' }: Props = $props();
 
 	const tooltipId = `tooltip-${Math.random().toString(36).substring(2, 11)}`;
 	let triggerElement = $state<HTMLButtonElement>();
@@ -95,9 +96,9 @@
 	}[position]);
 </script>
 
-<div class="relative inline-block">
+<div class="relative inline-block {className}">
 	<!-- Desktop: hover trigger -->
-	<div bind:this={desktopTriggerElement} class="hidden sm:block" role="button" tabindex="0" onmouseenter={showDesktopTooltip} onmouseleave={hideDesktopTooltip}>
+	<div bind:this={desktopTriggerElement} class="hidden sm:block h-full w-full" role="button" tabindex="0" onmouseenter={showDesktopTooltip} onmouseleave={hideDesktopTooltip}>
 		{@render children()}
 
 		<!-- Desktop tooltip (popover) -->
