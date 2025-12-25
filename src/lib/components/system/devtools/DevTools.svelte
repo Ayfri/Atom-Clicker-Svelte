@@ -6,15 +6,17 @@
 	import AchievementsTab from './tabs/AchievementsTab.svelte';
 	import JsonTab from './tabs/JsonTab.svelte';
 	import ActionsTab from './tabs/ActionsTab.svelte';
-	import { BarChart3, TrendingUp, Trophy, FileJson, Zap, Settings } from 'lucide-svelte';
+	import AutomationTab from './tabs/AutomationTab.svelte';
+	import { BarChart3, TrendingUp, Trophy, FileJson, Zap, Settings, Cpu } from 'lucide-svelte';
 
 	let isOpen = $state(false);
-	let activeTab = $state<'stats' | 'upgrades' | 'achievements' | 'json' | 'actions'>('stats');
+	let activeTab = $state<'stats' | 'upgrades' | 'achievements' | 'json' | 'actions' | 'automation'>('stats');
 
 	const tabs = [
 		{ id: 'stats' as const, label: 'Stats', icon: BarChart3 },
 		{ id: 'upgrades' as const, label: 'Upgrades', icon: TrendingUp },
 		{ id: 'achievements' as const, label: 'Achievements', icon: Trophy },
+		{ id: 'automation' as const, label: 'Automation', icon: Cpu },
 		{ id: 'json' as const, label: 'JSON', icon: FileJson },
 		{ id: 'actions' as const, label: 'Actions', icon: Zap }
 	];
@@ -63,6 +65,8 @@
 					<JsonTab />
 				{:else if activeTab === 'actions'}
 					<ActionsTab />
+				{:else if activeTab === 'automation'}
+					<AutomationTab />
 				{/if}
 			</div>
 		</Modal>

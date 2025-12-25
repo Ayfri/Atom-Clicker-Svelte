@@ -49,30 +49,6 @@
 					class="w-4 h-4 rounded border-white/10 bg-black/20 text-accent-500 focus:ring-accent-500/50 cursor-pointer"
 				/>
 			</label>
-			<label class="flex items-center justify-between bg-black/20 p-2 rounded-lg border border-white/5 cursor-pointer hover:bg-black/30 transition-colors">
-				<span class="text-sm text-white/80">Auto Upgrades</span>
-				<input
-					type="checkbox"
-					checked={gameManager.settings.automation.upgrades}
-					onchange={(e) => gameManager.settings.automation.upgrades = e.currentTarget.checked}
-					class="w-4 h-4 rounded border-white/10 bg-black/20 text-accent-500 focus:ring-accent-500/50 cursor-pointer"
-				/>
-			</label>
-			<label class="flex items-center justify-between bg-black/20 p-2 rounded-lg border border-white/5 cursor-pointer hover:bg-black/30 transition-colors">
-				<span class="text-sm text-white/80">Auto Buildings</span>
-				<input
-					type="checkbox"
-					checked={gameManager.settings.automation.buildings.length === BUILDING_TYPES.length}
-					onchange={(e) => {
-						if (e.currentTarget.checked) {
-							gameManager.settings.automation.buildings = BUILDING_TYPES;
-						} else {
-							gameManager.settings.automation.buildings = [];
-						}
-					}}
-					class="w-4 h-4 rounded border-white/10 bg-black/20 text-accent-500 focus:ring-accent-500/50 cursor-pointer"
-				/>
-			</label>
 		</div>
 	</div>
 
