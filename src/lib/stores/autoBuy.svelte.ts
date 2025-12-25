@@ -28,6 +28,30 @@ class AutoBuyManager {
 		return intervals;
 	}
 
+	purchaseBuilding(type: BuildingType) {
+		try {
+			const success = gameManager.purchaseBuilding(type, 1);
+
+			if (success) {
+				// Add visual feedback
+				const current = this.recentlyAutoPurchasedBuildings.get(type) || 0;
+				this.recentlyAutoPurchasedBuildings.set(type, current + 1);
+
+				setTimeout(() => {
+					const current = this.recentlyAutoPurchasedBuildings.get(type) || 0;
+					if (current <= 1) {
+						this.recentlyAutoPurchasedBuildings.delete(type);
+					} else {
+						this.recentlyAutoPurchasedBuildings.set(type, current - 1);
+					}
+				}, 2000);
+			}
+			return success;
+		} catch (error) {
+			return false;
+		}
+	}
+
 	init() {
 		if (browser) {
 			$effect(() => {
@@ -39,27 +63,7 @@ class AutoBuyManager {
 
 				Object.entries(intervals).forEach(([buildingType, interval]) => {
 					this.timers[buildingType] = setInterval(() => {
-						try {
-							const type = buildingType as BuildingType;
-							const success = gameManager.purchaseBuilding(type, 1);
-
-							if (success) {
-								// Add visual feedback
-								const current = this.recentlyAutoPurchasedBuildings.get(type) || 0;
-								this.recentlyAutoPurchasedBuildings.set(type, current + 1);
-
-								setTimeout(() => {
-									const current = this.recentlyAutoPurchasedBuildings.get(type) || 0;
-									if (current <= 1) {
-										this.recentlyAutoPurchasedBuildings.delete(type);
-									} else {
-										this.recentlyAutoPurchasedBuildings.set(type, current - 1);
-									}
-								}, 2000);
-							}
-						} catch (error) {
-							// Silent fail for auto-buy
-						}
+						this.purchaseBuilding(buildingType as BuildingType);
 					}, interval);
 				});
 
