@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Achievements from '@components/game/Achievements.svelte';
 	import Atom from '@components/game/Atom.svelte';
-	import BonusPhoton from '@components/game/BonusPhoton.svelte';
+	import Bonus from '@components/game/Bonus.svelte';
 	import Buildings from '@components/game/Buildings.svelte';
 	import Canvas from '@components/game/Canvas.svelte';
 	import Counter from '@components/game/Counter.svelte';
@@ -23,7 +23,7 @@
 	</div>
 
 	<Canvas />
-	<BonusPhoton />
+	<Bonus />
 
 	<div class="game-container gap-8 grid lg:max-w-4xl mx-auto p-8 text-sm xl:max-w-360">
 		<div class="left-panel flex flex-col gap-4 z-10">

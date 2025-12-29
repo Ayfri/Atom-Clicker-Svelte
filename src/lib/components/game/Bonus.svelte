@@ -1,4 +1,5 @@
 <script lang="ts">
+	import HiggsBoson from '@components/icons/HiggsBoson.svelte';
 	import { POWER_UPS } from '$data/powerUp';
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import type { PowerUp } from '$lib/types';
@@ -40,6 +41,7 @@
 		const randomPowerUp = randomValue(POWER_UPS);
 		powerUp.multiplier = randomPowerUp.multiplier * gameManager.powerUpEffectMultiplier;
 		powerUp.duration = randomPowerUp.duration * gameManager.powerUpDurationMultiplier;
+		// powerUp.duration = 60000; // Debug
 		powerUp.description = `Multiplies atoms by ${formatNumber(powerUp.multiplier)} for ${formatNumber(powerUp.duration / 1000)} seconds`;
 		powerUp.id = Date.now().toString();
 
@@ -100,21 +102,21 @@
 {#if showBonus}
 	<!-- Outer element to handle global opacity -->
 	<button
-		class="absolute z-20 w-10 h-10 rounded-full cursor-pointer transition-opacity ease-in-out duration-5000"
+		class="absolute z-20 w-10 h-10 rounded-full cursor-pointer transition-opacity ease-in-out duration-2000"
 		class:opacity-100={!isFadingOut}
 		class:opacity-0={isFadingOut}
 		style="left: {x}px; top: {y}px;"
 		onclick={onClick}
 		onmouseenter={() => isHovered = true}
 		onmouseleave={() => isHovered = false}
-		aria-label="Collect bonus atoms power-up"
+		aria-label="Collect bonus power-up"
 	>
-		<!-- Inner element for pulse animation (no opacity) -->
 		<div
-			class="w-full h-full rounded-full bonus-pulse"
+			class="w-full h-full flex items-center justify-center transition-transform duration-2000 ease-in-out vibrate"
 			class:drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]={isHovered}
-			style="background: radial-gradient(circle at 30% 30%, #ffd700, #ff6b6b);"
-		></div>
+		>
+			<HiggsBoson size={36} />
+		</div>
 	</button>
 {/if}
 
@@ -128,17 +130,16 @@
 {/if}
 
 <style>
-	@keyframes bonus-pulse {
-		0%, 100% {
-			transform: scale(1);
-		}
-		50% {
-			opacity: 0.8;
-			transform: scale(1.05);
-		}
+	@keyframes vibrate {
+		0% { transform: translate(0, 0); }
+		20% { transform: translate(-1px, 1px); }
+		40% { transform: translate(-1px, -1px); }
+		60% { transform: translate(1px, 1px); }
+		80% { transform: translate(1px, -1px); }
+		100% { transform: translate(0, 0); }
 	}
 
-	.bonus-pulse {
-		animation: bonus-pulse 2s ease-in-out infinite;
+	.vibrate {
+		animation: vibrate 0.1s linear infinite;
 	}
 </style>
