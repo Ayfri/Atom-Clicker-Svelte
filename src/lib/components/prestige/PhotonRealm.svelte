@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { gameManager } from '$helpers/GameManager.svelte';
-	import { createClickParticle, type Particle } from '$helpers/particles';
+	import { createClickParticleSync, type Particle } from '$helpers/particles';
 	import { onDestroy, onMount } from 'svelte';
 	import PhotonCounter from '@components/prestige/PhotonCounter.svelte';
 	import PhotonUpgrades from '@components/prestige/PhotonUpgrades.svelte';
@@ -165,17 +165,19 @@
 		circles = circles.slice(0, MAX_CIRCLES);
 	}
 
-	async function clickCircle(circle: Circle, event: MouseEvent) {
+	function clickCircle(circle: Circle, event: MouseEvent) {
 		gameManager.addPhotons(circle.photons);
 		circles = circles.filter((c) => c.id !== circle.id);
 
 		const particleCount = Math.floor(circle.photons / 2) + 1;
 		const addedParticles: Particle[] = [];
 		for (let i = 0; i < particleCount; i++) {
-			const particle = await createClickParticle(event.clientX, event.clientY, CurrenciesTypes.PHOTONS);
-			addedParticles.push(particle);
+			const particle = createClickParticleSync(event.clientX, event.clientY, CurrenciesTypes.PHOTONS);
+			if (particle) addedParticles.push(particle);
 		}
-		particles.update((p) => [...p, ...addedParticles]);
+		if (addedParticles.length > 0) {
+			addParticles(addedParticles);
+		}
 	}
 
 	function updateCircles() {

@@ -1,136 +1,177 @@
 import { CURRENCIES, type CurrencyName } from "$data/currencies";
+import { type Writable } from 'svelte/store';
+
+let PIXI: typeof import('pixi.js');
+let hitTextStyle: any;
+
+// --- Interfaces ---
 
 export interface Particle {
 	sprite: any;
-	speedX?: number;
-	speedY?: number;
-	update?: (particle: this, deltaTime: number) => void;
+	update: (dt: number) => boolean;
 }
 
-export const loadParticleAssets = async (): Promise<void> => {
+// --- Pooling ---
+
+const POOL_LIMIT = 100;
+const pool = {
+	icon: [] as any[],
+	text: [] as any[]
+};
+
+const recycle = (p: Particle) => {
+	const s = p.sprite;
+	s.visible = false;
+	s.removeFromParent();
+
+	const type = s instanceof PIXI.Text ? 'text' : 'icon';
+	if (pool[type].length < POOL_LIMIT) {
+		pool[type].push(s);
+	} else {
+		s.destroy();
+	}
+};
+
+const getSprite = (type: 'icon' | 'text', setup: (s: any) => void) => {
+	let s = pool[type].pop();
+	if (!s) {
+		s = type === 'text'
+			? new PIXI.Text({ style: hitTextStyle, anchor: 0.5 })
+			: new PIXI.Sprite({ anchor: 0.5 });
+		s.eventMode = 'none';
+	}
+	s.visible = true;
+	setup(s);
+	return s;
+};
+
+// --- Assets ---
+
+export const loadParticleAssets = async () => {
 	try {
-		const PIXI = await import('pixi.js');
-		const currenciesIcons = Object.values(CURRENCIES).map(currency => currency.icon);
-		await PIXI.Assets.load(currenciesIcons.map(icon => ({
-			alias: icon,
-			src: `currencies/${icon}.png`
+		PIXI = await import('pixi.js');
+		const icons = Object.values(CURRENCIES).map(c => c.icon);
+
+		await PIXI.Assets.load(icons.map(alias => ({
+			alias,
+			src: `currencies/${alias}.svg`,
+			data: { parse: true }
 		})));
-	} catch (error) {
-		console.warn('Failed to load particle assets:', error);
-	}
-};
 
-export const createClickParticle = async (
-	x: number,
-	y: number,
-	currency: CurrencyName
-): Promise<Particle> => {
-	try {
-		// Dynamically import PixiJS to avoid blocking the app
-		const PIXI = await import('pixi.js');
-
-		const texture = PIXI.Assets.get(CURRENCIES[currency].icon);
-		const sprite = new PIXI.Sprite({
-			texture,
-			anchor: 0.5,
-			alpha: 0.8,
-			scale: 0.2,
-			x,
-			y: y + document.documentElement.scrollTop,
-			rotation: Math.random() * Math.PI * 2,
-		});
-
-		return {
-			sprite,
-			speedX: (1.5 + Math.random() * 0.5) * Math.cos(sprite.rotation),
-			speedY: (1.5 + Math.random() * 0.5) * Math.sin(sprite.rotation),
-			update: (particle, deltaTime) => {
-				particle.speedX! *= 0.995;
-				particle.speedY! *= 0.995;
-
-				sprite.x += particle.speedX! * deltaTime;
-				sprite.y += particle.speedY! * deltaTime;
-				sprite.scale.x -= 0.001 * deltaTime;
-				sprite.scale.y -= 0.001 * deltaTime;
-				sprite.alpha -= 0.015 * deltaTime;
-
-				if (sprite.alpha <= 0 || sprite.scale.x <= 0) {
-					sprite.removeFromParent();
-					sprite.destroy();
-				}
-			}
-		}
-	} catch (error) {
-		// Fallback: return a dummy particle that has all necessary properties
-		console.warn('Failed to create click particle:', error);
-		return {
-			sprite: {
-				parent: null,
-				destroyed: true, // Mark as destroyed so it gets filtered out immediately
-				removeFromParent: () => {},
-				destroy: () => {},
-				x: 0,
-				y: 0,
-				alpha: 0,
-				scale: { x: 0, y: 0 }
-			}
-		};
-	}
-};
-
-export const createClickTextParticle = async (
-	x: number,
-	y: number,
-	text: string
-): Promise<Particle> => {
-	try {
-		// Dynamically import PixiJS to avoid blocking the app
-		const PIXI = await import('pixi.js');
-
-		const clickTextStyle = new PIXI.TextStyle({
-			fontWeight: 'bold',
+		hitTextStyle = new PIXI.TextStyle({
 			fill: 'white',
+			fontWeight: 'bold',
+			fontFamily: 'Arial, sans-serif' // Explicit font family for consistency
 		});
-
-		const sprite = new PIXI.Text({
-			anchor: 0.5,
-			scale: 0.5,
-			x,
-			y: y + document.documentElement.scrollTop,
-			text,
-			style: clickTextStyle,
-		});
-		sprite.zIndex = 1;
-
-		return {
-			sprite,
-			speedY: -1.5,
-			update: (particle, deltaTime) => {
-				particle.speedY! *= 0.995;
-
-				sprite.y += particle.speedY! * deltaTime;
-				sprite.alpha -= 0.015 * deltaTime;
-
-				if (sprite.alpha <= 0) {
-					sprite.removeFromParent();
-					sprite.destroy();
-				}
-			}
-		}
-	} catch (error) {
-		// Fallback: return a dummy particle that has all necessary properties
-		console.warn('Failed to create text particle:', error);
-		return {
-			sprite: {
-				parent: null,
-				destroyed: true, // Mark as destroyed so it gets filtered out immediately
-				removeFromParent: () => {},
-				destroy: () => {},
-				x: 0,
-				y: 0,
-				alpha: 0,
-				zIndex: 1
-			}
-		};
+	} catch (e) {
+		console.warn('Particle assets failed:', e);
 	}
 };
+
+// --- Creators ---
+
+export const createClickParticleSync = (x: number, y: number, currency: CurrencyName): Particle | null => {
+	if (!PIXI) return null;
+
+	const sprite = getSprite('icon', s => {
+		s.texture = PIXI.Assets.get(CURRENCIES[currency].icon);
+		s.alpha = 0.8;
+		s.scale.set(0.1);
+		s.position.set(x, y + document.documentElement.scrollTop);
+		s.rotation = Math.random() * Math.PI * 2;
+	});
+
+	let sx = (1.5 + Math.random() * 0.5) * Math.cos(sprite.rotation);
+	let sy = (1.5 + Math.random() * 0.5) * Math.sin(sprite.rotation);
+
+	return {
+		sprite,
+		update: (dt) => {
+			const damp = Math.pow(0.995, dt);
+			sx *= damp;
+			sy *= damp;
+			sprite.x += sx * dt;
+			sprite.y += sy * dt;
+			sprite.scale.x -= 0.001 * dt;
+			sprite.scale.y -= 0.001 * dt;
+			sprite.alpha -= 0.015 * dt;
+			return sprite.alpha > 0 && sprite.scale.x > 0;
+		}
+	};
+};
+
+export const createClickTextParticleSync = (x: number, y: number, text: string): Particle | null => {
+	if (!PIXI) return null;
+
+	const sprite = getSprite('text', s => {
+		s.text = text;
+		s.alpha = 1;
+		s.scale.set(0.5);
+		s.position.set(x, y + document.documentElement.scrollTop);
+		s.zIndex = 10; // Ensure text is consistently on top
+	});
+
+	let sy = -1.5;
+
+	return {
+		sprite,
+		update: (dt) => {
+			sy *= Math.pow(0.995, dt);
+			sprite.y += sy * dt;
+			sprite.alpha -= 0.015 * dt;
+			return sprite.alpha > 0;
+		}
+	};
+};
+
+// --- Engine ---
+
+export class ParticleEngine {
+	private particles: Particle[] = [];
+	private container: any;
+	private unsubscribe: () => void;
+
+	constructor(
+		private PIXI_INSTANCE: typeof import('pixi.js'),
+		private stage: any,
+		queue: Writable<Particle[]>
+	) {
+		this.container = new PIXI_INSTANCE.Container({
+			isRenderGroup: true,
+			sortableChildren: true // Required for text zIndex
+		});
+		this.container.cullable = true;
+		stage.addChild(this.container);
+
+		this.unsubscribe = queue.subscribe(newParticles => {
+			if (!newParticles.length) return;
+			// Add valid particles to system
+			for (const p of newParticles) {
+				if (this.particles.length < 150 && p.sprite) {
+					this.container.addChild(p.sprite);
+					this.particles.push(p);
+				} else {
+					recycle(p);
+				}
+			}
+			queue.set([]);
+		});
+	}
+
+	update(dt: number) {
+		for (let i = this.particles.length - 1; i >= 0; i--) {
+			const p = this.particles[i];
+			if (!p.update(dt)) {
+				recycle(p);
+				this.particles.splice(i, 1);
+			}
+		}
+	}
+
+	destroy() {
+		this.unsubscribe();
+		this.particles.forEach(recycle);
+		this.particles = [];
+		this.container.destroy({ children: true });
+	}
+}

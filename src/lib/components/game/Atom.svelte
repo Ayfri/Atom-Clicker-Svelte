@@ -2,7 +2,7 @@
 	import {gameManager} from '$helpers/GameManager.svelte';
 	import {BUILDING_TYPES, BUILDING_COLORS, BUILDING_LEVEL_UP_COST} from '$data/buildings';
 	import {onDestroy} from 'svelte';
-	import {createClickParticle, createClickTextParticle, type Particle} from '$helpers/particles';
+	import {createClickParticleSync, createClickTextParticleSync, type Particle} from '$helpers/particles';
 	import {formatNumber} from '$lib/utils';
 	import {shouldCreateParticles, addParticles} from '$stores/canvas';
 	import {app} from '$stores/pixi';
@@ -42,16 +42,25 @@
 
 		// Only create particles if graphics support is available
 		if (shouldCreateParticles() && $app?.canvas) {
-			try {
-				const newParticles: Particle[] = [];
-				newParticles.push(await createClickTextParticle(event.clientX + Math.random() * 10, event.clientY + Math.random() * 10, `+${formatNumber(gameManager.clickPower)}`));
+			const newParticles: Particle[] = [];
+			const textParticle = createClickTextParticleSync(
+				event.clientX + Math.random() * 10,
+				event.clientY + Math.random() * 10,
+				`+${formatNumber(gameManager.clickPower)}`
+			);
+			if (textParticle) newParticles.push(textParticle);
 
-				for (let i = 0; i < 5; i++) {
-					newParticles.push(await createClickParticle(event.clientX + Math.random() * 10, event.clientY + Math.random() * 10, CurrenciesTypes.ATOMS));
-				}
+			for (let i = 0; i < 5; i++) {
+				const particle = createClickParticleSync(
+					event.clientX + Math.random() * 10,
+					event.clientY + Math.random() * 10,
+					CurrenciesTypes.ATOMS
+				);
+				if (particle) newParticles.push(particle);
+			}
+
+			if (newParticles.length > 0) {
 				addParticles(newParticles);
-			} catch (error) {
-				console.warn('Failed to create particles:', error);
 			}
 		}
 	}
