@@ -21,7 +21,7 @@ export interface Upgrade {
 
 export interface Effect {
 	target?: string;
-	type: 'auto_buy' | 'auto_click' | 'auto_speed' | 'auto_upgrade' | 'building' | 'click' | 'electron_gain' | 'global' | 'power_up_duration' | 'power_up_interval' | 'power_up_multiplier' | 'proton_gain' | 'xp_gain';
+	type: 'auto_buy' | 'auto_click' | 'auto_speed' | 'auto_upgrade' | 'building' | 'click' | 'electron_gain' | 'global' | 'power_up_duration' | 'power_up_interval' | 'power_up_multiplier' | 'proton_gain' | 'stability_speed' | 'stability_boost' | 'stability_capacity' | 'xp_gain';
 	apply: (currentValue: number, manager: GameManager) => number;
 	description: string;
 }
@@ -60,6 +60,7 @@ export interface GameState {
 	electrons: number;
 	highestAPS: number;
 	inGameTime: number;
+	lastInteractionTime: number;
 	lastSave: number;
 	photons: number;
 	photonUpgrades: Record<string, number>;

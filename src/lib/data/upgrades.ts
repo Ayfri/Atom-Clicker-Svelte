@@ -431,6 +431,93 @@ function createProtonUpgrades() {
 		}),
 	);
 
+	// Stability Field Unlock
+	upgrades.push({
+		id: 'stability_unlock',
+		name: 'Stability Field',
+		description: 'Unlock the Stability Meter (Passive Idle Bonus)',
+		cost: {
+			amount: 5000,
+			currency: CurrenciesTypes.PROTONS,
+		},
+		effects: [
+			{
+				type: 'global',
+				description: 'Unlock Stability Meter',
+				apply: (val) => val,
+			},
+		],
+	} as Upgrade);
+
+	// Stability Boost
+	upgrades.push(
+		...createUpgrades({
+			id: 'stability_boost',
+			count: 5,
+			currency: CurrenciesTypes.PROTONS,
+			name: i => `Stable Resonance ${i}`,
+			description: i => `+${25 * i}% effect from Stability Meter`,
+			condition: (_, state) => state.upgrades.includes('stability_unlock'),
+			cost: i => {
+				const baseCost = Math.ceil(140 * 2.05 ** i);
+				return baseCost;
+			},
+			effects: i => [
+				{
+					type: 'stability_boost',
+					description: `Increases Stability Meter effect`,
+					apply: (val) => val + 0.25,
+				},
+			],
+		}),
+	);
+
+	// Stability Speed
+	upgrades.push(
+		...createUpgrades({
+			id: 'stability_speed',
+			count: 10,
+			currency: CurrenciesTypes.PROTONS,
+			name: i => `Field Coherence ${i}`,
+			description: i => `Stability grows 10% faster`,
+			condition: (_, state) => state.upgrades.includes('stability_unlock'),
+			cost: i => {
+				const baseCost = Math.ceil(100 * 2.25 ** i);
+				return baseCost;
+			},
+			effects: i => [
+				{
+					type: 'stability_speed',
+					description: `Increases Stability Meter speed`,
+					apply: (val) => val + 0.1,
+				},
+			],
+		}),
+	);
+
+	// Stability Expansion
+	upgrades.push(
+		...createUpgrades({
+			id: 'stability_expansion',
+			count: 5,
+			currency: CurrenciesTypes.PROTONS,
+			name: i => `Temporal Expansion ${i}`,
+			description: i => `Extends stability capacity and max bonus`,
+			condition: (_, state) => state.upgrades.includes('stability_unlock'),
+			cost: i => {
+				const baseCost = Math.ceil(500 * 3 ** i);
+				return baseCost;
+			},
+			effects: i => [
+				{
+					type: 'stability_capacity',
+					description: `Increases Stability Meter capacity`,
+					apply: (val) => val + 2.2,
+				},
+			],
+		}),
+	);
+
 	return upgrades;
 }
 

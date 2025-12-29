@@ -26,6 +26,7 @@ export class GameManager {
 	highestAPS = $state(0);
 	inGameTime = $state(0);
 	lastSave = $state(Date.now());
+	lastInteractionTime = $state(Date.now());
 	photons = $state(0);
 	photonUpgrades = $state<Record<string, number>>({});
 	powerUpsCollected = $state(0);
@@ -88,7 +89,7 @@ export class GameManager {
 			const oldMultiplier = Math.pow(building.count / 2, building.level + 1) / 5;
 			const linearMultiplier = (building.level + 1) * 100;
 			const levelMultiplier = building.level > 0 ? Math.sqrt(oldMultiplier * linearMultiplier) : 1;
-			const production = building.count * multiplier * levelMultiplier * this.globalMultiplier * this.bonusMultiplier;
+			const production = building.count * multiplier * levelMultiplier * this.globalMultiplier * this.bonusMultiplier * this.stabilityMultiplier;
 
 			return total + production;
 		}, 0);
@@ -111,7 +112,7 @@ export class GameManager {
 				const oldMultiplier = Math.pow(building.count / 2, building.level + 1) / 5;
 				const linearMultiplier = (building.level + 1) * 100;
 				const levelMultiplier = building.level > 0 ? Math.sqrt(oldMultiplier * linearMultiplier) : 1;
-				production = building.count * multiplier * levelMultiplier * this.globalMultiplier * this.bonusMultiplier;
+				production = building.count * multiplier * levelMultiplier * this.globalMultiplier * this.bonusMultiplier * this.stabilityMultiplier;
 			}
 			return {
 				...acc,
@@ -204,6 +205,55 @@ export class GameManager {
 
 	skillPointsAvailable = $derived(this.skillPointsTotal - this.skillUpgrades.length);
 
+	stabilitySpeed = $derived.by(() => {
+		const upgrades = getUpgradesWithEffects(this.currentUpgradesBought, { type: 'stability_speed' });
+		return calculateEffects(upgrades, this, 1);
+	});
+
+	stabilityMaxBoost = $derived.by(() => {
+		const upgrades = getUpgradesWithEffects(this.currentUpgradesBought, { type: 'stability_boost' });
+		return calculateEffects(upgrades, this, 2);
+	});
+
+	stabilityCapacity = $derived.by(() => {
+		const upgrades = getUpgradesWithEffects(this.currentUpgradesBought, { type: 'stability_capacity' });
+		return calculateEffects(upgrades, this, 1);
+	});
+
+	stabilityMultiplier = $derived.by(() => {
+		// 1. Check unlock & pause conditions
+		if (!this.upgrades.includes('stability_unlock')) return 1;
+		if (this.activePowerUps.length > 0) return 1;
+
+		// 2. Calculate Time Requirements
+		// Base time: 10 minutes (600,000 ms)
+		// Modified by Capacity (increases time) and Speed (decreases time)
+		const BASE_TIME_MS = 600_000;
+		const timeRequired = (BASE_TIME_MS * this.stabilityCapacity) / this.stabilitySpeed;
+
+		// 3. Calculate Progress (0 to 1)
+		// Reactivity trigger: this.inGameTime changes every second
+		this.inGameTime;
+		const elapsed = Date.now() - this.lastInteractionTime;
+		const progress = Math.min(Math.max(elapsed / timeRequired, 0), 1);
+
+		if (progress <= 0) return 1;
+
+		// 4. Calculate Max Possible Boost
+		// The max boost is determined by the Base Max Boost (from boosts upgrades)
+		// scaled by the Capacity multiplier.
+		// Formula: 1 + (BaseBonus * CapacityMultiplier)
+		const baseBonus = this.stabilityMaxBoost - 1; // e.g., if MaxBoost is 2x, bonus is 1x (100%)
+		const scaledBonus = baseBonus * this.stabilityCapacity;
+
+		// 5. Apply Curve (Linear)
+		// The current boost is simply the Max Possible Boost scaled linearly by progress
+		// e.g., 50% progress = 50% of the possible bonus
+		const currentBoost = 1 + (scaledBonus * progress);
+
+		return currentBoost;
+	});
+
 	xpGainMultiplier = $derived.by(() => {
 		const xpGainUpgrades = getUpgradesWithEffects(this.currentUpgradesBought, { type: 'xp_gain' });
 		return calculateEffects(xpGainUpgrades, this, 1);
@@ -223,6 +273,7 @@ export class GameManager {
 			electrons: this.electrons,
 			highestAPS: this.highestAPS,
 			inGameTime: this.inGameTime,
+			lastInteractionTime: this.lastInteractionTime,
 			lastSave: this.lastSave,
 			photons: this.photons,
 			photonUpgrades: this.photonUpgrades,
@@ -246,7 +297,7 @@ export class GameManager {
 			totalUsers: this.totalUsers,
 			totalXP: this.totalXP,
 			upgrades: this.upgrades,
-			version: SAVE_VERSION
+			version: SAVE_VERSION,
 		};
 	}
 
@@ -272,6 +323,9 @@ export class GameManager {
 			if (key in data) {
 				this[key as keyof this] = data[key as keyof GameState] as any;
 			}
+		}
+		if (data.lastInteractionTime) {
+			this.lastInteractionTime = data.lastInteractionTime;
 		}
 	}
 
@@ -481,6 +535,7 @@ export class GameManager {
 			}
 			this.electrons += electronGain;
 
+			this.lastInteractionTime = Date.now();
 			this.save();
 			return true;
 		}
@@ -506,6 +561,7 @@ export class GameManager {
 			}
 			this.protons += protonGain;
 
+			this.lastInteractionTime = Date.now();
 			this.save();
 			return true;
 		}
@@ -532,11 +588,13 @@ export class GameManager {
 
 	incrementBonusPhotonClicks() {
 		this.totalBonusPhotonsClicked += 1;
+		this.lastInteractionTime = Date.now();
 	}
 
 	incrementClicks() {
 		this.totalClicks += 1;
 		this.totalClicksAllTime += 1;
+		this.lastInteractionTime = Date.now();
 	}
 
 	unlockAchievement(achievementId: string) {
@@ -549,6 +607,7 @@ export class GameManager {
 	addPowerUp(powerUp: PowerUp) {
 		this.activePowerUps = [...this.activePowerUps, powerUp];
 		this.powerUpsCollected += 1;
+		this.lastInteractionTime = Date.now();
 
 		setTimeout(() => {
 			this.removePowerUp(powerUp.id);
@@ -632,6 +691,8 @@ export class GameManager {
 
 		this.gameInterval = setInterval(() => {
 			this.inGameTime += 1000;
+			// Trigger reactivity for stability multiplier
+			this.lastInteractionTime = this.lastInteractionTime;
 
 			if (this.atomsPerSecond > this.highestAPS) {
 				this.highestAPS = this.atomsPerSecond;
