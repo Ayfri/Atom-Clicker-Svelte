@@ -40,6 +40,7 @@
 		photons: number;
 		lifetime: number;
 		maxLifetime: number;
+		rotation: number;
 	}
 
 	let circles: Circle[] = $state([]);
@@ -155,7 +156,8 @@
 			size: baseSize * sizeMultiplier,
 			photons: Math.floor(finalPhotons),
 			lifetime: 0,
-			maxLifetime: baseCircleLifetime + lifetimeBonus
+			maxLifetime: baseCircleLifetime + lifetimeBonus,
+			rotation: Math.random() * 360
 		};
 
 		circles = [...circles, circle];
@@ -285,7 +287,7 @@
 						<Currency
 							name={CurrenciesTypes.PHOTONS}
 							class="w-full h-full object-contain"
-							style="filter: drop-shadow(0 0 10px rgba(153, 102, 204, 0.8));"
+							style="transform: rotate({circle.rotation}deg);"
 						/>
 						<span
 							class="absolute text-white font-bold text-xs pointer-events-none drop-shadow-[0_0_5px_rgba(0,0,0,0.8)]"
