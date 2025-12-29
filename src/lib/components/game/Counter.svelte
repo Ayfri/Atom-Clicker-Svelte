@@ -3,7 +3,10 @@
 	import {formatNumber} from '$lib/utils';
 	import {BUILDINGS, BuildingTypes, type BuildingType} from '$data/buildings';
 	import {Info} from 'lucide-svelte';
+	import { getUpgradesWithEffects } from '$helpers/effects';
+	import AutoButton from '@components/ui/AutoButton.svelte';
 	import Tooltip from '@components/ui/Tooltip.svelte';
+	import { mobile } from '$stores/window.svelte';
 
 	// Get buildings with their production sorted by production value (highest first)
 	const buildingsWithProduction = $derived(Object.entries(gameManager.buildingProductions)
@@ -15,9 +18,11 @@
 			count: gameManager.buildings[type as BuildingType]?.count ?? 0
 		}))
 		.sort((a, b) => Object.values(BuildingTypes).indexOf(a.type) - Object.values(BuildingTypes).indexOf(b.type)));
+
+	const hasAutoClick = $derived(getUpgradesWithEffects(gameManager.currentUpgradesBought, { type: 'auto_click' }).length > 0);
 </script>
 
-<div class="mb-8 text-center z-1 sm:mb-4">
+<div class="mb-8 text-center z-1 sm:mb-4 relative">
 	<div class="mb-2">
 		{#if gameManager.electrons > 0}
 			<div>
@@ -31,8 +36,19 @@
 				<span class="font-bold text-lg opacity-80">protons</span>
 			</div>
 		{/if}
-		<span id="atoms-value" class=" sm:text-[2.75rem] sm:leading-[1.35] text-5xl font-bold text-accent-500 transition-[filter] duration-200 {gameManager.hasBonus ? 'drop-shadow-[0_0_10px_#4a90e2]' : ''}">{formatNumber(gameManager.atoms)}</span>
-		<span class="font-bold text-2xl opacity-80">atoms</span>
+		<div class="flex items-center gap-2">
+			<span id="atoms-value" class=" sm:text-[2.75rem] sm:leading-[1.35] text-5xl font-bold text-accent-500 transition-[filter] duration-200 {gameManager.hasBonus ? 'drop-shadow-[0_0_10px_#4a90e2]' : ''}">{formatNumber(gameManager.atoms)}</span>
+			<span class="font-bold text-2xl opacity-80">atoms</span>
+
+			{#if !mobile.current && hasAutoClick}
+				<div class="mt-1.5">
+					<AutoButton
+						onClick={() => gameManager.toggleAutoClick()}
+						toggled={gameManager.settings.automation.autoClick}
+					/>
+				</div>
+			{/if}
+		</div>
 	</div>
 	<div class="text-lg relative flex justify-center items-center">
 		<div class="mr-2">
@@ -62,4 +78,11 @@
 			</Tooltip>
 		{/if}
 	</div>
+
+	{#if mobile.current && hasAutoClick}
+		<AutoButton
+			onClick={() => gameManager.toggleAutoClick()}
+			toggled={gameManager.settings.automation.autoClick}
+		/>
+	{/if}
 </div>

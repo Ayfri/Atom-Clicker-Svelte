@@ -33,6 +33,7 @@ export class GameManager {
 	purpleRealmUnlocked = $state(false);
 	settings = $state<Settings>({
 		automation: {
+			autoClick: false,
 			buildings: [],
 			upgrades: false
 		}
@@ -93,6 +94,7 @@ export class GameManager {
 	});
 
 	autoClicksPerSecond = $derived.by(() => {
+		if (!this.settings.automation.autoClick) return 0;
 		const autoClickUpgrades = getUpgradesWithEffects(this.currentUpgradesBought, { type: 'auto_click' });
 		return calculateEffects(autoClickUpgrades, this, 0);
 	});
@@ -572,6 +574,16 @@ export class GameManager {
 			automation: {
 				...this.settings.automation,
 				buildings
+			}
+		};
+	}
+
+	toggleAutoClick() {
+		this.settings = {
+			...this.settings,
+			automation: {
+				...this.settings.automation,
+				autoClick: !this.settings.automation.autoClick
 			}
 		};
 	}
