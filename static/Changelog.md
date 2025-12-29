@@ -1,5 +1,6 @@
 # What's new 29-12-2025
 
+- **New Icons**: Added new icons for currencies.
 - **Auto-click**: Added auto-click button for main atom and photons.
 - **Stability Meter**: New idle bonus with proton upgrades and a live display in the Protonise modal.
 

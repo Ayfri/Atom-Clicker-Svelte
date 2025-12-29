@@ -102,7 +102,7 @@
 					aria-label="Hidden secret"
 					title="?"
 				>
-					<Currency name={CurrenciesTypes.ATOMS} alt="Hidden atom" />
+					<Currency name={CurrenciesTypes.ATOMS} />
 				</button>
 			{/if}
 		</div>

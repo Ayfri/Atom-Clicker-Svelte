@@ -18,6 +18,7 @@
 	import {saveRecovery} from '$stores/saveRecovery';
 	import {supabaseAuth} from '$stores/supabaseAuth';
 	import {mobile} from '$stores/window.svelte';
+	import Currency from '@/lib/components/ui/Currency.svelte';
 
 	autoBuyManager.init();
 	autoUpgradeManager.init();
@@ -82,7 +83,7 @@
 						onclick={() => realmManager.selectRealm(realm.id)}
 						title="{realm.title} - {formatNumber(realmManager.realmValues[realm.id] ?? 0)} {realm.currency.name.toLowerCase()}"
 					>
-						<img src="/currencies/{realm.currency.icon}.png" alt={realm.currency.name} class="w-4 h-4" />
+						<Currency name={realm.currency.name} />
 						<div class="text-xs text-white/80">{formatNumber(realmManager.realmValues[realm.id] ?? 0, 1)}</div>
 					</button>
 				{/each}

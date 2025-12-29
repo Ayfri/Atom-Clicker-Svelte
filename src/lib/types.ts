@@ -101,7 +101,7 @@ export interface SkillUpgrade {
 
 export interface Currency {
 	color: string;
-	name: string;
+	name: CurrencyName;
 	icon: string;
 }
 
