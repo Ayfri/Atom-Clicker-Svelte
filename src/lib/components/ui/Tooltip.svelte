@@ -102,7 +102,7 @@
 		{@render children()}
 
 		<!-- Desktop tooltip (popover) -->
-		<div bind:this={desktopTooltipElement} popover="manual" class="fixed bg-black/95 backdrop-blur-xs rounded-lg {sizeClasses} transition-all duration-200 z-50">
+		<div bind:this={desktopTooltipElement} popover="manual" class="fixed bg-black/95 backdrop-blur-xs rounded-lg {sizeClasses} z-50">
 			<div class="text-white/90">
 				{@render content()}
 			</div>
