@@ -3,7 +3,7 @@
 	import { UPGRADES } from '$data/upgrades';
 	import { PHOTON_UPGRADES } from '$data/photonUpgrades';
 	import { BUILDING_TYPES, BUILDINGS } from '$data/buildings';
-	import { Target, MousePointer, Globe, Building2, Sparkles, Check, X as XIcon, type Icon as IconType } from 'lucide-svelte';
+	import { Target, MousePointer, Globe, Building2, Sparkles, Check, X as XIcon, type Icon as IconType, Atom, Zap, Shield } from 'lucide-svelte';
 	import Tooltip from '@components/ui/Tooltip.svelte';
 	import type { Upgrade } from '$lib/types';
 
@@ -11,57 +11,55 @@
 	let upgradeFilter = $state<'all' | 'owned' | 'not-owned'>('all');
 
 	const upgradeCategories = {
-		special: ['feature_levels', 'feature_purple_realm'],
+		special: (id: string) => id.startsWith('feature_'),
 		click: (id: string) => id.startsWith('click_power'),
-		global: (id: string) => id.startsWith('global_boost')
+		global: (id: string) => id.startsWith('global_boost') || id.startsWith('level_boost_'),
+		powerup: (id: string) => id.includes('power_up_interval'),
+		proton: (id: string) => id.startsWith('proton'),
+		electron: (id: string) => id.startsWith('electron'),
+		stability: (id: string) => id.startsWith('stability'),
 	};
 
+	function formatSubName(name: string) {
+		const clean = name.replace(/^(click_power_|protonise_|proton_|electron_|stability_|global_boost_|level_boost_|auto_buy_speed_|auto_buy_)/g, '');
+		const label = clean.replace(/_/g, ' ').trim() || 'General';
+		return label.charAt(0).toUpperCase() + label.slice(1);
+	}
+
 	const categorizedUpgrades = $derived.by(() => {
-		const categories: Record<string, { icon: typeof IconType; subcategories: Record<string, Array<[string, Upgrade]>> }> = {
-			'Special Features': { icon: Target as typeof IconType, subcategories: { 'General': [] } },
-			'Click Power': { icon: MousePointer as typeof IconType, subcategories: {} },
-			'Global Boosts': { icon: Globe as typeof IconType, subcategories: { 'General': [] } }
-		};
+		const categories: Record<string, { icon: typeof IconType; subcategories: Record<string, Array<[string, Upgrade]>> }> = {};
 
 		Object.entries(UPGRADES).forEach(([id, upgrade]) => {
 			const query = searchQuery.toLowerCase();
-			const matchesSearch = !query ||
-				id.toLowerCase().includes(query) ||
-				upgrade.name.toLowerCase().includes(query) ||
-				upgrade.description.toLowerCase().includes(query);
-
+			const matchesSearch = !query || [id, upgrade.name, upgrade.description].some(s => s.toLowerCase().includes(query));
 			const isOwned = gameManager.upgrades.includes(id);
-			const matchesFilter = upgradeFilter === 'all' ||
-				(upgradeFilter === 'owned' && isOwned) ||
-				(upgradeFilter === 'not-owned' && !isOwned);
+			const matchesFilter = upgradeFilter === 'all' || (upgradeFilter === 'owned' && isOwned) || (upgradeFilter === 'not-owned' && !isOwned);
 
 			if (!matchesSearch || !matchesFilter) return;
 
-			if (upgradeCategories.special.includes(id)) {
-				categories['Special Features'].subcategories['General'].push([id, upgrade]);
-			} else if (upgradeCategories.click(id)) {
-				let sub = 'Other';
-				if (id.includes('mul')) sub = 'Multipliers';
-				else if (id.includes('val')) sub = 'Base Value';
-				else if (id.includes('aps')) sub = 'APS %';
+			let cat = 'Global Boosts', icon = Globe, sub = id.replace(/_\d+$/, '');
 
-				if (!categories['Click Power'].subcategories[sub]) categories['Click Power'].subcategories[sub] = [];
-				categories['Click Power'].subcategories[sub].push([id, upgrade]);
-			} else if (upgradeCategories.global(id)) {
-				categories['Global Boosts'].subcategories['General'].push([id, upgrade]);
-			} else {
-				// Check for building upgrades
-				for (const buildingId of BUILDING_TYPES) {
-					if (id.startsWith(buildingId.toLowerCase())) {
-						const categoryName = BUILDINGS[buildingId].name + ' Upgrades';
-						if (!categories[categoryName]) {
-							categories[categoryName] = { icon: Building2, subcategories: { 'General': [] } };
-						}
-						categories[categoryName].subcategories['General'].push([id, upgrade]);
-						break;
-					}
+			if (upgradeCategories.special(id)) { cat = 'Special Features'; icon = Target; sub = 'General'; }
+			else if (upgradeCategories.click(id)) { cat = 'Click Power'; icon = MousePointer; }
+			else if (upgradeCategories.powerup(id)) { cat = 'Power-up Upgrades'; icon = Sparkles; }
+			else if (upgradeCategories.proton(id)) { cat = 'Proton Upgrades'; icon = Atom; }
+			else if (upgradeCategories.electron(id)) { cat = 'Electron Upgrades'; icon = Zap; }
+			else if (upgradeCategories.stability(id)) { cat = 'Stability Upgrades'; icon = Shield; }
+
+			const sortedBuildings = [...BUILDING_TYPES].sort((a, b) => b.length - a.length);
+			for (const bId of sortedBuildings) {
+				const lowId = id.toLowerCase();
+				const lowBId = bId.toLowerCase();
+				if (lowId.startsWith(lowBId + '_') || lowId.endsWith(lowBId)) {
+					cat = `${BUILDINGS[bId].name} Upgrades`; icon = Building2;
+					sub = id.includes('auto_buy_speed') ? 'auto_speed' : id.includes('auto_buy') ? 'auto_unlock' : 'production';
+					break;
 				}
 			}
+
+			if (!categories[cat]) categories[cat] = { icon: icon as typeof IconType, subcategories: {} };
+			if (!categories[cat].subcategories[sub]) categories[cat].subcategories[sub] = [];
+			categories[cat].subcategories[sub].push([id, upgrade]);
 		});
 
 		return categories;
@@ -139,8 +137,8 @@
 						{#each Object.entries(subcategories) as [subName, items]}
 							{#if items.length > 0}
 								<div class="space-y-1.5">
-									{#if subName !== 'General'}
-										<h4 class="text-[10px] uppercase tracking-widest text-white/40 font-bold">{subName}</h4>
+									{#if subName !== 'General' && subName !== 'production'}
+										<h4 class="text-[10px] uppercase tracking-widest text-white/40 font-bold">{formatSubName(subName)}</h4>
 									{/if}
 
 									{#if category === 'Special Features'}
