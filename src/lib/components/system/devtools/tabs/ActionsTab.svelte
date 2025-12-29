@@ -5,7 +5,7 @@
 	import { BUILDING_TYPES, BUILDINGS } from '$data/buildings';
 	import { PHOTON_UPGRADES } from '$data/photonUpgrades';
 	import { SAVE_KEY } from '$helpers/saves';
-	import { Save, Trash2, Zap, Unlock, Coins, Factory, Orbit, Download, Upload, ToggleLeft } from 'lucide-svelte';
+	import { Save, Trash2, Zap, Unlock, Coins, Factory, Orbit, Download, Upload, ToggleLeft, Sparkles } from 'lucide-svelte';
 
 	function toggleFeature(upgradeId: string) {
 		if (gameManager.upgrades.includes(upgradeId)) {
@@ -142,6 +142,16 @@
 			>
 				<Factory size={16} />
 				<span>Max Buildings</span>
+			</button>
+			<button
+				class="flex items-center justify-center gap-2 bg-yellow-600/80 hover:bg-yellow-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer shadow-lg"
+				onclick={() => {
+					window.dispatchEvent(new CustomEvent('force-bonus'));
+					// alert('Bonus spawned!'); // Optional, maybe too annoying
+				}}
+			>
+				<Sparkles size={16} />
+				<span>Force Bonus</span>
 			</button>
 		</div>
 	</div>

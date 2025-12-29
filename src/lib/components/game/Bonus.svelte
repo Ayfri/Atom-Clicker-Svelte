@@ -35,6 +35,9 @@
 	let disappearTimeout: ReturnType<typeof setTimeout> | null = null;
 
 	function spawnBonusAtom() {
+		if (fadeTimeout) clearTimeout(fadeTimeout);
+		if (disappearTimeout) clearTimeout(disappearTimeout);
+
 		x = Math.random() * ((innerWidth.current ?? window.innerWidth) - MARGIN * 2) + MARGIN;
 		y = Math.random() * ((innerHeight.current ?? window.innerHeight) - MARGIN * 2) + MARGIN;
 
@@ -70,7 +73,7 @@
 		messageShown = true;
 		powerUp.startTime = Date.now();
 		gameManager.addPowerUp(powerUp);
-		gameManager.incrementBonusPhotonClicks();
+		gameManager.incrementBonusHiggsBosonClicks();
 
 		setTimeout(() => gameManager.removePowerUp(powerUp.id), powerUp.duration);
 		setTimeout(() => (messageShown = false), 3000);
@@ -91,11 +94,20 @@
 		spawnTimeout = setTimeout(spawnBonusAtom, randomBetween(gameManager.powerUpInterval[0], gameManager.powerUpInterval[1]));
 	}
 
-	onMount(scheduleNextSpawn);
+	function forceSpawn() {
+		if (spawnTimeout) clearTimeout(spawnTimeout);
+		spawnBonusAtom();
+	}
+
+	onMount(() => {
+		scheduleNextSpawn();
+		window.addEventListener('force-bonus', forceSpawn);
+	});
 	onDestroy(() => {
 		if (spawnTimeout) clearTimeout(spawnTimeout);
 		if (fadeTimeout) clearTimeout(fadeTimeout);
 		if (disappearTimeout) clearTimeout(disappearTimeout);
+		if (typeof window !== 'undefined') window.removeEventListener('force-bonus', forceSpawn);
 	});
 </script>
 
