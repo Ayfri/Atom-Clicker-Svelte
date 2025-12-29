@@ -34,6 +34,7 @@ export class GameManager {
 	settings = $state<Settings>({
 		automation: {
 			autoClick: false,
+			autoClickPhotons: false,
 			buildings: [],
 			upgrades: false
 		}
@@ -584,6 +585,16 @@ export class GameManager {
 			automation: {
 				...this.settings.automation,
 				autoClick: !this.settings.automation.autoClick
+			}
+		};
+	}
+
+	toggleAutoClickPhotons() {
+		this.settings = {
+			...this.settings,
+			automation: {
+				...this.settings.automation,
+				autoClickPhotons: !this.settings.automation.autoClickPhotons
 			}
 		};
 	}

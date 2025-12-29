@@ -46,6 +46,7 @@ export interface PowerUp {
 export interface Settings {
 	automation: {
 		autoClick: boolean;
+		autoClickPhotons: boolean;
 		buildings: BuildingType[];
 		upgrades: boolean;
 	};

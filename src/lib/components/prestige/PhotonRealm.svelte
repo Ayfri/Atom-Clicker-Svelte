@@ -190,6 +190,7 @@
 
 	// Calculate auto-clicks per second from photon upgrades
 	const photonAutoClicksPerSecond = $derived.by(() => {
+		if (!gameManager.settings.automation.autoClickPhotons) return 0;
 		const autoClickerLevel = gameManager.photonUpgrades['auto_clicker'] || 0;
 		if (autoClickerLevel === 0) return 0;
 

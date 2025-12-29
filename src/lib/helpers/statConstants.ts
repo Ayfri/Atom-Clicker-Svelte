@@ -36,7 +36,7 @@ export const statsConfig: Record<string, StatConfig> = {
 	powerUpsCollected: { defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
 	protons: { defaultValue: 0, layer: LAYERS.ELECTRONIZE, minVersion: 4 },
 	purpleRealmUnlocked: { defaultValue: false, layer: LAYERS.PHOTON_REALM, minVersion: 13 },
-	settings: { defaultValue: { automation: { autoClick: false, buildings: [], upgrades: false } }, layer: LAYERS.NEVER, minVersion: 8 },
+	settings: { defaultValue: { automation: { autoClick: false, autoClickPhotons: false, buildings: [], upgrades: false } }, layer: LAYERS.NEVER, minVersion: 8 },
 	skillUpgrades: { defaultValue: [], layer: LAYERS.PROTONIZER, minVersion: 3 },
 	startDate: { defaultValue: Date.now(), layer: LAYERS.NEVER, minVersion: 5 },
 	totalAtomsEarned: { defaultValue: 0, layer: LAYERS.PROTONIZER, minVersion: 14 },
