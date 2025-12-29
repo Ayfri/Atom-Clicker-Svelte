@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { ACHIEVEMENTS } from '$data/achievements';
+	import { CurrenciesTypes } from '$data/currencies';
 	import { formatDuration, formatNumber, formatNumberFull } from '$lib/utils';
 	import StatItem from '@components/ui/StatItem.svelte';
 	import Modal from '@components/ui/Modal.svelte';
@@ -176,11 +177,12 @@
 					label="Atoms (Total)"
 					value={formatNumber(gameManager.totalAtomsEarnedAllTime)}
 				/>
-				<div class="flex items-center gap-2 rounded-lg bg-white/5 p-2.5" title={formatNumberFull(gameManager.atoms)}>
-					<img src="/currencies/atom.png" alt="Atoms" class="size-5" />
-					<span class="text-sm text-white/70">Current Atoms</span>
-					<span class="ml-auto font-semibold text-accent tabular-nums">{formatNumber(gameManager.atoms)}</span>
-				</div>
+				<StatItem
+					currency={CurrenciesTypes.ATOMS}
+					fullValue={formatNumberFull(gameManager.atoms)}
+					label="Current Atoms"
+					value={formatNumber(gameManager.atoms)}
+				/>
 			</div>
 		</section>
 
@@ -263,11 +265,12 @@
 					<!-- Protons Column -->
 					{#if gameManager.protons > 0 || gameManager.totalProtonises > 0 || gameManager.totalElectronizes > 0}
 						<div class="flex flex-col gap-1.5">
-							<div class="flex items-center gap-2 rounded-lg bg-white/5 p-2.5" title={formatNumberFull(gameManager.protons)}>
-								<img src="/currencies/proton.png" alt="Protons" class="size-5" />
-								<span class="text-sm text-white/70">Protons</span>
-								<span class="ml-auto font-semibold text-yellow-400 tabular-nums">{formatNumber(gameManager.protons)}</span>
-							</div>
+							<StatItem
+								currency={CurrenciesTypes.PROTONS}
+								fullValue={formatNumberFull(gameManager.protons)}
+								label="Protons"
+								value={formatNumber(gameManager.protons)}
+							/>
 							<StatItem
 								fullValue={formatNumberFull(gameManager.totalProtonsEarned)}
 								icon={Atom}
@@ -285,11 +288,12 @@
 					<!-- Electrons Column -->
 					{#if gameManager.electrons > 0 || gameManager.totalElectronizes > 0}
 						<div class="flex flex-col gap-1.5">
-							<div class="flex items-center gap-2 rounded-lg bg-white/5 p-2.5" title={formatNumberFull(gameManager.electrons)}>
-								<img src="/currencies/electron.png" alt="Electrons" class="size-5" />
-								<span class="text-sm text-white/70">Electrons</span>
-								<span class="ml-auto font-semibold text-green-400 tabular-nums">{formatNumber(gameManager.electrons)}</span>
-							</div>
+							<StatItem
+								currency={CurrenciesTypes.ELECTRONS}
+								fullValue={formatNumberFull(gameManager.electrons)}
+								label="Electrons"
+								value={formatNumber(gameManager.electrons)}
+							/>
 							<StatItem
 								fullValue={formatNumberFull(gameManager.totalElectronsEarned)}
 								icon={Atom}
@@ -316,11 +320,12 @@
 					Photon Realm
 				</h3>
 				<div class="grid gap-1.5 sm:grid-cols-2">
-					<div class="flex items-center gap-2 rounded-lg bg-white/5 p-2.5" title={formatNumberFull(gameManager.photons)}>
-						<img src="/currencies/photon.png" alt="Photons" class="size-5" />
-						<span class="text-sm text-white/70">Photons</span>
-						<span class="ml-auto font-semibold text-purple-400 tabular-nums">{formatNumber(gameManager.photons)}</span>
-					</div>
+					<StatItem
+						currency={CurrenciesTypes.PHOTONS}
+						fullValue={formatNumberFull(gameManager.photons)}
+						label="Photons"
+						value={formatNumber(gameManager.photons)}
+					/>
 					<StatItem
 						fullValue={formatNumberFull(gameManager.totalBonusPhotonsClicked)}
 						icon={MousePointerClick}
