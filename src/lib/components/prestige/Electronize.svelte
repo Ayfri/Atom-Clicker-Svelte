@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { gameManager } from '$helpers/GameManager.svelte';
-	import { formatNumber } from '$lib/utils';
+	import { CurrenciesTypes } from '$lib/data/currencies';
 	import Modal from '@components/ui/Modal.svelte';
+	import Value from '@components/ui/Value.svelte';
 	import { ELECTRONS_PROTONS_REQUIRED } from '$lib/constants';
 
 	interface Props {
@@ -32,15 +33,19 @@
 		<div class="bg-black/20 rounded-lg p-4">
 			<div class="flex justify-between items-center mb-2">
 				<span>Current Protons:</span>
-				<span class="font-bold text-yellow-400">{formatNumber(gameManager.protons)}</span>
+				<Value class="font-bold text-yellow-400" currency={CurrenciesTypes.PROTONS} value={gameManager.protons} />
 			</div>
 			<div class="flex justify-between items-center mb-4">
 				<span>Electrons to gain:</span>
-				<span class="font-bold text-green-400">{formatNumber(gameManager.electronizeElectronsGain)}</span>
+				<Value
+					class="font-bold text-green-400"
+					currency={CurrenciesTypes.ELECTRONS}
+					value={gameManager.electronizeElectronsGain}
+				/>
 			</div>
 			<div class="flex justify-between items-center">
 				<span>Current Electrons:</span>
-				<span class="font-bold text-green-400">{formatNumber(gameManager.electrons ?? 0)}</span>
+				<Value class="font-bold text-green-400" currency={CurrenciesTypes.ELECTRONS} value={gameManager.electrons ?? 0} />
 			</div>
 		</div>
 

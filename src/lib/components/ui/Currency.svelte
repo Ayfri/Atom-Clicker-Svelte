@@ -14,6 +14,7 @@
 		class?: string;
 		icon?: boolean;
 		name: CurrencyName;
+		size?: number;
 	}
 
 	let { name, icon = true, class: className = '', ...rest }: Props = $props();

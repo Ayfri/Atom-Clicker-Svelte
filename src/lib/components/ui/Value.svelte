@@ -31,7 +31,7 @@
 <span title={currencyObject?.name ?? ''} {...rest}>
 	{prefix}{formatNumber(value, precision)}
 	{#if currency}
-		<Currency name={currency} class={currencyClass} />
+		<Currency name={currency} class={currencyClass} size={16}/>
 	{/if}
 	{postfix}
 </span>
