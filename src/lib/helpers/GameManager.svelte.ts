@@ -44,7 +44,7 @@ export class GameManager {
 	startDate = $state(Date.now());
 	totalAtomsEarned = $state(0);
 	totalAtomsEarnedAllTime = $state(0);
-	totalBonusPhotonsClicked = $state(0);
+	totalBonusHiggsBosonClicked = $state(0);
 	totalBuildingsPurchased = $state(0);
 	totalClicks = $state(0);
 	totalClicksAllTime = $state(0);
@@ -285,7 +285,7 @@ export class GameManager {
 			startDate: this.startDate,
 			totalAtomsEarned: this.totalAtomsEarned,
 			totalAtomsEarnedAllTime: this.totalAtomsEarnedAllTime,
-			totalBonusPhotonsClicked: this.totalBonusPhotonsClicked,
+			totalBonusHiggsBosonClicked: this.totalBonusHiggsBosonClicked,
 			totalBuildingsPurchased: this.totalBuildingsPurchased,
 			totalClicks: this.totalClicks,
 			totalClicksAllTime: this.totalClicksAllTime,
@@ -586,8 +586,8 @@ export class GameManager {
 		this.photons += amount;
 	}
 
-	incrementBonusPhotonClicks() {
-		this.totalBonusPhotonsClicked += 1;
+	incrementBonusHiggsBosonClicks() {
+		this.totalBonusHiggsBosonClicked += 1;
 		this.lastInteractionTime = Date.now();
 	}
 

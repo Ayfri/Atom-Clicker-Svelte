@@ -1,6 +1,5 @@
 import type {SkillUpgrade} from '$lib/types';
 import {BUILDINGS, type BuildingData, type BuildingType, BUILDING_TYPES} from '$data/buildings';
-import type { GameManager } from '$helpers/GameManager.svelte';
 
 // Update constants for positioning
 export const GRID_SIZE = {
@@ -56,9 +55,9 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 			} satisfies SkillUpgrade;
 		},
 	),
-	bonusPhotonSpeed0: {
-		id: 'bonusPhotonSpeed0',
-		name: 'Bonus Photon Speed',
+	bonusHiggsBosonSpeed0: {
+		id: 'bonusHiggsBosonSpeed0',
+		name: 'Bonus Higgs Boson Speed',
 		description: '0.9x power up interval',
 		position: gridPos(0.5, 1),
 		effects: [{
@@ -68,9 +67,9 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		}],
 		requires: ['globalMultiplier'],
 	},
-	bonusPhotonSpeed1: {
-		id: 'bonusPhotonSpeed1',
-		name: 'Bonus Photon Speed',
+	bonusHiggsBosonSpeed1: {
+		id: 'bonusHiggsBosonSpeed1',
+		name: 'Bonus Higgs Boson Speed',
 		description: '0.8x power up interval',
 		position: gridPos(1.5, 1),
 		effects: [{
@@ -78,7 +77,7 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 			description: 'Multiply power up interval by 0.8',
 			apply: (currentValue) => currentValue * 0.8
 		}],
-		requires: ['bonusPhotonSpeed0'],
+		requires: ['bonusHiggsBosonSpeed0'],
 	},
 	clickPowerBoost0: {
 		id: 'clickPowerBoost0',
@@ -114,7 +113,7 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 			description: 'Multiply power-up duration by 1.2',
 			apply: (currentValue) => currentValue * 1.2
 		}],
-		requires: ['bonusPhotonSpeed1'],
+		requires: ['bonusHiggsBosonSpeed1'],
 	},
 	powerUpBoost1: {
 		id: 'powerUpBoost1',
@@ -419,9 +418,9 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		}],
 		requires: ['clickPowerBoost1'],
 	},
-	bonusPhotonSpeed2: {
-		id: 'bonusPhotonSpeed2',
-		name: 'Ultimate Photon Speed',
+	bonusHiggsBosonSpeed2: {
+		id: 'bonusHiggsBosonSpeed2',
+		name: 'Ultimate Higgs Boson Speed',
 		description: '0.7x power up interval',
 		position: gridPos(1.5, 0),
 		effects: [{
@@ -429,7 +428,7 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 			description: 'Multiply power up interval by 0.7',
 			apply: (currentValue) => currentValue * 0.7
 		}],
-		requires: ['bonusPhotonSpeed1'],
+		requires: ['bonusHiggsBosonSpeed1'],
 	},
 	atomicStability: {
 		id: 'atomicStability',

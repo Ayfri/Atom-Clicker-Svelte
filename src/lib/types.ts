@@ -72,7 +72,7 @@ export interface GameState {
 	startDate: number;
 	totalAtomsEarned: number;
 	totalAtomsEarnedAllTime: number;
-	totalBonusPhotonsClicked: number;
+	totalBonusHiggsBosonClicked: number;
 	totalBuildingsPurchased: number;
 	totalClicks: number;
 	totalClicksAllTime: number;

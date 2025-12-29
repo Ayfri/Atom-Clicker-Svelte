@@ -3,6 +3,7 @@
 	import {CURRENCIES, type CurrencyName} from '$data/currencies';
 	import AtomIcon from '@components/icons/Atom.svelte';
 	import ElectronIcon from '@components/icons/Electron.svelte';
+	import HiggsBosonIcon from '@components/icons/HiggsBoson.svelte';
 	import ProtonIcon from '@components/icons/Proton.svelte';
 	import PhotonIcon from '@components/icons/Photon.svelte';
 
@@ -25,6 +26,8 @@
 		<AtomIcon class="inline {className}" color={currency.color} {...rest} />
 	{:else if currency.icon === 'electron'}
 		<ElectronIcon class="inline {className}" color={currency.color} {...rest} />
+	{:else if currency.icon === 'higgs-boson'}
+		<HiggsBosonIcon class="inline {className}" color={currency.color} {...rest} />
 	{:else if currency.icon === 'proton'}
 		<ProtonIcon class="inline {className}" color={currency.color} {...rest} />
 	{:else if currency.icon === 'photon'}

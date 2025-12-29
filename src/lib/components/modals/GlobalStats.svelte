@@ -20,6 +20,7 @@
 		TrendingUp,
 		Zap,
 	} from 'lucide-svelte';
+	import HiggsBoson from '@components/icons/HiggsBoson.svelte';
 
 	const totalAchievements = Object.keys(ACHIEVEMENTS).length;
 
@@ -313,7 +314,8 @@
 		{/if}
 
 		<!-- Photon Realm Stats -->
-		{#if gameManager.photons > 0 || gameManager.totalBonusPhotonsClicked > 0}
+
+		{#if gameManager.photons > 0 || gameManager.totalBonusHiggsBosonClicked > 0}
 			<section>
 				<h3 class="mb-2 flex items-center gap-2 border-b border-white/20 pb-1.5 text-base font-semibold text-white/90">
 					<Sparkles size={18} />
@@ -327,10 +329,10 @@
 						value={formatNumber(gameManager.photons)}
 					/>
 					<StatItem
-						fullValue={formatNumberFull(gameManager.totalBonusPhotonsClicked)}
-						icon={MousePointerClick}
-						label="Bonus Photons Clicked"
-						value={formatNumber(gameManager.totalBonusPhotonsClicked, 0)}
+						currency={CurrenciesTypes.HIGGS_BOSON}
+						fullValue={formatNumberFull(gameManager.totalBonusHiggsBosonClicked)}
+						label="Bonus Higgs Bosons Clicked"
+						value={formatNumber(gameManager.totalBonusHiggsBosonClicked, 0)}
 					/>
 				</div>
 			</section>

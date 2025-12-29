@@ -2,10 +2,10 @@ import {BUILDING_LEVEL_UP_COST, type BuildingType} from '$data/buildings';
 import {CurrenciesTypes} from '$data/currencies';
 import type {Building, GameState} from '$lib/types';
 import {saveRecovery, type SaveErrorType} from '$stores/saveRecovery';
-import { statsConfig } from '$helpers/statConstants';
+import {statsConfig} from '$helpers/statConstants';
 
 export const SAVE_KEY = 'atomic-clicker-save';
-export const SAVE_VERSION = 14;
+export const SAVE_VERSION = 15;
 
 export interface LoadSaveResult {
 	errorDetails?: string;
@@ -306,6 +306,24 @@ function migrateSavedState(savedState: unknown): GameState | undefined {
 			state.totalProtonsEarned = state.protons || 0;
 			// Count upgrades owned as baseline
 			state.totalUpgradesPurchased = (state.upgrades?.length || 0) + (state.skillUpgrades?.length || 0);
+		}
+
+		if (state.version === 14) {
+			if (state.totalBonusPhotonsClicked) {
+				state.totalBonusHiggsBosonClicked = state.totalBonusPhotonsClicked;
+				delete state.totalBonusPhotonsClicked;
+			}
+			if (state.achievements) {
+				state.achievements = state.achievements.map((id: string) => id.replace('bonus_photons_clicked_', 'bonus_higgs_boson_clicked_'));
+			}
+			if (state.skillUpgrades) {
+				const map: Record<string, string> = {
+					'bonusPhotonSpeed0': 'bonusHiggsBosonSpeed0',
+					'bonusPhotonSpeed1': 'bonusHiggsBosonSpeed1',
+					'bonusPhotonSpeed2': 'bonusHiggsBosonSpeed2',
+				};
+				state.skillUpgrades = state.skillUpgrades.map((id: string) => map[id] || id);
+			}
 		}
 
 		state.version = nextVersion;
