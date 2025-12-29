@@ -1,10 +1,12 @@
 <script lang="ts">
 	import GitHub from '@components/icons/GitHub.svelte';
 	import Discord from '@components/icons/Discord.svelte';
+	import Currency from '@components/ui/Currency.svelte';
+	import Modal from '@components/ui/Modal.svelte';
+	import { CurrenciesTypes } from '$data/currencies';
+	import { gameManager } from '$helpers/GameManager.svelte';
 	import { SquareArrowOutUpRight } from 'lucide-svelte';
 	import { fade } from 'svelte/transition';
-	import { gameManager } from '$helpers/GameManager.svelte';
-	import Modal from '@components/ui/Modal.svelte';
 
 	// Check if achievements are already unlocked
 	let isWebsiteUnlocked = $derived(gameManager.achievements.includes('website_click'));
@@ -100,7 +102,7 @@
 					aria-label="Hidden secret"
 					title="?"
 				>
-					<img src="/atom.png" alt="Hidden atom" class="size-5" />
+					<Currency name={CurrenciesTypes.ATOMS} alt="Hidden atom" />
 				</button>
 			{/if}
 		</div>
