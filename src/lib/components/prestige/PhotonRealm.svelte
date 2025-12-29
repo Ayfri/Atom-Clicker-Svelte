@@ -4,7 +4,8 @@
 	import { onDestroy, onMount } from 'svelte';
 	import PhotonCounter from '@components/prestige/PhotonCounter.svelte';
 	import PhotonUpgrades from '@components/prestige/PhotonUpgrades.svelte';
-	import { particles } from '$stores/canvas';
+	import Currency from '@components/ui/Currency.svelte';
+	import { addParticles } from '$stores/canvas';
 	import { CurrenciesTypes } from '$data/currencies';
 	import { PHOTON_UPGRADES } from '$data/photonUpgrades';
 	import { mobile } from '$stores/window.svelte';
@@ -281,9 +282,8 @@
 						"
 						onclick={(event) => clickCircle(circle, event)}
 					>
-						<img
-							src="/currencies/photon.png"
-							alt="Photon"
+						<Currency
+							name={CurrenciesTypes.PHOTONS}
 							class="w-full h-full object-contain"
 							style="filter: drop-shadow(0 0 10px rgba(153, 102, 204, 0.8));"
 						/>
