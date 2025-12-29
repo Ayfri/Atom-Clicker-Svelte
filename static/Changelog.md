@@ -1,3 +1,7 @@
+# What's new 29-12-2025
+
+- **Auto-click**: Added auto-click button for main atom and photons.
+
 # What's new 23-12-2025
 
 - **New Upgrade**: Added "Community Power" upgrade that boosts atom production based on the total number of players.
