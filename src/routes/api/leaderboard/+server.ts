@@ -24,38 +24,24 @@ export const GET: RequestHandler = async ({ url }) => {
 
 		// Format response for frontend compatibility
 		const formattedLeaderboard = sortedWithRank.map((entry) => ({
-			username: entry.username || 'Anonymous',
 			atoms: parseFloat(entry.atoms), // Use parseFloat instead of parseInt
 			level: entry.level,
+			is_online: entry.is_online,
 			picture: entry.picture || '',
 			self: currentUserId ? entry.id === currentUserId : false, // Simple JavaScript check
 			lastUpdated: new Date(entry.last_updated).getTime(),
 			rank: entry.rank,
-			userId: entry.id
+			userId: entry.id,
+			username: entry.username || 'Anonymous',
 		}));
 
 		// Calculate statistics
 		const totalUsers = formattedLeaderboard.length;
-		const totalAtoms = formattedLeaderboard.reduce((sum, entry) => sum + entry.atoms, 0);
-		const averageAtoms = totalUsers > 0 ? totalAtoms / totalUsers : 0;
-
-		// Calculate median
-		let medianAtoms = 0;
-		if (totalUsers > 0) {
-			const sortedAtoms = formattedLeaderboard.map(e => e.atoms).sort((a, b) => a - b);
-			const mid = Math.floor(sortedAtoms.length / 2);
-			medianAtoms = sortedAtoms.length % 2 === 0
-				? (sortedAtoms[mid - 1] + sortedAtoms[mid]) / 2
-				: sortedAtoms[mid];
-		}
 
 		return json({
 			entries: formattedLeaderboard,
 			stats: {
-				totalUsers,
-				totalAtoms,
-				averageAtoms,
-				medianAtoms
+				totalUsers
 			}
 		});
 	} catch (error) {

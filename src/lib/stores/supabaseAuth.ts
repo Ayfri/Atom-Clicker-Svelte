@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient, type User, type Session } from '@supabase/supabase-js';
 import { browser } from '$app/environment';
 import { writable, derived } from 'svelte/store';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_PUBLISHABLE_KEY } from '$env/static/public';
@@ -29,6 +29,7 @@ function createSupabaseAuthStore() {
 	});
 
 	let supabase: SupabaseClient<Database>;
+	let currentSession: Session | null = null;
 
 	async function init() {
 		if (!browser) {
@@ -49,13 +50,32 @@ function createSupabaseAuthStore() {
 
 			// Get initial session
 			const { data: { session } } = await supabase.auth.getSession();
+			currentSession = session;
 			await handleAuthStateChange(session?.user || null);
 
 			// Listen for auth changes
 			supabase.auth.onAuthStateChange(async (event, session) => {
 				console.log('Auth state changed:', event);
+				currentSession = session;
 				await handleAuthStateChange(session?.user || null);
 			});
+
+			// Update offline status onunload
+			if (typeof window !== 'undefined') {
+				window.addEventListener('beforeunload', () => {
+					if (currentSession?.access_token) {
+						fetch('/api/auth/status', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+								'Authorization': `Bearer ${currentSession.access_token}`
+							},
+							body: JSON.stringify({ is_online: false }),
+							keepalive: true
+						});
+					}
+				});
+			}
 
 		} catch (error) {
 			console.error('Supabase auth initialization error:', error);
@@ -94,6 +114,19 @@ function createSupabaseAuthStore() {
 				if (directProfile) {
 					profile = directProfile;
 					console.log('Found direct profile:', profile.username);
+
+					// Update online status
+					const { error: updateError } = await supabase
+						.from('profiles')
+						.update({
+							is_online: true,
+							updated_at: new Date().toISOString()
+						})
+						.eq('id', user.id);
+
+					if (updateError) {
+						console.error('Error updating online status:', updateError);
+					}
 				}
 
 				// If still no profile, create a new one
@@ -107,6 +140,7 @@ function createSupabaseAuthStore() {
 						level: 1,   // Default leaderboard data for new users
 						picture: user.user_metadata?.avatar_url || user.user_metadata?.picture,
 						save: null,
+						is_online: true,
 						last_updated: new Date().toISOString(),
 						updated_at: new Date().toISOString(),
 						created_at: new Date().toISOString()
@@ -184,6 +218,17 @@ function createSupabaseAuthStore() {
 		if (!browser || !supabase) return;
 
 		try {
+			const { data: { user } } = await supabase.auth.getUser();
+			if (user) {
+				await supabase
+					.from('profiles')
+					.update({
+						is_online: false,
+						updated_at: new Date().toISOString()
+					})
+					.eq('id', user.id);
+			}
+
 			const { error } = await supabase.auth.signOut();
 			if (error) {
 				update(state => ({ ...state, error }));

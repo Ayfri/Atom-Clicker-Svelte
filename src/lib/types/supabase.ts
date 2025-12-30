@@ -76,6 +76,7 @@ export type Database = {
 					atoms: string
 					created_at: string | null
 					id: string
+					is_online: boolean | null
 					last_updated: string | null
 					level: number
 					picture: string | null
@@ -87,6 +88,7 @@ export type Database = {
 					atoms?: string
 					created_at?: string | null
 					id: string
+					is_online?: boolean | null
 					last_updated?: string | null
 					level?: number
 					picture?: string | null
@@ -98,6 +100,7 @@ export type Database = {
 					atoms?: string
 					created_at?: string | null
 					id?: string
+					is_online?: boolean | null
 					last_updated?: string | null
 					level?: number
 					picture?: string | null
@@ -117,6 +120,7 @@ export type Database = {
 				Returns: {
 					atoms: string
 					id: string
+					is_online: boolean
 					last_updated: string
 					level: number
 					picture: string
