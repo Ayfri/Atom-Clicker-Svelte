@@ -1,14 +1,14 @@
 <script lang="ts">
+	import { formatNumber } from '$lib/utils';
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
 	import { createClickParticleSync, type Particle } from '$helpers/particles';
-	import { onDestroy, onMount } from 'svelte';
+	import { onMount } from 'svelte';
 	import PhotonCounter from '@components/prestige/PhotonCounter.svelte';
 	import PhotonUpgrades from '@components/prestige/PhotonUpgrades.svelte';
 	import Currency from '@components/ui/Currency.svelte';
 	import { addParticles } from '$stores/canvas';
 	import { CurrenciesTypes } from '$data/currencies';
-	import { ALL_PHOTON_UPGRADES } from '$data/photonUpgrades';
 	import { mobile } from '$stores/window.svelte';
 
 	import { calculateEffects, getUpgradesWithEffects } from '$helpers/effects';
@@ -118,6 +118,13 @@
 		return Math.random() < gameManager.excitedPhotonChance;
 	}
 
+	function getCircleValue(circle: Circle) {
+		const amount = circle.photons;
+		const type = circle.type === 'excited' ? 'excited_photon_stability' : 'photon_stability';
+		const upgrades = getUpgradesWithEffects(gameManager.allEffectSources, { type });
+		return Math.floor(calculateEffects(upgrades, gameManager, amount, { type }));
+	}
+
 	function spawnCircle() {
 		if (!container) return;
 
@@ -177,10 +184,12 @@
 	}
 
 	function clickCircle(circle: Circle, event: MouseEvent) {
+		const amount = getCircleValue(circle);
+
 		if (circle.type === 'excited') {
-			currenciesManager.add(CurrenciesTypes.EXCITED_PHOTONS, circle.photons);
+			currenciesManager.add(CurrenciesTypes.EXCITED_PHOTONS, amount);
 		} else {
-			currenciesManager.add(CurrenciesTypes.PHOTONS, circle.photons);
+			currenciesManager.add(CurrenciesTypes.PHOTONS, amount);
 		}
 
 		circles = circles.filter((c) => c.id !== circle.id);
@@ -301,7 +310,7 @@
 						<span
 							class="absolute font-bold text-xs pointer-events-none drop-shadow-[0_0_5px_rgba(0,0,0,0.8)] {circle.type === 'excited' ? 'text-[#FFD700]' : 'text-white'}"
 						>
-							+{circle.photons}
+							+{formatNumber(getCircleValue(circle))}
 						</span>
 					</button>
 				{/each}

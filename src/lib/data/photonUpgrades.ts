@@ -138,6 +138,25 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 			},
 		],
 	},
+	photon_stability: {
+		id: 'photon_stability',
+		name: 'Stable Photons',
+		description: (level: number) => `Photons gain ${[20, 50, 100][level - 1] || 20}% of Stability Field bonus`,
+		baseCost: 200000,
+		costMultiplier: 2.5,
+		maxLevel: 3,
+		effects: (level: number) => [
+			{
+				type: 'photon_stability',
+				description: `Photons gain ${[20, 50, 100][level - 1] || 20}% of Stability Field bonus`,
+				apply: (currentValue, manager) => {
+					const efficiencies = [0.2, 0.5, 1];
+					const efficiency = efficiencies[level - 1] || 0.2;
+					return currentValue * (1 + (manager.stabilityMultiplier - 1) * efficiency);
+				},
+			},
+		],
+	},
 	photon_value: {
 		id: 'photon_value',
 		name: 'Photon Value',
@@ -241,7 +260,7 @@ export const EXCITED_PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 		id: 'excited_stabilization',
 		name: 'Excited Stabilization',
 		description: (level: number) => `Increase Stabilization field speed and bonus by ${300 * level}% but it now collapse also when you click on purple realm`,
-		baseCost: 1000,
+		baseCost: 5000,
 		costMultiplier: 2,
 		currency: CurrenciesTypes.EXCITED_PHOTONS,
 		maxLevel: 3,
@@ -258,19 +277,39 @@ export const EXCITED_PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 			},
 		],
 	},
+	excited_photon_stability: {
+		id: 'excited_photon_stability',
+		name: 'Excited Stability',
+		description: (level: number) => `Excited Photons gain ${[20, 50, 100][level - 1] || 20}% of Stability Field bonus`,
+		baseCost: 1500,
+		costMultiplier: 2.5,
+		currency: CurrenciesTypes.EXCITED_PHOTONS,
+		maxLevel: 3,
+		effects: (level: number) => [
+			{
+				type: 'excited_photon_stability',
+				description: `Excited Photons gain ${[20, 50, 100][level - 1] || 20}% of Stability Field bonus`,
+				apply: (currentValue, manager) => {
+					const efficiencies = [0.2, 0.5, 1];
+					const efficiency = efficiencies[level - 1] || 0.2;
+					return currentValue * (1 + (manager.stabilityMultiplier - 1) * efficiency);
+				},
+			},
+		],
+	},
 	excited_yield: {
 		id: 'excited_yield',
 		name: 'Excited Yield',
-		description: (level: number) => `${10 * level}% chance to get double Excited Photons`,
+		description: (level: number) => `${8 * level}% chance to get double Excited Photons`,
 		baseCost: 50,
-		costMultiplier: 1.5,
+		costMultiplier: 1.65,
 		currency: CurrenciesTypes.EXCITED_PHOTONS,
 		maxLevel: 10,
 		effects: (level: number) => [
 			{
 				type: 'excited_photon_double',
-				description: `${10 * level}% chance for double Excited Photons`,
-				apply: (currentValue) => currentValue + (0.1 * level),
+				description: `${8 * level}% chance for double Excited Photons`,
+				apply: (currentValue) => currentValue + (0.08 * level),
 			},
 		],
 	},
