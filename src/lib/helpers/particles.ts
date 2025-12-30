@@ -50,7 +50,7 @@ const getSprite = (type: 'icon' | 'text', setup: (s: any) => void) => {
 export const loadParticleAssets = async () => {
 	try {
 		PIXI = await import('pixi.js');
-		const icons = Object.values(CURRENCIES).map(c => c.icon);
+		const icons = Object.values(CURRENCIES).map(c => c.id);
 
 		await PIXI.Assets.load(icons.map(alias => ({
 			alias,
@@ -74,7 +74,7 @@ export const createClickParticleSync = (x: number, y: number, currency: Currency
 	if (!PIXI) return null;
 
 	const sprite = getSprite('icon', s => {
-		s.texture = PIXI.Assets.get(CURRENCIES[currency].icon);
+		s.texture = PIXI.Assets.get(CURRENCIES[currency].id);
 		s.alpha = 0.8;
 		s.scale.set(0.1);
 		s.position.set(x, y + document.documentElement.scrollTop);

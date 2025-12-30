@@ -54,7 +54,7 @@
 			</div>
 
 			<!-- Content -->
-			<div class="min-h-[50vh]">
+			<div class="min-h-[50vh] **:select-text!">
 				{#if activeTab === 'stats'}
 					<StatsTab />
 				{:else if activeTab === 'upgrades'}
