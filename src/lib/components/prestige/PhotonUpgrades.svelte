@@ -14,7 +14,7 @@
 			const hasLevelsRemaining = currentLevel < upgrade.maxLevel;
 			const meetsCondition = !upgrade.condition || upgrade.condition(gameManager);
 			return hasLevelsRemaining && meetsCondition;
-		});
+		}).sort((a, b) => a.baseCost - b.baseCost);
 	});
 
 	const showExcitedTab = $derived(gameManager.currencies[CurrenciesTypes.EXCITED_PHOTONS].earnedAllTime > 0);
