@@ -334,6 +334,18 @@
 						label="Bonus Higgs Bosons Clicked"
 						value={formatNumber(gameManager.totalBonusHiggsBosonClicked, 0)}
 					/>
+					<StatItem
+						currency={CurrenciesTypes.EXCITED_PHOTONS}
+						fullValue={formatNumberFull(gameManager.excitedPhotons)}
+						label="Excited Photons"
+						value={formatNumber(gameManager.excitedPhotons)}
+					/>
+					<StatItem
+						currency={CurrenciesTypes.EXCITED_PHOTONS}
+						fullValue={formatNumberFull(gameManager.totalExcitedPhotonsEarned)}
+						label="Excited Photons Earned (Total)"
+						value={formatNumber(gameManager.totalExcitedPhotonsEarned)}
+					/>
 				</div>
 			</section>
 		{/if}

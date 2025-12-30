@@ -20,7 +20,7 @@
 			const value = gameManager[key as keyof GameManager];
 			let icon: typeof IconType = FileBox;
 
-			if (['atoms', 'protons', 'electrons', 'photons'].includes(key)) {
+			if (['atoms', 'protons', 'electrons', 'photons', 'excitedPhotons'].includes(key)) {
 				icon = AtomIcon;
 			} else if (key.startsWith('total')) {
 				icon = BarChart3;
@@ -34,7 +34,7 @@
 
 			const stat = { key, config, value, icon };
 
-			if (['atoms', 'protons', 'electrons', 'photons'].includes(key)) {
+			if (['atoms', 'protons', 'electrons', 'photons', 'excitedPhotons'].includes(key)) {
 				groups.currencies.push(stat);
 			} else if (key.startsWith('total')) {
 				groups.totals.push(stat);

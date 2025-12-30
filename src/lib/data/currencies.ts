@@ -3,6 +3,7 @@ import type {Currency} from '$lib/types';
 export const CurrenciesTypes = {
 	ATOMS: 'Atoms',
 	ELECTRONS: 'Electrons',
+	EXCITED_PHOTONS: 'Excited Photons',
 	HIGGS_BOSON: 'Higgs Boson',
 	PHOTONS: 'Photons',
 	PROTONS: 'Protons',
@@ -21,6 +22,16 @@ export const CURRENCIES = {
 		name: 'Electrons',
 		icon: 'electron',
 	},
+	[CurrenciesTypes.EXCITED_PHOTONS]: {
+		color: '#FFD700',
+		name: 'Excited Photons',
+		icon: 'excited-photon',
+	},
+	[CurrenciesTypes.HIGGS_BOSON]: {
+		color: '#fbbf24',
+		name: 'Higgs Boson',
+		icon: 'higgs-boson',
+	},
 	[CurrenciesTypes.PHOTONS]: {
 		color: '#9966cc',
 		name: 'Photons',
@@ -30,10 +41,5 @@ export const CURRENCIES = {
 		color: '#ffd700',
 		name: 'Protons',
 		icon: 'proton',
-	},
-	[CurrenciesTypes.HIGGS_BOSON]: {
-		color: '#fbbf24',
-		name: 'Higgs Boson',
-		icon: 'higgs-boson',
 	},
 } as Record<CurrencyName, Currency>;

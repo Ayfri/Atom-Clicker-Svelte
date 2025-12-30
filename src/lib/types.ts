@@ -21,7 +21,7 @@ export interface Upgrade {
 
 export interface Effect {
 	target?: string;
-	type: 'auto_buy' | 'auto_click' | 'auto_speed' | 'auto_upgrade' | 'building' | 'click' | 'electron_gain' | 'global' | 'power_up_duration' | 'power_up_interval' | 'power_up_multiplier' | 'proton_gain' | 'stability_speed' | 'stability_boost' | 'stability_capacity' | 'xp_gain';
+	type: 'auto_buy' | 'auto_click' | 'auto_speed' | 'auto_upgrade' | 'building' | 'click' | 'electron_gain' | 'excited_auto_click' | 'excited_photon_chance' | 'excited_photon_double' | 'excited_photon_duration' | 'global' | 'power_up_duration' | 'power_up_interval' | 'power_up_multiplier' | 'proton_gain' | 'stability_speed' | 'stability_boost' | 'stability_capacity' | 'xp_gain';
 	apply: (currentValue: number, manager: GameManager) => number;
 	description: string;
 }
@@ -58,6 +58,7 @@ export interface GameState {
 	atoms: number;
 	buildings: Partial<Record<BuildingType, Building>>;
 	electrons: number;
+	excitedPhotons: number;
 	highestAPS: number;
 	inGameTime: number;
 	lastInteractionTime: number;
@@ -78,6 +79,7 @@ export interface GameState {
 	totalClicksAllTime: number;
 	totalElectronizes: number;
 	totalElectronsEarned: number;
+	totalExcitedPhotonsEarned: number;
 	totalProtonises: number;
 	totalProtonsEarned: number;
 	totalUpgradesPurchased: number;
