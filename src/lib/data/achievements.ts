@@ -2,7 +2,7 @@ import type { Achievement } from '$lib/types';
 import type { GameManager } from '$helpers/GameManager.svelte';
 import { formatNumber } from '$lib/utils';
 import { BUILDING_TYPES, BUILDINGS, type BuildingType } from '$data/buildings';
-import { CURRENCIES, CurrenciesTypes } from '$data/currencies';
+import { CURRENCIES, CurrenciesTypes, type CurrencyName } from '$data/currencies';
 import { SKILL_UPGRADES } from '$data/skillTree';
 
 export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
@@ -224,19 +224,35 @@ function createTotalLevelsAchievements(): Achievement[] {
 	return [1, 10, 25, 50, 100, 250, 500, 727, 1000, 2500, 5000, 10_000].map(createTotalLevelsAchievement);
 }
 
+function createProtoniseAchievements(): Achievement[] {
+	const tiers = [1, 2, 3, 5, 10, 20, 50, 100, 250, 500, 1000];
+	return tiers.map(tier => ({
+		id: `protonises_${tier}`,
+		name: `${tier} Protonises`,
+		description: `Protonise ${tier} times`,
+		condition: (manager: GameManager) => manager.currencies[CurrenciesTypes.PROTONS].earnedAllTime >= tier,
+		hiddenCondition: (manager: GameManager) => manager.currencies[CurrenciesTypes.PROTONS].earnedAllTime === 0,
+	}));
+}
+
+function createElectronizeAchievements(): Achievement[] {
+	const tiers = [1, 2, 3, 5, 10, 20, 50, 100, 250, 500, 1000];
+	return tiers.map(tier => ({
+		id: `electronizes_${tier}`,
+		name: `${tier} Electronizes`,
+		description: `Electronize ${tier} times`,
+		condition: (manager: GameManager) => manager.currencies[CurrenciesTypes.ELECTRONS].earnedAllTime >= tier,
+		hiddenCondition: (manager: GameManager) => manager.currencies[CurrenciesTypes.ELECTRONS].earnedAllTime === 0,
+	}));
+}
+
 function createCurrencyAchievements(): Achievement[] {
 	return Object.values(CURRENCIES).filter(c => c.achievementTiers && c.stat).flatMap(currency => {
 		return currency.achievementTiers!.map(tier => {
 			let name = `${formatNumber(tier)} ${currency.name}`;
 			let description = `Collect ${formatNumber(tier)} ${currency.name.toLowerCase()}`;
 
-			if (currency.name === CurrenciesTypes.PROTONS) {
-				name = `${tier} Protonises`;
-				description = `Protonise ${tier} times`;
-			} else if (currency.name === CurrenciesTypes.ELECTRONS) {
-				name = `${tier} Electronizes`;
-				description = `Electronize ${tier} times`;
-			} else if (currency.name === CurrenciesTypes.HIGGS_BOSON) {
+			if (currency.name === CurrenciesTypes.HIGGS_BOSON) {
 				const countNames: Record<number, string> = {
 					1: 'First',
 					10: 'Ten',
@@ -251,12 +267,25 @@ function createCurrencyAchievements(): Achievement[] {
 				description = `Earn ${formatNumber(tier)} Excited Photon${tier > 1 ? 's' : ''}`;
 			}
 
+			// Prefix mapping for backward compatibility and cleanliness
+			let prefix = currency.id;
+			if (currency.name === CurrenciesTypes.ATOMS) prefix = 'atoms';
+			if (currency.name === CurrenciesTypes.EXCITED_PHOTONS) prefix = 'excited_photons';
+			if (currency.name === CurrenciesTypes.HIGGS_BOSON) prefix = 'bonus_higgs_boson_clicked';
+			if (currency.name === CurrenciesTypes.PHOTONS) prefix = 'photons';
+
 			return {
-				id: `${currency.achievementIdPrefix}_${tier}`,
+				id: `${prefix}_${tier}`,
 				name,
 				description,
-				condition: (manager: GameManager) => (manager[currency.stat as keyof GameManager] as number) >= tier,
-				hiddenCondition: (manager: GameManager) => (manager[currency.stat as keyof GameManager] as number) === 0,
+				condition: (manager: GameManager) => {
+					const currencyData = manager.currencies[currency.stat as CurrencyName];
+					return (currencyData?.earnedAllTime || 0) >= tier;
+				},
+				hiddenCondition: (manager: GameManager) => {
+					const currencyData = manager.currencies[currency.stat as CurrencyName];
+					return (currencyData?.earnedAllTime || 0) === 0;
+				},
 			};
 		});
 	});
@@ -290,6 +319,8 @@ const achievementsArray: Achievement[] = [
 	...createAtomsPerSecondAchievements(),
 	...createTotalClicksAchievements(),
 	...createTotalLevelsAchievements(),
+	...createProtoniseAchievements(),
+	...createElectronizeAchievements(),
 	...createCurrencyAchievements(),
 	...createPhotonUpgradeAchievements(),
 	...SPECIAL_ACHIEVEMENTS,

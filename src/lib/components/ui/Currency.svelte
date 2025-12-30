@@ -24,17 +24,17 @@
 </script>
 
 {#if icon}
-	{#if currency.icon === 'atom'}
+	{#if currency.id === 'atom'}
 		<AtomIcon class="inline {className}" color={currency.color} {...rest} />
-	{:else if currency.icon === 'electron'}
+	{:else if currency.id === 'electron'}
 		<ElectronIcon class="inline {className}" color={currency.color} {...rest} />
-	{:else if currency.icon === 'excited-photon'}
+	{:else if currency.id === 'excited-photon'}
 		<ExcitedPhotonIcon class="inline {className}" color={currency.color} {...rest} />
-	{:else if currency.icon === 'higgs-boson'}
+	{:else if currency.id === 'higgs-boson'}
 		<HiggsBosonIcon class="inline {className}" color={currency.color} {...rest} />
-	{:else if currency.icon === 'proton'}
+	{:else if currency.id === 'proton'}
 		<ProtonIcon class="inline {className}" color={currency.color} {...rest} />
-	{:else if currency.icon === 'photon'}
+	{:else if currency.id === 'photon'}
 		<PhotonIcon class="inline {className}" color={currency.color} {...rest} />
 	{/if}
 {:else}

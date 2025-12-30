@@ -19,19 +19,22 @@
 			'Special & Hidden': { icon: Gift, subcategories: { 'General': [] } }
 		};
 
+		const unlockedSet = new Set(gameManager.achievements);
+		const query = searchQuery.toLowerCase();
+
 		Object.entries(ACHIEVEMENTS).forEach(([id, achievement]) => {
-			const query = searchQuery.toLowerCase();
+			const isUnlocked = unlockedSet.has(id);
+
+			const matchesFilter = achievementFilter === 'all' ||
+				(achievementFilter === 'unlocked' && isUnlocked) ||
+				(achievementFilter === 'locked' && !isUnlocked);
+			if (!matchesFilter) return;
+
 			const matchesSearch = !query ||
 				id.toLowerCase().includes(query) ||
 				achievement.name.toLowerCase().includes(query) ||
 				achievement.description.toLowerCase().includes(query);
-
-			const isUnlocked = gameManager.achievements.includes(id);
-			const matchesFilter = achievementFilter === 'all' ||
-				(achievementFilter === 'unlocked' && isUnlocked) ||
-				(achievementFilter === 'locked' && !isUnlocked);
-
-			if (!matchesSearch || !matchesFilter) return;
+			if (!matchesSearch) return;
 
 			let category = 'Special & Hidden';
 			let subcategory = 'General';
@@ -57,13 +60,6 @@
 			} else if (id.startsWith('buildings_levels_')) {
 				category = 'Building Goals';
 				subcategory = 'Total Levels';
-			} else if (BUILDING_TYPES.some(b => id.toLowerCase().includes(b.toLowerCase()))) {
-				category = 'Building Goals';
-				// Sort by length descending to match "neutronstar" before "star"
-				const buildingId = [...BUILDING_TYPES]
-					.sort((a, b) => b.length - a.length)
-					.find(b => id.toLowerCase().includes(b.toLowerCase()));
-				subcategory = buildingId ? BUILDINGS[buildingId].name : 'Other';
 			} else if (id.startsWith('protonises_')) {
 				category = 'Prestige';
 				subcategory = 'Protonises';
@@ -73,12 +69,25 @@
 			} else if (id.startsWith('photons_')) {
 				category = 'Prestige';
 				subcategory = 'Photons';
-			} else if (id.startsWith('bonus_photons_clicked_')) {
+			} else if (id.startsWith('excited_photons_')) {
 				category = 'Prestige';
-				subcategory = 'Bonus Photons';
+				subcategory = 'Excited Photons';
+			} else if (id.startsWith('bonus_higgs_boson_clicked_')) {
+				category = 'Prestige';
+				subcategory = 'Higgs Boson';
 			} else if (id === 'photon_collector') {
 				category = 'Prestige';
 				subcategory = 'Upgrades';
+			} else {
+				// Try building subcategory
+				// Sort by length descending to match "neutronstar" before "star"
+				const buildingId = [...BUILDING_TYPES]
+					.sort((a, b) => b.length - a.length)
+					.find(b => id.toLowerCase().includes(b.toLowerCase()));
+				if (buildingId) {
+					category = 'Building Goals';
+					subcategory = BUILDINGS[buildingId].name;
+				}
 			}
 
 			if (!categories[category].subcategories[subcategory]) {

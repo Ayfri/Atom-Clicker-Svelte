@@ -7,6 +7,7 @@
 	import { ALL_PHOTON_UPGRADES } from '$data/photonUpgrades';
 	import { SAVE_KEY } from '$helpers/saves';
 	import { Save, Trash2, Zap, Unlock, Coins, Factory, Orbit, Download, Upload, ToggleLeft, Sparkles } from 'lucide-svelte';
+	import { currenciesManager } from '@/lib/helpers/CurrenciesManager.svelte';
 
 	function toggleFeature(upgradeId: string) {
 		if (gameManager.upgrades.includes(upgradeId)) {
@@ -109,10 +110,9 @@
 			<button
 				class="flex items-center justify-center gap-2 bg-accent-600/80 hover:bg-accent-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer shadow-lg"
 				onclick={() => {
-					gameManager.currencies[CurrenciesTypes.ATOMS].amount = 1e15;
-					gameManager.currencies[CurrenciesTypes.PROTONS].amount = 1000;
-					gameManager.currencies[CurrenciesTypes.ELECTRONS].amount = 100;
-					gameManager.currencies[CurrenciesTypes.PHOTONS].amount = 10;
+					Object.keys(CurrenciesTypes).forEach(currency => {
+						currenciesManager.add(currency as CurrencyName, 1e300);
+					});
 					alert('Resources maxed!');
 				}}
 			>
