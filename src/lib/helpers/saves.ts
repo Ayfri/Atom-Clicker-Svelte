@@ -5,7 +5,7 @@ import {saveRecovery, type SaveErrorType} from '$stores/saveRecovery';
 import {statsConfig} from '$helpers/statConstants';
 
 export const SAVE_KEY = 'atomic-clicker-save';
-export const SAVE_VERSION = 17;
+export const SAVE_VERSION = 18;
 
 export interface LoadSaveResult {
 	errorDetails?: string;
@@ -402,6 +402,12 @@ export function migrateSavedState(savedState: unknown): GameState | undefined {
 			];
 
 			keysToRemove.forEach(key => delete state[key]);
+		}
+
+		if (state.version === 17) {
+			if (state.activePowerUps) {
+				state.activePowerUps = state.activePowerUps.filter((p: any) => p.duration <= 100_000);
+			}
 		}
 
 		state.version = nextVersion;
