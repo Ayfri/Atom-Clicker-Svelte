@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { BarChart3, Check, Clock, Cog, FileBox, Sparkles, X, type Icon as IconType } from 'lucide-svelte';
+	import { BarChart3, Check, Clock, Cog, FileBox, Sparkles, X, Activity, type Icon as IconType } from 'lucide-svelte';
 	import Currency from '@components/ui/Currency.svelte';
 	import Tooltip from '@components/ui/Tooltip.svelte';
 	import { CURRENCIES, type CurrencyName } from '$data/currencies';
 	import { gameManager, type GameManager } from '$helpers/GameManager.svelte';
 	import { statsConfig, NUMBER_STATS, ARRAY_STATS, type StatConfig } from '$helpers/statConstants';
-	import { formatNumberFull } from '$lib/utils';
+	import { formatNumberFull, formatDuration } from '$lib/utils';
 	import { parseAtomsValue } from '$lib/utils/number-parser';
 
 	// Group stats by type
@@ -137,6 +137,16 @@
 	function cancelEdit() {
 		editingKey = null;
 	}
+
+	const timeRequired = $derived((600_000 * gameManager.stabilityCapacity) / gameManager.stabilitySpeed);
+	const maxBoost = $derived(1 + ((gameManager.stabilityMaxBoost - 1) * gameManager.stabilityCapacity));
+	const formattedTime = $derived(formatDuration(timeRequired));
+
+	const currentProgress = $derived.by(() => {
+		gameManager.inGameTime; // trigger reactivity
+		const elapsed = Date.now() - gameManager.lastInteractionTime;
+		return Math.min(Math.max(elapsed / timeRequired, 0), 1);
+	});
 </script>
 
 {#snippet statItem(key: string, value: unknown, icon: any, currency?: CurrencyName)}
@@ -321,4 +331,58 @@
 			</div>
 		{/if}
 	{/each}
+
+	<!-- Stability Control -->
+	<div class="bg-white/5 rounded-xl p-3 border border-white/5">
+		<h3 class="text-base font-bold mb-3 flex items-center gap-2 text-accent-300">
+			<Activity size={18} />
+			<span>Stability Control</span>
+		</h3>
+
+		<div class="space-y-4">
+			<!-- Stats Grid -->
+			<div class="grid grid-cols-3 gap-2 text-sm">
+				<div class="bg-black/20 p-2 rounded border border-white/5">
+					<div class="text-white/40 text-[10px] uppercase tracking-wider mb-0.5">Effective</div>
+					<div class="font-mono text-accent-400 font-bold text-lg leading-none">x{gameManager.stabilityMultiplier.toFixed(2)}</div>
+				</div>
+				<div class="bg-black/20 p-2 rounded border border-white/5">
+					<div class="text-white/40 text-[10px] uppercase tracking-wider mb-0.5">Potential Max</div>
+					<div class="font-mono text-white/60 font-bold text-lg leading-none">x{maxBoost.toFixed(2)}</div>
+				</div>
+				<div class="bg-black/20 p-2 rounded border border-white/5">
+					<div class="text-white/40 text-[10px] uppercase tracking-wider mb-0.5">Total Time</div>
+					<div class="font-mono text-white/60 font-bold text-lg leading-none">{formattedTime}</div>
+				</div>
+			</div>
+
+			<!-- Slider Control -->
+			<div class="space-y-1.5">
+				<div class="flex justify-between items-end text-xs">
+					<span class="text-white/60">Advancement</span>
+					<span class="font-mono text-accent-300 font-bold">{(currentProgress * 100).toFixed(1)}%</span>
+				</div>
+				<input
+					type="range"
+					min="0"
+					max="1"
+					step="0.001"
+					value={currentProgress}
+					class="w-full h-1.5 bg-black/40 rounded-lg appearance-none cursor-pointer accent-accent-500 hover:accent-accent-400"
+					oninput={(e) => {
+						const progress = parseFloat(e.currentTarget.value);
+						// We need to calculate how much time equates to this progress
+						const targetElapsed = progress * timeRequired;
+						// Set last interaction time so that (now - last) = targetElapsed
+						gameManager.lastInteractionTime = Date.now() - targetElapsed;
+					}}
+				/>
+				<div class="flex justify-between text-[10px] text-white/30 font-mono tracking-wider">
+					<span>0%</span>
+					<span>50%</span>
+					<span>100%</span>
+				</div>
+			</div>
+		</div>
+	</div>
 </div>

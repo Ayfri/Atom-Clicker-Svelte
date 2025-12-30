@@ -6,7 +6,7 @@
 	import { BUILDING_TYPES, BUILDINGS } from '$data/buildings';
 	import { ALL_PHOTON_UPGRADES } from '$data/photonUpgrades';
 	import { SAVE_KEY } from '$helpers/saves';
-	import { Save, Trash2, Zap, Unlock, Coins, Factory, Orbit, Download, Upload, ToggleLeft, Sparkles } from 'lucide-svelte';
+	import { Save, Trash2, Zap, Unlock, Coins, Factory, Download, Upload, ToggleLeft, Sparkles } from 'lucide-svelte';
 	import { currenciesManager } from '@/lib/helpers/CurrenciesManager.svelte';
 
 	function toggleFeature(upgradeId: string) {
