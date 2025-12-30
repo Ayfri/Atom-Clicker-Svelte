@@ -70,18 +70,35 @@
 
 	// Helper functions to get upgrade bonuses
 	function getSpawnRate() {
-		const level = gameManager.photonUpgrades['photon_spawn_rate'] || 0;
-		if (level === 0) return baseSpawnRate;
+		let rate = baseSpawnRate;
 
-		const upgrade = ALL_PHOTON_UPGRADES['photon_spawn_rate'];
-		const effects = upgrade.effects(level);
+		// Initial spawn rate upgrade
+		const spawnRateLevel = gameManager.photonUpgrades['photon_spawn_rate'] || 0;
+		if (spawnRateLevel > 0) {
+			const upgrade = ALL_PHOTON_UPGRADES['photon_spawn_rate'];
+			const effects = upgrade.effects(spawnRateLevel);
+			rate = effects.reduce((current, effect) => {
+				if (effect.type === 'power_up_interval') {
+					return effect.apply(current, gameManager);
+				}
+				return current;
+			}, rate);
+		}
 
-		return effects.reduce((rate, effect) => {
-			if (effect.type === 'power_up_interval') {
-				return effect.apply(rate, gameManager);
-			}
-			return rate;
-		}, baseSpawnRate);
+		// Photon Overdrive upgrade
+		const overdriveLevel = gameManager.photonUpgrades['photon_overdrive'] || 0;
+		if (overdriveLevel > 0) {
+			const upgrade = ALL_PHOTON_UPGRADES['photon_overdrive'];
+			const effects = upgrade.effects(overdriveLevel);
+			rate = effects.reduce((current, effect) => {
+				if (effect.type === 'power_up_interval') {
+					return effect.apply(current, gameManager);
+				}
+				return current;
+			}, rate);
+		}
+
+		return rate;
 	}
 
 	function getSizeMultiplier() {
@@ -186,36 +203,7 @@
 	}
 
 	function getIsExcited() {
-		const baseChance = 0.001; // 0.1%
-		let chance = baseChance;
-
-		// Quantum Fluctuation
-		const level = gameManager.photonUpgrades['quantum_fluctuation'] || 0;
-		if (level > 0) {
-			const upgrade = ALL_PHOTON_UPGRADES['quantum_fluctuation'];
-			const effects = upgrade.effects(level);
-			chance = effects.reduce((c, effect) => {
-				if (effect.type === 'excited_photon_chance') {
-					return effect.apply(c, gameManager);
-				}
-				return c;
-			}, chance);
-		}
-
-		// Cheap Excited Spawn Boost
-		const cheapLevel = gameManager.photonUpgrades['cheap_excited_spawn_boost'] || 0;
-		if (cheapLevel > 0) {
-			const upgrade = ALL_PHOTON_UPGRADES['cheap_excited_spawn_boost'];
-			const effects = upgrade.effects(cheapLevel);
-			chance = effects.reduce((c, effect) => {
-				if (effect.type === 'excited_photon_chance') {
-					return effect.apply(c, gameManager);
-				}
-				return c;
-			}, chance);
-		}
-
-		return Math.random() < chance;
+		return Math.random() < gameManager.excitedPhotonChance;
 	}
 
 	function spawnCircle() {

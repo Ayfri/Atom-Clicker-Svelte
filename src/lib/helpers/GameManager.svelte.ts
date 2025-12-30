@@ -150,6 +150,39 @@ export class GameManager {
 			.map(id => UPGRADES[id] || SKILL_UPGRADES[id]);
 	});
 
+	excitedPhotonChance = $derived.by(() => {
+		const baseChance = 0.002; // 0.2%
+		let chance = baseChance;
+
+		// Quantum Fluctuation
+		const fluctuationLevel = this.photonUpgrades['quantum_fluctuation'] || 0;
+		if (fluctuationLevel > 0) {
+			const upgrade = ALL_PHOTON_UPGRADES['quantum_fluctuation'];
+			const effects = upgrade.effects(fluctuationLevel);
+			chance = effects.reduce((c, effect) => {
+				if (effect.type === 'excited_photon_chance') {
+					return effect.apply(c, this);
+				}
+				return c;
+			}, chance);
+		}
+
+		// Cheap Excited Spawn Boost
+		const cheapLevel = this.photonUpgrades['cheap_excited_spawn_boost'] || 0;
+		if (cheapLevel > 0) {
+			const upgrade = ALL_PHOTON_UPGRADES['cheap_excited_spawn_boost'];
+			const effects = upgrade.effects(cheapLevel);
+			chance = effects.reduce((c, effect) => {
+				if (effect.type === 'excited_photon_chance') {
+					return effect.apply(c, this);
+				}
+				return c;
+			}, chance);
+		}
+
+		return chance;
+	});
+
 	electronizeElectronsGain = $derived.by(() => {
 		if (this.protons < ELECTRONS_PROTONS_REQUIRED) return 0;
 

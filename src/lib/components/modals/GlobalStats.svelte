@@ -20,7 +20,6 @@
 		TrendingUp,
 		Zap,
 	} from 'lucide-svelte';
-	import HiggsBoson from '@components/icons/HiggsBoson.svelte';
 
 	const totalAchievements = Object.keys(ACHIEVEMENTS).length;
 
@@ -371,6 +370,13 @@
 							/>
 						{/if}
 					{/each}
+					<StatItem
+						fullValue={`${(gameManager.excitedPhotonChance * 100).toFixed(3)}%`}
+						icon={Sparkles}
+						label="Excited Photon Chance"
+						suffix="%"
+						value={(gameManager.excitedPhotonChance * 100).toFixed(2)}
+					/>
 				</div>
 			</section>
 		{/if}
