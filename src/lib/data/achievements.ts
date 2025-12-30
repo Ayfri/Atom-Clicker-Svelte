@@ -1,27 +1,27 @@
-import {get} from 'svelte/store';
-import {atomsPerSecond, playerLevel, startDate} from '$stores/gameStore';
-import type {Achievement, GameState} from '$lib/types';
-import {formatNumber} from '$lib/utils';
-import {BUILDING_TYPES, BUILDINGS, type BuildingType} from '$data/buildings';
-import {SKILL_UPGRADES} from '$data/skillTree';
+import type { Achievement } from '$lib/types';
+import type { GameManager } from '$helpers/GameManager.svelte';
+import { formatNumber } from '$lib/utils';
+import { BUILDING_TYPES, BUILDINGS, type BuildingType } from '$data/buildings';
+import { CURRENCIES, CurrenciesTypes, type CurrencyName } from '$data/currencies';
+import { SKILL_UPGRADES } from '$data/skillTree';
 
 export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
 	{
 		id: 'first_atom',
 		name: 'Baby Steps',
 		description: 'Click your first atom',
-		condition: (state: GameState) => state.atoms >= 1,
+		condition: (manager: GameManager) => manager.atoms >= 1,
 	},
 	{
 		id: 'secret_achievement',
 		name: 'Have more than 100 buildings',
 		description: 'A mysterious achievement',
-		hiddenCondition: (state: GameState) => {
-			const totalBuildings = Object.values(state.buildings).reduce((sum, b) => sum + b.count, 0);
+		hiddenCondition: (manager: GameManager) => {
+			const totalBuildings = Object.values(manager.buildings).reduce((sum, b) => sum + b.count, 0);
 			return totalBuildings >= 100;
 		},
-		condition: (state: GameState) => {
-			const totalBuildings = Object.values(state.buildings).reduce((sum, b) => sum + b.count, 0);
+		condition: (manager: GameManager) => {
+			const totalBuildings = Object.values(manager.buildings).reduce((sum, b) => sum + b.count, 0);
 			return totalBuildings >= 100;
 		},
 	},
@@ -29,96 +29,96 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
 		id: 'hidden_atom_clicked',
 		name: 'Atomic Discoverer',
 		description: 'Found the hidden atom in the credits',
-		hiddenCondition: (state: GameState) => !state.achievements.includes('hidden_atom_clicked'),
-		condition: (state: GameState) => state.achievements.includes('hidden_atom_clicked'),
+		hiddenCondition: (manager: GameManager) => !manager.achievements.includes('hidden_atom_clicked'),
+		condition: (manager: GameManager) => manager.achievements.includes('hidden_atom_clicked'),
 	},
 	{
 		id: 'skill_tree_master',
 		name: 'Skill Tree Master',
 		description: 'Master of the atomic realm',
-		hiddenCondition: (state: GameState) => state.skillUpgrades.length === 0,
-		condition: (state: GameState) => {
+		hiddenCondition: (manager: GameManager) => manager.skillUpgrades.length === 0,
+		condition: (manager: GameManager) => {
 			const totalSkillUpgrades = Object.keys(SKILL_UPGRADES).length;
-			return state.skillUpgrades.length >= totalSkillUpgrades;
+			return manager.skillUpgrades.length >= totalSkillUpgrades;
 		},
 	},
 	{
 		id: 'reset_modal_opener',
 		name: 'Curious Explorer',
 		description: 'Found the reset button... but decided not to press it',
-		hiddenCondition: (state: GameState) => !state.achievements.includes('reset_modal_opener'),
-		condition: (state: GameState) => state.achievements.includes('reset_modal_opener'),
+		hiddenCondition: (manager: GameManager) => !manager.achievements.includes('reset_modal_opener'),
+		condition: (manager: GameManager) => manager.achievements.includes('reset_modal_opener'),
 	},
 	{
 		id: 'play_time_10min',
 		name: 'Getting Started',
 		description: 'Play for 10 minutes',
-		condition: (state: GameState) => state.inGameTime >= 600000, // 10 minutes in ms
+		condition: (manager: GameManager) => manager.inGameTime >= 600000, // 10 minutes in ms
 	},
 	{
 		id: 'play_time_2h',
 		name: 'Dedicated Player',
 		description: 'Play for 2 hours',
-		condition: (state: GameState) => state.inGameTime >= 7200000, // 2 hours in ms
+		condition: (manager: GameManager) => manager.inGameTime >= 7200000, // 2 hours in ms
 	},
 	{
 		id: 'play_time_30h',
 		name: 'Atomic Addict',
 		description: 'Play for 30 hours',
-		condition: (state: GameState) => state.inGameTime >= 108000000, // 30 hours in ms
+		condition: (manager: GameManager) => manager.inGameTime >= 108000000, // 30 hours in ms
 	},
 	{
 		id: 'play_time_123h',
 		name: 'Time Lord',
 		description: 'Play for 123 hours',
-		condition: (state: GameState) => state.inGameTime >= 442800000, // 123 hours in ms
+		condition: (manager: GameManager) => manager.inGameTime >= 442800000, // 123 hours in ms
 	},
 	{
 		id: 'time_since_start_10d',
 		name: 'Decade Player',
 		description: 'Play for 10 days total',
-		condition: (state: GameState) => Date.now() - get(startDate) >= 864000000, // 10 days in ms
+		condition: (manager: GameManager) => Date.now() - manager.startDate >= 864000000, // 10 days in ms
 	},
 	{
 		id: 'time_since_start_123d',
 		name: 'Century Gamer',
 		description: 'Play for 123 days total',
-		condition: (state: GameState) => Date.now() - get(startDate) >= 10627200000, // 123 days in ms
+		condition: (manager: GameManager) => Date.now() - manager.startDate >= 10627200000, // 123 days in ms
 	},
 	{
 		id: 'website_click',
 		name: 'Website Visitor',
 		description: 'Visited the creator\'s website',
-		hiddenCondition: (state: GameState) => !state.achievements.includes('website_click'),
-		condition: (state: GameState) => state.achievements.includes('website_click'),
+		hiddenCondition: (manager: GameManager) => !manager.achievements.includes('website_click'),
+		condition: (manager: GameManager) => manager.achievements.includes('website_click'),
 	},
 	{
 		id: 'coffee_click',
 		name: 'Coffee Supporter',
 		description: 'Clicked on the Buy me a coffee link',
-		hiddenCondition: (state: GameState) => !state.achievements.includes('coffee_click'),
-		condition: (state: GameState) => state.achievements.includes('coffee_click'),
+		hiddenCondition: (manager: GameManager) => !manager.achievements.includes('coffee_click'),
+		condition: (manager: GameManager) => manager.achievements.includes('coffee_click'),
 	},
 	{
 		id: 'discord_click',
 		name: 'Community Member',
 		description: 'Joined the Discord community',
-		hiddenCondition: (state: GameState) => !state.achievements.includes('discord_click'),
-		condition: (state: GameState) => state.achievements.includes('discord_click'),
+		hiddenCondition: (manager: GameManager) => !manager.achievements.includes('discord_click'),
+		condition: (manager: GameManager) => manager.achievements.includes('discord_click'),
 	},
 	{
 		id: 'github_click',
 		name: 'Open Source Contributor',
 		description: 'Visited the GitHub repository',
-		hiddenCondition: (state: GameState) => !state.achievements.includes('github_click'),
-		condition: (state: GameState) => state.achievements.includes('github_click'),
+		hiddenCondition: (manager: GameManager) => !manager.achievements.includes('github_click'),
+		condition: (manager: GameManager) => manager.achievements.includes('github_click'),
 	},
 	{
 		id: 'changelog_modal_opener',
 		name: 'Changelog Reader',
 		description: 'Checked what\'s new in the game',
-		hiddenCondition: (state: GameState) => !state.achievements.includes('changelog_modal_opener'),
-		condition: (state: GameState) => state.achievements.includes('changelog_modal_opener'),
+		hiddenCondition: (manager: GameManager) => !manager.achievements.includes('changelog_modal_opener'),
+		condition: (manager: GameManager) => manager.achievements.includes('changelog_modal_opener'),
 	},
 ];
 
@@ -130,8 +130,8 @@ function createBuildingAchievements(buildingId: BuildingType): Achievement[] {
 			id: `${number}_${buildingId}`,
 			name: `${countName} ${name}`,
 			description,
-			hiddenCondition: (state: GameState) => state.buildings[buildingId] === undefined || state.buildings[buildingId].count === 0,
-			condition: (state: GameState) => state.buildings[buildingId] !== undefined && state.buildings[buildingId].count >= number,
+			hiddenCondition: (manager: GameManager) => manager.buildings[buildingId] === undefined || manager.buildings[buildingId].count === 0,
+			condition: (manager: GameManager) => manager.buildings[buildingId] !== undefined && manager.buildings[buildingId].count >= number,
 		};
 	}
 
@@ -154,9 +154,9 @@ function createBuildingTotalAchievements(): Achievement[] {
 			id: `total_${count}`,
 			name: `${count} Buildings`,
 			description: `Own a total of ${count} buildings`,
-			hiddenCondition: (state: GameState) => Object.values(state.buildings).every(b => b.count === 0),
-			condition: (state: GameState) => {
-				const totalBuildings = Object.values(state.buildings).reduce((sum, b) => sum + b.count, 0);
+			hiddenCondition: (manager: GameManager) => Object.values(manager.buildings).every(b => b.count === 0),
+			condition: (manager: GameManager) => {
+				const totalBuildings = Object.values(manager.buildings).reduce((sum, b) => sum + b.count, 0);
 				return totalBuildings >= count;
 			},
 		};
@@ -171,9 +171,9 @@ function createBuildingLevelsAchievements(): Achievement[] {
 			id: `buildings_levels_${level}`,
 			name: `Levels ${level}`,
 			description: `Have a total of ${level} buildings levels`,
-			hiddenCondition: (state: GameState) => Object.values(state.buildings).every(b => b.level === 0),
-			condition: (state: GameState) => {
-				const totalLevels = Object.values(state.buildings).reduce((sum, b) => sum + b.level, 0);
+			hiddenCondition: (manager: GameManager) => Object.values(manager.buildings).every(b => b.level === 0),
+			condition: (manager: GameManager) => {
+				const totalLevels = Object.values(manager.buildings).reduce((sum, b) => sum + b.level, 0);
 				return totalLevels >= level;
 			},
 		}
@@ -189,7 +189,7 @@ function createAtomsPerSecondAchievements(): Achievement[] {
 			id: `aps_${formattedCount.toLowerCase()}`,
 			name: `${formattedCount} Atoms per Second`,
 			description: `Produce ${formattedCount} atoms per second`,
-			condition: () => get(atomsPerSecond) >= count,
+			condition: (manager: GameManager) => manager.atomsPerSecond >= count,
 		};
 	}
 	const numbers = Array(10).fill(0).map((_, i) => 10 ** (i * 2) * 10);
@@ -203,8 +203,8 @@ function createTotalClicksAchievements(): Achievement[] {
 			id: `clicks_${count}`,
 			name: `${formatNumber(count)} Clicks`,
 			description: `Click ${formatNumber(count)} times`,
-			hiddenCondition: (state: GameState) => state.totalClicks === 0,
-			condition: (state: GameState) => state.totalClicks >= count,
+			hiddenCondition: (manager: GameManager) => manager.totalClicksAllTime === 0,
+			condition: (manager: GameManager) => manager.totalClicksAllTime >= count,
 		};
 	}
 
@@ -217,75 +217,78 @@ function createTotalLevelsAchievements(): Achievement[] {
 			id: `levels_${count}`,
 			name: `Level ${formatNumber(count, 0)}`,
 			description: `Be at least ${formatNumber(count, 0)} xp level`,
-			condition: (state: GameState) => get(playerLevel) >= count,
+			condition: (manager: GameManager) => manager.playerLevel >= count,
 		};
 	}
 
 	return [1, 10, 25, 50, 100, 250, 500, 727, 1000, 2500, 5000, 10_000].map(createTotalLevelsAchievement);
 }
 
-function createProtonisesAchievements(): Achievement[] {
-	function createProtonisesAchievement(count: number): Achievement {
-		return {
-			id: `protonises_${count}`,
-			name: `${count} Protonises`,
-			description: `Protonise ${count} times`,
-			condition: (state: GameState) => state.totalProtonises >= count,
-			hiddenCondition: (state: GameState) => state.totalProtonises === 0,
-		};
-	}
-
-	return [1, 2, 3, 5, 10, 20, 50, 100, 250, 500, 1000].map(createProtonisesAchievement);
+function createProtoniseAchievements(): Achievement[] {
+	const tiers = [1, 2, 3, 5, 10, 20, 50, 100, 250, 500, 1000];
+	return tiers.map(tier => ({
+		id: `protonises_${tier}`,
+		name: `${tier} Protonises`,
+		description: `Protonise ${tier} times`,
+		condition: (manager: GameManager) => manager.currencies[CurrenciesTypes.PROTONS].earnedAllTime >= tier,
+		hiddenCondition: (manager: GameManager) => manager.currencies[CurrenciesTypes.PROTONS].earnedAllTime === 0,
+	}));
 }
 
-function createElectronizesAchievements(): Achievement[] {
-	function createElectronizesAchievement(count: number): Achievement {
-		return {
-			id: `electronizes_${count}`,
-			name: `${count} Electronizes`,
-			description: `Electronize ${count} times`,
-			condition: (state: GameState) => state.totalElectronizes >= count,
-			hiddenCondition: (state: GameState) => state.totalElectronizes === 0,
-		};
-	}
-
-	return [1, 2, 3, 5, 10, 20, 50, 100, 250, 500, 1000].map(createElectronizesAchievement);
+function createElectronizeAchievements(): Achievement[] {
+	const tiers = [1, 2, 3, 5, 10, 20, 50, 100, 250, 500, 1000];
+	return tiers.map(tier => ({
+		id: `electronizes_${tier}`,
+		name: `${tier} Electronizes`,
+		description: `Electronize ${tier} times`,
+		condition: (manager: GameManager) => manager.currencies[CurrenciesTypes.ELECTRONS].earnedAllTime >= tier,
+		hiddenCondition: (manager: GameManager) => manager.currencies[CurrenciesTypes.ELECTRONS].earnedAllTime === 0,
+	}));
 }
 
-function createBonusPhotonClicksAchievements(): Achievement[] {
-	function createBonusPhotonClicksAchievement(count: number): Achievement {
-		const countNames: Record<number, string> = {
-			1: 'First',
-			10: 'Ten',
-			64: '64',
-			512: '512',
-			4096: '4096'
-		};
+function createCurrencyAchievements(): Achievement[] {
+	return Object.values(CURRENCIES).filter(c => c.achievementTiers && c.stat).flatMap(currency => {
+		return currency.achievementTiers!.map(tier => {
+			let name = `${formatNumber(tier)} ${currency.name}`;
+			let description = `Collect ${formatNumber(tier)} ${currency.name.toLowerCase()}`;
 
-		return {
-			id: `bonus_photons_clicked_${count}`,
-			name: `${countNames[count]} Bonus Photon`,
-			description: `Click ${formatNumber(count, 0)} bonus photon${count === 1 ? '' : 's'}`,
-			condition: (state: GameState) => state.totalBonusPhotonsClicked >= count,
-			hiddenCondition: (state: GameState) => state.totalBonusPhotonsClicked === 0,
-		};
-	}
+			if (currency.name === CurrenciesTypes.HIGGS_BOSON) {
+				const countNames: Record<number, string> = {
+					1: 'First',
+					10: 'Ten',
+					64: '64',
+					512: '512',
+					4096: '4096'
+				};
+				name = `${countNames[tier] || tier} Bonus Higgs Boson`;
+				description = `Click ${formatNumber(tier, 0)} bonus higgs boson${tier === 1 ? '' : 's'}`;
+			} else if (currency.name === CurrenciesTypes.EXCITED_PHOTONS) {
+				name = `Excited ${tier >= 1000 ? (tier >= 400000 ? '4' : '3') : (tier >= 20 ? '2' : '')}`;
+				description = `Earn ${formatNumber(tier)} Excited Photon${tier > 1 ? 's' : ''}`;
+			}
 
-	return [1, 10, 64, 512, 4096].map(createBonusPhotonClicksAchievement);
-}
+			// Prefix mapping for backward compatibility and cleanliness
+			let prefix = currency.id;
+			if (currency.name === CurrenciesTypes.ATOMS) prefix = 'atoms';
+			if (currency.name === CurrenciesTypes.EXCITED_PHOTONS) prefix = 'excited_photons';
+			if (currency.name === CurrenciesTypes.HIGGS_BOSON) prefix = 'bonus_higgs_boson_clicked';
+			if (currency.name === CurrenciesTypes.PHOTONS) prefix = 'photons';
 
-function createPhotonAchievements(): Achievement[] {
-	function createPhotonAchievement(count: number): Achievement {
-		return {
-			id: `photons_${count}`,
-			name: `${formatNumber(count)} Photons`,
-			description: `Collect ${formatNumber(count)} photons`,
-			condition: (state: GameState) => state.photons >= count,
-			hiddenCondition: (state: GameState) => state.photons === 0,
-		};
-	}
-
-	return [1, 100, 1000, 10_000, 100_000, 1_000_000].map(createPhotonAchievement);
+			return {
+				id: `${prefix}_${tier}`,
+				name,
+				description,
+				condition: (manager: GameManager) => {
+					const currencyData = manager.currencies[currency.stat as CurrencyName];
+					return (currencyData?.earnedAllTime || 0) >= tier;
+				},
+				hiddenCondition: (manager: GameManager) => {
+					const currencyData = manager.currencies[currency.stat as CurrencyName];
+					return (currencyData?.earnedAllTime || 0) === 0;
+				},
+			};
+		});
+	});
 }
 
 function createPhotonUpgradeAchievements(): Achievement[] {
@@ -296,12 +299,12 @@ function createPhotonUpgradeAchievements(): Achievement[] {
 		id: 'photon_collector',
 		name: 'Photon Collector',
 		description: 'Purchase 50 total photon upgrade levels',
-		condition: (state: GameState) => {
-			const totalUpgrades = Object.values(state.photonUpgrades || {}).reduce((sum, level) => sum + level, 0);
+		condition: (manager: GameManager) => {
+			const totalUpgrades = Object.values(manager.photonUpgrades || {}).reduce((sum, level) => sum + level, 0);
 			return totalUpgrades >= 50;
 		},
-		hiddenCondition: (state: GameState) => {
-			const totalUpgrades = Object.values(state.photonUpgrades || {}).reduce((sum, level) => sum + level, 0);
+		hiddenCondition: (manager: GameManager) => {
+			const totalUpgrades = Object.values(manager.photonUpgrades || {}).reduce((sum, level) => sum + level, 0);
 			return totalUpgrades < 10;
 		},
 	});
@@ -316,10 +319,9 @@ const achievementsArray: Achievement[] = [
 	...createAtomsPerSecondAchievements(),
 	...createTotalClicksAchievements(),
 	...createTotalLevelsAchievements(),
-	...createProtonisesAchievements(),
-	...createElectronizesAchievements(),
-	...createBonusPhotonClicksAchievements(),
-	...createPhotonAchievements(),
+	...createProtoniseAchievements(),
+	...createElectronizeAchievements(),
+	...createCurrencyAchievements(),
 	...createPhotonUpgradeAchievements(),
 	...SPECIAL_ACHIEVEMENTS,
 ];

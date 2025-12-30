@@ -3,9 +3,10 @@
 	import {browser} from '$app/environment';
 	import Analytics from '@components/system/Analytics.svelte';
 	import SEO from '@components/system/SEO.svelte';
+	import DevTools from '@components/system/devtools/DevTools.svelte';
 	import {LoaderCircle} from 'lucide-svelte';
 	import type { Snippet } from 'svelte';
-	
+
 	interface Props {
 		children?: Snippet;
 	}
@@ -40,4 +41,5 @@
 	</div>
 {:else}
 	{@render children?.()}
+	<DevTools />
 {/if}

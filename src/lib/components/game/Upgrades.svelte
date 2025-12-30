@@ -1,44 +1,39 @@
 <script lang="ts">
 	import {CURRENCIES, CurrenciesTypes, type CurrencyName} from '$data/currencies';
-	import { gameManager } from '$helpers/gameManager';
-	import { getCurrentState } from '$stores/gameStore';
-	import { currentUpgradesBought, protons, electrons, upgrades, totalProtonises, settings, atoms } from '$stores/gameStore';
+	import { gameManager } from '$helpers/GameManager.svelte';
 	import { UPGRADES } from '$data/upgrades';
 	import type { Upgrade } from '$lib/types';
 	import AutoButton from '@components/ui/AutoButton.svelte';
 	import Currency from '@components/ui/Currency.svelte';
 	import Value from '@components/ui/Value.svelte';
 	import { getUpgradesWithEffects } from '$helpers/effects';
-	import { recentlyAutoPurchased } from '$stores/autoUpgrade';
+	import { autoUpgradeManager } from '$stores/autoUpgrade.svelte';
 	import { fly, scale } from 'svelte/transition';
 
-	let availableUpgrades: Upgrade[] = $state([]);
 	let selectedCurrency: CurrencyName = $state(CurrenciesTypes.ATOMS);
 
 	// Show proton upgrades if player has protons, has protonised before, or has purchased any proton upgrade
-	const hasProtonUpgrades = $derived($upgrades.some(id => id.startsWith('proton')));
-	const showProtons = $derived($protons > 0 || $totalProtonises > 0 || hasProtonUpgrades);
+	const hasProtonUpgrades = $derived(gameManager.upgrades.some(id => id.startsWith('proton')));
+	const showProtons = $derived(gameManager.protons > 0 || gameManager.totalProtonisesAllTime > 0 || hasProtonUpgrades);
 
 	// Show electron upgrades if player has electrons or has purchased any electron upgrade
-	const hasElectronUpgrades = $derived($upgrades.some(id => id.startsWith('electron')));
-	const showElectrons = $derived($electrons > 0 || hasElectronUpgrades);
+	const hasElectronUpgrades = $derived(gameManager.upgrades.some(id => id.startsWith('electron')));
+	const showElectrons = $derived(gameManager.electrons > 0 || gameManager.totalElectronizesAllTime > 0 || hasElectronUpgrades);
 
-	$effect(() => {
-		if ($upgrades && ($atoms || $electrons || $protons || true)) {
-			const currentState = getCurrentState();
-			availableUpgrades = Object.values(UPGRADES)
-				.filter((upgrade) => {
-					const condition = upgrade.condition?.(currentState) ?? true;
-					const notPurchased = !$upgrades.includes(upgrade.id);
-					const matchesCurrency = upgrade.cost.currency === selectedCurrency;
-					return condition && notPurchased && matchesCurrency;
-				})
-				.sort((a, b) => a.cost.amount - b.cost.amount);
-		}
+	const boughtUpgrades = $derived(new Set(gameManager.upgrades));
+
+	const availableUpgrades = $derived.by(() => {
+		return Object.values(UPGRADES)
+			.filter((upgrade) => {
+				const condition = upgrade.condition?.(gameManager) ?? true;
+				const notPurchased = !boughtUpgrades.has(upgrade.id);
+				const matchesCurrency = upgrade.cost.currency === selectedCurrency;
+				return condition && notPurchased && matchesCurrency;
+			})
+			.sort((a, b) => a.cost.amount - b.cost.amount);
 	});
 
-	let affordableUpgrades = $derived(availableUpgrades.filter((upgrade) => gameManager.canAfford(upgrade.cost)));
-	let hasAutomation = $derived(getUpgradesWithEffects($currentUpgradesBought, { type: 'auto_upgrade' }).length > 0);
+	let hasAutomation = $derived(getUpgradesWithEffects(gameManager.currentUpgradesBought, { type: 'auto_upgrade' }).length > 0);
 </script>
 
 <div id="upgrades" class="bg-black/10 backdrop-blur-xs rounded-lg p-3 flex flex-col gap-2">
@@ -51,7 +46,7 @@
 						e.stopPropagation();
 						gameManager.toggleUpgradeAutomation();
 					}}
-					toggled={$settings.automation.upgrades}
+					toggled={gameManager.settings.automation.upgrades}
 				/>
 			{/if}
 		</div>
@@ -87,8 +82,8 @@
 
 	<div class="grid gap-1.5">
 		{#each availableUpgrades.slice(0, 10) as upgrade (upgrade.id)}
-			{@const affordable = affordableUpgrades.includes(upgrade)}
-			{@const wasAutoPurchased = $recentlyAutoPurchased.has(upgrade.id)}
+			{@const affordable = gameManager.canAfford(upgrade.cost)}
+			{@const wasAutoPurchased = autoUpgradeManager.recentlyAutoPurchased.has(upgrade.id)}
 			<button
 				class="relative text-start bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer p-2 transition-all duration-200 {affordable ? '' : 'opacity-50 cursor-not-allowed'}"
 				onclick={() => {

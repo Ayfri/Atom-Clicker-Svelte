@@ -1,16 +1,17 @@
 <script lang="ts">
 	import GitHub from '@components/icons/GitHub.svelte';
 	import Discord from '@components/icons/Discord.svelte';
+	import Currency from '@components/ui/Currency.svelte';
+	import Modal from '@components/ui/Modal.svelte';
+	import { CurrenciesTypes } from '$data/currencies';
+	import { gameManager } from '$helpers/GameManager.svelte';
 	import { SquareArrowOutUpRight } from 'lucide-svelte';
 	import { fade } from 'svelte/transition';
-	import { gameManager } from '$helpers/gameManager';
-	import { achievements } from '$stores/gameStore';
-	import Modal from '@components/ui/Modal.svelte';
 
 	// Check if achievements are already unlocked
-	let isWebsiteUnlocked = $derived($achievements.includes('website_click'));
-	let isDiscordUnlocked = $derived($achievements.includes('discord_click'));
-	let isGitHubUnlocked = $derived($achievements.includes('github_click'));
+	let isWebsiteUnlocked = $derived(gameManager.achievements.includes('website_click'));
+	let isDiscordUnlocked = $derived(gameManager.achievements.includes('discord_click'));
+	let isGitHubUnlocked = $derived(gameManager.achievements.includes('github_click'));
 
 	function handleWebsiteClick() {
 		if (!isWebsiteUnlocked) {
@@ -39,7 +40,7 @@
 	let hiddenAtomClicked = $state(false);
 
 	// Check if achievement is already unlocked
-	let isAlreadyUnlocked = $derived($achievements.includes('hidden_atom_clicked'));
+	let isAlreadyUnlocked = $derived(gameManager.achievements.includes('hidden_atom_clicked'));
 
 	function handleHiddenAtomClick() {
 		if (!hiddenAtomClicked && !isAlreadyUnlocked) {
@@ -57,7 +58,7 @@
 	const socials = [
 		{
 			name: 'GitHub',
-			url: 'https://github.com/Ayfri/Atom-Clicker-Svelte',
+			url: 'https://github.com/Ayfri/Atom-Clicker',
 			description: 'View source code',
 			icon: GitHub,
 		},
@@ -101,7 +102,7 @@
 					aria-label="Hidden secret"
 					title="?"
 				>
-					<img src="/atom.png" alt="Hidden atom" class="size-5" />
+					<Currency name={CurrenciesTypes.ATOMS} />
 				</button>
 			{/if}
 		</div>

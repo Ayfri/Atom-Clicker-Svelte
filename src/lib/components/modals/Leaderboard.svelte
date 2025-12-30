@@ -3,8 +3,8 @@
 	import Modal from '@components/ui/Modal.svelte';
 	import type { LeaderboardEntry } from '$lib/types/leaderboard';
 	import {capitalize, formatNumber} from '$lib/utils';
-	import {startDate} from '$stores/gameStore';
-	import {leaderboard, leaderboardStats, fetchLeaderboard} from '$stores/leaderboard';
+	import { gameManager } from '$helpers/GameManager.svelte';
+	import {leaderboard, leaderboardStats, fetchLeaderboard} from '$stores/leaderboard.svelte';
 	import {supabaseAuth} from '$stores/supabaseAuth';
 	import {Info, LogOut, Edit2, Save, Search, Users, Trophy, Medal, Crown} from 'lucide-svelte';
 	import {onDestroy, onMount} from 'svelte';
@@ -280,7 +280,7 @@
 						</div>
 					{/if}
 					<div class="text-sm text-white/60 mt-1">
-						Playing since {formatStartDate($startDate)}
+						Playing since {formatStartDate(gameManager.startDate)}
 					</div>
 				</div>
 			</div>

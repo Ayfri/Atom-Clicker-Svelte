@@ -1,5 +1,7 @@
 import type {BuildingType} from '$data/buildings';
 import type {CurrencyName} from '$data/currencies';
+import type {GameManager} from '$helpers/GameManager.svelte';
+import type {LayerType, StatName} from '$helpers/statConstants';
 
 export interface Building {
 	count: number;
@@ -12,7 +14,7 @@ export interface Building {
 export interface Upgrade {
 	id: string;
 	name: string;
-	condition?: (state: GameState) => boolean;
+	condition?: (state: GameManager) => boolean;
 	description: string;
 	effects: Effect[];
 	cost: Price;
@@ -20,15 +22,15 @@ export interface Upgrade {
 
 export interface Effect {
 	target?: string;
-	type: 'auto_buy' | 'auto_click' | 'auto_speed' | 'auto_upgrade' | 'building' | 'click' | 'electron_gain' | 'global' | 'power_up_duration' | 'power_up_interval' | 'power_up_multiplier' | 'proton_gain' | 'xp_gain';
-	apply: (currentValue: number, state: GameState) => number;
+	type: 'auto_buy' | 'auto_click' | 'auto_speed' | 'auto_upgrade' | 'building' | 'circle_size' | 'click' | 'electron_gain' | 'excited_auto_click' | 'excited_photon_chance' | 'excited_photon_double' | 'excited_photon_duration' | 'excited_photon_from_max' | 'global' | 'photon_spawn_interval' | 'power_up_duration' | 'power_up_interval' | 'power_up_multiplier' | 'proton_gain' | 'stability_boost' | 'stability_capacity' | 'stability_speed' | 'xp_gain';
+	apply: (currentValue: number, manager: GameManager) => number;
 	description: string;
 }
 
 export interface Achievement {
-	condition: (state: GameState) => boolean;
+	condition: (manager: GameManager) => boolean;
 	description: string;
-	hiddenCondition?: (state: GameState) => boolean;
+	hiddenCondition?: (manager: GameManager) => boolean;
 	id: string;
 	name: string;
 }
@@ -44,6 +46,8 @@ export interface PowerUp {
 
 export interface Settings {
 	automation: {
+		autoClick: boolean;
+		autoClickPhotons: boolean;
 		buildings: BuildingType[];
 		upgrades: boolean;
 	};
@@ -52,31 +56,31 @@ export interface Settings {
 export interface GameState {
 	achievements: string[];
 	activePowerUps: PowerUp[];
-	atoms: number;
 	buildings: Partial<Record<BuildingType, Building>>;
-	electrons: number;
+	currencies: Record<CurrencyName, {
+		amount: number;
+		earnedRun: number;
+		earnedAllTime: number;
+	}>;
 	highestAPS: number;
 	inGameTime: number;
+	lastInteractionTime: number;
 	lastSave: number;
-	photons: number;
 	photonUpgrades: Record<string, number>;
 	powerUpsCollected: number;
-	protons: number;
 	purpleRealmUnlocked: boolean;
 	settings: Settings;
 	skillUpgrades: string[];
 	startDate: number;
-	totalAtomsEarned: number;
-	totalAtomsEarnedAllTime: number;
-	totalBonusPhotonsClicked: number;
-	totalBuildingsPurchased: number;
-	totalClicks: number;
+	totalBuildingsPurchasedAllTime: number;
 	totalClicksAllTime: number;
-	totalElectronizes: number;
-	totalElectronsEarned: number;
-	totalProtonises: number;
-	totalProtonsEarned: number;
-	totalUpgradesPurchased: number;
+	totalClicksRun: number;
+	totalElectronizesAllTime: number;
+	totalElectronizesRun: number;
+	totalProtonisesAllTime: number;
+	totalProtonisesRun: number;
+	totalUpgradesPurchasedAllTime: number;
+	totalUsers: number;
 	totalXP: number;
 	upgrades: string[];
 	version: number;
@@ -89,15 +93,18 @@ export interface SkillUpgrade {
 	name: string;
 	description: string;
 	position: { x: number; y: number };
-	condition?: (state: GameState) => boolean;
+	condition?: (manager: GameManager) => boolean;
 	effects: Effect[];
 	requires?: string[];
 }
 
 export interface Currency {
+	id: string;
+	achievementTiers?: number[];
 	color: string;
-	name: string;
-	icon: string;
+	layer?: LayerType;
+	name: CurrencyName;
+	stat?: CurrencyName;
 }
 
 export interface Price {

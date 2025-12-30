@@ -92,7 +92,7 @@ function simpleDecrypt(encryptedData: string): string {
     }
 }
 
-export function encryptData(data: any): string {
+export function encryptData(data: unknown): string {
     try {
         const dataStr = JSON.stringify(data);
         return simpleEncrypt(dataStr);
@@ -102,7 +102,7 @@ export function encryptData(data: any): string {
     }
 }
 
-export function decryptData(encryptedData: string): any | null {
+export function decryptData(encryptedData: string): unknown | null {
     try {
         const decryptedStr = simpleDecrypt(encryptedData);
         return JSON.parse(decryptedStr);

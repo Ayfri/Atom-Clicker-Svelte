@@ -1,5 +1,5 @@
-import { browser } from '$app/environment';
-import { getCurrentState } from '$stores/gameStore';
+import { browser, dev } from '$app/environment';
+import { gameManager } from '$helpers/GameManager.svelte';
 import { get } from 'svelte/store';
 import { supabaseAuth } from '$stores/supabaseAuth';
 
@@ -75,7 +75,7 @@ export function captureGameState(): Record<string, unknown> | null {
 	if (!browser) return null;
 
 	try {
-		const state = getCurrentState();
+		const state = gameManager.getCurrentState();
 
 		const safeState: Record<string, unknown> = {
 			...state,
@@ -137,6 +137,11 @@ export function createErrorReport(error: Error | string): ErrorReport {
  */
 export async function reportError(error: Error | string): Promise<void> {
 	if (!browser) return;
+
+	if (dev) {
+		console.log('[ErrorReporting] Skipping error report in dev mode:', error);
+		return;
+	}
 
 	try {
 		const report = createErrorReport(error);

@@ -1,46 +1,62 @@
 <script lang="ts">
-	import {atomsPerSecond, atoms, electrons, hasBonus, protons, buildingProductions, buildings} from '$stores/gameStore';
+	import {gameManager} from '$helpers/GameManager.svelte';
 	import {formatNumber} from '$lib/utils';
 	import {BUILDINGS, BuildingTypes, type BuildingType} from '$data/buildings';
 	import {Info} from 'lucide-svelte';
+	import { getUpgradesWithEffects } from '$helpers/effects';
+	import AutoButton from '@components/ui/AutoButton.svelte';
 	import Tooltip from '@components/ui/Tooltip.svelte';
+	import { mobile } from '$stores/window.svelte';
 
 	// Get buildings with their production sorted by production value (highest first)
-	const buildingsWithProduction = $derived(Object.entries($buildingProductions)
+	const buildingsWithProduction = $derived(Object.entries(gameManager.buildingProductions)
 		.filter(([type, production]) => production > 0)
 		.map(([type, production]) => ({
 			type: type as BuildingType,
 			name: BUILDINGS[type as BuildingType].name,
 			production: production,
-			count: $buildings[type as BuildingType]?.count ?? 0
+			count: gameManager.buildings[type as BuildingType]?.count ?? 0
 		}))
 		.sort((a, b) => Object.values(BuildingTypes).indexOf(a.type) - Object.values(BuildingTypes).indexOf(b.type)));
+
+	const hasAutoClick = $derived(getUpgradesWithEffects(gameManager.currentUpgradesBought, { type: 'auto_click' }).length > 0);
 </script>
 
-<div class="mb-8 text-center z-1 sm:mb-4">
+<div class="mb-8 text-center z-1 sm:mb-4 relative">
 	<div class="mb-2">
-		{#if $electrons > 0}
+		{#if gameManager.electrons > 0}
 			<div>
-				<span id="electrons-value" class="text-2xl font-bold text-green-400">{formatNumber($electrons)}</span>
+				<span id="electrons-value" class="text-2xl font-bold text-green-400">{formatNumber(gameManager.electrons)}</span>
 				<span class="font-bold text-lg opacity-80">electrons</span>
 			</div>
 		{/if}
-		{#if $protons > 0}
+		{#if gameManager.protons > 0}
 			<div>
-				<span id="protons-value" class="text-2xl font-bold text-yellow-400">{formatNumber($protons)}</span>
+				<span id="protons-value" class="text-2xl font-bold text-yellow-400">{formatNumber(gameManager.protons)}</span>
 				<span class="font-bold text-lg opacity-80">protons</span>
 			</div>
 		{/if}
-		<span id="atoms-value" class=" sm:text-[2.75rem] sm:leading-[1.35] text-5xl font-bold text-accent-500 transition-[filter] duration-200 {$hasBonus ? 'drop-shadow-[0_0_10px_#4a90e2]' : ''}">{formatNumber($atoms)}</span>
-		<span class="font-bold text-2xl opacity-80">atoms</span>
+		<div class="flex items-center gap-2">
+			<span id="atoms-value" class=" sm:text-[2.75rem] sm:leading-[1.35] text-5xl font-bold text-accent-500 transition-[filter] duration-200 {gameManager.hasBonus ? 'drop-shadow-[0_0_10px_#4a90e2]' : ''}">{formatNumber(gameManager.atoms)}</span>
+			<span class="font-bold text-2xl opacity-80">atoms</span>
+
+			{#if !mobile.current && hasAutoClick}
+				<div class="mt-1.5">
+					<AutoButton
+						onClick={() => gameManager.toggleAutoClick()}
+						toggled={gameManager.settings.automation.autoClick}
+					/>
+				</div>
+			{/if}
+		</div>
 	</div>
 	<div class="text-lg relative flex justify-center items-center">
 		<div class="mr-2">
 			<span
 				id="atoms-per-second-value"
-				class="{$hasBonus ? 'opacity-100' : 'opacity-80'} font-bold transition-[filter] duration-200 {$hasBonus ? 'drop-shadow-[0_0_7px_currentColor]' : ''}"
+				class="{gameManager.hasBonus ? 'opacity-100' : 'opacity-80'} font-bold transition-[filter] duration-200 {gameManager.hasBonus ? 'drop-shadow-[0_0_7px_currentColor]' : ''}"
 			>
-				{formatNumber($atomsPerSecond)}
+				{formatNumber(gameManager.atomsPerSecond)}
 			</span> atoms per second
 		</div>
 
@@ -54,7 +70,7 @@
 						{#each buildingsWithProduction as building}
 							<div class="flex justify-between items-center text-xs">
 								<span class="text-white/80">{building.name} (×{building.count})</span>
-								<span class="text-accent-300 font-medium">{formatNumber(building.production)}/s ({Math.round(building.production / $atomsPerSecond * 100)}%)</span>
+								<span class="text-accent-300 font-medium">{formatNumber(building.production)}/s ({Math.round(building.production / gameManager.atomsPerSecond * 100)}%)</span>
 							</div>
 						{/each}
 					</div>
@@ -62,4 +78,11 @@
 			</Tooltip>
 		{/if}
 	</div>
+
+	{#if mobile.current && hasAutoClick}
+		<AutoButton
+			onClick={() => gameManager.toggleAutoClick()}
+			toggled={gameManager.settings.automation.autoClick}
+		/>
+	{/if}
 </div>

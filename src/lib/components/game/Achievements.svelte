@@ -1,21 +1,20 @@
 <script lang="ts">
-	import {gameManager} from '$helpers/gameManager';
+	import {gameManager} from '$helpers/GameManager.svelte';
 	import {ACHIEVEMENTS} from '$data/achievements';
-	import {achievements} from '$stores/gameStore';
 
 	const unlockedAchievements = $derived(Object.entries(ACHIEVEMENTS).map(([name, achievement]) => ({
 		...achievement,
-		unlocked: $achievements.includes(name)
+		unlocked: gameManager.achievements.includes(name)
 	})));
 </script>
 
 <div class="backdrop-blur-xs bg-black/10 p-3 rounded-lg">
 	<h2 class="font-semibold text-lg">
-		Achievements ({$achievements.length}/{Object.keys(ACHIEVEMENTS).length})
+		Achievements ({gameManager.achievements.length}/{Object.keys(ACHIEVEMENTS).length})
 	</h2>
 	<div class="achievement-grid mt-2 grid max-h-200 gap-1.5 overflow-y-auto">
 		{#each unlockedAchievements as achievement}
-			{@const hidden = achievement.hiddenCondition?.(gameManager.getCurrentState()) === true}
+			{@const hidden = achievement.hiddenCondition?.(gameManager) === true}
 			<div
 				class="duration-200 flex items-center gap-2 rounded-lg p-2 transition-all {achievement.unlocked
 					? 'bg-[#486f9b]'

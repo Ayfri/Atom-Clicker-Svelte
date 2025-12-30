@@ -1,22 +1,29 @@
 <script lang="ts">
-	import { gameManager } from '$helpers/gameManager';
-	import { createClickParticle, type Particle } from '$helpers/particles';
-	import { STATS } from '$helpers/statConstants';
+	import { gameManager } from '$helpers/GameManager.svelte';
+	import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
+	import { createClickParticleSync, type Particle } from '$helpers/particles';
 	import { onDestroy, onMount } from 'svelte';
 	import PhotonCounter from '@components/prestige/PhotonCounter.svelte';
 	import PhotonUpgrades from '@components/prestige/PhotonUpgrades.svelte';
-	import { particles } from '$stores/canvas';
+	import Currency from '@components/ui/Currency.svelte';
+	import { addParticles } from '$stores/canvas';
 	import { CurrenciesTypes } from '$data/currencies';
-	import { photonUpgrades } from '$stores/gameStore';
-	import { PHOTON_UPGRADES } from '$data/photonUpgrades';
-	import { derived } from 'svelte/store';
-	import { mobile } from '$stores/window';
+	import { ALL_PHOTON_UPGRADES } from '$data/photonUpgrades';
+	import { mobile } from '$stores/window.svelte';
+
+	import { calculateEffects, getUpgradesWithEffects } from '$helpers/effects';
 
 	export function simulateClick() {
 		if (!container || circles.length === 0) return;
 
-		// Get a random circle from our circles array
-		const randomCircle = circles[Math.floor(Math.random() * circles.length)];
+		// Filter valid targets
+		const allowExcited = (gameManager.photonUpgrades['excited_auto_click'] || 0) > 0;
+		const validCircles = circles.filter(c => allowExcited || c.type !== 'excited');
+
+		if (validCircles.length === 0) return;
+
+		// Get a random circle from our valid circles array
+		const randomCircle = validCircles[Math.floor(Math.random() * validCircles.length)];
 
 		// Get the container's position to calculate absolute coordinates
 		const containerRect = container.getBoundingClientRect();
@@ -42,14 +49,14 @@
 		photons: number;
 		lifetime: number;
 		maxLifetime: number;
+		rotation: number;
+		type?: 'normal' | 'excited';
+		baseValue?: number;
 	}
 
 	let circles: Circle[] = $state([]);
 	let nextId = 0;
 	let container = $state<HTMLDivElement>();
-	let spawnInterval: ReturnType<typeof setInterval>;
-	let updateInterval: ReturnType<typeof setInterval>;
-	let autoClickInterval: ReturnType<typeof setInterval>;
 	let lastUpdateTime = Date.now();
 
 	// Base values - will be modified by upgrades
@@ -63,73 +70,52 @@
 	const MIN_PHOTONS = 1;
 	const MAX_PHOTONS = 10;
 
-	// Helper functions to get upgrade bonuses
-	function getSpawnRate() {
-		const level = $photonUpgrades['photon_spawn_rate'] || 0;
-		if (level === 0) return baseSpawnRate;
-
-		const upgrade = PHOTON_UPGRADES['photon_spawn_rate'];
-		const effects = upgrade.effects(level);
-
-		return effects.reduce((rate, effect) => {
-			if (effect.type === 'power_up_interval') {
-				return effect.apply(rate, gameManager.getCurrentState());
-			}
-			return rate;
-		}, baseSpawnRate);
-	}
-
 	function getSizeMultiplier() {
-		const level = $photonUpgrades['circle_size'] || 0;
-		if (level === 0) return baseSizeMultiplier;
-
-		const upgrade = PHOTON_UPGRADES['circle_size'];
-		const effects = upgrade.effects(level);
-
-		return effects.reduce((multiplier, effect) => {
-			if (effect.type === 'global') {
-				return effect.apply(multiplier, gameManager.getCurrentState());
-			}
-			return multiplier;
-		}, baseSizeMultiplier);
+		const options = { type: 'circle_size' as const };
+		const upgrades = getUpgradesWithEffects(gameManager.allEffectSources, options);
+		return calculateEffects(upgrades, gameManager, baseSizeMultiplier, options);
 	}
 
 	function getPhotonValueBonus() {
-		const level = $photonUpgrades['photon_value'] || 0;
-		if (level === 0) return 0;
+		const upgrade = gameManager.allEffectSources.find(u => u.id === 'photon_value');
+		if (!upgrade) return 0;
+		return calculateEffects([upgrade], gameManager, 0, { type: 'click' });
+	}
 
-		const upgrade = PHOTON_UPGRADES['photon_value'];
-		const effects = upgrade.effects(level);
-
-		return effects.reduce((bonus, effect) => {
-			if (effect.type === 'click') {
-				return effect.apply(bonus, gameManager.getCurrentState());
-			}
-			return bonus;
-		}, 0);
+	function getExcitedFromMaxBonus() {
+		const options = { type: 'excited_photon_from_max' as const };
+		const upgrades = getUpgradesWithEffects(gameManager.allEffectSources, options);
+		return calculateEffects(upgrades, gameManager, 0, options);
 	}
 
 	function getLifetimeBonus() {
-		const level = $photonUpgrades['circle_lifetime'] || 0;
-		if (level === 0) return 0;
+		const upgrade = gameManager.allEffectSources.find(u => u.id === 'circle_lifetime');
+		if (!upgrade) return 0;
+		return calculateEffects([upgrade], gameManager, 0, { type: 'power_up_duration' });
+	}
 
-		const upgrade = PHOTON_UPGRADES['circle_lifetime'];
-		const effects = upgrade.effects(level);
-
-		return effects.reduce((bonus, effect) => {
-			if (effect.type === 'power_up_duration') {
-				return effect.apply(bonus, gameManager.getCurrentState());
-			}
-			return bonus;
-		}, 0);
+	function getExcitedLifetimeMultiplier() {
+		const options = { type: 'excited_photon_duration' as const };
+		const upgrades = getUpgradesWithEffects(gameManager.allEffectSources, options);
+		return calculateEffects(upgrades, gameManager, 1, options);
 	}
 
 	function getDoubleChance() {
-		const level = $photonUpgrades['double_chance'] || 0;
+		const level = gameManager.photonUpgrades['double_chance'] || 0;
 		if (level === 0) return 0;
 
 		// Simple calculation: 2% per level
 		return (level * 2) / 100;
+	}
+
+	function getExcitedDoubleChance() {
+		const options = { type: 'excited_photon_double' as const };
+		const upgrades = getUpgradesWithEffects(gameManager.allEffectSources, options);
+		return calculateEffects(upgrades, gameManager, 0, options);
+	}
+
+	function getIsExcited() {
+		return Math.random() < gameManager.excitedPhotonChance;
 	}
 
 	function spawnCircle() {
@@ -144,11 +130,33 @@
 		const lifetimeBonus = getLifetimeBonus();
 		const doubleChance = getDoubleChance();
 
+		const isExcited = getIsExcited();
+
 		const baseSize = Math.random() * (MAX_SIZE - MIN_SIZE) + MIN_SIZE;
 		const basePhotons = Math.floor(Math.random() * (MAX_PHOTONS - MIN_PHOTONS + 1)) + MIN_PHOTONS;
 
-		// Apply double chance
-		const finalPhotons = Math.random() < doubleChance ? (basePhotons + photonValueBonus) * 2 : basePhotons + photonValueBonus;
+		let finalPhotons = basePhotons;
+
+		if (isExcited) {
+			// Excited photons give 1 excited photon currency (or 2 if double chance)
+			const excitedDoubleChance = getExcitedDoubleChance();
+			const baseExcited = Math.random() < excitedDoubleChance ? 2 : 1;
+
+			// Add bonus from max photon value
+			const maxPhotonValue = MAX_PHOTONS + photonValueBonus;
+			const fromMaxBonusFactor = getExcitedFromMaxBonus();
+
+			finalPhotons = baseExcited + (maxPhotonValue * fromMaxBonusFactor);
+		} else {
+			// Apply double chance for normal photons
+			finalPhotons = Math.random() < doubleChance ? (basePhotons + photonValueBonus) * 2 : basePhotons + photonValueBonus;
+		}
+
+		// Calculate Max Lifetime
+		let maxLifetime = baseCircleLifetime + lifetimeBonus;
+		if (isExcited) {
+			maxLifetime *= getExcitedLifetimeMultiplier();
+		}
 
 		const circle: Circle = {
 			id: nextId++,
@@ -157,7 +165,10 @@
 			size: baseSize * sizeMultiplier,
 			photons: Math.floor(finalPhotons),
 			lifetime: 0,
-			maxLifetime: baseCircleLifetime + lifetimeBonus
+			maxLifetime: maxLifetime,
+			rotation: Math.random() * 360,
+			type: isExcited ? 'excited' : 'normal',
+			baseValue: isExcited ? 1 : 1
 		};
 
 		circles = [...circles, circle];
@@ -165,17 +176,32 @@
 		circles = circles.slice(0, MAX_CIRCLES);
 	}
 
-	async function clickCircle(circle: Circle, event: MouseEvent) {
-		gameManager.addStat(STATS.PHOTONS, circle.photons);
+	function clickCircle(circle: Circle, event: MouseEvent) {
+		if (circle.type === 'excited') {
+			currenciesManager.add(CurrenciesTypes.EXCITED_PHOTONS, circle.photons);
+		} else {
+			currenciesManager.add(CurrenciesTypes.PHOTONS, circle.photons);
+		}
+
 		circles = circles.filter((c) => c.id !== circle.id);
 
 		const particleCount = Math.floor(circle.photons / 2) + 1;
 		const addedParticles: Particle[] = [];
+		const currencyType = circle.type === 'excited' ? CurrenciesTypes.EXCITED_PHOTONS : CurrenciesTypes.PHOTONS;
+
 		for (let i = 0; i < particleCount; i++) {
-			const particle = await createClickParticle(event.clientX, event.clientY, CurrenciesTypes.PHOTONS);
-			addedParticles.push(particle);
+			const particle = createClickParticleSync(event.clientX, event.clientY, currencyType);
+			if (particle) addedParticles.push(particle);
 		}
-		particles.update((p) => [...p, ...addedParticles]);
+		if (addedParticles.length > 0) {
+			addParticles(addedParticles);
+		}
+
+		// Excited stabilization: interacting with the realm resets/collapses it
+		const excitedStabilizationLevel = gameManager.photonUpgrades['excited_stabilization'] || 0;
+		if (excitedStabilizationLevel > 0) {
+			gameManager.lastInteractionTime = Date.now();
+		}
 	}
 
 	function updateCircles() {
@@ -191,59 +217,41 @@
 			.filter((circle) => circle.lifetime < circle.maxLifetime);
 	}
 
+	// Update circles logic
+	$effect(() => {
+		lastUpdateTime = Date.now();
+		const interval = setInterval(updateCircles, 16);
+		return () => clearInterval(interval);
+	});
+
 	// Calculate auto-clicks per second from photon upgrades
-	const photonAutoClicksPerSecond = derived(photonUpgrades, ($photonUpgrades) => {
-		const autoClickerLevel = $photonUpgrades['auto_clicker'] || 0;
-		if (autoClickerLevel === 0) return 0;
-
-		const upgrade = PHOTON_UPGRADES['auto_clicker'];
-		const effects = upgrade.effects(autoClickerLevel);
-
-		// Apply the effect to get clicks per second
-		return effects.reduce((total, effect) => {
-			if (effect.type === 'auto_click') {
-				return effect.apply(total, gameManager.getCurrentState());
-			}
-			return total;
-		}, 0);
+	const photonAutoClicksPerSecond = $derived.by(() => {
+		if (!gameManager.settings.automation.autoClickPhotons) return 0;
+		const upgrade = gameManager.allEffectSources.find(u => u.id === 'auto_clicker');
+		if (!upgrade) return 0;
+		return calculateEffects([upgrade], gameManager, 0, { type: 'auto_click' });
 	});
 
 	// Calculate current spawn rate reactively
-	const currentSpawnRate = $derived(getSpawnRate());
+	const currentSpawnRate = $derived(gameManager.photonSpawnInterval);
 
-	// Set up auto-clicker subscription like in Atom.svelte
+	// Set up auto-clicker subscription
 	$effect(() => {
-		const clicksPerSecond = $photonAutoClicksPerSecond;
-		if (autoClickInterval) clearInterval(autoClickInterval);
+		const clicksPerSecond = photonAutoClicksPerSecond;
 		if (clicksPerSecond > 0) {
-			autoClickInterval = setInterval(() => simulateClick(), 5000 / clicksPerSecond);
+			const interval = setInterval(() => simulateClick(), 5000 / clicksPerSecond);
+			return () => clearInterval(interval);
 		}
-		return () => {
-			if (autoClickInterval) clearInterval(autoClickInterval);
-		};
 	});
 
 	// Update spawn rate when upgrades change
 	$effect(() => {
-		const newSpawnRate = currentSpawnRate;
-		if (spawnInterval) {
-			clearInterval(spawnInterval);
-			spawnInterval = setInterval(spawnCircle, newSpawnRate);
-		}
-		return () => {
-			if (spawnInterval) clearInterval(spawnInterval);
-		};
+		const interval = setInterval(spawnCircle, currentSpawnRate);
+		return () => clearInterval(interval);
 	});
 
 	onMount(() => {
 		lastUpdateTime = Date.now();
-		spawnInterval = setInterval(spawnCircle, getSpawnRate());
-		updateInterval = setInterval(updateCircles, 16);
-	});
-
-	onDestroy(() => {
-		if (spawnInterval) clearInterval(spawnInterval);
-		if (updateInterval) clearInterval(updateInterval);
 	});
 
 	const opacity = $derived((circle: Circle) => Math.max(0, 1 - circle.lifetime / circle.maxLifetime));
@@ -257,40 +265,46 @@
 </script>
 
 <div
-	class="pt-12 lg:pt-4 transition-all duration-1000 ease-in-out min-h-dvh"
+	class="fixed inset-0 pt-12 lg:pt-4 transition-all duration-1000 ease-in-out {mobile.current ? 'overflow-y-auto' : ''}"
 	style="background: linear-gradient(135deg, rgba(139, 69, 191, 0.1) 0%, rgba(75, 0, 130, 0.1) 50%, rgba(139, 69, 191, 0.1) 100%);"
 >
-	<div class="flex flex-col lg:flex-row px-4 pt-12 pb-16 max-w-7xl mx-auto gap-4">
+	<div class="h-full flex flex-col lg:flex-row px-4 pt-12 pb-6 max-w-7xl mx-auto gap-4 {mobile.current ? 'min-h-screen' : ''}">
 		<!-- Game Area - Left side (2/3 on desktop, full width on mobile) -->
 		<div class="flex-1 lg:w-2/3 flex flex-col items-center">
 			<PhotonCounter />
 
 			<div
-				class="relative w-full {$mobile ? 'h-[40vh] min-h-[300px]' : 'h-[350px] lg:h-[650px]'} overflow-hidden"
+				class="relative w-full {mobile.current ? 'h-[40vh] min-h-75' : 'h-87.5 lg:h-162.5'} overflow-hidden"
 				data-photon-realm
 				bind:this={container}
 			>
 				{#each circles as circle (circle.id)}
 					<button
-						class="absolute rounded-full cursor-pointer flex items-center justify-center"
-						style="
-							left: {circle.x}px;
-							top: {circle.y}px;
-							width: {circle.size}px;
-							height: {circle.size}px;
-							opacity: {opacity(circle)};
-							transform: translate(-50%, -50%) scale({scale(circle)});
-						"
+						class="absolute cursor-pointer flex items-center justify-center rounded-full"
 						onclick={(event) => clickCircle(circle, event)}
+						onpointerenter={(event) => {
+							if (gameManager.photonUpgrades['feature_hover_collection'] > 0) {
+								clickCircle(circle, event);
+							}
+						}}
+						style="
+							height: {circle.size}px;
+							left: {circle.x}px;
+							opacity: {opacity(circle)};
+							top: {circle.y}px;
+							transform: translate(-50%, -50%) scale({scale(circle)});
+							width: {circle.size}px;
+						"
 					>
-						<img
-							src="/currencies/photon.png"
-							alt="Photon"
-							class="w-full h-full object-contain"
-							style="filter: drop-shadow(0 0 10px rgba(153, 102, 204, 0.8));"
-						/>
+						<div class="w-full h-full {circle.type === 'excited' ? 'animate-pulse' : ''}">
+							<Currency
+								name={circle.type === 'excited' ? CurrenciesTypes.EXCITED_PHOTONS : CurrenciesTypes.PHOTONS}
+								class="w-full h-full object-contain drop-shadow-[0_0_10px_{circle.type === 'excited' ? 'rgba(255,215,0,0.8)' : 'rgba(139,69,191,0.5)'}]"
+								style="transform: rotate({circle.rotation}deg);"
+							/>
+						</div>
 						<span
-							class="absolute text-white font-bold text-xs pointer-events-none drop-shadow-[0_0_5px_rgba(0,0,0,0.8)]"
+							class="absolute font-bold text-xs pointer-events-none drop-shadow-[0_0_5px_rgba(0,0,0,0.8)] {circle.type === 'excited' ? 'text-[#FFD700]' : 'text-white'}"
 						>
 							+{circle.photons}
 						</span>
@@ -300,7 +314,7 @@
 		</div>
 
 		<!-- Upgrades Area - Right side (1/3 on desktop, full width on mobile) -->
-		<div class="w-full lg:w-1/3 lg:max-w-xs {$mobile ? 'max-h-[50vh] overflow-y-auto' : ''}">
+		<div class="w-full lg:w-1/3 lg:max-w-xs {mobile.current ? 'max-h-[50vh] overflow-y-auto' : ''}">
 			<PhotonUpgrades />
 		</div>
 	</div>

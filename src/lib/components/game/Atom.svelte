@@ -1,9 +1,8 @@
 <script lang="ts">
-	import {gameManager} from '$helpers/gameManager';
+	import {gameManager} from '$helpers/GameManager.svelte';
 	import {BUILDING_TYPES, BUILDING_COLORS, BUILDING_LEVEL_UP_COST} from '$data/buildings';
 	import {onDestroy} from 'svelte';
-	import {createClickParticle, createClickTextParticle, type Particle} from '$helpers/particles';
-	import {autoClicksPerSecond, buildings, clickPower, hasBonus} from '$stores/gameStore';
+	import {createClickParticleSync, createClickTextParticleSync, type Particle} from '$helpers/particles';
 	import {formatNumber} from '$lib/utils';
 	import {shouldCreateParticles, addParticles} from '$stores/canvas';
 	import {app} from '$stores/pixi';
@@ -27,7 +26,8 @@
 	}
 
 	let interval: ReturnType<typeof setInterval>;
-	autoClicksPerSecond.subscribe(value => {
+	$effect(() => {
+		const value = gameManager.autoClicksPerSecond;
 		if (interval) clearInterval(interval);
 		if (value > 0) {
 			interval = setInterval(() => simulateClick(), 1000 / value);
@@ -35,23 +35,32 @@
 	});
 
 	async function handleClick(event: MouseEvent) {
-		gameManager.addAtoms($clickPower);
+		gameManager.addAtoms(gameManager.clickPower);
 		gameManager.incrementClicks();
 
 		// TODO: Re-add main atom click animation
 
 		// Only create particles if graphics support is available
 		if (shouldCreateParticles() && $app?.canvas) {
-			try {
-				const newParticles: Particle[] = [];
-				newParticles.push(await createClickTextParticle(event.clientX + Math.random() * 10, event.clientY + Math.random() * 10, `+${formatNumber($clickPower)}`));
+			const newParticles: Particle[] = [];
+			const textParticle = createClickTextParticleSync(
+				event.clientX + Math.random() * 10,
+				event.clientY + Math.random() * 10,
+				`+${formatNumber(gameManager.clickPower)}`
+			);
+			if (textParticle) newParticles.push(textParticle);
 
-				for (let i = 0; i < 5; i++) {
-					newParticles.push(await createClickParticle(event.clientX + Math.random() * 10, event.clientY + Math.random() * 10, CurrenciesTypes.ATOMS));
-				}
+			for (let i = 0; i < 5; i++) {
+				const particle = createClickParticleSync(
+					event.clientX + Math.random() * 10,
+					event.clientY + Math.random() * 10,
+					CurrenciesTypes.ATOMS
+				);
+				if (particle) newParticles.push(particle);
+			}
+
+			if (newParticles.length > 0) {
 				addParticles(newParticles);
-			} catch (error) {
-				console.warn('Failed to create particles:', error);
 			}
 		}
 	}
@@ -60,13 +69,13 @@
 </script>
 
 <button
-	class="atom relative mt-20 flex size-[450px] items-center justify-center cursor-pointer bg-transparent md:size-[360px] sm:size-[300px]"
-	class:bonus={$hasBonus}
+	class="atom relative mt-20 flex size-112.5 items-center justify-center cursor-pointer bg-transparent md:size-90 sm:size-75"
+	class:bonus={gameManager.hasBonus}
 	onclick={async e => await handleClick(e)}
 	bind:this={atomElement}
 >
-	{#each BUILDING_TYPES.filter(name => name in $buildings) as name, i}
-		{@const data = $buildings[name]}
+	{#each BUILDING_TYPES.filter(name => name in gameManager.buildings) as name, i}
+		{@const data = gameManager.buildings[name]}
 
 		{#if data && data.count > 0}
 			{@const color = BUILDING_COLORS[data.level]}
@@ -77,7 +86,7 @@
 			</div>
 		{/if}
 	{/each}
-	<div class="nucleus h-[60px] w-[60px] rounded-full md:h-[50px] md:w-[50px]"></div>
+	<div class="nucleus h-15 w-15 rounded-full md:h-12.5 md:w-12.5"></div>
 </button>
 
 <style>

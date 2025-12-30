@@ -1,5 +1,5 @@
 /// <reference types="svelte" />
-import {gameManager} from '$helpers/gameManager';
+import type {gameManager} from '$helpers/GameManager.svelte';
 import type {ACHIEVEMENTS} from '$data/achievements';
 import type {BUILDINGS} from '$data/buildings';
 import type {UPGRADES} from '$data/upgrades';

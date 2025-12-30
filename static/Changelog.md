@@ -1,3 +1,27 @@
+# What's new 30-12-2025
+
+- **Excited Photons**: New rare currency in the Purple Realm with dedicated upgrades and achievements.
+
+# What's new 29-12-2025
+
+- **New Icons**: Added new icons for currencies.
+- **New Bonus**: Replaced bonus photons with bonus higgs bosons with a new icon.
+- **Auto-click**: Added auto-click button for main atom and photons.
+- **Stability Meter**: New idle bonus with proton upgrades and a live display in the Protonise modal.
+
+# What's new 23-12-2025
+
+- **New Upgrade**: Added "Community Power" upgrade that boosts atom production based on the total number of players.
+
+# What's new 22-12-2025
+
+- **Visual Progression**: Added dynamic yellow and green blurred background blobs in the Atom Realm that appear after your first Protonise and Electronise.
+
+# What's new 19-12-2025
+
+- **Remote Messaging System**: Added a new banner system that allows displaying important messages or announcements directly in-game.
+- **Cloud Save Modal**: Moved the "Hard Reset" button into the cloud save menu to declutter the main interface.
+
 # What's new 16-12-2025
 
 - **Achievement notifications improved**: Smaller, more compact design with better padding, now displays both achievement name and description.

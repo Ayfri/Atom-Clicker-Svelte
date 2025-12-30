@@ -1,10 +1,9 @@
 <script lang="ts">
 	import '@xyflow/svelte/dist/style.css';
-	import { mobile } from '$stores/window';
+	import { mobile } from '$stores/window.svelte';
 	import { onDestroy, onMount } from 'svelte';
 	import { SKILL_UPGRADES } from '$data/skillTree';
-	import { gameManager } from '$helpers/gameManager';
-	import { skillPointsAvailable, skillUpgrades } from '$stores/gameStore';
+	import { gameManager } from '$helpers/GameManager.svelte';
 	import type { SkillUpgrade } from '$lib/types';
 	import { SvelteFlow, Background, Controls, type Node, type Edge, Position } from '@xyflow/svelte';
 	import SkillNode from '@components/game/SkillNode.svelte';
@@ -25,17 +24,17 @@
 
 	// Skill management
 	function canUnlockSkill(skill: SkillUpgrade): boolean {
-		if (!$skillUpgrades) return false;
-		if ($skillUpgrades.includes(skill.id)) return false;
-		if ($skillPointsAvailable < 1) return false;
+		if (!gameManager.skillUpgrades) return false;
+		if (gameManager.skillUpgrades.includes(skill.id)) return false;
+		if (gameManager.skillPointsAvailable < 1) return false;
 
-		if (skill.condition !== undefined && !skill.condition(gameManager.getCurrentState())) return false;
-		return skill.requires?.every((req) => $skillUpgrades?.includes(req)) ?? true;
+		if (skill.condition !== undefined && !skill.condition(gameManager)) return false;
+		return skill.requires?.every((req) => gameManager.skillUpgrades?.includes(req)) ?? true;
 	}
 
 	function unlockSkill(skill: SkillUpgrade) {
 		if (!canUnlockSkill(skill)) return;
-		skillUpgrades.update((skills) => [...(skills ?? []), skill.id]);
+		gameManager.purchaseSkill(skill.id);
 		// Force immediate update after unlock
 		updateTree();
 	}
@@ -56,11 +55,11 @@
 			position: { ...skill.position },
 			data: {
 				...skill,
-				unlocked: $skillUpgrades.includes(skill.id),
+				unlocked: gameManager.skillUpgrades.includes(skill.id),
 				available: canUnlockSkill(skill),
 			},
 		}));
-		
+
 		// Only update if there are actual changes
 		nodes = newNodes;
 
@@ -106,7 +105,7 @@
 					sourceHandle: `${requireId}-${sourceDirection}`,
 					targetHandle: `${skill.id}-${targetDirection}`,
 					type: 'smoothstep',
-					class: canUnlockSkill(skill) || $skillUpgrades.includes(skill.id) ? 'unlocking' : '',
+					class: canUnlockSkill(skill) || gameManager.skillUpgrades.includes(skill.id) ? 'unlocking' : '',
 				};
 			}),
 		);
@@ -118,7 +117,7 @@
 		<div  class="flex w-full items-center justify-between">
 			<h2 class="text-2xl font-bold text-white">Skill Tree</h2>
 			<div class="points-counter bg-accent-400/20 border border-accent-400/20 px-4 py-2 rounded-lg text-accent-400 font-medium">
-				Available Points: {$skillPointsAvailable}
+				Available Points: {gameManager.skillPointsAvailable}
 			</div>
 		</div>
 	{/snippet}
@@ -130,7 +129,7 @@
 		colorMode="dark"
 		minZoom={0.3}
 		maxZoom={2}
-		initialViewport={{ x: $mobile ? 100 : 500, y: 200, zoom: 0.8 }}
+		initialViewport={{ x: mobile.current ? 100 : 500, y: 200, zoom: 0.8 }}
 		translateExtent={[
 			[-10000, -10000],
 			[10000, 10000],
@@ -149,7 +148,7 @@
 		}}
 	>
 		<Background gap={35} lineWidth={1} />
-		{#if !$mobile}
+		{#if !mobile.current}
 			<Controls showZoom={true} showFitView={false} showLock={false} position="bottom-right" />
 		{/if}
 	</SvelteFlow>

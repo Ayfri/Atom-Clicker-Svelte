@@ -1,7 +1,6 @@
 <script lang="ts">
 	import Modal from '@components/ui/Modal.svelte';
-	import { gameManager } from '$helpers/gameManager';
-	import { achievements } from '$stores/gameStore';
+	import { gameManager } from '$helpers/GameManager.svelte';
     import { Trash2, X } from 'lucide-svelte';
 
 	interface Props {
@@ -11,7 +10,7 @@
 	let { onClose }: Props = $props();
 
 	// Check if achievement is already unlocked
-	let isAlreadyUnlocked = $derived($achievements.includes('reset_modal_opener'));
+	let isAlreadyUnlocked = $derived(gameManager.achievements.includes('reset_modal_opener'));
 
 	// Unlock achievement when modal opens
 	$effect(() => {

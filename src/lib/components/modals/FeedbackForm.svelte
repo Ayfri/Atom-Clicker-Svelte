@@ -33,7 +33,7 @@
 			<Discord class="size-6 text-blue-500" />
 		</a>
 		<a
-			href="https://github.com/Ayfri/Atom-Clicker-Svelte"
+			href="https://github.com/Ayfri/Atom-Clicker"
 			target="_blank"
 			rel="noopener noreferrer"
 			class="flex items-center justify-center size-10 rounded-lg hover:bg-white/10 transition-colors"

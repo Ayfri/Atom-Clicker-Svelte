@@ -50,6 +50,27 @@ export type Database = {
 					}
 				]
 			}
+			game_messages: {
+				Row: {
+					created_at: string | null
+					id: string
+					is_active: boolean | null
+					message_html: string
+				}
+				Insert: {
+					created_at?: string | null
+					id?: string
+					is_active?: boolean | null
+					message_html: string
+				}
+				Update: {
+					created_at?: string | null
+					id?: string
+					is_active?: boolean | null
+					message_html?: string
+				}
+				Relationships: []
+			}
 			profiles: {
 				Row: {
 					atoms: string
@@ -94,21 +115,21 @@ export type Database = {
 			get_leaderboard: {
 				Args: { p_limit?: number }
 				Returns: {
-					id: string
-					username: string
 					atoms: string
+					id: string
+					last_updated: string
 					level: number
 					picture: string
-					last_updated: string
+					username: string
 				}[]
 			}
 			update_profile_stats: {
 				Args: {
-					p_user_id: string
 					p_atoms: string
 					p_level: number
-					p_username?: string
 					p_picture?: string
+					p_user_id: string
+					p_username?: string
 				}
 				Returns: undefined
 			}
@@ -237,3 +258,4 @@ export const Constants = {
 export type Profile = Tables<'profiles'>
 export type ProfileInsert = TablesInsert<'profiles'>
 export type ProfileUpdate = TablesUpdate<'profiles'>
+export type GameMessage = Tables<'game_messages'>

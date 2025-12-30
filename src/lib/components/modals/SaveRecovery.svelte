@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Login from '@components/modals/Login.svelte';
 	import Modal from '@components/ui/Modal.svelte';
-	import { gameManager } from '$helpers/gameManager';
+	import { gameManager } from '$helpers/GameManager.svelte';
 	import { saveRecovery } from '$stores/saveRecovery';
 	import { supabaseAuth } from '$stores/supabaseAuth';
 	import { error as errorToast, info, success } from '$stores/toasts';

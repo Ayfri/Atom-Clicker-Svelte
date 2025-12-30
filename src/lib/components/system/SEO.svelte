@@ -1,4 +1,6 @@
 <script>
+	import { VERSION } from "@sveltejs/kit";
+
 	const site = 'https://atom-clicker.ayfri.com';
 	const name = 'Atom Clicker';
 	const author = 'Ayfri';
@@ -15,7 +17,7 @@
 		},
 		description: description,
 		url: site,
-		image: `${site}/atom.png`,
+		image: `${site}/currencies/atom.svg`,
 		genre: ['Incremental', 'Clicker', 'Idle'],
 		operatingSystem: 'All',
 		publisher: author,
@@ -33,13 +35,14 @@
 	<meta name="keywords" content="clicker,incremental,game,atoms" />
 	<meta name="author" content={author} />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta name="generator" content={`SvelteKit ${VERSION}`} />
 	<meta name="theme-color" content="#4a90e2" />
 
-	<link rel="icon" type="image/png" href="/atom.png" />
+	<link rel="icon" type="image/svg+xml" href="/currencies/atom.svg" />
 
 	<meta property="og:title" content={name} />
 	<meta property="og:description" content={description} />
-	<meta property="og:image" content="/atom.png" />
+	<meta property="og:image" content="/currencies/atom.svg" />
 	<meta property="og:url" content={site} />
 	<meta property="og:type" content="website" />
 
@@ -48,13 +51,13 @@
 	<meta name="twitter:site" content={site} />
 	<meta name="twitter:title" content={name} />
 	<meta name="twitter:description" content={description} />
-	<meta name="twitter:image" content="/atom.png" />
+	<meta name="twitter:image" content="/currencies/atom.svg" />
 
 	<meta name="canonical" content={site} />
 	<meta name="robots" content="index, follow" />
 	<meta name="language" content="en" />
 
 	<title>{name}</title>
-	
+
 	{@html `<script type="application/ld+json">${JSON.stringify(structuredData)}</script>`}
 </svelte:head>

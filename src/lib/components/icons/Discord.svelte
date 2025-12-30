@@ -1,9 +1,7 @@
 <script lang="ts">
-	interface Props {
-		[key: string]: any
-	}
+	import type { SvelteHTMLElements  } from 'svelte/elements';
 
-	let { ...props }: Props = $props();
+	let { ...props }: SvelteHTMLElements['svg'] = $props();
 </script>
 
 <svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid" viewBox="0 -28.5 256 256" {...props}>

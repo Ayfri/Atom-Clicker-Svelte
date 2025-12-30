@@ -1,14 +1,16 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { innerWidth, innerHeight } from 'svelte/reactivity/window';
 
 	interface Props {
 		children: Snippet;
 		content: Snippet;
 		position?: 'top' | 'bottom' | 'left' | 'right';
 		size?: 'sm' | 'md' | 'lg';
+		class?: string;
 	}
 
-	let { children, content, position = 'top', size = 'md' }: Props = $props();
+	let { children, content, position = 'top', size = 'md', class: className = '' }: Props = $props();
 
 	const tooltipId = `tooltip-${Math.random().toString(36).substring(2, 11)}`;
 	let triggerElement = $state<HTMLButtonElement>();
@@ -44,8 +46,8 @@
 		}
 
 		// Keep tooltip within viewport
-		top = Math.max(8, Math.min(top, window.innerHeight - tooltipRect.height - 8));
-		left = Math.max(8, Math.min(left, window.innerWidth - tooltipRect.width - 8));
+		top = Math.max(8, Math.min(top, (innerHeight.current ?? window.innerHeight) - tooltipRect.height - 8));
+		left = Math.max(8, Math.min(left, (innerWidth.current ?? window.innerWidth) - tooltipRect.width - 8));
 
 		tooltip.style.top = `${top}px`;
 		tooltip.style.left = `${left}px`;
@@ -94,14 +96,14 @@
 	}[position]);
 </script>
 
-<div class="relative inline-block">
+<div class="relative inline-block {className}">
 	<!-- Desktop: hover trigger -->
-	<div bind:this={desktopTriggerElement} class="hidden sm:block" role="button" tabindex="0" onmouseenter={showDesktopTooltip} onmouseleave={hideDesktopTooltip}>
+	<div bind:this={desktopTriggerElement} class="hidden sm:block h-full w-full" role="button" tabindex="0" onmouseenter={showDesktopTooltip} onmouseleave={hideDesktopTooltip}>
 		{@render children()}
 
 		<!-- Desktop tooltip (popover) -->
-		<div bind:this={desktopTooltipElement} popover="manual" class="fixed bg-black/95 backdrop-blur-xs rounded-lg {sizeClasses} transition-all duration-200 z-50">
-			<div class="text-white/90 p-3">
+		<div bind:this={desktopTooltipElement} popover="manual" class="fixed bg-black/95 backdrop-blur-xs rounded-lg {sizeClasses} z-50">
+			<div class="text-white/90">
 				{@render content()}
 			</div>
 			<!-- Arrow -->
@@ -123,14 +125,14 @@
 	id={tooltipId}
 	popover="auto"
 	ontoggle={handleToggle}
-	class="fixed bg-black/95 backdrop-blur-xs rounded-lg p-3 border border-white/20 max-w-[90vw] min-w-[200px] text-white/90 text-sm"
+	class="fixed bg-black/95 backdrop-blur-xs rounded-lg p-3 border border-white/20 max-w-[90vw] min-w-50 text-white/90 text-sm"
 >
 	<div class="flex justify-between items-start">
 		<div>
 			{@render content()}
 		</div>
-		<button 
-			onclick={() => popoverElement?.hidePopover()} 
+		<button
+			onclick={() => popoverElement?.hidePopover()}
 			class="ml-2 text-white/60 hover:text-white/90 text-lg leading-none"
 			aria-label="Close tooltip"
 		>

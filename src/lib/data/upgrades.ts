@@ -1,9 +1,8 @@
 import { BUILDING_TYPES, BUILDINGS, type BuildingType } from '$data/buildings';
 import { CurrenciesTypes, type CurrencyName } from '$data/currencies';
-import type { Effect, GameState, Upgrade } from '$lib/types';
+import type { Effect, Upgrade } from '$lib/types';
+import type { GameManager } from '$helpers/GameManager.svelte';
 import { capitalize, formatNumber, shortNumberText } from '$lib/utils';
-import { atomsPerSecond, playerLevel, totalProtonises } from '$stores/gameStore';
-import { get } from 'svelte/store';
 
 export const SPECIAL_UPGRADES: Upgrade[] = [
 	{
@@ -29,7 +28,7 @@ export const SPECIAL_UPGRADES: Upgrade[] = [
 ];
 
 interface CreateUpgradesOptions {
-	condition?: (index: number, state: GameState) => boolean;
+	condition?: (index: number, manager: GameManager) => boolean;
 	cost: (index: number) => number;
 	currency?: CurrencyName;
 	count: number;
@@ -134,7 +133,7 @@ function createClickPowerUpgrades() {
 				{
 					type: 'click' as const,
 					description: `Add ${Math.ceil(i / 2)}% of APS to click power`,
-					apply: currentValue => currentValue + (Math.ceil(i / 2) / 100) * get(atomsPerSecond),
+					apply: (currentValue, manager) => currentValue + (Math.ceil(i / 2) / 100) * (manager.atomsPerSecond ?? 0),
 				},
 			],
 		}),
@@ -183,9 +182,9 @@ function createGlobalUpgrades() {
 				{
 					type: 'global',
 					description: `Add ${Math.ceil(i / 5)}% production per achievement`,
-					apply: (currentValue, state) => {
+					apply: (currentValue, manager) => {
 						const perAchievement = Math.ceil(i / 5);
-						const achievements = state.achievements.length;
+						const achievements = manager.achievements.length;
 						const boost = (achievements * perAchievement) / 100;
 						return currentValue * (1 + boost);
 					},
@@ -237,8 +236,8 @@ function createLevelBoostUpgrades() {
 				{
 					type: 'global',
 					description: `Add ${1 + Math.ceil(i / 2)}% production per level`,
-					apply: currentValue => {
-						const level = get(playerLevel);
+					apply: (currentValue, manager) => {
+						const level = manager.playerLevel ?? 1;
 						return currentValue * (1 + (level * (1 + Math.ceil(i / 2))) / 100);
 					},
 				},
@@ -336,7 +335,7 @@ function createProtonUpgrades() {
 				{
 					type: 'electron_gain',
 					description: '+1 electron per protonise',
-					apply: currentValue => currentValue + get(totalProtonises),
+					apply: (currentValue, manager) => currentValue + (manager.totalProtonisesRun || 0),
 				},
 			],
 		},
@@ -358,8 +357,8 @@ function createProtonUpgrades() {
 				{
 					type: 'global',
 					description: `Add ${25 * i}% production per protonise`,
-					apply: (currentValue, state) => {
-						const boost = (state.totalProtonises || 0) * (0.25 * i);
+					apply: (currentValue, manager) => {
+						const boost = (manager.totalProtonisesRun || 0) * (0.25 * i);
 						return currentValue * (1 + boost);
 					},
 				},
@@ -389,6 +388,27 @@ function createProtonUpgrades() {
 		}),
 	);
 
+	// Community boost
+	upgrades.push({
+		id: 'proton_community_boost',
+		name: 'Community Power',
+		description: '1% atom boost per thousand registered players',
+		cost: {
+			amount: 10,
+			currency: CurrenciesTypes.PROTONS,
+		},
+		effects: [
+			{
+				type: 'global',
+				description: '1% atom boost per thousand players',
+				apply: (currentValue, manager) => {
+					const boost = (manager.totalUsers / 1000) * 0.01;
+					return currentValue * (1 + boost);
+				},
+			},
+		],
+	} as Upgrade);
+
 	// Auto-clicker upgrade
 	upgrades.push(
 		...createUpgrades({
@@ -406,6 +426,93 @@ function createProtonUpgrades() {
 					type: 'auto_click',
 					description: `Clicks ${Math.ceil(i / 2)} time${Math.ceil(i / 2) > 1 ? 's' : ''} per second automatically`,
 					apply: currentValue => currentValue + Math.ceil(i / 2),
+				},
+			],
+		}),
+	);
+
+	// Stability Field Unlock
+	upgrades.push({
+		id: 'stability_unlock',
+		name: 'Stability Field',
+		description: 'Unlock the Stability Meter (Passive Idle Bonus)',
+		cost: {
+			amount: 5000,
+			currency: CurrenciesTypes.PROTONS,
+		},
+		effects: [
+			{
+				type: 'global',
+				description: 'Unlock Stability Meter',
+				apply: (val) => val,
+			},
+		],
+	} as Upgrade);
+
+	// Stability Boost
+	upgrades.push(
+		...createUpgrades({
+			id: 'stability_boost',
+			count: 5,
+			currency: CurrenciesTypes.PROTONS,
+			name: i => `Stable Resonance ${i}`,
+			description: i => `+${25 * i}% effect from Stability Meter`,
+			condition: (_, state) => state.upgrades.includes('stability_unlock'),
+			cost: i => {
+				const baseCost = Math.ceil(140 * 2.05 ** i);
+				return baseCost;
+			},
+			effects: i => [
+				{
+					type: 'stability_boost',
+					description: `Increases Stability Meter effect`,
+					apply: (val) => val + 0.25,
+				},
+			],
+		}),
+	);
+
+	// Stability Speed
+	upgrades.push(
+		...createUpgrades({
+			id: 'stability_speed',
+			count: 10,
+			currency: CurrenciesTypes.PROTONS,
+			name: i => `Field Coherence ${i}`,
+			description: i => `Stability grows 10% faster`,
+			condition: (_, state) => state.upgrades.includes('stability_unlock'),
+			cost: i => {
+				const baseCost = Math.ceil(100 * 2.25 ** i);
+				return baseCost;
+			},
+			effects: i => [
+				{
+					type: 'stability_speed',
+					description: `Increases Stability Meter speed`,
+					apply: (val) => val + 0.1,
+				},
+			],
+		}),
+	);
+
+	// Stability Expansion
+	upgrades.push(
+		...createUpgrades({
+			id: 'stability_expansion',
+			count: 5,
+			currency: CurrenciesTypes.PROTONS,
+			name: i => `Temporal Expansion ${i}`,
+			description: i => `Extends stability capacity and max bonus`,
+			condition: (_, state) => state.upgrades.includes('stability_unlock'),
+			cost: i => {
+				const baseCost = Math.ceil(500 * 3 ** i);
+				return baseCost;
+			},
+			effects: i => [
+				{
+					type: 'stability_capacity',
+					description: `Increases Stability Meter capacity`,
+					apply: (val) => val + 2.2,
 				},
 			],
 		}),

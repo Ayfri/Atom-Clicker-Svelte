@@ -11,13 +11,11 @@
 	import NotificationDot from '@components/ui/NotificationDot.svelte';
 	import { PROTONS_ATOMS_REQUIRED, ELECTRONS_PROTONS_REQUIRED } from '$lib/constants';
 	import { changelog } from '$stores/changelog';
-	import { electronizeElectronsGain } from '$stores/electrons';
-	import { protons, atoms, electrons, hasAvailableSkillUpgrades, skillPointsTotal } from '$stores/gameStore';
-	import { protoniseProtonsGain } from '$stores/protons';
-	import { mobile } from '$stores/window';
+	import { gameManager } from '$helpers/GameManager.svelte';
+	import { remoteMessage } from '$stores/remoteMessage';
+	import { mobile } from '$stores/window.svelte';
 	import { ChartNoAxesColumn, Network, Info, Atom, Trophy, MessageSquare, Orbit, FileText, Cloud, type Icon as IconType } from 'lucide-svelte';
 	import { onDestroy, onMount, type Component } from 'svelte';
-
 
 	type NavBarComponent = Component<{ onClose: () => void }>;
 
@@ -44,22 +42,22 @@
 			icon: Network,
 			label: 'Skill Tree',
 			component: SkillTree,
-			condition: () => $skillPointsTotal > 0,
-			notification: () => $hasAvailableSkillUpgrades,
+			condition: () => gameManager.skillPointsTotal > 0,
+			notification: () => gameManager.hasAvailableSkillUpgrades,
 		},
 		{
 			icon: Atom,
 			label: 'Protonise',
 			component: Protonise,
-			condition: () => $atoms >= PROTONS_ATOMS_REQUIRED || $protons > 0,
-			notification: () => $protoniseProtonsGain > $protons,
+			condition: () => gameManager.atoms >= PROTONS_ATOMS_REQUIRED || gameManager.protons > 0,
+			notification: () => gameManager.protoniseProtonsGain > gameManager.protons,
 		},
 		{
 			icon: Orbit,
 			label: 'Electronize',
 			component: Electronize,
-			condition: () => $protons >= ELECTRONS_PROTONS_REQUIRED || $electrons > 0,
-			notification: () => $electronizeElectronsGain > 0,
+			condition: () => gameManager.protons >= ELECTRONS_PROTONS_REQUIRED || gameManager.electrons > 0,
+			notification: () => gameManager.electronizeElectronsGain > 0,
 		},
 		{
 			icon: FileText,
@@ -101,7 +99,7 @@
 	});
 </script>
 
-{#if $mobile}
+{#if mobile.current}
 	<div
 		class="absolute top-[33vh] -translate-y-1/2 z-10 grid gap-3.5 w-full justify-between pointer-events-none"
 		class:grid-cols-2={visibleComponents.length > 5}
@@ -121,7 +119,10 @@
 		{/each}
 	</div>
 {:else}
-	<nav class="fixed left-0 top-0 z-50 flex h-full flex-col items-center gap-5 bg-black/20 px-3 py-6 backdrop-blur-xs">
+	<nav
+		class="fixed left-0 z-50 flex h-full flex-col items-center gap-5 bg-black/20 px-3 py-6 backdrop-blur-xs transition-all duration-300"
+		style="top: {$remoteMessage.message && $remoteMessage.isVisible ? '1.5rem' : '0'}"
+	>
 		{#each visibleComponents as link}
 			<NotificationDot hasNotification={link.notification ? link.notification() : false}>
 				<button

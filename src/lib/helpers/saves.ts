@@ -2,9 +2,10 @@ import {BUILDING_LEVEL_UP_COST, type BuildingType} from '$data/buildings';
 import {CurrenciesTypes} from '$data/currencies';
 import type {Building, GameState} from '$lib/types';
 import {saveRecovery, type SaveErrorType} from '$stores/saveRecovery';
+import {statsConfig} from '$helpers/statConstants';
 
 export const SAVE_KEY = 'atomic-clicker-save';
-export const SAVE_VERSION = 14;
+export const SAVE_VERSION = 17;
 
 export interface LoadSaveResult {
 	errorDetails?: string;
@@ -125,7 +126,7 @@ interface ValidationResult {
 	valid: boolean;
 }
 
-function validateAndRepairGameState(state: any): ValidationResult {
+export function validateAndRepairGameState(state: unknown): ValidationResult {
 	const errors: string[] = [];
 	const repairs: string[] = [];
 	let repaired = false;
@@ -134,93 +135,81 @@ function validateAndRepairGameState(state: any): ValidationResult {
 		return { errors: ['State is not an object'], repaired: false, repairs: [], state: null, valid: false };
 	}
 
-	// Define checks with default values for repair
-	const checks: Array<{
-		defaultValue: any;
-		key: string;
-		validator: (v: any) => boolean;
-	}> = [
-		{ defaultValue: [], key: 'achievements', validator: Array.isArray },
-		{ defaultValue: [], key: 'activePowerUps', validator: Array.isArray },
-		{ defaultValue: 0, key: 'atoms', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: {}, key: 'buildings', validator: (v: any) => typeof v === 'object' && v !== null },
-		{ defaultValue: 0, key: 'electrons', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'highestAPS', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'inGameTime', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: Date.now(), key: 'lastSave', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'photons', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: {}, key: 'photonUpgrades', validator: (v: any) => typeof v === 'object' && v !== null },
-		{ defaultValue: 0, key: 'powerUpsCollected', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'protons', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: false, key: 'purpleRealmUnlocked', validator: (v: any) => typeof v === 'boolean' },
-		{
-			defaultValue: { automation: { buildings: [], upgrades: false } },
-			key: 'settings',
-			validator: (v: any) => typeof v === 'object' && v !== null &&
-				typeof v.automation === 'object' &&
-				Array.isArray(v.automation?.buildings) &&
-				typeof v.automation?.upgrades === 'boolean'
-		},
-		{ defaultValue: [], key: 'skillUpgrades', validator: Array.isArray },
-		{ defaultValue: Date.now(), key: 'startDate', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalAtomsEarned', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalAtomsEarnedAllTime', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalBonusPhotonsClicked', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalBuildingsPurchased', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalClicks', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalClicksAllTime', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalElectronizes', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalElectronsEarned', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalProtonises', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalProtonsEarned', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalUpgradesPurchased', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: 0, key: 'totalXP', validator: (v: any) => typeof v === 'number' && !isNaN(v) },
-		{ defaultValue: [], key: 'upgrades', validator: Array.isArray },
-	];
+	const stateObj = state as Record<string, unknown>;
+
+	// Define custom validators for complex types
+	const customValidators: Record<string, (v: unknown) => boolean> = {
+		settings: (v: unknown) => {
+			const val = v as Record<string, any>;
+			return typeof val === 'object' && val !== null &&
+				typeof val.automation === 'object' &&
+				Array.isArray(val.automation?.buildings) &&
+				typeof val.automation?.upgrades === 'boolean';
+		}
+	};
+
+	// Generate checks from statsConfig
+	const checks = Object.entries(statsConfig).map(([key, config]) => {
+		let validator = (v: unknown) => true;
+
+		if (key in customValidators) {
+			validator = customValidators[key];
+		} else if (Array.isArray(config.defaultValue)) {
+			validator = Array.isArray;
+		} else if (typeof config.defaultValue === 'number') {
+			validator = (v: unknown) => typeof v === 'number' && !isNaN(v as number);
+		} else if (typeof config.defaultValue === 'boolean') {
+			validator = (v: unknown) => typeof v === 'boolean';
+		} else if (typeof config.defaultValue === 'object' && config.defaultValue !== null) {
+			validator = (v: unknown) => typeof v === 'object' && v !== null;
+		}
+
+		return {
+			defaultValue: config.defaultValue,
+			key,
+			validator
+		};
+	});
 
 	// Try to repair each field
 	for (const check of checks) {
-		if (!(check.key in state)) {
-			state[check.key] = check.defaultValue;
+		if (!(check.key in stateObj)) {
+			stateObj[check.key] = check.defaultValue;
 			repairs.push(`Added missing field: ${check.key}`);
 			repaired = true;
-		} else if (!check.validator(state[check.key])) {
-			const oldValue = state[check.key];
-			state[check.key] = check.defaultValue;
+		} else if (!check.validator(stateObj[check.key])) {
+			const oldValue = stateObj[check.key];
+			stateObj[check.key] = check.defaultValue;
 			repairs.push(`Repaired invalid ${check.key}: ${JSON.stringify(oldValue)} -> ${JSON.stringify(check.defaultValue)}`);
 			repaired = true;
 		}
 	}
 
 	// Handle version separately - we upgrade to current version
-	if (state.version !== SAVE_VERSION) {
-		state.version = SAVE_VERSION;
+	if (stateObj.version !== SAVE_VERSION) {
+		stateObj.version = SAVE_VERSION;
 		repairs.push(`Updated version to ${SAVE_VERSION}`);
 		repaired = true;
 	}
 
 	// Repair NaN/Infinity values in numeric fields
-	const numericFields = [
-		'atoms', 'electrons', 'highestAPS', 'inGameTime', 'lastSave', 'photons',
-		'powerUpsCollected', 'protons', 'startDate', 'totalAtomsEarned', 'totalAtomsEarnedAllTime',
-		'totalBonusPhotonsClicked', 'totalBuildingsPurchased', 'totalClicks', 'totalClicksAllTime',
-		'totalElectronizes', 'totalElectronsEarned', 'totalProtonises', 'totalProtonsEarned',
-		'totalUpgradesPurchased', 'totalXP'
-	];
+	const numericFields = Object.entries(statsConfig)
+		.filter(([_, config]) => typeof config.defaultValue === 'number')
+		.map(([key]) => key);
 
 	for (const field of numericFields) {
-		if (typeof state[field] === 'number' && (isNaN(state[field]) || !isFinite(state[field]))) {
-			state[field] = 0;
+		if (typeof stateObj[field] === 'number' && (isNaN(stateObj[field]) || !isFinite(stateObj[field]))) {
+			stateObj[field] = 0;
 			repairs.push(`Fixed NaN/Infinity in ${field}`);
 			repaired = true;
 		}
 	}
 
 	// Verify repairs were successful
-	const allValid = checks.every(check => check.key in state && check.validator(state[check.key]));
+	const allValid = checks.every(check => check.key in stateObj && check.validator(stateObj[check.key]));
 
 	if (!allValid) {
-		const failedChecks = checks.filter(check => !(check.key in state) || !check.validator(state[check.key]));
+		const failedChecks = checks.filter(check => !(check.key in stateObj) || !check.validator(stateObj[check.key]));
 		for (const check of failedChecks) {
 			errors.push(`Field ${check.key} is still invalid after repair`);
 		}
@@ -230,24 +219,27 @@ function validateAndRepairGameState(state: any): ValidationResult {
 		errors,
 		repaired,
 		repairs,
-		state: allValid ? state as GameState : null,
+		state: allValid ? stateObj as unknown as GameState : null,
 		valid: allValid && errors.length === 0,
 	};
 }
 
 // Simple validation check (used by cloud save)
-export function isValidGameState(state: any): state is GameState {
+export function isValidGameState(state: unknown): state is GameState {
 	if (!state) return false;
 	const result = validateAndRepairGameState(structuredClone(state));
 	return result.valid || result.repaired;
 }
 
-function migrateSavedState(savedState: any): GameState | undefined {
-	if (!('buildings' in savedState)) return savedState;
+export function migrateSavedState(savedState: unknown): GameState | undefined {
+	if (!savedState || typeof savedState !== 'object') return undefined;
+	const state = savedState as any;
 
-	if (!('version' in savedState)) {
+	if (!('buildings' in state)) return state;
+
+	if (!('version' in state)) {
 		// Migrate from old format
-		savedState.buildings = Object.entries(savedState.buildings as Partial<GameState['buildings']>).reduce((acc, [key, value]) => {
+		state.buildings = Object.entries(state.buildings as Partial<GameState['buildings']>).reduce((acc, [key, value]) => {
 			acc[key as BuildingType] = {
 				...value,
 				unlocked: true,
@@ -256,104 +248,164 @@ function migrateSavedState(savedState: any): GameState | undefined {
 		}, {} as GameState['buildings']);
 	}
 
-	if (savedState.version === 1) {
+	if (state.version === 1) {
 		// Hard reset due to balancing
 		return undefined;
 	}
 
-	if (savedState.version === 2) {
-		Object.entries<Partial<Building>>(savedState.buildings)?.forEach(([key, building]) => {
-			building.level = Math.floor((building.count ?? 0) / BUILDING_LEVEL_UP_COST);
-			savedState[key] = building;
-		});
-		savedState.version = 3;
-	}
-	if (savedState.version === 3) {
-		// Add skillUpgrades
-		savedState.skillUpgrades = [];
-		savedState.totalXP = 0;
-		savedState.version = 4;
-	}
-	if (savedState.version === 4) {
-		// Add totalProtonises
-		Object.entries<Partial<Building>>(savedState.buildings)?.forEach(([key, building]) => {
-			savedState[key].cost = {
-				amount: typeof building.cost === 'number' ? building.cost : building.cost?.amount,
-				currency: CurrenciesTypes.ATOMS,
+	while ((state.version || 0) < SAVE_VERSION) {
+		if (!state.version) break;
+
+		const nextVersion = state.version + 1;
+
+		// Generic Migration
+		for (const [key, config] of Object.entries(statsConfig)) {
+			if (config.minVersion <= nextVersion) {
+				if (!(key in state)) {
+					state[key] = typeof config.defaultValue === 'object' && config.defaultValue !== null
+						? structuredClone(config.defaultValue)
+						: config.defaultValue;
+				}
 			}
-		});
-		savedState.protons = 0;
-		savedState.totalProtonises = 0;
-		savedState.version = 5;
-	}
-	if (savedState.version === 5) {
-		// Add startDate
-		savedState.startDate = Date.now();
-		savedState.version = 6;
-	}
-	if (savedState.version === 6) {
-		// Add electrons
-		savedState.electrons = 0;
-		savedState.version = 7;
-	}
-	if (savedState.version === 7) {
-		// Add settings
-		savedState.settings = {
-			automation: {
-				buildings: [],
-				upgrades: false
-			}
-		};
-		savedState.version = 8;
-	}
-	if (savedState.version === 8) {
-		// Add totalElectronizes
-		savedState.totalElectronizes = 0;
-		if (savedState.electrons > 0) {
-			savedState.totalElectronizes = 1;
 		}
-		savedState.version = 9;
-	}
-	if (savedState.version === 9) {
-		// Add totalBonusPhotonsClicked
-		savedState.totalBonusPhotonsClicked = 0;
-		savedState.version = 10;
-	}
-	if (savedState.version === 10) {
-		// Add photons
-		savedState.photons = 0;
-		savedState.version = 11;
-	}
-	if (savedState.version === 11) {
-		// Add photonUpgrades
-		savedState.photonUpgrades = {};
-		savedState.version = 12;
-	}
-	if (savedState.version === 12) {
-		// Add purpleRealmUnlocked
-		savedState.purpleRealmUnlocked = false;
-		savedState.version = 13;
-	}
-	if (savedState.version === 13) {
-		// Add new stats tracking - initialize from current values
-		savedState.highestAPS = 0;
-		savedState.inGameTime = 0;
-		savedState.powerUpsCollected = 0;
-		// Initialize earned stats from current balance as a baseline
-		savedState.totalAtomsEarned = savedState.atoms || 0;
-		savedState.totalAtomsEarnedAllTime = savedState.atoms || 0;
-		// Count total buildings currently owned as baseline
-		const buildingsOwned = Object.values(savedState.buildings || {}).reduce((acc: number, b: any) => acc + (b?.count || 0), 0);
-		savedState.totalBuildingsPurchased = buildingsOwned;
-		// Initialize clicks all time from current run
-		savedState.totalClicksAllTime = savedState.totalClicks || 0;
-		// Initialize currency earned from current balance
-		savedState.totalElectronsEarned = savedState.electrons || 0;
-		savedState.totalProtonsEarned = savedState.protons || 0;
-		// Count upgrades owned as baseline
-		savedState.totalUpgradesPurchased = (savedState.upgrades?.length || 0) + (savedState.skillUpgrades?.length || 0);
-		savedState.version = 14;
+
+		// Specific Migrations
+		if (state.version === 2) {
+			Object.entries<Partial<Building>>(state.buildings)?.forEach(([key, building]) => {
+				building.level = Math.floor((building.count ?? 0) / BUILDING_LEVEL_UP_COST);
+				state[key] = building;
+			});
+		}
+
+		if (state.version === 4) {
+			Object.entries<Partial<Building>>(state.buildings)?.forEach(([key, building]) => {
+				state[key].cost = {
+					amount: typeof building.cost === 'number' ? building.cost : building.cost?.amount,
+					currency: CurrenciesTypes.ATOMS,
+				}
+			});
+		}
+
+		if (state.version === 8) {
+			if (state.electrons > 0) {
+				state.totalElectronizes = 1;
+			}
+		}
+
+		if (state.version === 13) {
+			// Initialize earned stats from current balance as a baseline
+			state.totalAtomsEarned = state.atoms || 0;
+			state.totalAtomsEarnedAllTime = state.atoms || 0;
+			// Count total buildings currently owned as baseline
+			const buildingsOwned = Object.values(state.buildings || {}).reduce((acc: number, b: unknown) => acc + ((b as any)?.count || 0), 0);
+			state.totalBuildingsPurchased = buildingsOwned;
+			// Initialize clicks all time from current run
+			state.totalClicksAllTime = state.totalClicks || 0;
+			// Initialize currency earned from current balance
+			state.totalElectronsEarned = state.electrons || 0;
+			state.totalProtonsEarned = state.protons || 0;
+			// Count upgrades owned as baseline
+			state.totalUpgradesPurchased = (state.upgrades?.length || 0) + (state.skillUpgrades?.length || 0);
+		}
+
+		if (state.version === 14) {
+			if (state.totalBonusPhotonsClicked) {
+				state.totalBonusHiggsBosonClicked = state.totalBonusPhotonsClicked;
+				delete state.totalBonusPhotonsClicked;
+			}
+			if (state.achievements) {
+				state.achievements = state.achievements.map((id: string) => id.replace('bonus_photons_clicked_', 'bonus_higgs_boson_clicked_'));
+			}
+			if (state.skillUpgrades) {
+				const map: Record<string, string> = {
+					'bonusPhotonSpeed0': 'bonusHiggsBosonSpeed0',
+					'bonusPhotonSpeed1': 'bonusHiggsBosonSpeed1',
+					'bonusPhotonSpeed2': 'bonusHiggsBosonSpeed2',
+				};
+				state.skillUpgrades = state.skillUpgrades.map((id: string) => map[id] || id);
+			}
+		}
+
+		if (state.version === 15) {
+			const mapping: Record<string, string> = {
+				totalAtomsEarned: 'totalAtomsEarnedRun',
+				totalBonusHiggsBosonClicked: 'totalBonusHiggsBosonClickedRun',
+				totalBuildingsPurchased: 'totalBuildingsPurchasedAllTime',
+				totalClicks: 'totalClicksRun',
+				totalElectronizes: 'totalElectronizesAllTime',
+				totalElectronsEarned: 'totalElectronsEarnedAllTime',
+				totalExcitedPhotonsEarned: 'totalExcitedPhotonsEarnedAllTime',
+				totalProtonises: 'totalProtonisesRun',
+				totalProtonsEarned: 'totalProtonsEarnedAllTime',
+				totalUpgradesPurchased: 'totalUpgradesPurchasedAllTime'
+			};
+
+			for (const [oldKey, newKey] of Object.entries(mapping)) {
+				if (oldKey in state) {
+					state[newKey] = state[oldKey];
+					delete state[oldKey];
+				}
+			}
+
+			// Initialize new stats
+			state.totalBonusHiggsBosonClickedAllTime = state.totalBonusHiggsBosonClickedRun || 0;
+			state.totalElectronizesRun = state.totalElectronizesAllTime || 0;
+			state.totalElectronsEarnedRun = state.totalElectronsEarnedAllTime || 0;
+			state.totalExcitedPhotonsEarnedRun = state.totalExcitedPhotonsEarnedAllTime || 0;
+			state.totalPhotonsEarnedAllTime = state.photons || 0;
+			state.totalPhotonsEarnedRun = state.photons || 0;
+			state.totalProtonisesAllTime = state.totalProtonisesRun || 0;
+			state.totalProtonsEarnedRun = state.totalProtonsEarnedAllTime || 0;
+		}
+
+		if (state.version === 16) {
+			state.currencies = {
+				[CurrenciesTypes.ATOMS]: {
+					amount: state.atoms || 0,
+					earnedRun: state.totalAtomsEarnedRun || 0,
+					earnedAllTime: state.totalAtomsEarnedAllTime || 0
+				},
+				[CurrenciesTypes.ELECTRONS]: {
+					amount: state.electrons || 0,
+					earnedRun: state.totalElectronsEarnedRun || 0,
+					earnedAllTime: state.totalElectronsEarnedAllTime || 0
+				},
+				[CurrenciesTypes.EXCITED_PHOTONS]: {
+					amount: state.excitedPhotons || 0,
+					earnedRun: state.totalExcitedPhotonsEarnedRun || 0,
+					earnedAllTime: state.totalExcitedPhotonsEarnedAllTime || 0
+				},
+				[CurrenciesTypes.HIGGS_BOSON]: {
+					amount: 0,
+					earnedRun: state.totalBonusHiggsBosonClickedRun || 0,
+					earnedAllTime: state.totalBonusHiggsBosonClickedAllTime || 0
+				},
+				[CurrenciesTypes.PHOTONS]: {
+					amount: state.photons || 0,
+					earnedRun: state.totalPhotonsEarnedRun || 0,
+					earnedAllTime: state.totalPhotonsEarnedAllTime || 0
+				},
+				[CurrenciesTypes.PROTONS]: {
+					amount: state.protons || 0,
+					earnedRun: state.totalProtonsEarnedRun || 0,
+					earnedAllTime: state.totalProtonsEarnedAllTime || 0
+				}
+			};
+
+			const keysToRemove = [
+				'atoms', 'totalAtomsEarnedRun', 'totalAtomsEarnedAllTime',
+				'electrons', 'totalElectronsEarnedRun', 'totalElectronsEarnedAllTime',
+				'excitedPhotons', 'totalExcitedPhotonsEarnedRun', 'totalExcitedPhotonsEarnedAllTime',
+				'totalBonusHiggsBosonClickedRun', 'totalBonusHiggsBosonClickedAllTime',
+				'photons', 'totalPhotonsEarnedRun', 'totalPhotonsEarnedAllTime',
+				'protons', 'totalProtonsEarnedRun', 'totalProtonsEarnedAllTime'
+			];
+
+			keysToRemove.forEach(key => delete state[key]);
+		}
+
+		state.version = nextVersion;
 	}
 
-	return savedState;
+	return state;
 }

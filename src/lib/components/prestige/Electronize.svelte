@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { gameManager } from '$helpers/gameManager';
-	import { formatNumber } from '$lib/utils';
+	import { gameManager } from '$helpers/GameManager.svelte';
+	import { CurrenciesTypes } from '$lib/data/currencies';
 	import Modal from '@components/ui/Modal.svelte';
-	import { electrons, protons } from '$stores/gameStore';
-	import { electronizeElectronsGain } from '$stores/electrons';
+	import Value from '@components/ui/Value.svelte';
 	import { ELECTRONS_PROTONS_REQUIRED } from '$lib/constants';
 
 	interface Props {
@@ -12,7 +11,7 @@
 
 	let { onClose }: Props = $props();
 
-	let canElectronize = $derived($protons >= ELECTRONS_PROTONS_REQUIRED || $electronizeElectronsGain > 0);
+	let canElectronize = $derived(gameManager.protons >= ELECTRONS_PROTONS_REQUIRED || gameManager.electronizeElectronsGain > 0);
 
 	function handleElectronize() {
 		gameManager.electronize();
@@ -34,22 +33,26 @@
 		<div class="bg-black/20 rounded-lg p-4">
 			<div class="flex justify-between items-center mb-2">
 				<span>Current Protons:</span>
-				<span class="font-bold text-yellow-400">{formatNumber($protons)}</span>
+				<Value class="font-bold text-yellow-400" currency={CurrenciesTypes.PROTONS} value={gameManager.protons} />
 			</div>
 			<div class="flex justify-between items-center mb-4">
 				<span>Electrons to gain:</span>
-				<span class="font-bold text-green-400">{formatNumber($electronizeElectronsGain)}</span>
+				<Value
+					class="font-bold text-green-400"
+					currency={CurrenciesTypes.ELECTRONS}
+					value={gameManager.electronizeElectronsGain}
+				/>
 			</div>
 			<div class="flex justify-between items-center">
 				<span>Current Electrons:</span>
-				<span class="font-bold text-green-400">{formatNumber($electrons ?? 0)}</span>
+				<Value class="font-bold text-green-400" currency={CurrenciesTypes.ELECTRONS} value={gameManager.electrons ?? 0} />
 			</div>
 		</div>
 
 		<button
 			class="electronize-button"
 			onclick={handleElectronize}
-			disabled={!canElectronize || $electronizeElectronsGain === 0}
+			disabled={!canElectronize || gameManager.electronizeElectronsGain === 0}
 		>
 			<div class="pulse-overlay"></div>
 			<span class="z-10 relative">Electronize</span>

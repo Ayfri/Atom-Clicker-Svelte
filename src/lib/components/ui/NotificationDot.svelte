@@ -1,8 +1,12 @@
 <script lang="ts">
-	interface Props {
+	import type { SvelteHTMLElements } from 'svelte/elements';
+	import type { Snippet } from 'svelte';
+
+	type SpanAttributes = SvelteHTMLElements['span'];
+
+	interface Props extends SpanAttributes {
 		hasNotification?: boolean;
-		children?: import('svelte').Snippet;
-		[key: string]: any
+		children?: Snippet;
 	}
 
 	let { hasNotification = false, children, ...rest }: Props = $props();

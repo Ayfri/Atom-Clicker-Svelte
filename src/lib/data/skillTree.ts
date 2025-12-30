@@ -1,7 +1,5 @@
-import {get} from 'svelte/store';
 import type {SkillUpgrade} from '$lib/types';
 import {BUILDINGS, type BuildingData, type BuildingType, BUILDING_TYPES} from '$data/buildings';
-import {playerLevel} from '$stores/gameStore';
 
 // Update constants for positioning
 export const GRID_SIZE = {
@@ -45,7 +43,7 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 				id: `${buildingType}Multiplier`,
 				name: `${building.name} Multiplier`,
 				description: `2x ${building.name} production`,
-				condition: state => (state.buildings[buildingType]?.count ?? 0) >= 100,
+				condition: manager => (manager.buildings[buildingType]?.count ?? 0) >= 100,
 				position: gridPos(-(i + 0.5), 1),
 				effects: [{
 					type: 'building',
@@ -57,9 +55,9 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 			} satisfies SkillUpgrade;
 		},
 	),
-	bonusPhotonSpeed0: {
-		id: 'bonusPhotonSpeed0',
-		name: 'Bonus Photon Speed',
+	bonusHiggsBosonSpeed0: {
+		id: 'bonusHiggsBosonSpeed0',
+		name: 'Bonus Higgs Boson Speed',
 		description: '0.9x power up interval',
 		position: gridPos(0.5, 1),
 		effects: [{
@@ -69,9 +67,9 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		}],
 		requires: ['globalMultiplier'],
 	},
-	bonusPhotonSpeed1: {
-		id: 'bonusPhotonSpeed1',
-		name: 'Bonus Photon Speed',
+	bonusHiggsBosonSpeed1: {
+		id: 'bonusHiggsBosonSpeed1',
+		name: 'Bonus Higgs Boson Speed',
 		description: '0.8x power up interval',
 		position: gridPos(1.5, 1),
 		effects: [{
@@ -79,7 +77,7 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 			description: 'Multiply power up interval by 0.8',
 			apply: (currentValue) => currentValue * 0.8
 		}],
-		requires: ['bonusPhotonSpeed0'],
+		requires: ['bonusHiggsBosonSpeed0'],
 	},
 	clickPowerBoost0: {
 		id: 'clickPowerBoost0',
@@ -115,7 +113,7 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 			description: 'Multiply power-up duration by 1.2',
 			apply: (currentValue) => currentValue * 1.2
 		}],
-		requires: ['bonusPhotonSpeed1'],
+		requires: ['bonusHiggsBosonSpeed1'],
 	},
 	powerUpBoost1: {
 		id: 'powerUpBoost1',
@@ -161,8 +159,8 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		effects: [{
 			type: 'global',
 			description: 'Add 1% production per level',
-			apply: (currentValue, state) => {
-				const level = get(playerLevel);
+			apply: (currentValue, manager) => {
+				const level = manager.playerLevel;
 				return currentValue * (1 + level * 0.01);
 			}
 		}],
@@ -313,7 +311,7 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 			type: 'global',
 			description: 'Add 10% production per 100 total clicks',
 			apply: (currentValue, state) => {
-				const clickBonus = Math.floor((state.totalClicks || 0) / 100) * 0.1;
+				const clickBonus = Math.floor((state.totalClicksRun || 0) / 100) * 0.1;
 				return currentValue * (1 + clickBonus);
 			}
 		}],
@@ -328,7 +326,7 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 			type: 'global',
 			description: 'Add 1% production per Electronize performed',
 			apply: (currentValue, state) => {
-				const electronizeBonus = (state.totalElectronizes || 0) * 0.01;
+				const electronizeBonus = (state.totalElectronizesAllTime || 0) * 0.01;
 				return currentValue * (1 + electronizeBonus);
 			}
 		}],
@@ -389,8 +387,8 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		effects: [{
 			type: 'global',
 			description: 'Add 1.5% production per level',
-			apply: (currentValue, state) => {
-				const level = get(playerLevel);
+			apply: (currentValue, manager) => {
+				const level = manager.playerLevel;
 				return currentValue * (1 + level * 0.015);
 			}
 		}],
@@ -420,9 +418,9 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		}],
 		requires: ['clickPowerBoost1'],
 	},
-	bonusPhotonSpeed2: {
-		id: 'bonusPhotonSpeed2',
-		name: 'Ultimate Photon Speed',
+	bonusHiggsBosonSpeed2: {
+		id: 'bonusHiggsBosonSpeed2',
+		name: 'Ultimate Higgs Boson Speed',
 		description: '0.7x power up interval',
 		position: gridPos(1.5, 0),
 		effects: [{
@@ -430,7 +428,7 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 			description: 'Multiply power up interval by 0.7',
 			apply: (currentValue) => currentValue * 0.7
 		}],
-		requires: ['bonusPhotonSpeed1'],
+		requires: ['bonusHiggsBosonSpeed1'],
 	},
 	atomicStability: {
 		id: 'atomicStability',
@@ -468,7 +466,7 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 			type: 'global',
 			description: 'Add 25% production per Protonise performed',
 			apply: (currentValue, state) => {
-				const protoniseBonus = (state.totalProtonises || 0) * 0.25;
+				const protoniseBonus = (state.totalProtonisesRun || 0) * 0.25;
 				return currentValue * (1 + protoniseBonus);
 			}
 		}],

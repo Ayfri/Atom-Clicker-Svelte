@@ -1,7 +1,10 @@
 <script lang="ts">
 	import type { Icon as IconType } from 'lucide-svelte';
+	import { CURRENCIES, type CurrencyName } from '$data/currencies';
+	import Currency from '@components/ui/Currency.svelte';
 
 	interface Props {
+		currency?: CurrencyName;
 		description?: string;
 		fullValue?: string;
 		icon?: typeof IconType;
@@ -9,9 +12,11 @@
 		prefix?: string;
 		suffix?: string;
 		value: string | number;
+		valueClass?: string;
 	}
 
 	let {
+		currency,
 		description,
 		fullValue,
 		icon: Icon,
@@ -19,7 +24,10 @@
 		prefix = '',
 		suffix = '',
 		value,
+		valueClass = 'text-accent',
 	}: Props = $props();
+
+	const currencyData = $derived(currency ? CURRENCIES[currency] : undefined);
 </script>
 
 <div
@@ -27,9 +35,15 @@
 	title={fullValue || undefined}
 >
 	<div class="flex items-center gap-2">
-		{#if Icon}
-			<div class="flex size-6 shrink-0 items-center justify-center rounded bg-accent/20 text-accent">
-				<Icon size={14} />
+		{#if Icon || currency}
+			<div
+				class="flex size-6 shrink-0 items-center justify-center rounded bg-accent/20 text-accent"
+			>
+				{#if currency}
+					<Currency name={currency} />
+				{:else if Icon}
+					<Icon size={14} />
+				{/if}
 			</div>
 		{/if}
 		<div class="flex flex-col">
@@ -39,5 +53,10 @@
 			{/if}
 		</div>
 	</div>
-	<span class="font-semibold text-accent tabular-nums">{prefix}{value}{suffix}</span>
+	<span
+		class="font-semibold tabular-nums {currency ? '' : valueClass}"
+		style:color={currencyData?.color}
+	>
+		{prefix}{value}{suffix}
+	</span>
 </div>

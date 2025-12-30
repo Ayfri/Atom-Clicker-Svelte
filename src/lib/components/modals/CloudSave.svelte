@@ -1,14 +1,15 @@
 <script lang="ts">
+	import HardReset from '@components/modals/HardReset.svelte';
 	import Login from '@components/modals/Login.svelte';
 	import Modal from '@components/ui/Modal.svelte';
 	import Value from '@components/ui/Value.svelte';
 	import { CurrenciesTypes } from '$data/currencies';
 	import type { GameState } from '$lib/types';
 	import { autoSaveEnabled, autoSaveState, shouldAutoSave } from '$stores/autoSave';
-	import { getLevelFromTotalXP } from '$stores/gameStore';
+	import { gameManager } from '$helpers/GameManager.svelte';
 	import { supabaseAuth } from '$stores/supabaseAuth';
 	import { error as errorToast, info } from '$stores/toasts';
-	import { AlertCircle, Clock, CloudDownload, CloudUpload } from 'lucide-svelte';
+	import { AlertCircle, Clock, CloudDownload, CloudUpload, RotateCcw } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 
 	interface Props {
@@ -31,6 +32,7 @@
 	let lastManualSaveTime = $state(0);
 	let loading = $state(false);
 	let progressInterval: ReturnType<typeof setInterval> | null = null;
+	let showHardReset = $state(false);
 	let showLoginModal = $state(false);
 
 	function updateProgress() {
@@ -208,36 +210,21 @@
                     <div class="flex flex-wrap gap-3 text-sm">
                         <div class="flex items-center gap-2">
                             <span class="text-white/60">Level</span>
-                            <span class="text-white font-semibold">{getLevelFromTotalXP(cloudSaveInfo.totalXP)}</span>
+                            <span class="text-white font-semibold">{gameManager.getLevelFromTotalXP(cloudSaveInfo.totalXP)}</span>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <Value
-                                value={cloudSaveInfo.atoms}
-                                currency={CurrenciesTypes.ATOMS}
-                                currencyClass="size-4"
-                                class="text-white font-semibold"
-                            />
-                        </div>
-                        {#if cloudSaveInfo.protons > 0}
-                            <div class="flex items-center gap-2">
-                                <Value
-                                    value={cloudSaveInfo.protons}
-                                    currency={CurrenciesTypes.PROTONS}
-                                    currencyClass="size-4"
-                                    class="text-white font-semibold"
-                                />
-                            </div>
-                        {/if}
-                        {#if cloudSaveInfo.electrons > 0}
-                            <div class="flex items-center gap-2">
-                                <Value
-                                    value={cloudSaveInfo.electrons}
-                                    currency={CurrenciesTypes.ELECTRONS}
-                                    currencyClass="size-4"
-                                    class="text-white font-semibold"
-                                />
-                            </div>
-                        {/if}
+                        {#each Object.values(CurrenciesTypes) as currencyType}
+                            {@const amount = cloudSaveInfo.currencies[currencyType]?.amount ?? 0}
+                            {#if amount > 0 || currencyType === CurrenciesTypes.ATOMS}
+                                <div class="flex items-center gap-2">
+                                    <Value
+                                        value={amount}
+                                        currency={currencyType}
+                                        currencyClass="size-4"
+                                        class="text-white font-semibold"
+                                    />
+                                </div>
+                            {/if}
+                        {/each}
                     </div>
                 </div>
             {/if}
@@ -259,13 +246,13 @@
                                 bind:checked={$autoSaveEnabled}
                                 class="sr-only peer"
                             />
-                            <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
+                            <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
                         </label>
                     </div>
                 </div>
                 {#if $shouldAutoSave}
                     <div
-                        class="h-[2px] bg-accent-500 transition-all duration-100 ease-linear"
+                        class="h-0.5 bg-accent-500 transition-all duration-100 ease-linear"
                         style:width="{autoSaveProgress * 100}%"
                     ></div>
                 {/if}
@@ -296,6 +283,16 @@
                     <CloudDownload class="size-5" />
                     Load from Cloud
                 </button>
+
+                <div class="h-px bg-white/10 my-2"></div>
+
+                <button
+                    class="flex items-center justify-center gap-2 rounded-lg bg-red-900/40 px-6 py-3 font-semibold text-red-200 transition-colors hover:bg-red-900/60"
+                    onclick={() => showHardReset = true}
+                >
+                    <RotateCcw class="size-5" />
+                    Hard Reset
+                </button>
             </div>
 
             <div class="mt-4 rounded-lg bg-black/20 p-4 text-sm text-white/80">
@@ -312,4 +309,8 @@
 
 {#if showLoginModal}
     <Login onClose={() => showLoginModal = false}/>
+{/if}
+
+{#if showHardReset}
+	<HardReset onClose={() => showHardReset = false} />
 {/if}

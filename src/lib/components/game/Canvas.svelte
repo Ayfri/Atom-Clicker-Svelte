@@ -1,160 +1,81 @@
 <script lang="ts">
-	import { loadParticleAssets } from '$helpers/particles';
+	import { loadParticleAssets, ParticleEngine } from '$helpers/particles';
 	import { onDestroy, onMount } from 'svelte';
-	import { particles, shouldCreateParticles } from '$stores/canvas';
+	import { particleQueue, shouldCreateParticles } from '$stores/canvas';
 	import { app } from '$stores/pixi';
+	import { innerWidth, innerHeight } from 'svelte/reactivity/window';
 
-	let particlesContainer: any;
-	let pixiApp: {
-		canvas: HTMLCanvasElement;
-		destroy: () => void;
-		renderer: any;
-		stage: any;
-		ticker: any;
-	} | null = null;
+	let pixiApp: any = null;
+	let particleEngine: ParticleEngine | null = null;
 
-	const animate = (deltaTime: number) => {
-		if (!pixiApp) return;
-
-		particles.update(current => {
-			let newParticles = [...current];
-
-			newParticles = newParticles.filter(particle => {
-				// Safety check for particle sprite properties
-				if (!particle?.sprite) return false;
-
-				if (!particle.sprite.parent && particlesContainer) {
-					try {
-						particlesContainer.addChild(particle.sprite);
-					} catch (error) {
-						// If addChild fails, skip this particle
-						return false;
-					}
-				}
-
-				particle.update?.(particle, deltaTime);
-
-				return !particle.sprite.destroyed;
-			});
-
-			return newParticles;
-		});
-	};
+	// Responsive resize
+	$effect(() => {
+		const w = innerWidth.current || window.innerWidth;
+		const h = innerHeight.current || window.innerHeight;
+		if (pixiApp?.renderer) {
+			pixiApp.renderer.resize(w, h);
+		}
+	});
 
 	onMount(async () => {
-		try {
-			// Only skip in obvious non-browser environments
-			if (!shouldCreateParticles()) {
-				console.info('PixiJS particles disabled - environment not suitable');
-				$app = null;
-				return;
-			}
+		if (!shouldCreateParticles()) {
+			console.info('Particle system disabled.');
+			return;
+		}
 
-			// Dynamically import PixiJS to avoid blocking the app if it fails to load
+		try {
 			const PIXI = await import('pixi.js');
 			await loadParticleAssets();
 
-			// Let PixiJS test itself - if autoDetectRenderer works, we're good to go!
+			// Initialize Renderer with performance optimizations
 			const renderer = await PIXI.autoDetectRenderer({
+				width: innerWidth.current ?? window.innerWidth,
+				height: innerHeight.current ?? window.innerHeight,
 				backgroundAlpha: 0,
-				antialias: true,
-				width: window.innerWidth,
-				height: window.innerHeight,
-				preference: 'webgpu', // Will fallback to webgl automatically
+				antialias: false,
+				preference: 'webgpu',
 			});
 
-			// If we get here, PixiJS works in this environment
-			console.log(`PixiJS initialized successfully with ${renderer.type} renderer`);
-
-			// Create a minimal PixiJS app structure
 			const stage = new PIXI.Container();
 			const ticker = new PIXI.Ticker();
+
+			// Setup Engine
+			particleEngine = new ParticleEngine(PIXI, stage, particleQueue);
 
 			pixiApp = {
 				renderer,
 				stage,
 				ticker,
-				canvas: renderer.canvas as HTMLCanvasElement,
+				canvas: renderer.canvas,
 				destroy: () => {
-					try {
-						ticker.destroy();
-						renderer.destroy();
-					} catch (error) {
-						console.warn('Error during renderer cleanup:', error);
-					}
+					ticker.destroy();
+					renderer.destroy();
+					particleEngine?.destroy();
 				}
 			};
 
-			document.body.appendChild(pixiApp.canvas);
+			document.body.appendChild(renderer.canvas as Node);
 
-			const getFps = () =>
-				new Promise<number>(resolve =>
-					requestAnimationFrame(t1 =>
-						requestAnimationFrame(t2 => resolve(1000 / (t2 - t1)))
-					)
-				);
-
-			const fps = await getFps();
-
-			ticker.add((ticker: any) => {
-				animate(ticker.deltaTime);
-				// Safely render the stage
-				try {
-					renderer.render(stage);
-				} catch (error) {
-					console.warn('Render error:', error);
-				}
+			// Animation Loop
+			ticker.add((t: any) => {
+				particleEngine?.update(t.deltaTime);
+				renderer.render(stage);
 			});
 
-			ticker.minFPS = Math.round(fps);
 			ticker.start();
+			$app = pixiApp;
 
-			particlesContainer = new PIXI.Container({
-				isRenderGroup: true,
-			});
-
-			stage.addChild(particlesContainer);
-
-			// Store app reference for compatibility
-			$app = {
-				canvas: pixiApp.canvas,
-				ticker: pixiApp.ticker,
-				stage: pixiApp.stage,
-				renderer: pixiApp.renderer,
-				destroy: pixiApp.destroy,
-				queueResize: () => {
-					// Resize the renderer to match current window size
-					try {
-						renderer.resize(window.innerWidth, window.innerHeight);
-					} catch (error) {
-						console.warn('Error during resize:', error);
-					}
-				}
-			} as any;
-
-		} catch (error) {
-			// PixiJS couldn't be imported or initialized
-			const errorMessage = error instanceof Error ? error.message : String(error);
-
-			console.warn('PixiJS particles disabled - initialization failed:', errorMessage);
-
-			// Clean failure - no particles, but game continues
-			$app = null;
-			pixiApp = null;
+		} catch (err) {
+			console.warn('PixiJS init failed:', err);
 		}
 	});
 
 	onDestroy(() => {
 		if (pixiApp) {
-			try {
-				pixiApp.ticker.remove((ticker: any) => animate(ticker.deltaTime));
-				if (pixiApp.canvas && pixiApp.canvas.parentNode) {
-					document.body.removeChild(pixiApp.canvas);
-				}
-				pixiApp.destroy();
-			} catch (error) {
-				console.warn('Error during PixiJS cleanup:', error);
+			if (pixiApp.canvas?.parentNode) {
+				document.body.removeChild(pixiApp.canvas);
 			}
+			pixiApp.destroy();
 		}
 		$app = null;
 	});
