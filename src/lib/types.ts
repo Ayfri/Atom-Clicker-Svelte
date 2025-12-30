@@ -1,6 +1,7 @@
 import type {BuildingType} from '$data/buildings';
 import type {CurrencyName} from '$data/currencies';
 import type {GameManager} from '$helpers/GameManager.svelte';
+import type {StatName} from '$helpers/statConstants';
 
 export interface Building {
 	count: number;
@@ -71,18 +72,26 @@ export interface GameState {
 	settings: Settings;
 	skillUpgrades: string[];
 	startDate: number;
-	totalAtomsEarned: number;
 	totalAtomsEarnedAllTime: number;
-	totalBonusHiggsBosonClicked: number;
-	totalBuildingsPurchased: number;
-	totalClicks: number;
+	totalAtomsEarnedRun: number;
+	totalBonusHiggsBosonClickedAllTime: number;
+	totalBonusHiggsBosonClickedRun: number;
+	totalBuildingsPurchasedAllTime: number;
 	totalClicksAllTime: number;
-	totalElectronizes: number;
-	totalElectronsEarned: number;
-	totalExcitedPhotonsEarned: number;
-	totalProtonises: number;
-	totalProtonsEarned: number;
-	totalUpgradesPurchased: number;
+	totalClicksRun: number;
+	totalElectronizesAllTime: number;
+	totalElectronizesRun: number;
+	totalElectronsEarnedAllTime: number;
+	totalElectronsEarnedRun: number;
+	totalExcitedPhotonsEarnedAllTime: number;
+	totalExcitedPhotonsEarnedRun: number;
+	totalPhotonsEarnedAllTime: number;
+	totalPhotonsEarnedRun: number;
+	totalProtonisesAllTime: number;
+	totalProtonisesRun: number;
+	totalProtonsEarnedAllTime: number;
+	totalProtonsEarnedRun: number;
+	totalUpgradesPurchasedAllTime: number;
 	totalUsers: number;
 	totalXP: number;
 	upgrades: string[];
@@ -102,9 +111,12 @@ export interface SkillUpgrade {
 }
 
 export interface Currency {
+	achievementIdPrefix?: string;
+	achievementTiers?: number[];
 	color: string;
-	name: CurrencyName;
 	icon: string;
+	name: CurrencyName;
+	stat?: StatName;
 }
 
 export interface Price {

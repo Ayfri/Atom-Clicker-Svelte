@@ -1,14 +1,16 @@
 <script lang="ts">
+	import { BarChart3, Check, Clock, Cog, FileBox, Sparkles, X, type Icon as IconType } from 'lucide-svelte';
+	import Currency from '@components/ui/Currency.svelte';
+	import Tooltip from '@components/ui/Tooltip.svelte';
+	import { CURRENCIES, type CurrencyName } from '$data/currencies';
 	import { gameManager, type GameManager } from '$helpers/GameManager.svelte';
 	import { statsConfig, NUMBER_STATS, ARRAY_STATS, type StatConfig } from '$helpers/statConstants';
-	import { FileBox, Atom as AtomIcon, BarChart3, Sparkles, Clock, Cog, Check, X, type Icon as IconType } from 'lucide-svelte';
-	import Tooltip from '@components/ui/Tooltip.svelte';
 	import { formatNumberFull } from '$lib/utils';
 	import { parseAtomsValue } from '$lib/utils/number-parser';
 
 	// Group stats by type
 	const statGroups = $derived.by(() => {
-		const groups: Record<string, Array<{ key: string; config: StatConfig; value: unknown; icon: typeof IconType }>> = {
+		const groups: Record<string, Array<{ key: string; config: StatConfig; value: unknown; icon: any; currency?: CurrencyName }>> = {
 			currencies: [],
 			prestige: [],
 			totals: [],
@@ -18,10 +20,15 @@
 
 		Object.entries(statsConfig).forEach(([key, config]) => {
 			const value = gameManager[key as keyof GameManager];
-			let icon: typeof IconType = FileBox;
 
-			if (['atoms', 'protons', 'electrons', 'photons', 'excitedPhotons'].includes(key)) {
-				icon = AtomIcon;
+			// Check if it's a currency stat
+			const currencyEntry = Object.entries(CURRENCIES).find(([_, c]) => c.stat === key);
+			const currency = currencyEntry ? (currencyEntry[0] as CurrencyName) : undefined;
+
+			let icon: any = FileBox;
+
+			if (currency) {
+				icon = undefined;
 			} else if (key.startsWith('total')) {
 				icon = BarChart3;
 			} else if (key.includes('Realm') || key.includes('protonise') || key.includes('electronize')) {
@@ -32,9 +39,9 @@
 				icon = Cog;
 			}
 
-			const stat = { key, config, value, icon };
+			const stat = { key, config, value, icon, currency };
 
-			if (['atoms', 'protons', 'electrons', 'photons', 'excitedPhotons'].includes(key)) {
+			if (currency || ['atoms', 'protons', 'electrons', 'photons', 'excitedPhotons'].includes(key)) {
 				groups.currencies.push(stat);
 			} else if (key.startsWith('total')) {
 				groups.totals.push(stat);
@@ -94,13 +101,21 @@
 	}
 </script>
 
-{#snippet statItem(key: string, value: unknown)}
+{#snippet statItem(key: string, value: unknown, icon: any, currency?: CurrencyName)}
 	{@const liveValue = (gameManager as any)[key]}
 	<div class="flex flex-col gap-1 p-1 rounded-lg hover:bg-white/5 transition-colors group">
 		<div class="flex items-center justify-between px-1">
-			<div class="text-[11px] text-accent-200/50 font-semibold truncate" title={key}>{key}</div>
+			<div class="flex items-center gap-1.5 min-w-0">
+				{#if currency}
+					<Currency name={currency} size={12} />
+				{:else if icon}
+					{@const Icon = icon}
+					<Icon size={12} class="text-accent-400/50" />
+				{/if}
+				<div class="text-[11px] text-accent-200/50 font-semibold truncate" title={key}>{key}</div>
+			</div>
 			{#if Array.isArray(value) || (typeof value === 'object' && value !== null)}
-				<div class="text-[10px] text-white/20 italic uppercase tracking-tighter">
+				<div class="text-[10px] text-white/20 italic uppercase tracking-tighter shrink-0">
 					{Array.isArray(value) ? 'Array' : 'Object'}
 				</div>
 			{/if}
@@ -248,12 +263,17 @@
 			{@const Icon = stats[0].icon}
 			<div class="space-y-2">
 				<h3 class="text-xs font-bold uppercase tracking-[0.2em] flex items-center gap-2 text-accent-300/50 px-2">
-					<Icon size={16} />
+					{#if stats[0].currency}
+						<Currency name={stats[0].currency} size={16} />
+					{:else if stats[0].icon}
+						{@const Icon = stats[0].icon}
+						<Icon size={16} />
+					{/if}
 					{groupName}
 				</h3>
 				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-2 gap-y-1 bg-white/5 rounded-xl p-1.5 border border-white/5">
 					{#each stats as stat (stat.key)}
-						{@render statItem(stat.key, stat.value)}
+						{@render statItem(stat.key, stat.value, stat.icon, stat.currency)}
 					{/each}
 				</div>
 			</div>

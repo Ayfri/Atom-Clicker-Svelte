@@ -20,7 +20,7 @@
 		return canAffordPhotonUpgrade(upgrade, currentLevel, gameManager);
 	}));
 
-	const showExcitedTab = $derived(gameManager.totalExcitedPhotonsEarned > 0);
+	const showExcitedTab = $derived(gameManager.totalExcitedPhotonsEarnedAllTime > 0);
 </script>
 
 <div id="photon-upgrades" class="bg-black/10 backdrop-blur-xs rounded-lg p-3 flex flex-col gap-2 h-full">

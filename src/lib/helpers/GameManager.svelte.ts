@@ -43,18 +43,26 @@ export class GameManager {
 	});
 	skillUpgrades = $state<string[]>([]);
 	startDate = $state(Date.now());
-	totalAtomsEarned = $state(0);
 	totalAtomsEarnedAllTime = $state(0);
-	totalBonusHiggsBosonClicked = $state(0);
-	totalBuildingsPurchased = $state(0);
-	totalClicks = $state(0);
+	totalAtomsEarnedRun = $state(0);
+	totalBonusHiggsBosonClickedAllTime = $state(0);
+	totalBonusHiggsBosonClickedRun = $state(0);
+	totalBuildingsPurchasedAllTime = $state(0);
 	totalClicksAllTime = $state(0);
-	totalElectronizes = $state(0);
-	totalExcitedPhotonsEarned = $state(0);
-	totalElectronsEarned = $state(0);
-	totalProtonises = $state(0);
-	totalProtonsEarned = $state(0);
-	totalUpgradesPurchased = $state(0);
+	totalClicksRun = $state(0);
+	totalElectronizesAllTime = $state(0);
+	totalElectronizesRun = $state(0);
+	totalElectronsEarnedAllTime = $state(0);
+	totalElectronsEarnedRun = $state(0);
+	totalExcitedPhotonsEarnedAllTime = $state(0);
+	totalExcitedPhotonsEarnedRun = $state(0);
+	totalPhotonsEarnedAllTime = $state(0);
+	totalPhotonsEarnedRun = $state(0);
+	totalProtonisesAllTime = $state(0);
+	totalProtonisesRun = $state(0);
+	totalProtonsEarnedAllTime = $state(0);
+	totalProtonsEarnedRun = $state(0);
+	totalUpgradesPurchasedAllTime = $state(0);
 	totalUsers = $state(0);
 	totalXP = $state(0);
 	upgrades = $state<string[]>([]);
@@ -286,18 +294,26 @@ export class GameManager {
 			settings: this.settings,
 			skillUpgrades: this.skillUpgrades,
 			startDate: this.startDate,
-			totalAtomsEarned: this.totalAtomsEarned,
 			totalAtomsEarnedAllTime: this.totalAtomsEarnedAllTime,
-			totalBonusHiggsBosonClicked: this.totalBonusHiggsBosonClicked,
-			totalBuildingsPurchased: this.totalBuildingsPurchased,
-			totalClicks: this.totalClicks,
+			totalAtomsEarnedRun: this.totalAtomsEarnedRun,
+			totalBonusHiggsBosonClickedAllTime: this.totalBonusHiggsBosonClickedAllTime,
+			totalBonusHiggsBosonClickedRun: this.totalBonusHiggsBosonClickedRun,
+			totalBuildingsPurchasedAllTime: this.totalBuildingsPurchasedAllTime,
 			totalClicksAllTime: this.totalClicksAllTime,
-			totalElectronizes: this.totalElectronizes,
-			totalExcitedPhotonsEarned: this.totalExcitedPhotonsEarned,
-			totalElectronsEarned: this.totalElectronsEarned,
-			totalProtonises: this.totalProtonises,
-			totalProtonsEarned: this.totalProtonsEarned,
-			totalUpgradesPurchased: this.totalUpgradesPurchased,
+			totalClicksRun: this.totalClicksRun,
+			totalElectronizesAllTime: this.totalElectronizesAllTime,
+			totalElectronizesRun: this.totalElectronizesRun,
+			totalElectronsEarnedAllTime: this.totalElectronsEarnedAllTime,
+			totalElectronsEarnedRun: this.totalElectronsEarnedRun,
+			totalExcitedPhotonsEarnedAllTime: this.totalExcitedPhotonsEarnedAllTime,
+			totalExcitedPhotonsEarnedRun: this.totalExcitedPhotonsEarnedRun,
+			totalPhotonsEarnedAllTime: this.totalPhotonsEarnedAllTime,
+			totalPhotonsEarnedRun: this.totalPhotonsEarnedRun,
+			totalProtonisesAllTime: this.totalProtonisesAllTime,
+			totalProtonisesRun: this.totalProtonisesRun,
+			totalProtonsEarnedAllTime: this.totalProtonsEarnedAllTime,
+			totalProtonsEarnedRun: this.totalProtonsEarnedRun,
+			totalUpgradesPurchasedAllTime: this.totalUpgradesPurchasedAllTime,
 			totalUsers: this.totalUsers,
 			totalXP: this.totalXP,
 			upgrades: this.upgrades,
@@ -446,7 +462,7 @@ export class GameManager {
 			[type]: newBuilding
 		};
 
-		this.totalBuildingsPurchased += amount;
+		this.totalBuildingsPurchasedAllTime += amount;
 		return true;
 	}
 
@@ -499,7 +515,7 @@ export class GameManager {
 				this.purpleRealmUnlocked = true;
 			}
 
-			this.totalUpgradesPurchased += 1;
+			this.totalUpgradesPurchasedAllTime += 1;
 			return true;
 		}
 		return false;
@@ -529,9 +545,11 @@ export class GameManager {
 				id.startsWith('electron') || id.startsWith('proton') || id === 'feature_purple_realm'
 			);
 
-			this.totalElectronizes += 1;
-			this.totalElectronsEarned += electronGain;
-			this.totalProtonises = 0; // Reset protonise counter
+			this.totalElectronizesRun += 1;
+			this.totalElectronizesAllTime += 1;
+			this.totalElectronsEarnedRun += electronGain;
+			this.totalElectronsEarnedAllTime += electronGain;
+			this.totalProtonisesRun = 0; // Reset protonise counter
 
 			this.resetLayer(LAYERS.ELECTRONIZE);
 
@@ -556,8 +574,10 @@ export class GameManager {
 				id.startsWith('proton') || id.startsWith('electron') || id === 'feature_purple_realm'
 			);
 
-			this.totalProtonises += 1;
-			this.totalProtonsEarned += protonGain;
+			this.totalProtonisesRun += 1;
+			this.totalProtonisesAllTime += 1;
+			this.totalProtonsEarnedRun += protonGain;
+			this.totalProtonsEarnedAllTime += protonGain;
 
 			this.resetLayer(LAYERS.PROTONIZER);
 
@@ -578,7 +598,7 @@ export class GameManager {
 	addAtoms(amount: number) {
 		this.atoms += amount;
 		if (amount > 0) {
-			this.totalAtomsEarned += amount;
+			this.totalAtomsEarnedRun += amount;
 			this.totalAtomsEarnedAllTime += amount;
 
 			if (this.upgrades.includes('feature_levels')) {
@@ -590,20 +610,28 @@ export class GameManager {
 
 	addPhotons(amount: number) {
 		this.photons += amount;
+		if (amount > 0) {
+			this.totalPhotonsEarnedRun += amount;
+			this.totalPhotonsEarnedAllTime += amount;
+		}
 	}
 
 	addExcitedPhotons(amount: number) {
 		this.excitedPhotons += amount;
-		this.totalExcitedPhotonsEarned += amount;
+		if (amount > 0) {
+			this.totalExcitedPhotonsEarnedRun += amount;
+			this.totalExcitedPhotonsEarnedAllTime += amount;
+		}
 	}
 
 	incrementBonusHiggsBosonClicks() {
-		this.totalBonusHiggsBosonClicked += 1;
+		this.totalBonusHiggsBosonClickedRun += 1;
+		this.totalBonusHiggsBosonClickedAllTime += 1;
 		this.lastInteractionTime = Date.now();
 	}
 
 	incrementClicks() {
-		this.totalClicks += 1;
+		this.totalClicksRun += 1;
 		this.totalClicksAllTime += 1;
 		this.lastInteractionTime = Date.now();
 	}

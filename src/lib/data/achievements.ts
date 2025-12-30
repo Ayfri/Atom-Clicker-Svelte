@@ -2,6 +2,7 @@ import type { Achievement } from '$lib/types';
 import type { GameManager } from '$helpers/GameManager.svelte';
 import { formatNumber } from '$lib/utils';
 import { BUILDING_TYPES, BUILDINGS, type BuildingType } from '$data/buildings';
+import { CURRENCIES, CurrenciesTypes } from '$data/currencies';
 import { SKILL_UPGRADES } from '$data/skillTree';
 
 export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
@@ -202,8 +203,8 @@ function createTotalClicksAchievements(): Achievement[] {
 			id: `clicks_${count}`,
 			name: `${formatNumber(count)} Clicks`,
 			description: `Click ${formatNumber(count)} times`,
-			hiddenCondition: (manager: GameManager) => manager.totalClicks === 0,
-			condition: (manager: GameManager) => manager.totalClicks >= count,
+			hiddenCondition: (manager: GameManager) => manager.totalClicksAllTime === 0,
+			condition: (manager: GameManager) => manager.totalClicksAllTime >= count,
 		};
 	}
 
@@ -223,82 +224,42 @@ function createTotalLevelsAchievements(): Achievement[] {
 	return [1, 10, 25, 50, 100, 250, 500, 727, 1000, 2500, 5000, 10_000].map(createTotalLevelsAchievement);
 }
 
-function createProtonisesAchievements(): Achievement[] {
-	function createProtonisesAchievement(count: number): Achievement {
-		return {
-			id: `protonises_${count}`,
-			name: `${count} Protonises`,
-			description: `Protonise ${count} times`,
-			condition: (manager: GameManager) => manager.totalProtonises >= count,
-			hiddenCondition: (manager: GameManager) => manager.totalProtonises === 0,
-		};
-	}
+function createCurrencyAchievements(): Achievement[] {
+	return Object.values(CURRENCIES).filter(c => c.achievementTiers && c.stat).flatMap(currency => {
+		return currency.achievementTiers!.map(tier => {
+			let name = `${formatNumber(tier)} ${currency.name}`;
+			let description = `Collect ${formatNumber(tier)} ${currency.name.toLowerCase()}`;
 
-	return [1, 2, 3, 5, 10, 20, 50, 100, 250, 500, 1000].map(createProtonisesAchievement);
-}
+			if (currency.name === CurrenciesTypes.PROTONS) {
+				name = `${tier} Protonises`;
+				description = `Protonise ${tier} times`;
+			} else if (currency.name === CurrenciesTypes.ELECTRONS) {
+				name = `${tier} Electronizes`;
+				description = `Electronize ${tier} times`;
+			} else if (currency.name === CurrenciesTypes.HIGGS_BOSON) {
+				const countNames: Record<number, string> = {
+					1: 'First',
+					10: 'Ten',
+					64: '64',
+					512: '512',
+					4096: '4096'
+				};
+				name = `${countNames[tier] || tier} Bonus Higgs Boson`;
+				description = `Click ${formatNumber(tier, 0)} bonus higgs boson${tier === 1 ? '' : 's'}`;
+			} else if (currency.name === CurrenciesTypes.EXCITED_PHOTONS) {
+				name = `Excited ${tier >= 1000 ? (tier >= 400000 ? '4' : '3') : (tier >= 20 ? '2' : '')}`;
+				description = `Earn ${formatNumber(tier)} Excited Photon${tier > 1 ? 's' : ''}`;
+			}
 
-function createElectronizesAchievements(): Achievement[] {
-	function createElectronizesAchievement(count: number): Achievement {
-		return {
-			id: `electronizes_${count}`,
-			name: `${count} Electronizes`,
-			description: `Electronize ${count} times`,
-			condition: (manager: GameManager) => manager.totalElectronizes >= count,
-			hiddenCondition: (manager: GameManager) => manager.totalElectronizes === 0,
-		};
-	}
-
-	return [1, 2, 3, 5, 10, 20, 50, 100, 250, 500, 1000].map(createElectronizesAchievement);
-}
-
-function createBonusHiggsBosonClicksAchievements(): Achievement[] {
-	function createBonusHiggsBosonClicksAchievement(count: number): Achievement {
-		const countNames: Record<number, string> = {
-			1: 'First',
-			10: 'Ten',
-			64: '64',
-			512: '512',
-			4096: '4096'
-		};
-
-		return {
-			id: `bonus_higgs_boson_clicked_${count}`,
-			name: `${countNames[count]} Bonus Higgs Boson`,
-			description: `Click ${formatNumber(count, 0)} bonus higgs boson${count === 1 ? '' : 's'}`,
-			condition: (manager: GameManager) => manager.totalBonusHiggsBosonClicked >= count,
-			hiddenCondition: (manager: GameManager) => manager.totalBonusHiggsBosonClicked === 0,
-		};
-	}
-
-	return [1, 10, 64, 512, 4096].map(createBonusHiggsBosonClicksAchievement);
-}
-
-function createPhotonAchievements(): Achievement[] {
-	function createPhotonAchievement(count: number): Achievement {
-		return {
-			id: `photons_${count}`,
-			name: `${formatNumber(count)} Photons`,
-			description: `Collect ${formatNumber(count)} photons`,
-			condition: (manager: GameManager) => manager.photons >= count,
-			hiddenCondition: (manager: GameManager) => manager.photons === 0,
-		};
-	}
-
-	return [1, 100, 1000, 10_000, 100_000, 1_000_000].map(createPhotonAchievement);
-}
-
-function createExcitedPhotonAchievements(): Achievement[] {
-	function createExcitedPhotonAchievement(count: number): Achievement {
-		return {
-			id: `excited_photons_${count}`,
-			name: `Excited ${count >= 1000 ? (count >= 400000 ? '4' : '3') : (count >= 20 ? '2' : '')}`,
-			description: `Earn ${formatNumber(count)} Excited Photon${count > 1 ? 's' : ''}`,
-			condition: (manager: GameManager) => manager.totalExcitedPhotonsEarned >= count,
-			hiddenCondition: (manager: GameManager) => manager.totalExcitedPhotonsEarned === 0,
-		};
-	}
-
-	return [1, 20, 1000, 400_000].map(createExcitedPhotonAchievement);
+			return {
+				id: `${currency.achievementIdPrefix}_${tier}`,
+				name,
+				description,
+				condition: (manager: GameManager) => (manager[currency.stat as keyof GameManager] as number) >= tier,
+				hiddenCondition: (manager: GameManager) => (manager[currency.stat as keyof GameManager] as number) === 0,
+			};
+		});
+	});
 }
 
 function createPhotonUpgradeAchievements(): Achievement[] {
@@ -329,11 +290,7 @@ const achievementsArray: Achievement[] = [
 	...createAtomsPerSecondAchievements(),
 	...createTotalClicksAchievements(),
 	...createTotalLevelsAchievements(),
-	...createProtonisesAchievements(),
-	...createElectronizesAchievements(),
-	...createBonusHiggsBosonClicksAchievements(),
-	...createPhotonAchievements(),
-	...createExcitedPhotonAchievements(),
+	...createCurrencyAchievements(),
 	...createPhotonUpgradeAchievements(),
 	...SPECIAL_ACHIEVEMENTS,
 ];

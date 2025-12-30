@@ -254,7 +254,7 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 				apply: (currentValue) => currentValue,
 			},
 		],
-		condition: (manager) => manager.totalExcitedPhotonsEarned > 0,
+		condition: (manager) => manager.totalExcitedPhotonsEarnedAllTime > 0,
 	},
 };
 

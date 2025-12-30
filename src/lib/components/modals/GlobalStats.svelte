@@ -152,10 +152,10 @@
 			<div class="grid gap-1.5 sm:grid-cols-2">
 				<StatItem
 					description="This run"
-					fullValue={formatNumberFull(gameManager.totalClicks)}
+					fullValue={formatNumberFull(gameManager.totalClicksRun)}
 					icon={MousePointerClick}
 					label="Clicks"
-					value={formatNumber(gameManager.totalClicks, 0)}
+					value={formatNumber(gameManager.totalClicksRun, 0)}
 				/>
 				<StatItem
 					description="All time"
@@ -165,16 +165,16 @@
 					value={formatNumber(gameManager.totalClicksAllTime, 0)}
 				/>
 				<StatItem
+					currency={CurrenciesTypes.ATOMS}
 					description="This run"
-					fullValue={formatNumberFull(gameManager.totalAtomsEarned)}
-					icon={Zap}
+					fullValue={formatNumberFull(gameManager.totalAtomsEarnedRun)}
 					label="Atoms Earned"
-					value={formatNumber(gameManager.totalAtomsEarned)}
+					value={formatNumber(gameManager.totalAtomsEarnedRun)}
 				/>
 				<StatItem
+					currency={CurrenciesTypes.ATOMS}
 					description="All time"
 					fullValue={formatNumberFull(gameManager.totalAtomsEarnedAllTime)}
-					icon={Zap}
 					label="Atoms (Total)"
 					value={formatNumber(gameManager.totalAtomsEarnedAllTime)}
 				/>
@@ -203,10 +203,10 @@
 				/>
 				<StatItem
 					description="All time"
-					fullValue={formatNumberFull(gameManager.totalBuildingsPurchased)}
+					fullValue={formatNumberFull(gameManager.totalBuildingsPurchasedAllTime)}
 					icon={Building2}
 					label="Buildings Purchased"
-					value={formatNumber(gameManager.totalBuildingsPurchased, 0)}
+					value={formatNumber(gameManager.totalBuildingsPurchasedAllTime, 0)}
 				/>
 				<StatItem
 					description="Currently owned"
@@ -217,10 +217,10 @@
 				/>
 				<StatItem
 					description="All time"
-					fullValue={formatNumberFull(gameManager.totalUpgradesPurchased)}
+					fullValue={formatNumberFull(gameManager.totalUpgradesPurchasedAllTime)}
 					icon={Package}
 					label="Upgrades Purchased"
-					value={formatNumber(gameManager.totalUpgradesPurchased, 0)}
+					value={formatNumber(gameManager.totalUpgradesPurchasedAllTime, 0)}
 				/>
 			</div>
 		</section>
@@ -237,6 +237,20 @@
 					icon={Zap}
 					label="Power-ups Collected"
 					value={formatNumber(gameManager.powerUpsCollected, 0)}
+				/>
+				<StatItem
+					currency={CurrenciesTypes.HIGGS_BOSON}
+					description="This run"
+					fullValue={formatNumberFull(gameManager.totalBonusHiggsBosonClickedRun)}
+					label="Bonus Higgs Clicked"
+					value={formatNumber(gameManager.totalBonusHiggsBosonClickedRun, 0)}
+				/>
+				<StatItem
+					currency={CurrenciesTypes.HIGGS_BOSON}
+					description="All time"
+					fullValue={formatNumberFull(gameManager.totalBonusHiggsBosonClickedAllTime)}
+					label="Bonus Higgs Clicked (Total)"
+					value={formatNumber(gameManager.totalBonusHiggsBosonClickedAllTime, 0)}
 				/>
 				<StatItem
 					fullValue={`${gameManager.powerUpDurationMultiplier.toFixed(2)}×`}
@@ -256,7 +270,7 @@
 		</section>
 
 		<!-- Prestige Stats -->
-		{#if gameManager.protons > 0 || gameManager.electrons > 0 || gameManager.totalProtonises > 0 || gameManager.totalElectronizes > 0}
+		{#if gameManager.protons > 0 || gameManager.electrons > 0 || gameManager.totalProtonisesRun > 0 || gameManager.totalElectronizesAllTime > 0}
 			<section>
 				<h3 class="mb-2 flex items-center gap-2 border-b border-white/20 pb-1.5 text-base font-semibold text-white/90">
 					<RotateCcw size={18} />
@@ -264,48 +278,76 @@
 				</h3>
 				<div class="grid gap-1.5 lg:grid-cols-2">
 					<!-- Protons Column -->
-					{#if gameManager.protons > 0 || gameManager.totalProtonises > 0 || gameManager.totalElectronizes > 0}
+					{#if gameManager.protons > 0 || gameManager.totalProtonisesRun > 0 || gameManager.totalElectronizesAllTime > 0}
 						<div class="flex flex-col gap-1.5">
 							<StatItem
 								currency={CurrenciesTypes.PROTONS}
 								fullValue={formatNumberFull(gameManager.protons)}
-								label="Protons"
+								label="Current Protons"
 								value={formatNumber(gameManager.protons)}
 							/>
 							<StatItem
-								fullValue={formatNumberFull(gameManager.totalProtonsEarned)}
-								icon={Atom}
-								label="Protons Earned (Total)"
-								value={formatNumber(gameManager.totalProtonsEarned)}
+								currency={CurrenciesTypes.PROTONS}
+								description="This run"
+								fullValue={formatNumberFull(gameManager.totalProtonsEarnedRun)}
+								label="Protons Earned"
+								value={formatNumber(gameManager.totalProtonsEarnedRun)}
 							/>
 							<StatItem
-								fullValue={formatNumberFull(gameManager.totalProtonises)}
+								currency={CurrenciesTypes.PROTONS}
+								description="All time"
+								fullValue={formatNumberFull(gameManager.totalProtonsEarnedAllTime)}
+								label="Protons Earned (Total)"
+								value={formatNumber(gameManager.totalProtonsEarnedAllTime)}
+							/>
+							<StatItem
+								fullValue={formatNumberFull(gameManager.totalProtonisesRun)}
 								icon={RotateCcw}
 								label="Times Protonised"
-								value={gameManager.totalProtonises}
+								value={gameManager.totalProtonisesRun}
+							/>
+							<StatItem
+								fullValue={formatNumberFull(gameManager.totalProtonisesAllTime)}
+								icon={RotateCcw}
+								label="Times Protonised (Total)"
+								value={gameManager.totalProtonisesAllTime}
 							/>
 						</div>
 					{/if}
 					<!-- Electrons Column -->
-					{#if gameManager.electrons > 0 || gameManager.totalElectronizes > 0}
+					{#if gameManager.electrons > 0 || gameManager.totalElectronizesAllTime > 0}
 						<div class="flex flex-col gap-1.5">
 							<StatItem
 								currency={CurrenciesTypes.ELECTRONS}
 								fullValue={formatNumberFull(gameManager.electrons)}
-								label="Electrons"
+								label="Current Electrons"
 								value={formatNumber(gameManager.electrons)}
 							/>
 							<StatItem
-								fullValue={formatNumberFull(gameManager.totalElectronsEarned)}
-								icon={Atom}
-								label="Electrons Earned (Total)"
-								value={formatNumber(gameManager.totalElectronsEarned)}
+								currency={CurrenciesTypes.ELECTRONS}
+								description="This run"
+								fullValue={formatNumberFull(gameManager.totalElectronsEarnedRun)}
+								label="Electrons Earned"
+								value={formatNumber(gameManager.totalElectronsEarnedRun)}
 							/>
 							<StatItem
-								fullValue={formatNumberFull(gameManager.totalElectronizes)}
+								currency={CurrenciesTypes.ELECTRONS}
+								description="All time"
+								fullValue={formatNumberFull(gameManager.totalElectronsEarnedAllTime)}
+								label="Electrons Earned (Total)"
+								value={formatNumber(gameManager.totalElectronsEarnedAllTime)}
+							/>
+							<StatItem
+								fullValue={formatNumberFull(gameManager.totalElectronizesRun)}
 								icon={RotateCcw}
 								label="Times Electronized"
-								value={gameManager.totalElectronizes}
+								value={gameManager.totalElectronizesRun}
+							/>
+							<StatItem
+								fullValue={formatNumberFull(gameManager.totalElectronizesAllTime)}
+								icon={RotateCcw}
+								label="Times Electronized (Total)"
+								value={gameManager.totalElectronizesAllTime}
 							/>
 						</div>
 					{/if}
@@ -315,7 +357,7 @@
 
 		<!-- Photon Realm Stats -->
 
-		{#if gameManager.photons > 0 || gameManager.totalBonusHiggsBosonClicked > 0}
+		{#if gameManager.photons > 0 || gameManager.excitedPhotons > 0 || gameManager.totalPhotonsEarnedAllTime > 0}
 			<section>
 				<h3 class="mb-2 flex items-center gap-2 border-b border-white/20 pb-1.5 text-base font-semibold text-white/90">
 					<Sparkles size={18} />
@@ -325,26 +367,42 @@
 					<StatItem
 						currency={CurrenciesTypes.PHOTONS}
 						fullValue={formatNumberFull(gameManager.photons)}
-						label="Photons"
+						label="Current Photons"
 						value={formatNumber(gameManager.photons)}
 					/>
 					<StatItem
-						currency={CurrenciesTypes.HIGGS_BOSON}
-						fullValue={formatNumberFull(gameManager.totalBonusHiggsBosonClicked)}
-						label="Bonus Higgs Bosons Clicked"
-						value={formatNumber(gameManager.totalBonusHiggsBosonClicked, 0)}
+						currency={CurrenciesTypes.PHOTONS}
+						description="This run"
+						fullValue={formatNumberFull(gameManager.totalPhotonsEarnedRun)}
+						label="Photons Earned"
+						value={formatNumber(gameManager.totalPhotonsEarnedRun)}
+					/>
+					<StatItem
+						currency={CurrenciesTypes.PHOTONS}
+						description="All time"
+						fullValue={formatNumberFull(gameManager.totalPhotonsEarnedAllTime)}
+						label="Photons Earned (Total)"
+						value={formatNumber(gameManager.totalPhotonsEarnedAllTime)}
 					/>
 					<StatItem
 						currency={CurrenciesTypes.EXCITED_PHOTONS}
 						fullValue={formatNumberFull(gameManager.excitedPhotons)}
-						label="Excited Photons"
+						label="Current Excited Photons"
 						value={formatNumber(gameManager.excitedPhotons)}
 					/>
 					<StatItem
 						currency={CurrenciesTypes.EXCITED_PHOTONS}
-						fullValue={formatNumberFull(gameManager.totalExcitedPhotonsEarned)}
+						description="This run"
+						fullValue={formatNumberFull(gameManager.totalExcitedPhotonsEarnedRun)}
+						label="Excited Photons Earned"
+						value={formatNumber(gameManager.totalExcitedPhotonsEarnedRun)}
+					/>
+					<StatItem
+						currency={CurrenciesTypes.EXCITED_PHOTONS}
+						description="All time"
+						fullValue={formatNumberFull(gameManager.totalExcitedPhotonsEarnedAllTime)}
 						label="Excited Photons Earned (Total)"
-						value={formatNumber(gameManager.totalExcitedPhotonsEarned)}
+						value={formatNumber(gameManager.totalExcitedPhotonsEarnedAllTime)}
 					/>
 				</div>
 			</section>

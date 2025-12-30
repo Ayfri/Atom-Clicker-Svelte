@@ -311,7 +311,7 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 			type: 'global',
 			description: 'Add 10% production per 100 total clicks',
 			apply: (currentValue, state) => {
-				const clickBonus = Math.floor((state.totalClicks || 0) / 100) * 0.1;
+				const clickBonus = Math.floor((state.totalClicksRun || 0) / 100) * 0.1;
 				return currentValue * (1 + clickBonus);
 			}
 		}],
@@ -326,7 +326,7 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 			type: 'global',
 			description: 'Add 1% production per Electronize performed',
 			apply: (currentValue, state) => {
-				const electronizeBonus = (state.totalElectronizes || 0) * 0.01;
+				const electronizeBonus = (state.totalElectronizesAllTime || 0) * 0.01;
 				return currentValue * (1 + electronizeBonus);
 			}
 		}],
@@ -466,7 +466,7 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 			type: 'global',
 			description: 'Add 25% production per Protonise performed',
 			apply: (currentValue, state) => {
-				const protoniseBonus = (state.totalProtonises || 0) * 0.25;
+				const protoniseBonus = (state.totalProtonisesRun || 0) * 0.25;
 				return currentValue * (1 + protoniseBonus);
 			}
 		}],

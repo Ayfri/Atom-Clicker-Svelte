@@ -335,7 +335,7 @@ function createProtonUpgrades() {
 				{
 					type: 'electron_gain',
 					description: '+1 electron per protonise',
-					apply: (currentValue, manager) => currentValue + (manager.totalProtonises || 0),
+					apply: (currentValue, manager) => currentValue + (manager.totalProtonisesRun || 0),
 				},
 			],
 		},
@@ -358,7 +358,7 @@ function createProtonUpgrades() {
 					type: 'global',
 					description: `Add ${25 * i}% production per protonise`,
 					apply: (currentValue, manager) => {
-						const boost = (manager.totalProtonises || 0) * (0.25 * i);
+						const boost = (manager.totalProtonisesRun || 0) * (0.25 * i);
 						return currentValue * (1 + boost);
 					},
 				},

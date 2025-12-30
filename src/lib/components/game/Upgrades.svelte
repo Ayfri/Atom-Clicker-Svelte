@@ -14,11 +14,11 @@
 
 	// Show proton upgrades if player has protons, has protonised before, or has purchased any proton upgrade
 	const hasProtonUpgrades = $derived(gameManager.upgrades.some(id => id.startsWith('proton')));
-	const showProtons = $derived(gameManager.protons > 0 || gameManager.totalProtonises > 0 || hasProtonUpgrades);
+	const showProtons = $derived(gameManager.protons > 0 || gameManager.totalProtonisesAllTime > 0 || hasProtonUpgrades);
 
 	// Show electron upgrades if player has electrons or has purchased any electron upgrade
 	const hasElectronUpgrades = $derived(gameManager.upgrades.some(id => id.startsWith('electron')));
-	const showElectrons = $derived(gameManager.electrons > 0 || hasElectronUpgrades);
+	const showElectrons = $derived(gameManager.electrons > 0 || gameManager.totalElectronizesAllTime > 0 || hasElectronUpgrades);
 
 	const boughtUpgrades = $derived(new Set(gameManager.upgrades));
 

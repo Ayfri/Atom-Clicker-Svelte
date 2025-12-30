@@ -14,10 +14,10 @@
 
 <div class="relative pt-12 transition-all duration-1000 ease-in-out lg:pt-4 {mobile.current ? 'min-h-screen pb-8' : ''}">
 	<div class="-z-10 absolute inset-0 overflow-hidden pointer-events-none">
-		{#if gameManager.totalProtonises > 0}
+		{#if gameManager.totalProtonisesAllTime > 0}
 			<div class="absolute bg-yellow-400/15 blur-[160px] h-64 right-[20%] rounded-full top-[10%] w-64"></div>
 		{/if}
-		{#if gameManager.totalElectronizes > 0}
+		{#if gameManager.totalElectronizesAllTime > 0}
 			<div class="absolute bg-green-500/15 blur-[180px] bottom-[20%] h-80 left-[10%] rounded-full w-80"></div>
 		{/if}
 	</div>

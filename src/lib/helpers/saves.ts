@@ -5,7 +5,7 @@ import {saveRecovery, type SaveErrorType} from '$stores/saveRecovery';
 import {statsConfig} from '$helpers/statConstants';
 
 export const SAVE_KEY = 'atomic-clicker-save';
-export const SAVE_VERSION = 15;
+export const SAVE_VERSION = 16;
 
 export interface LoadSaveResult {
 	errorDetails?: string;
@@ -324,6 +324,38 @@ function migrateSavedState(savedState: unknown): GameState | undefined {
 				};
 				state.skillUpgrades = state.skillUpgrades.map((id: string) => map[id] || id);
 			}
+		}
+
+		if (state.version === 15) {
+			const mapping: Record<string, string> = {
+				totalAtomsEarned: 'totalAtomsEarnedRun',
+				totalBonusHiggsBosonClicked: 'totalBonusHiggsBosonClickedRun',
+				totalBuildingsPurchased: 'totalBuildingsPurchasedAllTime',
+				totalClicks: 'totalClicksRun',
+				totalElectronizes: 'totalElectronizesAllTime',
+				totalElectronsEarned: 'totalElectronsEarnedAllTime',
+				totalExcitedPhotonsEarned: 'totalExcitedPhotonsEarnedAllTime',
+				totalProtonises: 'totalProtonisesRun',
+				totalProtonsEarned: 'totalProtonsEarnedAllTime',
+				totalUpgradesPurchased: 'totalUpgradesPurchasedAllTime'
+			};
+
+			for (const [oldKey, newKey] of Object.entries(mapping)) {
+				if (oldKey in state) {
+					state[newKey] = state[oldKey];
+					delete state[oldKey];
+				}
+			}
+
+			// Initialize new stats
+			state.totalBonusHiggsBosonClickedAllTime = state.totalBonusHiggsBosonClickedRun || 0;
+			state.totalElectronizesRun = state.totalElectronizesAllTime || 0;
+			state.totalElectronsEarnedRun = state.totalElectronsEarnedAllTime || 0;
+			state.totalExcitedPhotonsEarnedRun = state.totalExcitedPhotonsEarnedAllTime || 0;
+			state.totalPhotonsEarnedAllTime = state.photons || 0;
+			state.totalPhotonsEarnedRun = state.photons || 0;
+			state.totalProtonisesAllTime = state.totalProtonisesRun || 0;
+			state.totalProtonsEarnedRun = state.totalProtonsEarnedAllTime || 0;
 		}
 
 		state.version = nextVersion;
