@@ -1,31 +1,30 @@
-import { type BuildingType, BUILDINGS, BUILDING_LEVEL_UP_COST } from '$data/buildings';
-import { type Building, type PowerUp, type Settings, type GameState, type Price } from '$lib/types';
-import { LAYERS, type LayerType } from '$helpers/statConstants';
-import { SAVE_VERSION, loadSavedState, SAVE_KEY } from '$helpers/saves';
 import { ACHIEVEMENTS } from '$data/achievements';
+import { type BuildingType, BUILDINGS, BUILDING_LEVEL_UP_COST } from '$data/buildings';
 import { CurrenciesTypes } from '$data/currencies';
-import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
 import { ALL_PHOTON_UPGRADES, getPhotonUpgradeCost } from '$data/photonUpgrades';
-import { SKILL_UPGRADES } from '$data/skillTree';
-import { statsConfig } from '$helpers/statConstants';
-import { UPGRADES } from '$data/upgrades';
-import { BUILDING_COST_MULTIPLIER, PROTONS_ATOMS_REQUIRED, ELECTRONS_PROTONS_REQUIRED } from '$lib/constants';
-import { calculateEffects, getUpgradesWithEffects } from '$helpers/effects';
 import { POWER_UP_DEFAULT_INTERVAL } from '$data/powerUp';
-import { info } from '$stores/toasts';
-import { saveRecovery } from '$stores/saveRecovery';
-import { leaderboardStats } from '$stores/leaderboard.svelte';
+import { SKILL_UPGRADES } from '$data/skillTree';
+import { UPGRADES } from '$data/upgrades';
 import { browser } from '$app/environment';
+import { BUILDING_COST_MULTIPLIER, ELECTRONS_PROTONS_REQUIRED, PROTONS_ATOMS_REQUIRED } from '$lib/constants';
+import { type Building, type GameState, type PowerUp, type Price, type Settings, type SkillUpgrade, type Upgrade } from '$lib/types';
+import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
+import { calculateEffects, getUpgradesWithEffects } from '$helpers/effects';
+import { LAYERS, type LayerType, statsConfig } from '$helpers/statConstants';
+import { leaderboardStats } from '$stores/leaderboard.svelte';
+import { saveRecovery } from '$stores/saveRecovery';
+import { info } from '$stores/toasts';
+import { SAVE_KEY, SAVE_VERSION, loadSavedState } from '$helpers/saves';
 
 export class GameManager {
-	// Stats
+	// State
 	achievements = $state<string[]>([]);
 	activePowerUps = $state<PowerUp[]>([]);
 	buildings = $state<Partial<Record<BuildingType, Building>>>({});
 	highestAPS = $state(0);
 	inGameTime = $state(0);
-	lastSave = $state(Date.now());
 	lastInteractionTime = $state(Date.now());
+	lastSave = $state(Date.now());
 	photonUpgrades = $state<Record<string, number>>({});
 	powerUpsCollected = $state(0);
 	purpleRealmUnlocked = $state(false);
@@ -51,10 +50,8 @@ export class GameManager {
 	totalXP = $state(0);
 	upgrades = $state<string[]>([]);
 
-	// Configuration for stats (for saving/loading/resetting)
+	// Configuration
 	private statsConfig = statsConfig;
-
-	// Intervals
 	private gameInterval: ReturnType<typeof setInterval> | null = null;
 
 	initialize() {
@@ -72,29 +69,27 @@ export class GameManager {
 		if (this.gameInterval) clearInterval(this.gameInterval);
 	}
 
+	// Derived Props (Sorted Alphabetically)
 
-	// Derived values (Getters)
-	get currencies() {
-		return currenciesManager.currencies;
-	}
+	allEffectSources = $derived.by(() => {
+		const baseUpgrades = this.currentUpgradesBought;
+		const photonUpgrades = Object.entries(this.photonUpgrades)
+			.filter(([id, level]) => level > 0 && ALL_PHOTON_UPGRADES[id])
+			.map(([id, level]) => ({
+				effects: ALL_PHOTON_UPGRADES[id].effects(level),
+				id,
+			}));
 
-	set currencies(value) {
-		currenciesManager.currencies = value;
-	}
-
-	// Stats Getters
-	get atoms() { return currenciesManager.getAmount(CurrenciesTypes.ATOMS); }
-	get electrons() { return currenciesManager.getAmount(CurrenciesTypes.ELECTRONS); }
-	get excitedPhotons() { return currenciesManager.getAmount(CurrenciesTypes.EXCITED_PHOTONS); }
-	get photons() { return currenciesManager.getAmount(CurrenciesTypes.PHOTONS); }
-	get protons() { return currenciesManager.getAmount(CurrenciesTypes.PROTONS); }
+		return [...baseUpgrades, ...photonUpgrades] as (Upgrade | SkillUpgrade)[];
+	});
 
 	atomsPerSecond = $derived.by(() => {
 		return Object.entries(this.buildings).reduce((total, [type, building]) => {
 			if (!building) return total;
 
-			const upgrades = getUpgradesWithEffects(this.currentUpgradesBought, { target: type, type: 'building' });
-			const multiplier = calculateEffects(upgrades, this, building.rate);
+			const options = { target: type, type: 'building' as const };
+			const upgrades = getUpgradesWithEffects(this.allEffectSources, options);
+			const multiplier = calculateEffects(upgrades, this, building.rate, options);
 			const oldMultiplier = Math.pow(building.count / 2, building.level + 1) / 5;
 			const linearMultiplier = (building.level + 1) * 100;
 			const levelMultiplier = building.level > 0 ? Math.sqrt(oldMultiplier * linearMultiplier) : 1;
@@ -106,8 +101,9 @@ export class GameManager {
 
 	autoClicksPerSecond = $derived.by(() => {
 		if (!this.settings.automation.autoClick) return 0;
-		const autoClickUpgrades = getUpgradesWithEffects(this.currentUpgradesBought, { type: 'auto_click' });
-		return calculateEffects(autoClickUpgrades, this, 0);
+		const options = { type: 'auto_click' as const };
+		const autoClickUpgrades = getUpgradesWithEffects(this.allEffectSources, options);
+		return calculateEffects(autoClickUpgrades, this, 0, options);
 	});
 
 	bonusMultiplier = $derived(this.activePowerUps.reduce((acc, powerUp) => acc * powerUp.multiplier, 1));
@@ -116,8 +112,9 @@ export class GameManager {
 		return Object.entries(this.buildings).reduce((acc, [type, building]) => {
 			let production = 0;
 			if (building) {
-				const upgrades = getUpgradesWithEffects(this.currentUpgradesBought, { target: type, type: 'building' });
-				const multiplier = calculateEffects(upgrades, this, building.rate);
+				const options = { target: type, type: 'building' as const };
+				const upgrades = getUpgradesWithEffects(this.allEffectSources, options);
+				const multiplier = calculateEffects(upgrades, this, building.rate, options);
 				const oldMultiplier = Math.pow(building.count / 2, building.level + 1) / 5;
 				const linearMultiplier = (building.level + 1) * 100;
 				const levelMultiplier = building.level > 0 ? Math.sqrt(oldMultiplier * linearMultiplier) : 1;
@@ -133,13 +130,15 @@ export class GameManager {
 	canProtonise = $derived(this.atoms >= PROTONS_ATOMS_REQUIRED || this.protons > 0);
 
 	clickPower = $derived.by(() => {
-		const clickUpgrades = getUpgradesWithEffects(this.currentUpgradesBought, { type: 'click' });
-		return calculateEffects(clickUpgrades, this, 1) * this.bonusMultiplier;
+		const options = { type: 'click' as const };
+		const clickUpgrades = getUpgradesWithEffects(this.allEffectSources, options);
+		return calculateEffects(clickUpgrades, this, 1, options) * this.bonusMultiplier;
 	});
 
 	currentLevelXP = $derived.by(() => {
-		if (this.playerLevel === 0) return this.totalXP;
-		const previousLevelXP = Array.from({ length: this.playerLevel }, (_, i) => this.getXPForLevel(i + 1)).reduce((acc, val) => acc + val, 0);
+		const level = this.getLevelFromTotalXP(this.totalXP);
+		if (level === 0) return this.totalXP;
+		const previousLevelXP = Array.from({ length: level }, (_, i) => this.getXPForLevel(i + 1)).reduce((acc, val) => acc + val, 0);
 		return Math.max(0, this.totalXP - previousLevelXP);
 	});
 
@@ -150,52 +149,24 @@ export class GameManager {
 			.map(id => UPGRADES[id] || SKILL_UPGRADES[id]);
 	});
 
-	excitedPhotonChance = $derived.by(() => {
-		const baseChance = 0.002; // 0.2%
-		let chance = baseChance;
-
-		// Quantum Fluctuation
-		const fluctuationLevel = this.photonUpgrades['quantum_fluctuation'] || 0;
-		if (fluctuationLevel > 0) {
-			const upgrade = ALL_PHOTON_UPGRADES['quantum_fluctuation'];
-			const effects = upgrade.effects(fluctuationLevel);
-			chance = effects.reduce((c, effect) => {
-				if (effect.type === 'excited_photon_chance') {
-					return effect.apply(c, this);
-				}
-				return c;
-			}, chance);
-		}
-
-		// Cheap Excited Spawn Boost
-		const cheapLevel = this.photonUpgrades['cheap_excited_spawn_boost'] || 0;
-		if (cheapLevel > 0) {
-			const upgrade = ALL_PHOTON_UPGRADES['cheap_excited_spawn_boost'];
-			const effects = upgrade.effects(cheapLevel);
-			chance = effects.reduce((c, effect) => {
-				if (effect.type === 'excited_photon_chance') {
-					return effect.apply(c, this);
-				}
-				return c;
-			}, chance);
-		}
-
-		return chance;
-	});
-
 	electronizeElectronsGain = $derived.by(() => {
 		if (this.protons < ELECTRONS_PROTONS_REQUIRED) return 0;
+		const options = { type: 'electron_gain' as const };
+		const electronGainUpgrades = getUpgradesWithEffects(this.allEffectSources, options);
+		return calculateEffects(electronGainUpgrades, this, 1, options);
+	});
 
-		// Get all electron gain multiplier upgrades
-		const electronGainUpgrades = getUpgradesWithEffects(this.currentUpgradesBought, { type: 'electron_gain' });
-
-		// Start with base gain of 1 and apply multipliers
-		return calculateEffects(electronGainUpgrades, this, 1);
+	excitedPhotonChance = $derived.by(() => {
+		const baseChance = 0.002; // 0.2%
+		const options = { type: 'excited_photon_chance' as const };
+		const upgrades = getUpgradesWithEffects(this.allEffectSources, options);
+		return calculateEffects(upgrades, this, baseChance, options);
 	});
 
 	globalMultiplier = $derived.by(() => {
-		const globalUpgrades = getUpgradesWithEffects(this.currentUpgradesBought, { type: 'global' });
-		return calculateEffects(globalUpgrades, this, 1);
+		const options = { type: 'global' as const };
+		const globalUpgrades = getUpgradesWithEffects(this.allEffectSources, options);
+		return calculateEffects(globalUpgrades, this, 1, options);
 	});
 
 	hasAvailableSkillUpgrades = $derived.by(() => {
@@ -211,23 +182,36 @@ export class GameManager {
 
 	hasBonus = $derived(this.activePowerUps.length > 0);
 
+	nextLevelXP = $derived.by(() => {
+		const level = this.getLevelFromTotalXP(this.totalXP);
+		return this.getXPForLevel(level + 1);
+	});
+
+	photonSpawnInterval = $derived.by(() => {
+		const baseSpawnRate = 2000;
+		const options = { type: 'photon_spawn_interval' as const };
+		const upgrades = getUpgradesWithEffects(this.allEffectSources, options);
+		return calculateEffects(upgrades, this, baseSpawnRate, options);
+	});
+
 	playerLevel = $derived(this.getLevelFromTotalXP(this.totalXP));
 
-	nextLevelXP = $derived(this.getXPForLevel(this.playerLevel + 1));
-
 	powerUpDurationMultiplier = $derived.by(() => {
-		const powerUpDurationUpgrades = getUpgradesWithEffects(this.currentUpgradesBought, { type: 'power_up_duration' });
-		return calculateEffects(powerUpDurationUpgrades, this, 1);
+		const options = { type: 'power_up_duration' as const };
+		const powerUpDurationUpgrades = getUpgradesWithEffects(this.allEffectSources, options);
+		return calculateEffects(powerUpDurationUpgrades, this, 1, options);
 	});
 
 	powerUpEffectMultiplier = $derived.by(() => {
-		const powerUpMultiplierUpgrades = getUpgradesWithEffects(this.currentUpgradesBought, { type: 'power_up_multiplier' });
-		return calculateEffects(powerUpMultiplierUpgrades, this, 1);
+		const options = { type: 'power_up_multiplier' as const };
+		const powerUpMultiplierUpgrades = getUpgradesWithEffects(this.allEffectSources, options);
+		return calculateEffects(powerUpMultiplierUpgrades, this, 1, options);
 	});
 
 	powerUpInterval = $derived.by(() => {
-		const powerUpIntervalUpgrades = getUpgradesWithEffects(this.currentUpgradesBought, { type: 'power_up_interval' });
-		return POWER_UP_DEFAULT_INTERVAL.map(interval => calculateEffects(powerUpIntervalUpgrades, this, interval)) as [number, number];
+		const options = { type: 'power_up_interval' as const };
+		const powerUpIntervalUpgrades = getUpgradesWithEffects(this.allEffectSources, options);
+		return POWER_UP_DEFAULT_INTERVAL.map(interval => calculateEffects(powerUpIntervalUpgrades, this, interval, options)) as [number, number];
 	});
 
 	protoniseProtonsGain = $derived.by(() => {
@@ -237,29 +221,27 @@ export class GameManager {
 		const baseGain = Math.floor(Math.sqrt(this.atoms / PROTONS_ATOMS_REQUIRED));
 
 		// Get all proton gain multiplier upgrades
-		const protonGainUpgrades = getUpgradesWithEffects(this.currentUpgradesBought, { type: 'proton_gain' });
+		const options = { type: 'proton_gain' as const };
+		const protonGainUpgrades = getUpgradesWithEffects(this.allEffectSources, options);
 
 		// Apply multipliers to base gain
-		return calculateEffects(protonGainUpgrades, this, baseGain);
+		return calculateEffects(protonGainUpgrades, this, baseGain, options);
 	});
 
-	skillPointsTotal = $derived(Object.values(this.buildings).reduce((sum, building) => sum + building.level, 0));
 
+	skillPointsTotal = $derived(Object.values(this.buildings).reduce((sum, building) => sum + building.level, 0));
 	skillPointsAvailable = $derived(this.skillPointsTotal - this.skillUpgrades.length);
 
-	stabilitySpeed = $derived.by(() => {
-		const upgrades = getUpgradesWithEffects(this.currentUpgradesBought, { type: 'stability_speed' });
-		return calculateEffects(upgrades, this, 1);
+	stabilityCapacity = $derived.by(() => {
+		const options = { type: 'stability_capacity' as const };
+		const upgrades = getUpgradesWithEffects(this.allEffectSources, options);
+		return calculateEffects(upgrades, this, 1, options);
 	});
 
 	stabilityMaxBoost = $derived.by(() => {
-		const upgrades = getUpgradesWithEffects(this.currentUpgradesBought, { type: 'stability_boost' });
-		return calculateEffects(upgrades, this, 2);
-	});
-
-	stabilityCapacity = $derived.by(() => {
-		const upgrades = getUpgradesWithEffects(this.currentUpgradesBought, { type: 'stability_capacity' });
-		return calculateEffects(upgrades, this, 1);
+		const options = { type: 'stability_boost' as const };
+		const upgrades = getUpgradesWithEffects(this.allEffectSources, options);
+		return calculateEffects(upgrades, this, 2, options);
 	});
 
 	stabilityMultiplier = $derived.by(() => {
@@ -296,12 +278,31 @@ export class GameManager {
 		return currentBoost;
 	});
 
+	stabilitySpeed = $derived.by(() => {
+		const options = { type: 'stability_speed' as const };
+		const upgrades = getUpgradesWithEffects(this.allEffectSources, options);
+		return calculateEffects(upgrades, this, 1, options);
+	});
+
 	xpGainMultiplier = $derived.by(() => {
-		const xpGainUpgrades = getUpgradesWithEffects(this.currentUpgradesBought, { type: 'xp_gain' });
-		return calculateEffects(xpGainUpgrades, this, 1);
+		const options = { type: 'xp_gain' as const };
+		const xpGainUpgrades = getUpgradesWithEffects(this.allEffectSources, options);
+		return calculateEffects(xpGainUpgrades, this, 1, options);
 	});
 
 	xpProgress = $derived((this.currentLevelXP / this.nextLevelXP) * 100);
+
+	// Stats Getters for Currencies
+	get atoms() { return currenciesManager.getAmount(CurrenciesTypes.ATOMS); }
+	get currencies() { return currenciesManager.currencies; }
+	get electrons() { return currenciesManager.getAmount(CurrenciesTypes.ELECTRONS); }
+	get excitedPhotons() { return currenciesManager.getAmount(CurrenciesTypes.EXCITED_PHOTONS); }
+	get photons() { return currenciesManager.getAmount(CurrenciesTypes.PHOTONS); }
+	get protons() { return currenciesManager.getAmount(CurrenciesTypes.PROTONS); }
+
+	set currencies(value) {
+		currenciesManager.currencies = value;
+	}
 
 	// Methods
 
@@ -386,7 +387,6 @@ export class GameManager {
 
 	resetLayer(layer: LayerType) {
 		for (const [key, config] of Object.entries(this.statsConfig)) {
-			// Reset stats that are at or below the triggered layer, but ignore NEVER (0) and SPECIAL (-1)
 			if (config.layer > 0 && config.layer <= layer) {
 				this[key as keyof this] = config.defaultValue;
 			}
@@ -458,7 +458,7 @@ export class GameManager {
 		const newBuilding = {
 			...currentBuilding,
 			cost: {
-				amount: this.getBuildingCost(type, 1), // Cost of the NEXT one
+				amount: this.getBuildingCost(type, 1),
 				currency: cost.currency
 			},
 			count: newCount,
@@ -504,7 +504,6 @@ export class GameManager {
 		if (this.skillUpgrades.includes(skillId)) return false;
 		if (this.skillPointsAvailable < 1) return false;
 
-		// Check requirements
 		if (skill.requires && !skill.requires.every(req => this.skillUpgrades.includes(req))) return false;
 		if (skill.condition && !skill.condition(this)) return false;
 
@@ -555,8 +554,7 @@ export class GameManager {
 
 			this.totalElectronizesRun += 1;
 			this.totalElectronizesAllTime += 1;
-			// Removed manual additions to stats as currenciesManager handles it
-			this.totalProtonisesRun = 0; // Reset protonise counter
+			this.totalProtonisesRun = 0;
 
 			this.resetLayer(LAYERS.ELECTRONIZE);
 
@@ -583,7 +581,6 @@ export class GameManager {
 
 			this.totalProtonisesRun += 1;
 			this.totalProtonisesAllTime += 1;
-			// Removed manual additions to stats as currenciesManager handles it
 
 			this.resetLayer(LAYERS.PROTONIZER);
 
@@ -706,17 +703,16 @@ export class GameManager {
 
 	getXPForLevel(level: number) {
 		const base = 100;
-		const taux = 0.42; // 42%
+		const taux = 0.42;
 		return Math.floor(base * Math.pow(1 + taux, level - 1));
 	}
 
-	// Intervals setup
+	// Intervals
 	setupInterval() {
 		if (this.gameInterval) clearInterval(this.gameInterval);
 
 		this.gameInterval = setInterval(() => {
 			this.inGameTime += 1000;
-			// Trigger reactivity for stability multiplier
 			this.lastInteractionTime = this.lastInteractionTime;
 
 			if (this.atomsPerSecond > this.highestAPS) {

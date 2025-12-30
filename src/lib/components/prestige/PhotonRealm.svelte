@@ -11,6 +11,8 @@
 	import { ALL_PHOTON_UPGRADES } from '$data/photonUpgrades';
 	import { mobile } from '$stores/window.svelte';
 
+	import { calculateEffects, getUpgradesWithEffects } from '$helpers/effects';
+
 	export function simulateClick() {
 		if (!container || circles.length === 0) return;
 
@@ -68,115 +70,34 @@
 	const MIN_PHOTONS = 1;
 	const MAX_PHOTONS = 10;
 
-	// Helper functions to get upgrade bonuses
-	function getSpawnRate() {
-		let rate = baseSpawnRate;
-
-		// Initial spawn rate upgrade
-		const spawnRateLevel = gameManager.photonUpgrades['photon_spawn_rate'] || 0;
-		if (spawnRateLevel > 0) {
-			const upgrade = ALL_PHOTON_UPGRADES['photon_spawn_rate'];
-			const effects = upgrade.effects(spawnRateLevel);
-			rate = effects.reduce((current, effect) => {
-				if (effect.type === 'power_up_interval') {
-					return effect.apply(current, gameManager);
-				}
-				return current;
-			}, rate);
-		}
-
-		// Photon Overdrive upgrade
-		const overdriveLevel = gameManager.photonUpgrades['photon_overdrive'] || 0;
-		if (overdriveLevel > 0) {
-			const upgrade = ALL_PHOTON_UPGRADES['photon_overdrive'];
-			const effects = upgrade.effects(overdriveLevel);
-			rate = effects.reduce((current, effect) => {
-				if (effect.type === 'power_up_interval') {
-					return effect.apply(current, gameManager);
-				}
-				return current;
-			}, rate);
-		}
-
-		return rate;
-	}
-
 	function getSizeMultiplier() {
-		const level = gameManager.photonUpgrades['circle_size'] || 0;
-		if (level === 0) return baseSizeMultiplier;
-
-		const upgrade = ALL_PHOTON_UPGRADES['circle_size'];
-		const effects = upgrade.effects(level);
-
-		return effects.reduce((multiplier, effect) => {
-			if (effect.type === 'global') {
-				return effect.apply(multiplier, gameManager);
-			}
-			return multiplier;
-		}, baseSizeMultiplier);
+		const options = { type: 'circle_size' as const };
+		const upgrades = getUpgradesWithEffects(gameManager.allEffectSources, options);
+		return calculateEffects(upgrades, gameManager, baseSizeMultiplier, options);
 	}
 
 	function getPhotonValueBonus() {
-		const level = gameManager.photonUpgrades['photon_value'] || 0;
-		if (level === 0) return 0;
-
-		const upgrade = ALL_PHOTON_UPGRADES['photon_value'];
-		const effects = upgrade.effects(level);
-
-		return effects.reduce((bonus, effect) => {
-			if (effect.type === 'click') {
-				return effect.apply(bonus, gameManager);
-			}
-			return bonus;
-		}, 0);
+		const upgrade = gameManager.allEffectSources.find(u => u.id === 'photon_value');
+		if (!upgrade) return 0;
+		return calculateEffects([upgrade], gameManager, 0, { type: 'click' });
 	}
 
 	function getExcitedFromMaxBonus() {
-		const level = gameManager.photonUpgrades['excited_from_max_photons'] || 0;
-		if (level === 0) return 0;
-
-		const upgrade = ALL_PHOTON_UPGRADES['excited_from_max_photons'];
-		const effects = upgrade.effects(level);
-
-		return effects.reduce((bonus, effect) => {
-			if (effect.type === 'excited_photon_from_max') {
-				return effect.apply(bonus, gameManager);
-			}
-			return bonus;
-		}, 0);
+		const options = { type: 'excited_photon_from_max' as const };
+		const upgrades = getUpgradesWithEffects(gameManager.allEffectSources, options);
+		return calculateEffects(upgrades, gameManager, 0, options);
 	}
 
 	function getLifetimeBonus() {
-		// Normal lifetime bonus
-		let duration = 0;
-		const lifetimeLevel = gameManager.photonUpgrades['circle_lifetime'] || 0;
-		if (lifetimeLevel > 0) {
-			const upgrade = ALL_PHOTON_UPGRADES['circle_lifetime'];
-			const effects = upgrade.effects(lifetimeLevel);
-			duration += effects.reduce((bonus, effect) => {
-				if (effect.type === 'power_up_duration') {
-					return effect.apply(bonus, gameManager);
-				}
-				return bonus;
-			}, 0);
-		}
-
-		return duration;
+		const upgrade = gameManager.allEffectSources.find(u => u.id === 'circle_lifetime');
+		if (!upgrade) return 0;
+		return calculateEffects([upgrade], gameManager, 0, { type: 'power_up_duration' });
 	}
 
 	function getExcitedLifetimeMultiplier() {
-		const level = gameManager.photonUpgrades['energetic_decay'] || 0;
-		if (level === 0) return 1;
-
-		const upgrade = ALL_PHOTON_UPGRADES['energetic_decay'];
-		const effects = upgrade.effects(level);
-
-		return effects.reduce((mult, effect) => {
-			if (effect.type === 'excited_photon_duration') {
-				return effect.apply(mult, gameManager);
-			}
-			return mult;
-		}, 1);
+		const options = { type: 'excited_photon_duration' as const };
+		const upgrades = getUpgradesWithEffects(gameManager.allEffectSources, options);
+		return calculateEffects(upgrades, gameManager, 1, options);
 	}
 
 	function getDoubleChance() {
@@ -188,18 +109,9 @@
 	}
 
 	function getExcitedDoubleChance() {
-		const level = gameManager.photonUpgrades['excited_yield'] || 0;
-		if (level === 0) return 0;
-
-		const upgrade = ALL_PHOTON_UPGRADES['excited_yield'];
-		const effects = upgrade.effects(level);
-
-		return effects.reduce((chance, effect) => {
-			if (effect.type === 'excited_photon_double') {
-				return effect.apply(chance, gameManager);
-			}
-			return chance;
-		}, 0);
+		const options = { type: 'excited_photon_double' as const };
+		const upgrades = getUpgradesWithEffects(gameManager.allEffectSources, options);
+		return calculateEffects(upgrades, gameManager, 0, options);
 	}
 
 	function getIsExcited() {
@@ -315,23 +227,13 @@
 	// Calculate auto-clicks per second from photon upgrades
 	const photonAutoClicksPerSecond = $derived.by(() => {
 		if (!gameManager.settings.automation.autoClickPhotons) return 0;
-		const autoClickerLevel = gameManager.photonUpgrades['auto_clicker'] || 0;
-		if (autoClickerLevel === 0) return 0;
-
-		const upgrade = ALL_PHOTON_UPGRADES['auto_clicker'];
-		const effects = upgrade.effects(autoClickerLevel);
-
-		// Apply the effect to get clicks per second
-		return effects.reduce((total, effect) => {
-			if (effect.type === 'auto_click') {
-				return effect.apply(total, gameManager);
-			}
-			return total;
-		}, 0);
+		const upgrade = gameManager.allEffectSources.find(u => u.id === 'auto_clicker');
+		if (!upgrade) return 0;
+		return calculateEffects([upgrade], gameManager, 0, { type: 'auto_click' });
 	});
 
 	// Calculate current spawn rate reactively
-	const currentSpawnRate = $derived(getSpawnRate());
+	const currentSpawnRate = $derived(gameManager.photonSpawnInterval);
 
 	// Set up auto-clicker subscription
 	$effect(() => {

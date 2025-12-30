@@ -26,11 +26,15 @@ export function getUpgradesWithEffects(upgrades: (Upgrade | SkillUpgrade)[], opt
     });
 }
 
-export function calculateEffects(upgrades: (Upgrade | SkillUpgrade)[], manager: GameManager, defaultValue: number = 0): number {
-    return upgrades.reduce((currentValue, upgrade) => {
-        if ('effects' in upgrade && Array.isArray(upgrade.effects)) {
-            return upgrade.effects.reduce((value, effect) => effect.apply(value, manager), currentValue);
-        }
-        return currentValue;
-    }, defaultValue);
+export function calculateEffects(upgrades: (Upgrade | SkillUpgrade)[], manager: GameManager, defaultValue: number = 0, options?: SearchEffectsOptions): number {
+	return upgrades.reduce((currentValue, upgrade) => {
+		if ('effects' in upgrade && Array.isArray(upgrade.effects)) {
+			return upgrade.effects.reduce((value, effect) => {
+				if (options?.type && effect.type !== options.type) return value;
+				if (options?.target && effect.target !== options.target) return value;
+				return effect.apply(value, manager);
+			}, currentValue);
+		}
+		return currentValue;
+	}, defaultValue);
 }

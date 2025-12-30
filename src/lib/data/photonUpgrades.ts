@@ -34,15 +34,15 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 	cheap_excited_spawn_boost: {
 		id: 'cheap_excited_spawn_boost',
 		name: 'Unstable Flux',
-		description: (level: number) => `Increases chance for Excited Photons to spawn (+${formatNumber(0.05 * level)}%)`,
+		description: (level: number) => `Increases chance for Excited Photons to spawn (+${formatNumber(0.06 * level)}%)`,
 		baseCost: 500,
-		costMultiplier: 3,
-		maxLevel: 3,
+		costMultiplier: 2.6,
+		maxLevel: 7,
 		effects: (level: number) => [
 			{
 				type: 'excited_photon_chance',
-				description: `Increase excited photon chance by ${0.05 * level}%`,
-				apply: (currentValue) => currentValue + (0.0005 * level),
+				description: `Increase excited photon chance by ${0.06 * level}%`,
+				apply: (currentValue) => currentValue + (0.0006 * level),
 			},
 		],
 	},
@@ -70,9 +70,9 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 		maxLevel: 12,
 		effects: (level: number) => [
 			{
-				type: 'global',
-				description: `Increase circle size by ${5 * level}%`,
 				apply: (currentValue) => currentValue * (1 + (0.05 * level)),
+				description: `Increase circle size by ${5 * level}%`,
+				type: 'circle_size',
 			},
 		],
 	},
@@ -132,9 +132,9 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 		maxLevel: 22,
 		effects: (level: number) => [
 			{
-				type: 'power_up_interval',
-				description: `Reduce circle spawn interval by ${4 * level}%`,
 				apply: (currentValue) => currentValue * (1 - (0.04 * level)),
+				description: `Reduce circle spawn interval by ${4 * level}%`,
+				type: 'photon_spawn_interval',
 			},
 		],
 	},
@@ -277,7 +277,7 @@ export const EXCITED_PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 	quantum_fluctuation: {
 		id: 'quantum_fluctuation',
 		name: 'Quantum Fluctuation',
-		description: (level: number) => `Increases chance for Excited Photons to spawn (+${formatNumber(0.02 * level)}%)`,
+		description: (level: number) => `Increases chance for Excited Photons to spawn (+${formatNumber(0.08 * level)}%)`,
 		baseCost: 1,
 		costMultiplier: 1.5,
 		currency: CurrenciesTypes.EXCITED_PHOTONS,
@@ -285,8 +285,8 @@ export const EXCITED_PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 		effects: (level: number) => [
 			{
 				type: 'excited_photon_chance',
-				description: `Increase excited photon chance by ${0.02 * level}%`,
-				apply: (currentValue) => currentValue + (0.0002 * level),
+				description: `Increase excited photon chance by ${0.08 * level}%`,
+				apply: (currentValue) => currentValue + (0.0008 * level),
 			},
 		],
 	},
@@ -300,6 +300,22 @@ export const EXCITED_PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 		id: 'feature_hover_collection',
 		maxLevel: 1,
 		name: 'Quantum Magnetism',
+	},
+	photon_overdrive: {
+		baseCost: 2000,
+		costMultiplier: 2.3,
+		currency: CurrenciesTypes.EXCITED_PHOTONS,
+		description: (level: number) => `Spawn circles ${10 * level}% even faster`,
+		effects: (level: number) => [
+			{
+				apply: (currentValue) => currentValue * (1 - 0.1 * level),
+				description: `Reduce circle spawn interval by ${10 * level}%`,
+				type: 'photon_spawn_interval',
+			},
+		],
+		id: 'photon_overdrive',
+		maxLevel: 4,
+		name: 'Photon Overdrive',
 	},
 };
 
