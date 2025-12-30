@@ -259,22 +259,22 @@ export const EXCITED_PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 	excited_stabilization: {
 		id: 'excited_stabilization',
 		name: 'Excited Stabilization',
-		description: (level: number) => `Increase Stabilization field speed and bonus by ${300 * level}% but it now collapse also when you click on purple realm`,
+		description: (level: number) => `Increase Stabilization field capacity by ${200 * level}% but it now collapse also when you click on purple realm`,
 		baseCost: 5000,
 		costMultiplier: 2,
 		currency: CurrenciesTypes.EXCITED_PHOTONS,
 		maxLevel: 3,
 		effects: (level: number) => [
 			{
-				type: 'stability_speed',
-				description: `Increase stability speed by ${300 * level}%`,
-				apply: (currentValue) => currentValue * (1 + (3 * level)),
+				type: 'stability_capacity',
+				description: `Increase stability capacity by ${200 * level}%`,
+				apply: (currentValue) => currentValue * (1 + (2 * level)),
 			},
 			{
-				type: 'stability_boost',
-				description: `Increase stability bonus by ${300 * level}%`,
-				apply: (currentValue) => currentValue * (1 + (3 * level)),
-			},
+				type: 'stability_speed',
+				description: `Increase stability speed by ${100 * level}%`,
+				apply: (currentValue) => currentValue * (1 + (1 * level)),
+			}
 		],
 	},
 	excited_photon_stability: {
