@@ -1,6 +1,8 @@
 # What's new 30-12-2025
 
 - **Excited Photons**: New rare currency in the Purple Realm with dedicated upgrades and achievements.
+- **New Photon Upgrades**: Added new upgrades for photons.
+- **New Electron Upgrades**: Added new upgrades for electrons.
 
 # What's new 29-12-2025
 
@@ -8,6 +10,7 @@
 - **New Bonus**: Replaced bonus photons with bonus higgs bosons with a new icon.
 - **Auto-click**: Added auto-click button for main atom and photons.
 - **Stability Meter**: New idle bonus with proton upgrades and a live display in the Protonise modal.
+- **New Electron Upgrades**: Added new upgrades for electrons for the stability meter.
 
 # What's new 23-12-2025
 

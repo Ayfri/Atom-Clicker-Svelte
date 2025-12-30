@@ -617,13 +617,22 @@ export class GameManager {
 
 	incrementBonusHiggsBosonClicks() {
 		currenciesManager.add(CurrenciesTypes.HIGGS_BOSON, 1);
-		this.lastInteractionTime = Date.now();
+		if (!this.upgrades.includes('electron_bypass_bonus_click_stability')) {
+			this.lastInteractionTime = Date.now();
+		}
 	}
 
-	incrementClicks() {
+	incrementClicks(isAuto = false) {
 		this.totalClicksRun += 1;
 		this.totalClicksAllTime += 1;
-		this.lastInteractionTime = Date.now();
+
+		const shouldUpdate = isAuto
+			? !this.upgrades.includes('electron_bypass_atom_autoclick_stability')
+			: !this.upgrades.includes('electron_bypass_atom_click_stability');
+
+		if (shouldUpdate) {
+			this.lastInteractionTime = Date.now();
+		}
 	}
 
 	unlockAchievement(achievementId: string) {
@@ -636,7 +645,9 @@ export class GameManager {
 	addPowerUp(powerUp: PowerUp) {
 		this.activePowerUps = [...this.activePowerUps, powerUp];
 		this.powerUpsCollected += 1;
-		this.lastInteractionTime = Date.now();
+		if (!this.upgrades.includes('electron_bypass_bonus_click_stability')) {
+			this.lastInteractionTime = Date.now();
+		}
 
 		setTimeout(() => {
 			this.removePowerUp(powerUp.id);

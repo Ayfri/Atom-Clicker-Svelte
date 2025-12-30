@@ -209,6 +209,12 @@
 		// Excited stabilization: interacting with the realm resets/collapses it
 		const excitedStabilizationLevel = gameManager.photonUpgrades['excited_stabilization'] || 0;
 		if (excitedStabilizationLevel > 0) {
+			const isAuto = !event.isTrusted;
+			const hasAutoBypass = gameManager.upgrades.includes('electron_bypass_photon_autoclick_stability');
+			const hasManualBypass = gameManager.upgrades.includes('electron_bypass_photon_click_stability');
+
+			if ((isAuto && hasAutoBypass) || (!isAuto && hasManualBypass)) return;
+
 			gameManager.lastInteractionTime = Date.now();
 		}
 	}
