@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { ACHIEVEMENTS } from '$data/achievements';
-	import { CurrenciesTypes } from '$data/currencies';
+	import { CurrenciesTypes, type CurrencyName } from '$data/currencies';
 	import { formatDuration, formatNumber, formatNumberFull } from '$lib/utils';
 	import StatItem from '@components/ui/StatItem.svelte';
 	import Modal from '@components/ui/Modal.svelte';

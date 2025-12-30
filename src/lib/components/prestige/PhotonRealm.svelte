@@ -265,52 +265,9 @@
 			addParticles(addedParticles);
 		}
 
-		// For excited stabilization, clicking on purple realm collapses the field (TODO check requirement)
-		// Requirement: "Excited Stabilization: ... but it now collapse also when you click on purple realm."
-		// Does simply clicking a circle count as "clicking on purple realm"?
-		// Or clicking the background? The requirement says "click on purple realm".
-		// Usually this means any interaction in the realm. Ideally clicking a circle is distinct, but let's assume it might trigger if implemented broadly.
-		// However, I'll stick to the requested mechanics. If needed I'd add a click handler on the container.
-
-		// Wait, "Excited Stabilization" effect logic says "Increase stability speed and bonus...".
-		// The collapsing part is likely a side effect I need to implement in GameManager or here.
-		// Since I don't see "collapse logic" in GameManager for clicking, I assume it's related to the "Stability" feature which resets if you don't interact?
-		// Actually, stability usually collapses if you switch realms. This upgrade makes it collapse on clicks in Purple realm too (presumably effectively nerfing it for active play here?).
-		// Let's implement the collapse trigger if the upgrade is active.
+		// Excited stabilization: interacting with the realm resets/collapses it
 		const excitedStabilizationLevel = gameManager.photonUpgrades['excited_stabilization'] || 0;
 		if (excitedStabilizationLevel > 0) {
-			// Trigger collapse or negative effect.
-			// Since I don't see a "collapse" method exposed, and stability logic is time-based.
-			// "Collapse also when you click on purple realm".
-			// I will simply reset `lastInteractionTime` to something far back? No, that would reduce progress.
-			// Currently stability decreases if `progress` goes down? No, it resets if you leave I guess.
-			// Let's look at GameManager stability logic.
-			// It uses `lastInteractionTime`.
-			// If I click, `lastInteractionTime` updates, keeping it ALIVE.
-			// "Collapse" means it should GO DOWN.
-			// So clicking should NOT update lastInteractionTime? Or it should explicitly REDUCE progress.
-			// Given the complexity and lack of "collapse" method config, I will skip implementing the collapse logic unless I see how stability works exactly.
-			// GameManager line 238: `const progress = Math.min(Math.max(elapsed / timeRequired, 0), 1);`
-			// `elapsed` is time SINCE last interaction. So the longer you DON'T interact, the more it grows (wait?).
-			// Line 232: `timeRequired`.
-			// Line 238: `elapsed`.
-			// Logic: `elapsed` increases -> progress increases.
-			// So interacting (updating `lastInteractionTime`) resets `elapsed` to 0, resetting progress to 0?
-			// Line 29: `lastInteractionTime = $state(Date.now());`
-			// `addPhotons` calls `addPhotons` -> doesn't update `lastInteractionTime`.
-			// `incrementClicks` updates `lastInteractionTime`.
-			// Use `addExcitedPhotons` -> updates `totalExcited...`.
-			// If `clickCircle` calls `gameManager.addPhotons`, it does NOT call `incrementClicks`.
-			// So clicking circles does NOT update `lastInteractionTime` currently?
-			// Let's check `addPhotons` in `GameManager`. It strictly adds `photons`.
-			// `GameManager` methods for powerups do update `lastInteractionTime`.
-			// So effectively, clicking circles is "passive" regarding stability?
-			// If "Collapse also when you click on purple realm", maybe it means it forces valid interaction?
-			// If interacting RESETS progress (because `elapsed` becomes 0), then clicking DOES collapse it.
-			// So if I call `gameManager.lastInteractionTime = Date.now()` it will collapse.
-			// I should probably check if clicking circles normally does this. It currently doesn't seem to.
-			// So I will add: `if (excitedStabilization > 0) gameManager.lastInteractionTime = Date.now();`
-			// This will make `elapsed` = 0, so `progress` = 0, so `stabilityMultiplier` = 1 (collapse).
 			gameManager.lastInteractionTime = Date.now();
 		}
 	}
