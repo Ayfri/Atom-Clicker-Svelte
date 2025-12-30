@@ -4,7 +4,7 @@ import { writable, derived } from 'svelte/store';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import type { Database } from '$lib/types/supabase';
 import { gameManager } from '$helpers/GameManager.svelte';
-import { isValidGameState, SAVE_VERSION } from '$helpers/saves';
+import { isValidGameState, SAVE_VERSION, migrateSavedState } from '$helpers/saves';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
@@ -279,8 +279,10 @@ function createSupabaseAuthStore() {
 			if (!profile?.save) return false;
 
 			const savedState = profile.save as any;
-			if (savedState && isValidGameState(savedState)) {
-				gameManager.loadSaveData(savedState);
+			const migratedState = migrateSavedState(savedState);
+
+			if (migratedState && isValidGameState(migratedState)) {
+				gameManager.loadSaveData(migratedState);
 				return true;
 			}
 			return false;
@@ -307,9 +309,13 @@ function createSupabaseAuthStore() {
 			if (!profile?.save) return null;
 
 			const saveData = profile.save as any;
+			const migratedData = migrateSavedState(saveData);
+
+			if (!migratedData) return null;
+
 			return {
 				lastSaveDate: saveData.lastSaveDate || null,
-				...saveData
+				...migratedData
 			};
 		} catch (error) {
 			console.error('Error getting cloud save info:', error);

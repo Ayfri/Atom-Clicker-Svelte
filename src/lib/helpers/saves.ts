@@ -231,7 +231,7 @@ export function isValidGameState(state: unknown): state is GameState {
 	return result.valid || result.repaired;
 }
 
-function migrateSavedState(savedState: unknown): GameState | undefined {
+export function migrateSavedState(savedState: unknown): GameState | undefined {
 	if (!savedState || typeof savedState !== 'object') return undefined;
 	const state = savedState as any;
 
