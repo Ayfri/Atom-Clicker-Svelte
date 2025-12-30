@@ -356,7 +356,7 @@ export class GameManager {
 	}
 
 	loadSaveData(data: Partial<GameState>) {
-		for (const [key, config] of Object.entries(this.statsConfig)) {
+		for (const key of Object.keys(this.statsConfig)) {
 			if (key in data) {
 				this[key as keyof this] = data[key as keyof GameState] as any;
 			}
@@ -713,7 +713,6 @@ export class GameManager {
 
 		this.gameInterval = setInterval(() => {
 			this.inGameTime += 1000;
-			this.lastInteractionTime = this.lastInteractionTime;
 
 			if (this.atomsPerSecond > this.highestAPS) {
 				this.highestAPS = this.atomsPerSecond;
