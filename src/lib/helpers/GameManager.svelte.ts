@@ -106,6 +106,13 @@ export class GameManager {
 		return calculateEffects(autoClickUpgrades, this, 0, options);
 	});
 
+	photonAutoClicksPer5Seconds = $derived.by(() => {
+		if (!this.settings.automation.autoClickPhotons) return 0;
+		const options = { type: 'photon_auto_click' as const };
+		const upgrades = getUpgradesWithEffects(this.allEffectSources, options);
+		return calculateEffects(upgrades, this, 0, options);
+	});
+
 	bonusMultiplier = $derived(this.activePowerUps.reduce((acc, powerUp) => acc * powerUp.multiplier, 1));
 
 	buildingProductions = $derived.by(() => {

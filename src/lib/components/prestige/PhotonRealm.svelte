@@ -225,19 +225,14 @@
 	});
 
 	// Calculate auto-clicks per second from photon upgrades
-	const photonAutoClicksPerSecond = $derived.by(() => {
-		if (!gameManager.settings.automation.autoClickPhotons) return 0;
-		const upgrade = gameManager.allEffectSources.find(u => u.id === 'auto_clicker');
-		if (!upgrade) return 0;
-		return calculateEffects([upgrade], gameManager, 0, { type: 'auto_click' });
-	});
+	const photonAutoClicksPer5Seconds = $derived(gameManager.photonAutoClicksPer5Seconds);
 
 	// Calculate current spawn rate reactively
 	const currentSpawnRate = $derived(gameManager.photonSpawnInterval);
 
 	// Set up auto-clicker subscription
 	$effect(() => {
-		const clicksPerSecond = photonAutoClicksPerSecond;
+		const clicksPerSecond = photonAutoClicksPer5Seconds;
 		if (clicksPerSecond > 0) {
 			const interval = setInterval(() => simulateClick(), 5000 / clicksPerSecond);
 			return () => clearInterval(interval);

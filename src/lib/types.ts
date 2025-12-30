@@ -22,7 +22,7 @@ export interface Upgrade {
 
 export interface Effect {
 	target?: string;
-	type: 'auto_buy' | 'auto_click' | 'auto_speed' | 'auto_upgrade' | 'building' | 'circle_size' | 'click' | 'electron_gain' | 'excited_auto_click' | 'excited_photon_chance' | 'excited_photon_double' | 'excited_photon_duration' | 'excited_photon_from_max' | 'global' | 'photon_spawn_interval' | 'power_up_duration' | 'power_up_interval' | 'power_up_multiplier' | 'proton_gain' | 'stability_boost' | 'stability_capacity' | 'stability_speed' | 'xp_gain';
+	type: 'auto_buy' | 'auto_click' | 'auto_speed' | 'auto_upgrade' | 'building' | 'circle_size' | 'click' | 'electron_gain' | 'excited_auto_click' | 'excited_photon_chance' | 'excited_photon_double' | 'excited_photon_duration' | 'excited_photon_from_max' | 'global' | 'photon_auto_click' | 'photon_spawn_interval' | 'power_up_duration' | 'power_up_interval' | 'power_up_multiplier' | 'proton_gain' | 'stability_boost' | 'stability_capacity' | 'stability_speed' | 'xp_gain';
 	apply: (currentValue: number, manager: GameManager) => number;
 	description: string;
 }

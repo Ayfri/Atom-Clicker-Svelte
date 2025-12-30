@@ -371,6 +371,12 @@
 						{/if}
 					{/each}
 					<StatItem
+						fullValue={formatNumberFull(gameManager.photonAutoClicksPer5Seconds / 5)}
+						icon={Timer}
+						label="Photon Auto Clicks/s"
+						value={formatNumber(gameManager.photonAutoClicksPer5Seconds / 5)}
+					/>
+					<StatItem
 						fullValue={`${(gameManager.excitedPhotonChance * 100).toFixed(3)}%`}
 						icon={Sparkles}
 						label="Excited Photon Chance"

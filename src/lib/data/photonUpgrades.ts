@@ -25,7 +25,7 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 		maxLevel: 5,
 		effects: (level: number) => [
 			{
-				type: 'auto_click',
+				type: 'photon_auto_click',
 				description: `Auto-click ${level} circles every 5 seconds`,
 				apply: (currentValue) => currentValue + level,
 			},
