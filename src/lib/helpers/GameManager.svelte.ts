@@ -760,10 +760,7 @@ export class GameManager {
 
 			if (this.activePowerUps.length > 0) {
 				const now = Date.now();
-				const expired = this.activePowerUps.filter(p => now >= p.startTime + p.duration);
-				if (expired.length > 0) {
-					this.activePowerUps = this.activePowerUps.filter(p => now < p.startTime + p.duration);
-				}
+				this.activePowerUps = this.activePowerUps.filter((p) => now < p.startTime + p.duration);
 			}
 		}, 1000);
 	}
