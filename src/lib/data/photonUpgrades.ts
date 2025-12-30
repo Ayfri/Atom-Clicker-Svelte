@@ -16,33 +16,33 @@ export interface PhotonUpgrade {
 }
 
 export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
-	photon_spawn_rate: {
-		id: 'photon_spawn_rate',
-		name: 'Faster Circles',
-		description: (level: number) => `Spawn circles ${formatNumber(4 * level)}% faster`,
-		baseCost: 10,
-		costMultiplier: 1.6,
-		maxLevel: 22,
+	auto_clicker: {
+		id: 'auto_clicker',
+		name: 'Auto Clicker',
+		description: (level: number) => `Auto-click ${level} circle${level > 1 ? 's' : ''} every 5 seconds`,
+		baseCost: 500,
+		costMultiplier: 3,
+		maxLevel: 5,
 		effects: (level: number) => [
 			{
-				type: 'power_up_interval',
-				description: `Reduce circle spawn interval by ${4 * level}%`,
-				apply: (currentValue) => currentValue * (1 - (0.04 * level)),
+				type: 'auto_click',
+				description: `Auto-click ${level} circles every 5 seconds`,
+				apply: (currentValue) => currentValue + level,
 			},
 		],
 	},
-	photon_value: {
-		id: 'photon_value',
-		name: 'Photon Value',
-		description: (level: number) => `+${level} photons per circle`,
-		baseCost: 25,
-		costMultiplier: 1.75,
-		maxLevel: 20,
+	cheap_excited_spawn_boost: {
+		id: 'cheap_excited_spawn_boost',
+		name: 'Unstable Flux',
+		description: (level: number) => `Increases chance for Excited Photons to spawn (+${formatNumber(0.05 * level)}%)`,
+		baseCost: 500,
+		costMultiplier: 3,
+		maxLevel: 3,
 		effects: (level: number) => [
 			{
-				type: 'click',
-				description: `Add ${level} photons per circle`,
-				apply: (currentValue) => currentValue + level,
+				type: 'excited_photon_chance',
+				description: `Increase excited photon chance by ${0.05 * level}%`,
+				apply: (currentValue) => currentValue + (0.0005 * level),
 			},
 		],
 	},
@@ -91,21 +91,6 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 			},
 		],
 	},
-	auto_clicker: {
-		id: 'auto_clicker',
-		name: 'Auto Clicker',
-		description: (level: number) => `Auto-click ${level} circle${level > 1 ? 's' : ''} every 5 seconds`,
-		baseCost: 500,
-		costMultiplier: 3,
-		maxLevel: 5,
-		effects: (level: number) => [
-			{
-				type: 'auto_click',
-				description: `Auto-click ${level} circles every 5 seconds`,
-				apply: (currentValue) => currentValue + level,
-			},
-		],
-	},
 	electron_boost: {
 		id: 'electron_boost',
 		name: 'Electron Amplifier',
@@ -121,22 +106,6 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 			},
 		],
 		condition: (manager: GameManager) => manager.electrons > 0,
-	},
-	proton_boost: {
-		id: 'proton_boost',
-		name: 'Proton Multiplier',
-		description: (level: number) => `${formatNumber(15 * level)}% more protons from protonise`,
-		baseCost: 5000,
-		costMultiplier: 5,
-		maxLevel: 6,
-		effects: (level: number) => [
-			{
-				type: 'proton_gain',
-				description: `Multiply proton gain by ${1 + (0.15 * level)}`,
-				apply: (currentValue) => currentValue * (1 + (0.15 * level)),
-			},
-		],
-		condition: (manager: GameManager) => manager.protons > 0,
 	},
 	electron_super_boost: {
 		id: 'electron_super_boost',
@@ -154,6 +123,52 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 		],
 		condition: (manager: GameManager) => manager.electrons >= 10,
 	},
+	photon_spawn_rate: {
+		id: 'photon_spawn_rate',
+		name: 'Faster Circles',
+		description: (level: number) => `Spawn circles ${formatNumber(4 * level)}% faster`,
+		baseCost: 10,
+		costMultiplier: 1.6,
+		maxLevel: 22,
+		effects: (level: number) => [
+			{
+				type: 'power_up_interval',
+				description: `Reduce circle spawn interval by ${4 * level}%`,
+				apply: (currentValue) => currentValue * (1 - (0.04 * level)),
+			},
+		],
+	},
+	photon_value: {
+		id: 'photon_value',
+		name: 'Photon Value',
+		description: (level: number) => `+${level} photons per circle`,
+		baseCost: 25,
+		costMultiplier: 1.75,
+		maxLevel: 20,
+		effects: (level: number) => [
+			{
+				type: 'click',
+				description: `Add ${level} photons per circle`,
+				apply: (currentValue) => currentValue + level,
+			},
+		],
+	},
+	proton_boost: {
+		id: 'proton_boost',
+		name: 'Proton Multiplier',
+		description: (level: number) => `${formatNumber(15 * level)}% more protons from protonise`,
+		baseCost: 5000,
+		costMultiplier: 5,
+		maxLevel: 6,
+		effects: (level: number) => [
+			{
+				type: 'proton_gain',
+				description: `Multiply proton gain by ${1 + (0.15 * level)}`,
+				apply: (currentValue) => currentValue * (1 + (0.15 * level)),
+			},
+		],
+		condition: (manager: GameManager) => manager.protons > 0,
+	},
 	proton_super_boost: {
 		id: 'proton_super_boost',
 		name: 'Proton Overdrive',
@@ -170,29 +185,16 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 		],
 		condition: (manager: GameManager) => manager.protons >= 5,
 	},
-	quantum_fluctuation: {
-		id: 'quantum_fluctuation',
-		name: 'Quantum Fluctuation',
-		description: (level: number) => `Increases chance for Excited Photons to spawn (+${formatNumber(0.02 * level)}%)`,
-		baseCost: 1,
-		costMultiplier: 1.5,
-		currency: 'Excited Photons',
-		maxLevel: 20,
-		effects: (level: number) => [
-			{
-				type: 'excited_photon_chance',
-				description: `Increase excited photon chance by ${0.02 * level}%`,
-				apply: (currentValue) => currentValue + (0.0002 * level),
-			},
-		],
-	},
+};
+
+export const EXCITED_PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 	energetic_decay: {
 		id: 'energetic_decay',
 		name: 'Energetic Decay',
 		description: (level: number) => `Excited Photons stay on screen ${20 * level}% longer`,
 		baseCost: 20,
 		costMultiplier: 1.5,
-		currency: 'Excited Photons',
+		currency: CurrenciesTypes.EXCITED_PHOTONS,
 		maxLevel: 5,
 		effects: (level: number) => [
 			{
@@ -202,19 +204,36 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 			},
 		],
 	},
-	excited_yield: {
-		id: 'excited_yield',
-		name: 'Excited Yield',
-		description: (level: number) => `${10 * level}% chance to get double Excited Photons`,
-		baseCost: 50,
+	excited_auto_click: {
+		id: 'excited_auto_click',
+		name: 'Excited Targeting',
+		description: () => 'The auto-clicker can now target Excited Photons.',
+		baseCost: 35,
 		costMultiplier: 1.5,
-		currency: 'Excited Photons',
-		maxLevel: 10,
+		currency: CurrenciesTypes.EXCITED_PHOTONS,
+		maxLevel: 1,
+		effects: () => [
+			{
+				type: 'excited_auto_click',
+				description: 'Enables auto-clicking on Excited Photons',
+				apply: (currentValue) => currentValue,
+			},
+		],
+		condition: (manager) => manager.currencies[CurrenciesTypes.EXCITED_PHOTONS].earnedAllTime > 0,
+	},
+	excited_from_max_photons: {
+		id: 'excited_from_max_photons',
+		name: 'Photon Excitation',
+		description: (level: number) => `+${5 * level}% of max photon value added to Excited Photons`,
+		baseCost: 10,
+		costMultiplier: 2,
+		currency: CurrenciesTypes.EXCITED_PHOTONS,
+		maxLevel: 5,
 		effects: (level: number) => [
 			{
-				type: 'excited_photon_double',
-				description: `${10 * level}% chance for double Excited Photons`,
-				apply: (currentValue) => currentValue + (0.1 * level),
+				type: 'excited_photon_from_max',
+				description: `Add ${5 * level}% of max photon value to excited photons`,
+				apply: (currentValue) => currentValue + (0.05 * level),
 			},
 		],
 	},
@@ -224,7 +243,7 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 		description: (level: number) => `Increase Stabilization field speed and bonus by ${300 * level}% but it now collapse also when you click on purple realm`,
 		baseCost: 1000,
 		costMultiplier: 2,
-		currency: 'Excited Photons',
+		currency: CurrenciesTypes.EXCITED_PHOTONS,
 		maxLevel: 3,
 		effects: (level: number) => [
 			{
@@ -239,23 +258,43 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 			},
 		],
 	},
-	excited_auto_click: {
-		id: 'excited_auto_click',
-		name: 'Excited Targeting',
-		description: () => 'The auto-clicker can now target Excited Photons.',
-		baseCost: 35,
+	excited_yield: {
+		id: 'excited_yield',
+		name: 'Excited Yield',
+		description: (level: number) => `${10 * level}% chance to get double Excited Photons`,
+		baseCost: 50,
 		costMultiplier: 1.5,
-		currency: 'Excited Photons',
-		maxLevel: 1,
-		effects: () => [
+		currency: CurrenciesTypes.EXCITED_PHOTONS,
+		maxLevel: 10,
+		effects: (level: number) => [
 			{
-				type: 'excited_auto_click',
-				description: 'Enables auto-clicking on Excited Photons',
-				apply: (currentValue) => currentValue,
+				type: 'excited_photon_double',
+				description: `${10 * level}% chance for double Excited Photons`,
+				apply: (currentValue) => currentValue + (0.1 * level),
 			},
 		],
-		condition: (manager) => manager.currencies[CurrenciesTypes.EXCITED_PHOTONS].earnedAllTime > 0,
 	},
+	quantum_fluctuation: {
+		id: 'quantum_fluctuation',
+		name: 'Quantum Fluctuation',
+		description: (level: number) => `Increases chance for Excited Photons to spawn (+${formatNumber(0.02 * level)}%)`,
+		baseCost: 1,
+		costMultiplier: 1.5,
+		currency: CurrenciesTypes.EXCITED_PHOTONS,
+		maxLevel: 20,
+		effects: (level: number) => [
+			{
+				type: 'excited_photon_chance',
+				description: `Increase excited photon chance by ${0.02 * level}%`,
+				apply: (currentValue) => currentValue + (0.0002 * level),
+			},
+		],
+	},
+};
+
+export const ALL_PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
+	...PHOTON_UPGRADES,
+	...EXCITED_PHOTON_UPGRADES,
 };
 
 export function getPhotonUpgradeCost(upgrade: PhotonUpgrade, level: number): number {
@@ -263,10 +302,10 @@ export function getPhotonUpgradeCost(upgrade: PhotonUpgrade, level: number): num
 }
 
 export function canAffordPhotonUpgrade(upgrade: PhotonUpgrade, level: number, manager: GameManager): boolean {
-	const currency = upgrade.currency || 'Photons';
+	const currency = upgrade.currency || CurrenciesTypes.PHOTONS;
 	const cost = getPhotonUpgradeCost(upgrade, level);
 
-	if (currency === 'Excited Photons') {
+	if (currency === CurrenciesTypes.EXCITED_PHOTONS) {
 		return manager.excitedPhotons >= cost;
 	}
 	return manager.photons >= cost;

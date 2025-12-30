@@ -1,24 +1,21 @@
 <script lang="ts">
-	import { PHOTON_UPGRADES, getPhotonUpgradeCost, canAffordPhotonUpgrade } from '$data/photonUpgrades';
+	import { PHOTON_UPGRADES, EXCITED_PHOTON_UPGRADES } from '$data/photonUpgrades';
 	import { gameManager } from '$helpers/GameManager.svelte';
-	import Value from '@components/ui/Value.svelte';
 	import { CurrenciesTypes, type CurrencyName } from '$data/currencies';
 	import Currency from '@components/ui/Currency.svelte';
+	import PhotonUpgradeItem from './PhotonUpgradeItem.svelte';
 
 	let selectedCurrency = $state<CurrencyName>(CurrenciesTypes.PHOTONS);
 
-	const availableUpgrades = $derived(Object.values(PHOTON_UPGRADES).filter(upgrade => {
-		const currentLevel = gameManager.photonUpgrades[upgrade.id] || 0;
-		const hasLevelsRemaining = currentLevel < upgrade.maxLevel;
-		const meetsCondition = !upgrade.condition || upgrade.condition(gameManager);
-		const matchesCurrency = (upgrade.currency || CurrenciesTypes.PHOTONS) === selectedCurrency;
-		return hasLevelsRemaining && meetsCondition && matchesCurrency;
-	}));
-
-	const affordableUpgrades = $derived(availableUpgrades.filter(upgrade => {
-		const currentLevel = gameManager.photonUpgrades[upgrade.id] || 0;
-		return canAffordPhotonUpgrade(upgrade, currentLevel, gameManager);
-	}));
+	const availableUpgrades = $derived.by(() => {
+		const upgrades = selectedCurrency === CurrenciesTypes.EXCITED_PHOTONS ? EXCITED_PHOTON_UPGRADES : PHOTON_UPGRADES;
+		return Object.values(upgrades).filter(upgrade => {
+			const currentLevel = gameManager.photonUpgrades[upgrade.id] || 0;
+			const hasLevelsRemaining = currentLevel < upgrade.maxLevel;
+			const meetsCondition = !upgrade.condition || upgrade.condition(gameManager);
+			return hasLevelsRemaining && meetsCondition;
+		});
+	});
 
 	const showExcitedTab = $derived(gameManager.currencies[CurrenciesTypes.EXCITED_PHOTONS].earnedAllTime > 0);
 </script>
@@ -50,28 +47,11 @@
 	<div class="flex-1 overflow-y-auto px-1 custom-scrollbar">
 		<div class="grid gap-2">
 			{#each availableUpgrades as upgrade (upgrade.id)}
-				{@const currentLevel = gameManager.photonUpgrades[upgrade.id] || 0}
-				{@const cost = getPhotonUpgradeCost(upgrade, currentLevel)}
-				{@const affordable = affordableUpgrades.includes(upgrade)}
-				{@const isExcited = selectedCurrency === CurrenciesTypes.EXCITED_PHOTONS}
-
-				<button
-					class="upgrade text-start rounded-sm cursor-pointer p-2 transition-all duration-200 {affordable ? '' : 'opacity-50 cursor-not-allowed'} {isExcited ? 'bg-yellow-900/10 hover:bg-yellow-900/20 border border-yellow-500/20 hover:border-yellow-500/40' : 'bg-realm-900/20 hover:bg-realm-900/30 border border-realm-500/20 hover:border-realm-500/40'}"
-					onclick={() => {
-						if (affordable) gameManager.purchasePhotonUpgrade(upgrade.id);
-					}}
-				>
-					<div class="flex justify-between items-start mb-0.5">
-						<h3 class="text-xs font-medium leading-tight {isExcited ? 'text-yellow-300' : 'text-realm-300'}">{upgrade.name}</h3>
-						<span class="text-xs px-1 py-0.5 rounded-sm whitespace-nowrap ml-1 {isExcited ? 'text-yellow-400 bg-yellow-800/20' : 'text-realm-400 bg-realm-800/30'}">
-							{currentLevel}/{upgrade.maxLevel}
-						</span>
-					</div>
-					<p class="text-xs mb-0.5 leading-tight {isExcited ? 'text-yellow-200/80' : 'text-realm-200/80'}">{upgrade.description(currentLevel + 1)}</p>
-					<div class="text-xs {isExcited ? 'text-yellow-300' : 'text-realm-300'}">
-						<Value value={cost} currency={selectedCurrency}/>
-					</div>
-				</button>
+				<PhotonUpgradeItem
+					{upgrade}
+					currency={selectedCurrency}
+					isExcited={selectedCurrency === CurrenciesTypes.EXCITED_PHOTONS}
+				/>
 			{/each}
 
 			{#if availableUpgrades.length === 0}

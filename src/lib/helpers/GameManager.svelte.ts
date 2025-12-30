@@ -5,7 +5,7 @@ import { SAVE_VERSION, loadSavedState, SAVE_KEY } from '$helpers/saves';
 import { ACHIEVEMENTS } from '$data/achievements';
 import { CurrenciesTypes } from '$data/currencies';
 import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
-import { PHOTON_UPGRADES, getPhotonUpgradeCost } from '$data/photonUpgrades';
+import { ALL_PHOTON_UPGRADES, getPhotonUpgradeCost } from '$data/photonUpgrades';
 import { SKILL_UPGRADES } from '$data/skillTree';
 import { statsConfig } from '$helpers/statConstants';
 import { UPGRADES } from '$data/upgrades';
@@ -443,7 +443,7 @@ export class GameManager {
 
 	purchasePhotonUpgrade(upgradeId: string) {
 		const currentLevel = this.photonUpgrades[upgradeId] || 0;
-		const upgrade = PHOTON_UPGRADES[upgradeId];
+		const upgrade = ALL_PHOTON_UPGRADES[upgradeId];
 
 		if (!upgrade || currentLevel >= upgrade.maxLevel) {
 			return false;

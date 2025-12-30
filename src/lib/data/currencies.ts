@@ -1,5 +1,6 @@
 import { LAYERS } from '$helpers/statConstants';
 import type { Currency } from '$lib/types';
+
 export const CurrenciesTypes = {
 	ATOMS: 'Atoms',
 	ELECTRONS: 'Electrons',

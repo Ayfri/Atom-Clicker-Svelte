@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { gameManager } from '$helpers/GameManager.svelte';
-	import { CurrenciesTypes } from '$data/currencies';
+	import { CurrenciesTypes, type CurrencyName } from '$data/currencies';
 	import { UPGRADES } from '$data/upgrades';
 	import { ACHIEVEMENTS } from '$data/achievements';
 	import { BUILDING_TYPES, BUILDINGS } from '$data/buildings';
-	import { PHOTON_UPGRADES } from '$data/photonUpgrades';
+	import { ALL_PHOTON_UPGRADES } from '$data/photonUpgrades';
 	import { SAVE_KEY } from '$helpers/saves';
 	import { Save, Trash2, Zap, Unlock, Coins, Factory, Orbit, Download, Upload, ToggleLeft, Sparkles } from 'lucide-svelte';
 
@@ -98,7 +98,7 @@
 					gameManager.upgrades = Object.keys(UPGRADES);
 					gameManager.achievements = Object.keys(ACHIEVEMENTS);
 					gameManager.photonUpgrades = Object.fromEntries(
-						Object.keys(PHOTON_UPGRADES).map(key => [key, 100])
+						Object.keys(ALL_PHOTON_UPGRADES).map(key => [key, 100])
 					);
 					alert('Everything unlocked!');
 				}}

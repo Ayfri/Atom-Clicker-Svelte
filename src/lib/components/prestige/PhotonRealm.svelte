@@ -8,7 +8,7 @@
 	import Currency from '@components/ui/Currency.svelte';
 	import { addParticles } from '$stores/canvas';
 	import { CurrenciesTypes } from '$data/currencies';
-	import { PHOTON_UPGRADES } from '$data/photonUpgrades';
+	import { ALL_PHOTON_UPGRADES } from '$data/photonUpgrades';
 	import { mobile } from '$stores/window.svelte';
 
 	export function simulateClick() {
@@ -73,7 +73,7 @@
 		const level = gameManager.photonUpgrades['photon_spawn_rate'] || 0;
 		if (level === 0) return baseSpawnRate;
 
-		const upgrade = PHOTON_UPGRADES['photon_spawn_rate'];
+		const upgrade = ALL_PHOTON_UPGRADES['photon_spawn_rate'];
 		const effects = upgrade.effects(level);
 
 		return effects.reduce((rate, effect) => {
@@ -88,7 +88,7 @@
 		const level = gameManager.photonUpgrades['circle_size'] || 0;
 		if (level === 0) return baseSizeMultiplier;
 
-		const upgrade = PHOTON_UPGRADES['circle_size'];
+		const upgrade = ALL_PHOTON_UPGRADES['circle_size'];
 		const effects = upgrade.effects(level);
 
 		return effects.reduce((multiplier, effect) => {
@@ -103,11 +103,26 @@
 		const level = gameManager.photonUpgrades['photon_value'] || 0;
 		if (level === 0) return 0;
 
-		const upgrade = PHOTON_UPGRADES['photon_value'];
+		const upgrade = ALL_PHOTON_UPGRADES['photon_value'];
 		const effects = upgrade.effects(level);
 
 		return effects.reduce((bonus, effect) => {
 			if (effect.type === 'click') {
+				return effect.apply(bonus, gameManager);
+			}
+			return bonus;
+		}, 0);
+	}
+
+	function getExcitedFromMaxBonus() {
+		const level = gameManager.photonUpgrades['excited_from_max_photons'] || 0;
+		if (level === 0) return 0;
+
+		const upgrade = ALL_PHOTON_UPGRADES['excited_from_max_photons'];
+		const effects = upgrade.effects(level);
+
+		return effects.reduce((bonus, effect) => {
+			if (effect.type === 'excited_photon_from_max') {
 				return effect.apply(bonus, gameManager);
 			}
 			return bonus;
@@ -119,7 +134,7 @@
 		let duration = 0;
 		const lifetimeLevel = gameManager.photonUpgrades['circle_lifetime'] || 0;
 		if (lifetimeLevel > 0) {
-			const upgrade = PHOTON_UPGRADES['circle_lifetime'];
+			const upgrade = ALL_PHOTON_UPGRADES['circle_lifetime'];
 			const effects = upgrade.effects(lifetimeLevel);
 			duration += effects.reduce((bonus, effect) => {
 				if (effect.type === 'power_up_duration') {
@@ -136,7 +151,7 @@
 		const level = gameManager.photonUpgrades['energetic_decay'] || 0;
 		if (level === 0) return 1;
 
-		const upgrade = PHOTON_UPGRADES['energetic_decay'];
+		const upgrade = ALL_PHOTON_UPGRADES['energetic_decay'];
 		const effects = upgrade.effects(level);
 
 		return effects.reduce((mult, effect) => {
@@ -159,7 +174,7 @@
 		const level = gameManager.photonUpgrades['excited_yield'] || 0;
 		if (level === 0) return 0;
 
-		const upgrade = PHOTON_UPGRADES['excited_yield'];
+		const upgrade = ALL_PHOTON_UPGRADES['excited_yield'];
 		const effects = upgrade.effects(level);
 
 		return effects.reduce((chance, effect) => {
@@ -172,12 +187,26 @@
 
 	function getIsExcited() {
 		const baseChance = 0.001; // 0.1%
-		const level = gameManager.photonUpgrades['quantum_fluctuation'] || 0;
 		let chance = baseChance;
 
+		// Quantum Fluctuation
+		const level = gameManager.photonUpgrades['quantum_fluctuation'] || 0;
 		if (level > 0) {
-			const upgrade = PHOTON_UPGRADES['quantum_fluctuation'];
+			const upgrade = ALL_PHOTON_UPGRADES['quantum_fluctuation'];
 			const effects = upgrade.effects(level);
+			chance = effects.reduce((c, effect) => {
+				if (effect.type === 'excited_photon_chance') {
+					return effect.apply(c, gameManager);
+				}
+				return c;
+			}, chance);
+		}
+
+		// Cheap Excited Spawn Boost
+		const cheapLevel = gameManager.photonUpgrades['cheap_excited_spawn_boost'] || 0;
+		if (cheapLevel > 0) {
+			const upgrade = ALL_PHOTON_UPGRADES['cheap_excited_spawn_boost'];
+			const effects = upgrade.effects(cheapLevel);
 			chance = effects.reduce((c, effect) => {
 				if (effect.type === 'excited_photon_chance') {
 					return effect.apply(c, gameManager);
@@ -211,7 +240,13 @@
 		if (isExcited) {
 			// Excited photons give 1 excited photon currency (or 2 if double chance)
 			const excitedDoubleChance = getExcitedDoubleChance();
-			finalPhotons = Math.random() < excitedDoubleChance ? 2 : 1;
+			const baseExcited = Math.random() < excitedDoubleChance ? 2 : 1;
+
+			// Add bonus from max photon value
+			const maxPhotonValue = MAX_PHOTONS + photonValueBonus;
+			const fromMaxBonusFactor = getExcitedFromMaxBonus();
+
+			finalPhotons = baseExcited + (maxPhotonValue * fromMaxBonusFactor);
 		} else {
 			// Apply double chance for normal photons
 			finalPhotons = Math.random() < doubleChance ? (basePhotons + photonValueBonus) * 2 : basePhotons + photonValueBonus;
@@ -295,7 +330,7 @@
 		const autoClickerLevel = gameManager.photonUpgrades['auto_clicker'] || 0;
 		if (autoClickerLevel === 0) return 0;
 
-		const upgrade = PHOTON_UPGRADES['auto_clicker'];
+		const upgrade = ALL_PHOTON_UPGRADES['auto_clicker'];
 		const effects = upgrade.effects(autoClickerLevel);
 
 		// Apply the effect to get clicks per second
