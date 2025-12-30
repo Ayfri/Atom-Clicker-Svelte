@@ -36,7 +36,7 @@
 
 	async function handleClick(event: MouseEvent) {
 		gameManager.addAtoms(gameManager.clickPower);
-		gameManager.incrementClicks();
+		gameManager.incrementClicks(!event.isTrusted);
 
 		// TODO: Re-add main atom click animation
 

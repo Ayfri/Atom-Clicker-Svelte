@@ -106,6 +106,13 @@ export class GameManager {
 		return calculateEffects(autoClickUpgrades, this, 0, options);
 	});
 
+	photonAutoClicksPer5Seconds = $derived.by(() => {
+		if (!this.settings.automation.autoClickPhotons) return 0;
+		const options = { type: 'photon_auto_click' as const };
+		const upgrades = getUpgradesWithEffects(this.allEffectSources, options);
+		return calculateEffects(upgrades, this, 0, options);
+	});
+
 	bonusMultiplier = $derived(this.activePowerUps.reduce((acc, powerUp) => acc * powerUp.multiplier, 1));
 
 	buildingProductions = $derived.by(() => {
@@ -356,7 +363,7 @@ export class GameManager {
 	}
 
 	loadSaveData(data: Partial<GameState>) {
-		for (const [key, config] of Object.entries(this.statsConfig)) {
+		for (const key of Object.keys(this.statsConfig)) {
 			if (key in data) {
 				this[key as keyof this] = data[key as keyof GameState] as any;
 			}
@@ -610,13 +617,22 @@ export class GameManager {
 
 	incrementBonusHiggsBosonClicks() {
 		currenciesManager.add(CurrenciesTypes.HIGGS_BOSON, 1);
-		this.lastInteractionTime = Date.now();
+		if (!this.upgrades.includes('electron_bypass_bonus_click_stability')) {
+			this.lastInteractionTime = Date.now();
+		}
 	}
 
-	incrementClicks() {
+	incrementClicks(isAuto = false) {
 		this.totalClicksRun += 1;
 		this.totalClicksAllTime += 1;
-		this.lastInteractionTime = Date.now();
+
+		const shouldUpdate = isAuto
+			? !this.upgrades.includes('electron_bypass_atom_autoclick_stability')
+			: !this.upgrades.includes('electron_bypass_atom_click_stability');
+
+		if (shouldUpdate) {
+			this.lastInteractionTime = Date.now();
+		}
 	}
 
 	unlockAchievement(achievementId: string) {
@@ -629,7 +645,9 @@ export class GameManager {
 	addPowerUp(powerUp: PowerUp) {
 		this.activePowerUps = [...this.activePowerUps, powerUp];
 		this.powerUpsCollected += 1;
-		this.lastInteractionTime = Date.now();
+		if (!this.upgrades.includes('electron_bypass_bonus_click_stability')) {
+			this.lastInteractionTime = Date.now();
+		}
 
 		setTimeout(() => {
 			this.removePowerUp(powerUp.id);
@@ -713,7 +731,6 @@ export class GameManager {
 
 		this.gameInterval = setInterval(() => {
 			this.inGameTime += 1000;
-			this.lastInteractionTime = this.lastInteractionTime;
 
 			if (this.atomsPerSecond > this.highestAPS) {
 				this.highestAPS = this.atomsPerSecond;

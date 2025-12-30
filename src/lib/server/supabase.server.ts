@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '$lib/types/supabase'
 import { PUBLIC_SUPABASE_URL } from '$env/static/public'
-import { SUPABASE_SERVICE_ROLE } from '$env/static/private'
+import { SUPABASE_SECRET_KEY } from '$env/static/private'
 
 // Server-side client with service role key for admin operations
-export const supabaseAdmin = createClient<Database>(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE, {
+export const supabaseAdmin = createClient<Database>(PUBLIC_SUPABASE_URL, SUPABASE_SECRET_KEY, {
 	auth: {
 		autoRefreshToken: false,
 		persistSession: false

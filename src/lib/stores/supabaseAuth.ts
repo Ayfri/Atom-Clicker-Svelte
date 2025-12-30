@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
 import { browser } from '$app/environment';
 import { writable, derived } from 'svelte/store';
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_PUBLISHABLE_KEY } from '$env/static/public';
 import type { GameState } from '$lib/types';
 import type { Database } from '$lib/types/supabase';
 import { gameManager } from '$helpers/GameManager.svelte';
@@ -37,7 +37,7 @@ function createSupabaseAuthStore() {
 		}
 
 		try {
-			supabase = createClient<Database>(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+			supabase = createClient<Database>(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
 				auth: {
 					autoRefreshToken: true,
 					persistSession: true,

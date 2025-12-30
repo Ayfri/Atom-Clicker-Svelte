@@ -43,10 +43,10 @@
 </script>
 
 <script lang="ts">
-	import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+	import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_PUBLISHABLE_KEY } from '$env/static/public';
 	import {supabaseAuth} from '$stores/supabaseAuth';
 	import Modal from '@components/ui/Modal.svelte';
-	
+
 	interface Props {
 		onClose: () => void;
 	}
@@ -60,7 +60,7 @@
 		error = null;
 		try {
 			// Check Supabase configuration
-			if (!PUBLIC_SUPABASE_URL || !PUBLIC_SUPABASE_ANON_KEY) {
+			if (!PUBLIC_SUPABASE_URL || !PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
 				error = 'Supabase configuration is missing. Please check your environment variables.';
 				return;
 			}

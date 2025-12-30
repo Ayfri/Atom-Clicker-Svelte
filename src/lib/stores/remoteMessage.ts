@@ -4,7 +4,7 @@ import { browser } from '$app/environment';
 import type { GameMessage } from '$lib/types/supabase';
 
 function createRemoteMessageStore() {
-	const { subscribe, set, update } = writable<{
+	const { subscribe, update } = writable<{
 		message: GameMessage | null;
 		dismissedIds: string[];
 		isVisible: boolean;
