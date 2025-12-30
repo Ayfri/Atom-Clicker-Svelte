@@ -4,6 +4,7 @@ import { LAYERS, type LayerType } from '$helpers/statConstants';
 import { SAVE_VERSION, loadSavedState, SAVE_KEY } from '$helpers/saves';
 import { ACHIEVEMENTS } from '$data/achievements';
 import { CurrenciesTypes } from '$data/currencies';
+import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
 import { PHOTON_UPGRADES, getPhotonUpgradeCost } from '$data/photonUpgrades';
 import { SKILL_UPGRADES } from '$data/skillTree';
 import { statsConfig } from '$helpers/statConstants';
@@ -20,18 +21,13 @@ export class GameManager {
 	// Stats
 	achievements = $state<string[]>([]);
 	activePowerUps = $state<PowerUp[]>([]);
-	atoms = $state(0);
 	buildings = $state<Partial<Record<BuildingType, Building>>>({});
-	electrons = $state(0);
-	excitedPhotons = $state(0);
 	highestAPS = $state(0);
 	inGameTime = $state(0);
 	lastSave = $state(Date.now());
 	lastInteractionTime = $state(Date.now());
-	photons = $state(0);
 	photonUpgrades = $state<Record<string, number>>({});
 	powerUpsCollected = $state(0);
-	protons = $state(0);
 	purpleRealmUnlocked = $state(false);
 	settings = $state<Settings>({
 		automation: {
@@ -43,25 +39,13 @@ export class GameManager {
 	});
 	skillUpgrades = $state<string[]>([]);
 	startDate = $state(Date.now());
-	totalAtomsEarnedAllTime = $state(0);
-	totalAtomsEarnedRun = $state(0);
-	totalBonusHiggsBosonClickedAllTime = $state(0);
-	totalBonusHiggsBosonClickedRun = $state(0);
 	totalBuildingsPurchasedAllTime = $state(0);
 	totalClicksAllTime = $state(0);
 	totalClicksRun = $state(0);
 	totalElectronizesAllTime = $state(0);
 	totalElectronizesRun = $state(0);
-	totalElectronsEarnedAllTime = $state(0);
-	totalElectronsEarnedRun = $state(0);
-	totalExcitedPhotonsEarnedAllTime = $state(0);
-	totalExcitedPhotonsEarnedRun = $state(0);
-	totalPhotonsEarnedAllTime = $state(0);
-	totalPhotonsEarnedRun = $state(0);
 	totalProtonisesAllTime = $state(0);
 	totalProtonisesRun = $state(0);
-	totalProtonsEarnedAllTime = $state(0);
-	totalProtonsEarnedRun = $state(0);
 	totalUpgradesPurchasedAllTime = $state(0);
 	totalUsers = $state(0);
 	totalXP = $state(0);
@@ -88,7 +72,22 @@ export class GameManager {
 		if (this.gameInterval) clearInterval(this.gameInterval);
 	}
 
+
 	// Derived values (Getters)
+	get currencies() {
+		return currenciesManager.currencies;
+	}
+
+	set currencies(value) {
+		currenciesManager.currencies = value;
+	}
+
+	// Stats Getters
+	get atoms() { return currenciesManager.getAmount(CurrenciesTypes.ATOMS); }
+	get electrons() { return currenciesManager.getAmount(CurrenciesTypes.ELECTRONS); }
+	get excitedPhotons() { return currenciesManager.getAmount(CurrenciesTypes.EXCITED_PHOTONS); }
+	get photons() { return currenciesManager.getAmount(CurrenciesTypes.PHOTONS); }
+	get protons() { return currenciesManager.getAmount(CurrenciesTypes.PROTONS); }
 
 	atomsPerSecond = $derived.by(() => {
 		return Object.entries(this.buildings).reduce((total, [type, building]) => {
@@ -278,41 +277,25 @@ export class GameManager {
 		return {
 			achievements: this.achievements,
 			activePowerUps: this.activePowerUps,
-			atoms: this.atoms,
 			buildings: this.buildings,
-			electrons: this.electrons,
-			excitedPhotons: this.excitedPhotons,
+			currencies: this.currencies,
 			highestAPS: this.highestAPS,
 			inGameTime: this.inGameTime,
 			lastInteractionTime: this.lastInteractionTime,
 			lastSave: this.lastSave,
-			photons: this.photons,
 			photonUpgrades: this.photonUpgrades,
 			powerUpsCollected: this.powerUpsCollected,
-			protons: this.protons,
 			purpleRealmUnlocked: this.purpleRealmUnlocked,
 			settings: this.settings,
 			skillUpgrades: this.skillUpgrades,
 			startDate: this.startDate,
-			totalAtomsEarnedAllTime: this.totalAtomsEarnedAllTime,
-			totalAtomsEarnedRun: this.totalAtomsEarnedRun,
-			totalBonusHiggsBosonClickedAllTime: this.totalBonusHiggsBosonClickedAllTime,
-			totalBonusHiggsBosonClickedRun: this.totalBonusHiggsBosonClickedRun,
 			totalBuildingsPurchasedAllTime: this.totalBuildingsPurchasedAllTime,
 			totalClicksAllTime: this.totalClicksAllTime,
 			totalClicksRun: this.totalClicksRun,
 			totalElectronizesAllTime: this.totalElectronizesAllTime,
 			totalElectronizesRun: this.totalElectronizesRun,
-			totalElectronsEarnedAllTime: this.totalElectronsEarnedAllTime,
-			totalElectronsEarnedRun: this.totalElectronsEarnedRun,
-			totalExcitedPhotonsEarnedAllTime: this.totalExcitedPhotonsEarnedAllTime,
-			totalExcitedPhotonsEarnedRun: this.totalExcitedPhotonsEarnedRun,
-			totalPhotonsEarnedAllTime: this.totalPhotonsEarnedAllTime,
-			totalPhotonsEarnedRun: this.totalPhotonsEarnedRun,
 			totalProtonisesAllTime: this.totalProtonisesAllTime,
 			totalProtonisesRun: this.totalProtonisesRun,
-			totalProtonsEarnedAllTime: this.totalProtonsEarnedAllTime,
-			totalProtonsEarnedRun: this.totalProtonsEarnedRun,
 			totalUpgradesPurchasedAllTime: this.totalUpgradesPurchasedAllTime,
 			totalUsers: this.totalUsers,
 			totalXP: this.totalXP,
@@ -370,10 +353,12 @@ export class GameManager {
 
 	resetLayer(layer: LayerType) {
 		for (const [key, config] of Object.entries(this.statsConfig)) {
-			if (config.layer >= layer) {
+			// Reset stats that are at or below the triggered layer, but ignore NEVER (0) and SPECIAL (-1)
+			if (config.layer > 0 && config.layer <= layer) {
 				this[key as keyof this] = config.defaultValue;
 			}
 		}
+		currenciesManager.reset(layer);
 	}
 
 	// Currency & Affordability
@@ -382,22 +367,12 @@ export class GameManager {
 	}
 
 	getCurrency(price: Price): number {
-		if (price.currency === CurrenciesTypes.ATOMS) return this.atoms;
-		if (price.currency === CurrenciesTypes.ELECTRONS) return this.electrons;
-		if (price.currency === CurrenciesTypes.PHOTONS) return this.photons;
-		if (price.currency === CurrenciesTypes.PROTONS) return this.protons;
-		if (price.currency === CurrenciesTypes.EXCITED_PHOTONS) return this.excitedPhotons;
-		return 0;
+		return currenciesManager.getAmount(price.currency);
 	}
 
 	spendCurrency(price: Price): boolean {
 		if (!this.canAfford(price)) return false;
-
-		if (price.currency === CurrenciesTypes.ATOMS) this.atoms -= price.amount;
-		else if (price.currency === CurrenciesTypes.ELECTRONS) this.electrons -= price.amount;
-		else if (price.currency === CurrenciesTypes.PHOTONS) this.photons -= price.amount;
-		else if (price.currency === CurrenciesTypes.PROTONS) this.protons -= price.amount;
-		else if (price.currency === CurrenciesTypes.EXCITED_PHOTONS) this.excitedPhotons -= price.amount;
+		currenciesManager.remove(price.currency, price.amount);
 		return true;
 	}
 
@@ -547,8 +522,7 @@ export class GameManager {
 
 			this.totalElectronizesRun += 1;
 			this.totalElectronizesAllTime += 1;
-			this.totalElectronsEarnedRun += electronGain;
-			this.totalElectronsEarnedAllTime += electronGain;
+			// Removed manual additions to stats as currenciesManager handles it
 			this.totalProtonisesRun = 0; // Reset protonise counter
 
 			this.resetLayer(LAYERS.ELECTRONIZE);
@@ -557,7 +531,7 @@ export class GameManager {
 			if (persistentUpgrades.includes('feature_purple_realm')) {
 				this.purpleRealmUnlocked = true;
 			}
-			this.electrons += electronGain;
+			currenciesManager.add(CurrenciesTypes.ELECTRONS, electronGain);
 
 			this.lastInteractionTime = Date.now();
 			this.save();
@@ -576,8 +550,7 @@ export class GameManager {
 
 			this.totalProtonisesRun += 1;
 			this.totalProtonisesAllTime += 1;
-			this.totalProtonsEarnedRun += protonGain;
-			this.totalProtonsEarnedAllTime += protonGain;
+			// Removed manual additions to stats as currenciesManager handles it
 
 			this.resetLayer(LAYERS.PROTONIZER);
 
@@ -585,7 +558,7 @@ export class GameManager {
 			if (persistentUpgrades.includes('feature_purple_realm')) {
 				this.purpleRealmUnlocked = true;
 			}
-			this.protons += protonGain;
+			currenciesManager.add(CurrenciesTypes.PROTONS, protonGain);
 
 			this.lastInteractionTime = Date.now();
 			this.save();
@@ -596,11 +569,8 @@ export class GameManager {
 
 	// Stats & Progression
 	addAtoms(amount: number) {
-		this.atoms += amount;
+		currenciesManager.add(CurrenciesTypes.ATOMS, amount);
 		if (amount > 0) {
-			this.totalAtomsEarnedRun += amount;
-			this.totalAtomsEarnedAllTime += amount;
-
 			if (this.upgrades.includes('feature_levels')) {
 				const xpPerAtom = 0.1;
 				this.totalXP += amount * xpPerAtom * this.xpGainMultiplier;
@@ -608,25 +578,8 @@ export class GameManager {
 		}
 	}
 
-	addPhotons(amount: number) {
-		this.photons += amount;
-		if (amount > 0) {
-			this.totalPhotonsEarnedRun += amount;
-			this.totalPhotonsEarnedAllTime += amount;
-		}
-	}
-
-	addExcitedPhotons(amount: number) {
-		this.excitedPhotons += amount;
-		if (amount > 0) {
-			this.totalExcitedPhotonsEarnedRun += amount;
-			this.totalExcitedPhotonsEarnedAllTime += amount;
-		}
-	}
-
 	incrementBonusHiggsBosonClicks() {
-		this.totalBonusHiggsBosonClickedRun += 1;
-		this.totalBonusHiggsBosonClickedAllTime += 1;
+		currenciesManager.add(CurrenciesTypes.HIGGS_BOSON, 1);
 		this.lastInteractionTime = Date.now();
 	}
 

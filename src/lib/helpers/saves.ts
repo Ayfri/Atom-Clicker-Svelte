@@ -5,7 +5,7 @@ import {saveRecovery, type SaveErrorType} from '$stores/saveRecovery';
 import {statsConfig} from '$helpers/statConstants';
 
 export const SAVE_KEY = 'atomic-clicker-save';
-export const SAVE_VERSION = 16;
+export const SAVE_VERSION = 17;
 
 export interface LoadSaveResult {
 	errorDetails?: string;
@@ -356,6 +356,52 @@ function migrateSavedState(savedState: unknown): GameState | undefined {
 			state.totalPhotonsEarnedRun = state.photons || 0;
 			state.totalProtonisesAllTime = state.totalProtonisesRun || 0;
 			state.totalProtonsEarnedRun = state.totalProtonsEarnedAllTime || 0;
+		}
+
+		if (state.version === 16) {
+			state.currencies = {
+				[CurrenciesTypes.ATOMS]: {
+					amount: state.atoms || 0,
+					earnedRun: state.totalAtomsEarnedRun || 0,
+					earnedAllTime: state.totalAtomsEarnedAllTime || 0
+				},
+				[CurrenciesTypes.ELECTRONS]: {
+					amount: state.electrons || 0,
+					earnedRun: state.totalElectronsEarnedRun || 0,
+					earnedAllTime: state.totalElectronsEarnedAllTime || 0
+				},
+				[CurrenciesTypes.EXCITED_PHOTONS]: {
+					amount: state.excitedPhotons || 0,
+					earnedRun: state.totalExcitedPhotonsEarnedRun || 0,
+					earnedAllTime: state.totalExcitedPhotonsEarnedAllTime || 0
+				},
+				[CurrenciesTypes.HIGGS_BOSON]: {
+					amount: 0,
+					earnedRun: state.totalBonusHiggsBosonClickedRun || 0,
+					earnedAllTime: state.totalBonusHiggsBosonClickedAllTime || 0
+				},
+				[CurrenciesTypes.PHOTONS]: {
+					amount: state.photons || 0,
+					earnedRun: state.totalPhotonsEarnedRun || 0,
+					earnedAllTime: state.totalPhotonsEarnedAllTime || 0
+				},
+				[CurrenciesTypes.PROTONS]: {
+					amount: state.protons || 0,
+					earnedRun: state.totalProtonsEarnedRun || 0,
+					earnedAllTime: state.totalProtonsEarnedAllTime || 0
+				}
+			};
+
+			const keysToRemove = [
+				'atoms', 'totalAtomsEarnedRun', 'totalAtomsEarnedAllTime',
+				'electrons', 'totalElectronsEarnedRun', 'totalElectronsEarnedAllTime',
+				'excitedPhotons', 'totalExcitedPhotonsEarnedRun', 'totalExcitedPhotonsEarnedAllTime',
+				'totalBonusHiggsBosonClickedRun', 'totalBonusHiggsBosonClickedAllTime',
+				'photons', 'totalPhotonsEarnedRun', 'totalPhotonsEarnedAllTime',
+				'protons', 'totalProtonsEarnedRun', 'totalProtonsEarnedAllTime'
+			];
+
+			keysToRemove.forEach(key => delete state[key]);
 		}
 
 		state.version = nextVersion;

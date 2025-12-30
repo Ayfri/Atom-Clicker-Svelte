@@ -1,7 +1,7 @@
 import type { Effect } from '$lib/types';
 import type { GameManager } from '$helpers/GameManager.svelte';
 import { formatNumber } from '$lib/utils';
-import type { CurrencyName } from '$data/currencies';
+import { type CurrencyName, CurrenciesTypes } from '$data/currencies';
 
 export interface PhotonUpgrade {
 	id: string;
@@ -254,7 +254,7 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 				apply: (currentValue) => currentValue,
 			},
 		],
-		condition: (manager) => manager.totalExcitedPhotonsEarnedAllTime > 0,
+		condition: (manager) => manager.currencies[CurrenciesTypes.EXCITED_PHOTONS].earnedAllTime > 0,
 	},
 };
 

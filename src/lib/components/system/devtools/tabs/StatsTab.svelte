@@ -18,18 +18,37 @@
 			other: []
 		};
 
+		// Add Currencies
+		Object.values(CURRENCIES).forEach(currency => {
+			groups.currencies.push({
+				key: currency.name,
+				config: { defaultValue: 0, layer: currency.layer ?? 0, minVersion: 0 },
+				value: gameManager.currencies[currency.name].amount,
+				icon: undefined,
+				currency: currency.name
+			});
+			groups.currencies.push({
+				key: `${currency.name}:earnedRun`,
+				config: { defaultValue: 0, layer: currency.layer ?? 0, minVersion: 0 },
+				value: gameManager.currencies[currency.name].earnedRun,
+				icon: undefined,
+				currency: currency.name
+			});
+			groups.currencies.push({
+				key: `${currency.name}:earnedAllTime`,
+				config: { defaultValue: 0, layer: currency.layer ?? 0, minVersion: 0 },
+				value: gameManager.currencies[currency.name].earnedAllTime,
+				icon: undefined,
+				currency: currency.name
+			});
+		});
+
 		Object.entries(statsConfig).forEach(([key, config]) => {
 			const value = gameManager[key as keyof GameManager];
 
-			// Check if it's a currency stat
-			const currencyEntry = Object.entries(CURRENCIES).find(([_, c]) => c.stat === key);
-			const currency = currencyEntry ? (currencyEntry[0] as CurrencyName) : undefined;
-
 			let icon: any = FileBox;
 
-			if (currency) {
-				icon = undefined;
-			} else if (key.startsWith('total')) {
+			if (key.startsWith('total')) {
 				icon = BarChart3;
 			} else if (key.includes('Realm') || key.includes('protonise') || key.includes('electronize')) {
 				icon = Sparkles;
@@ -39,11 +58,9 @@
 				icon = Cog;
 			}
 
-			const stat = { key, config, value, icon, currency };
+			const stat = { key, config, value, icon, currency: undefined };
 
-			if (currency || ['atoms', 'protons', 'electrons', 'photons', 'excitedPhotons'].includes(key)) {
-				groups.currencies.push(stat);
-			} else if (key.startsWith('total')) {
+			if (key.startsWith('total')) {
 				groups.totals.push(stat);
 			} else if (['purpleRealmUnlocked', 'protoniseProtonsGain', 'electronizeElectronsGain'].includes(key)) {
 				groups.prestige.push(stat);
@@ -59,6 +76,27 @@
 
 	function updateStat(key: string, value: unknown) {
 		try {
+			// Check if key is a currency
+			const currency = Object.values(CURRENCIES).find(c => c.name === key);
+			if (currency) {
+				const num = typeof value === 'string' ? parseFloat(value) : (value as number);
+				const val = isNaN(num) ? 0 : num;
+				gameManager.currencies[currency.name].amount = val;
+				return;
+			}
+
+			if (key.includes(':')) {
+				const [currencyName, field] = key.split(':');
+				const cName = currencyName as CurrencyName;
+				if (gameManager.currencies[cName] && ['earnedRun', 'earnedAllTime'].includes(field)) {
+					const num = typeof value === 'string' ? parseFloat(value) : (value as number);
+					const val = isNaN(num) ? 0 : num;
+					// @ts-ignore
+					gameManager.currencies[cName][field] = val;
+				}
+				return;
+			}
+
 			const manager = gameManager as unknown as Record<string, unknown>;
 			const currentValue = manager[key];
 			if (NUMBER_STATS.includes(key as any)) {
@@ -102,7 +140,11 @@
 </script>
 
 {#snippet statItem(key: string, value: unknown, icon: any, currency?: CurrencyName)}
-	{@const liveValue = (gameManager as any)[key]}
+	{@const liveValue = key.includes(':')
+		? gameManager.currencies[key.split(':')[0] as CurrencyName][key.split(':')[1] as 'earnedRun' | 'earnedAllTime']
+		: currency
+			? gameManager.currencies[currency].amount
+			: (gameManager as any)[key]}
 	<div class="flex flex-col gap-1 p-1 rounded-lg hover:bg-white/5 transition-colors group">
 		<div class="flex items-center justify-between px-1">
 			<div class="flex items-center gap-1.5 min-w-0">
@@ -175,7 +217,7 @@
 				<div class="flex items-center gap-2 w-full">
 					<div class="relative flex-1">
 						{#if isEditing}
-							{#if NUMBER_STATS.includes(key as any)}
+							{#if NUMBER_STATS.includes(key as any) || currency || key.includes(':')}
 								<Tooltip position="bottom" size="md" class="w-full">
 									{#snippet children()}
 										<input

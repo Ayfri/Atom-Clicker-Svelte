@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { gameManager } from '$helpers/GameManager.svelte';
+	import { CurrenciesTypes } from '$data/currencies';
 	import { UPGRADES } from '$data/upgrades';
 	import { ACHIEVEMENTS } from '$data/achievements';
 	import { BUILDING_TYPES, BUILDINGS } from '$data/buildings';
@@ -108,10 +109,10 @@
 			<button
 				class="flex items-center justify-center gap-2 bg-accent-600/80 hover:bg-accent-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer shadow-lg"
 				onclick={() => {
-					gameManager.atoms = 1e15;
-					gameManager.protons = 1000;
-					gameManager.electrons = 100;
-					gameManager.photons = 10;
+					gameManager.currencies[CurrenciesTypes.ATOMS].amount = 1e15;
+					gameManager.currencies[CurrenciesTypes.PROTONS].amount = 1000;
+					gameManager.currencies[CurrenciesTypes.ELECTRONS].amount = 100;
+					gameManager.currencies[CurrenciesTypes.PHOTONS].amount = 10;
 					alert('Resources maxed!');
 				}}
 			>

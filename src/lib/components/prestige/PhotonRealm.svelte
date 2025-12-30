@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { gameManager } from '$helpers/GameManager.svelte';
+	import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
 	import { createClickParticleSync, type Particle } from '$helpers/particles';
 	import { onDestroy, onMount } from 'svelte';
 	import PhotonCounter from '@components/prestige/PhotonCounter.svelte';
@@ -245,9 +246,9 @@
 
 	function clickCircle(circle: Circle, event: MouseEvent) {
 		if (circle.type === 'excited') {
-			gameManager.addExcitedPhotons(circle.photons);
+			currenciesManager.add(CurrenciesTypes.EXCITED_PHOTONS, circle.photons);
 		} else {
-			gameManager.addPhotons(circle.photons);
+			currenciesManager.add(CurrenciesTypes.PHOTONS, circle.photons);
 		}
 
 		circles = circles.filter((c) => c.id !== circle.id);

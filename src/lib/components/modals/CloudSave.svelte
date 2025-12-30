@@ -214,26 +214,26 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <Value
-                                value={cloudSaveInfo.atoms}
+                                value={cloudSaveInfo.currencies[CurrenciesTypes.ATOMS].amount}
                                 currency={CurrenciesTypes.ATOMS}
                                 currencyClass="size-4"
                                 class="text-white font-semibold"
                             />
                         </div>
-                        {#if cloudSaveInfo.protons > 0}
+                        {#if cloudSaveInfo.currencies[CurrenciesTypes.PROTONS].amount > 0}
                             <div class="flex items-center gap-2">
                                 <Value
-                                    value={cloudSaveInfo.protons}
+                                    value={cloudSaveInfo.currencies[CurrenciesTypes.PROTONS].amount}
                                     currency={CurrenciesTypes.PROTONS}
                                     currencyClass="size-4"
                                     class="text-white font-semibold"
                                 />
                             </div>
                         {/if}
-                        {#if cloudSaveInfo.electrons > 0}
+                        {#if cloudSaveInfo.currencies[CurrenciesTypes.ELECTRONS].amount > 0}
                             <div class="flex items-center gap-2">
                                 <Value
-                                    value={cloudSaveInfo.electrons}
+                                    value={cloudSaveInfo.currencies[CurrenciesTypes.ELECTRONS].amount}
                                     currency={CurrenciesTypes.ELECTRONS}
                                     currencyClass="size-4"
                                     class="text-white font-semibold"

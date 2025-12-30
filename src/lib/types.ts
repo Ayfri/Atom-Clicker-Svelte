@@ -1,7 +1,7 @@
 import type {BuildingType} from '$data/buildings';
 import type {CurrencyName} from '$data/currencies';
 import type {GameManager} from '$helpers/GameManager.svelte';
-import type {StatName} from '$helpers/statConstants';
+import type {LayerType, StatName} from '$helpers/statConstants';
 
 export interface Building {
 	count: number;
@@ -56,41 +56,29 @@ export interface Settings {
 export interface GameState {
 	achievements: string[];
 	activePowerUps: PowerUp[];
-	atoms: number;
 	buildings: Partial<Record<BuildingType, Building>>;
-	electrons: number;
-	excitedPhotons: number;
+	currencies: Record<CurrencyName, {
+		amount: number;
+		earnedRun: number;
+		earnedAllTime: number;
+	}>;
 	highestAPS: number;
 	inGameTime: number;
 	lastInteractionTime: number;
 	lastSave: number;
-	photons: number;
 	photonUpgrades: Record<string, number>;
 	powerUpsCollected: number;
-	protons: number;
 	purpleRealmUnlocked: boolean;
 	settings: Settings;
 	skillUpgrades: string[];
 	startDate: number;
-	totalAtomsEarnedAllTime: number;
-	totalAtomsEarnedRun: number;
-	totalBonusHiggsBosonClickedAllTime: number;
-	totalBonusHiggsBosonClickedRun: number;
 	totalBuildingsPurchasedAllTime: number;
 	totalClicksAllTime: number;
 	totalClicksRun: number;
 	totalElectronizesAllTime: number;
 	totalElectronizesRun: number;
-	totalElectronsEarnedAllTime: number;
-	totalElectronsEarnedRun: number;
-	totalExcitedPhotonsEarnedAllTime: number;
-	totalExcitedPhotonsEarnedRun: number;
-	totalPhotonsEarnedAllTime: number;
-	totalPhotonsEarnedRun: number;
 	totalProtonisesAllTime: number;
 	totalProtonisesRun: number;
-	totalProtonsEarnedAllTime: number;
-	totalProtonsEarnedRun: number;
 	totalUpgradesPurchasedAllTime: number;
 	totalUsers: number;
 	totalXP: number;
@@ -115,6 +103,7 @@ export interface Currency {
 	achievementTiers?: number[];
 	color: string;
 	icon: string;
+	layer?: LayerType;
 	name: CurrencyName;
 	stat?: StatName;
 }
