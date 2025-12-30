@@ -75,7 +75,6 @@
 		gameManager.addPowerUp(powerUp);
 		gameManager.incrementBonusHiggsBosonClicks();
 
-		setTimeout(() => gameManager.removePowerUp(powerUp.id), powerUp.duration);
 		setTimeout(() => (messageShown = false), 3000);
 
 		// Clear timeouts
