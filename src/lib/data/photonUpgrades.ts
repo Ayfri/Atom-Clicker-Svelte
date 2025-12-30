@@ -290,6 +290,17 @@ export const EXCITED_PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 			},
 		],
 	},
+	feature_hover_collection: {
+		baseCost: 100000,
+		condition: (manager) => manager.currencies[CurrenciesTypes.EXCITED_PHOTONS].earnedAllTime >= 10000,
+		costMultiplier: 1,
+		currency: CurrenciesTypes.EXCITED_PHOTONS,
+		description: () => 'Unlock the ability to collect photons by simply hovering over them or touching them.',
+		effects: () => [],
+		id: 'feature_hover_collection',
+		maxLevel: 1,
+		name: 'Quantum Magnetism',
+	},
 };
 
 export const ALL_PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {

@@ -390,16 +390,21 @@
 			>
 				{#each circles as circle (circle.id)}
 					<button
-						class="absolute rounded-full cursor-pointer flex items-center justify-center"
-						style="
-							left: {circle.x}px;
-							top: {circle.y}px;
-							width: {circle.size}px;
-							height: {circle.size}px;
-							opacity: {opacity(circle)};
-							transform: translate(-50%, -50%) scale({scale(circle)});
-						"
+						class="absolute cursor-pointer flex items-center justify-center rounded-full"
 						onclick={(event) => clickCircle(circle, event)}
+						onpointerenter={(event) => {
+							if (gameManager.photonUpgrades['feature_hover_collection'] > 0) {
+								clickCircle(circle, event);
+							}
+						}}
+						style="
+							height: {circle.size}px;
+							left: {circle.x}px;
+							opacity: {opacity(circle)};
+							top: {circle.y}px;
+							transform: translate(-50%, -50%) scale({scale(circle)});
+							width: {circle.size}px;
+						"
 					>
 						<div class="w-full h-full {circle.type === 'excited' ? 'animate-pulse' : ''}">
 							<Currency
