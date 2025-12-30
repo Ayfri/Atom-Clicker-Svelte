@@ -126,7 +126,7 @@ interface ValidationResult {
 	valid: boolean;
 }
 
-function validateAndRepairGameState(state: unknown): ValidationResult {
+export function validateAndRepairGameState(state: unknown): ValidationResult {
 	const errors: string[] = [];
 	const repairs: string[] = [];
 	let repaired = false;

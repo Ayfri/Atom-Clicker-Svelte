@@ -212,34 +212,19 @@
                             <span class="text-white/60">Level</span>
                             <span class="text-white font-semibold">{gameManager.getLevelFromTotalXP(cloudSaveInfo.totalXP)}</span>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <Value
-                                value={cloudSaveInfo.currencies[CurrenciesTypes.ATOMS].amount}
-                                currency={CurrenciesTypes.ATOMS}
-                                currencyClass="size-4"
-                                class="text-white font-semibold"
-                            />
-                        </div>
-                        {#if cloudSaveInfo.currencies[CurrenciesTypes.PROTONS].amount > 0}
-                            <div class="flex items-center gap-2">
-                                <Value
-                                    value={cloudSaveInfo.currencies[CurrenciesTypes.PROTONS].amount}
-                                    currency={CurrenciesTypes.PROTONS}
-                                    currencyClass="size-4"
-                                    class="text-white font-semibold"
-                                />
-                            </div>
-                        {/if}
-                        {#if cloudSaveInfo.currencies[CurrenciesTypes.ELECTRONS].amount > 0}
-                            <div class="flex items-center gap-2">
-                                <Value
-                                    value={cloudSaveInfo.currencies[CurrenciesTypes.ELECTRONS].amount}
-                                    currency={CurrenciesTypes.ELECTRONS}
-                                    currencyClass="size-4"
-                                    class="text-white font-semibold"
-                                />
-                            </div>
-                        {/if}
+                        {#each Object.values(CurrenciesTypes) as currencyType}
+                            {@const amount = cloudSaveInfo.currencies[currencyType]?.amount ?? 0}
+                            {#if amount > 0 || currencyType === CurrenciesTypes.ATOMS}
+                                <div class="flex items-center gap-2">
+                                    <Value
+                                        value={amount}
+                                        currency={currencyType}
+                                        currencyClass="size-4"
+                                        class="text-white font-semibold"
+                                    />
+                                </div>
+                            {/if}
+                        {/each}
                     </div>
                 </div>
             {/if}

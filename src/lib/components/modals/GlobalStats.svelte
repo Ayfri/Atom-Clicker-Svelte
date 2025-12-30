@@ -273,7 +273,7 @@
 		</section>
 
 		<!-- Prestige Stats -->
-		{#if Object.values(CurrenciesTypes).some(t => ([CurrenciesTypes.PROTONS, CurrenciesTypes.ELECTRONS] as CurrencyName[]).includes(t) && gameManager.currencies[t].earnedAllTime > 0)}
+		{#if Object.values(CurrenciesTypes).some(t => (([CurrenciesTypes.PROTONS, CurrenciesTypes.ELECTRONS] as unknown) as CurrencyName[]).includes(t as CurrencyName) && gameManager.currencies[t as CurrencyName].earnedAllTime > 0)}
 			<section>
 				<h3 class="mb-2 flex items-center gap-2 border-b border-white/20 pb-1.5 text-base font-semibold text-white/90">
 					<RotateCcw size={18} />
@@ -339,7 +339,7 @@
 		{/if}
 
 		<!-- Photon Realm Stats -->
-		{#if Object.values(CurrenciesTypes).some(t => ([CurrenciesTypes.PHOTONS, CurrenciesTypes.EXCITED_PHOTONS] as CurrencyName[]).includes(t) && gameManager.currencies[t].earnedAllTime > 0)}
+		{#if Object.values(CurrenciesTypes).some(t => (([CurrenciesTypes.PHOTONS, CurrenciesTypes.EXCITED_PHOTONS] as unknown) as CurrencyName[]).includes(t as CurrencyName) && gameManager.currencies[t as CurrencyName].earnedAllTime > 0)}
 			<section>
 				<h3 class="mb-2 flex items-center gap-2 border-b border-white/20 pb-1.5 text-base font-semibold text-white/90">
 					<Sparkles size={18} />

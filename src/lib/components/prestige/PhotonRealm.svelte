@@ -55,9 +55,6 @@
 	let circles: Circle[] = $state([]);
 	let nextId = 0;
 	let container = $state<HTMLDivElement>();
-	let spawnInterval: ReturnType<typeof setInterval>;
-	let updateInterval: ReturnType<typeof setInterval>;
-	let autoClickInterval: ReturnType<typeof setInterval>;
 	let lastUpdateTime = Date.now();
 
 	// Base values - will be modified by upgrades
@@ -285,6 +282,13 @@
 			.filter((circle) => circle.lifetime < circle.maxLifetime);
 	}
 
+	// Update circles logic
+	$effect(() => {
+		lastUpdateTime = Date.now();
+		const interval = setInterval(updateCircles, 16);
+		return () => clearInterval(interval);
+	});
+
 	// Calculate auto-clicks per second from photon upgrades
 	const photonAutoClicksPerSecond = $derived.by(() => {
 		if (!gameManager.settings.automation.autoClickPhotons) return 0;
@@ -306,39 +310,23 @@
 	// Calculate current spawn rate reactively
 	const currentSpawnRate = $derived(getSpawnRate());
 
-	// Set up auto-clicker subscription like in Atom.svelte
+	// Set up auto-clicker subscription
 	$effect(() => {
 		const clicksPerSecond = photonAutoClicksPerSecond;
-		if (autoClickInterval) clearInterval(autoClickInterval);
 		if (clicksPerSecond > 0) {
-			autoClickInterval = setInterval(() => simulateClick(), 5000 / clicksPerSecond);
+			const interval = setInterval(() => simulateClick(), 5000 / clicksPerSecond);
+			return () => clearInterval(interval);
 		}
-		return () => {
-			if (autoClickInterval) clearInterval(autoClickInterval);
-		};
 	});
 
 	// Update spawn rate when upgrades change
 	$effect(() => {
-		const newSpawnRate = currentSpawnRate;
-		if (spawnInterval) {
-			clearInterval(spawnInterval);
-			spawnInterval = setInterval(spawnCircle, newSpawnRate);
-		}
-		return () => {
-			if (spawnInterval) clearInterval(spawnInterval);
-		};
+		const interval = setInterval(spawnCircle, currentSpawnRate);
+		return () => clearInterval(interval);
 	});
 
 	onMount(() => {
 		lastUpdateTime = Date.now();
-		spawnInterval = setInterval(spawnCircle, getSpawnRate());
-		updateInterval = setInterval(updateCircles, 16);
-	});
-
-	onDestroy(() => {
-		if (spawnInterval) clearInterval(spawnInterval);
-		if (updateInterval) clearInterval(updateInterval);
 	});
 
 	const opacity = $derived((circle: Circle) => Math.max(0, 1 - circle.lifetime / circle.maxLifetime));
