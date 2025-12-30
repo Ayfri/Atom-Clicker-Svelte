@@ -1,6 +1,7 @@
 import type { Effect } from '$lib/types';
 import type { GameManager } from '$helpers/GameManager.svelte';
 import { formatNumber } from '$lib/utils';
+import type { CurrencyName } from '$data/currencies';
 
 export interface PhotonUpgrade {
 	id: string;
@@ -8,6 +9,7 @@ export interface PhotonUpgrade {
 	description: (level: number) => string;
 	baseCost: number;
 	costMultiplier: number;
+	currency?: CurrencyName;
 	maxLevel: number;
 	effects: (level: number) => Effect[];
 	condition?: (manager: GameManager) => boolean;
@@ -168,12 +170,104 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 		],
 		condition: (manager: GameManager) => manager.protons >= 5,
 	},
+	quantum_fluctuation: {
+		id: 'quantum_fluctuation',
+		name: 'Quantum Fluctuation',
+		description: (level: number) => `Increases chance for Excited Photons to spawn (+${formatNumber(0.02 * level)}%)`,
+		baseCost: 1,
+		costMultiplier: 1.5,
+		currency: 'Excited Photons',
+		maxLevel: 20,
+		effects: (level: number) => [
+			{
+				type: 'excited_photon_chance',
+				description: `Increase excited photon chance by ${0.02 * level}%`,
+				apply: (currentValue) => currentValue + (0.0002 * level),
+			},
+		],
+	},
+	energetic_decay: {
+		id: 'energetic_decay',
+		name: 'Energetic Decay',
+		description: (level: number) => `Excited Photons stay on screen ${20 * level}% longer`,
+		baseCost: 20,
+		costMultiplier: 1.5,
+		currency: 'Excited Photons',
+		maxLevel: 5,
+		effects: (level: number) => [
+			{
+				type: 'excited_photon_duration',
+				description: `Excited Photons stay ${20 * level}% longer`,
+				apply: (currentValue) => currentValue * (1 + (0.2 * level)),
+			},
+		],
+	},
+	excited_yield: {
+		id: 'excited_yield',
+		name: 'Excited Yield',
+		description: (level: number) => `${10 * level}% chance to get double Excited Photons`,
+		baseCost: 50,
+		costMultiplier: 1.5,
+		currency: 'Excited Photons',
+		maxLevel: 10,
+		effects: (level: number) => [
+			{
+				type: 'excited_photon_double',
+				description: `${10 * level}% chance for double Excited Photons`,
+				apply: (currentValue) => currentValue + (0.1 * level),
+			},
+		],
+	},
+	excited_stabilization: {
+		id: 'excited_stabilization',
+		name: 'Excited Stabilization',
+		description: (level: number) => `Increase Stabilization field speed and bonus by ${300 * level}% but it now collapse also when you click on purple realm`,
+		baseCost: 1000,
+		costMultiplier: 2,
+		currency: 'Excited Photons',
+		maxLevel: 3,
+		effects: (level: number) => [
+			{
+				type: 'stability_speed',
+				description: `Increase stability speed by ${300 * level}%`,
+				apply: (currentValue) => currentValue * (1 + (3 * level)),
+			},
+			{
+				type: 'stability_boost',
+				description: `Increase stability bonus by ${300 * level}%`,
+				apply: (currentValue) => currentValue * (1 + (3 * level)),
+			},
+		],
+	},
+	excited_auto_click: {
+		id: 'excited_auto_click',
+		name: 'Excited Targeting',
+		description: () => 'The auto-clicker can now target Excited Photons.',
+		baseCost: 35,
+		costMultiplier: 1.5,
+		currency: 'Excited Photons',
+		maxLevel: 1,
+		effects: () => [
+			{
+				type: 'excited_auto_click',
+				description: 'Enables auto-clicking on Excited Photons',
+				apply: (currentValue) => currentValue,
+			},
+		],
+		condition: (manager) => manager.totalExcitedPhotonsEarned > 0,
+	},
 };
 
 export function getPhotonUpgradeCost(upgrade: PhotonUpgrade, level: number): number {
 	return Math.ceil(upgrade.baseCost * Math.pow(upgrade.costMultiplier, level));
 }
 
-export function canAffordPhotonUpgrade(upgrade: PhotonUpgrade, level: number, photons: number): boolean {
-	return photons >= getPhotonUpgradeCost(upgrade, level);
+export function canAffordPhotonUpgrade(upgrade: PhotonUpgrade, level: number, manager: GameManager): boolean {
+	const currency = upgrade.currency || 'Photons';
+	const cost = getPhotonUpgradeCost(upgrade, level);
+
+	if (currency === 'Excited Photons') {
+		return manager.excitedPhotons >= cost;
+	}
+	return manager.photons >= cost;
 }

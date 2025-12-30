@@ -23,6 +23,7 @@ export class GameManager {
 	atoms = $state(0);
 	buildings = $state<Partial<Record<BuildingType, Building>>>({});
 	electrons = $state(0);
+	excitedPhotons = $state(0);
 	highestAPS = $state(0);
 	inGameTime = $state(0);
 	lastSave = $state(Date.now());
@@ -49,6 +50,7 @@ export class GameManager {
 	totalClicks = $state(0);
 	totalClicksAllTime = $state(0);
 	totalElectronizes = $state(0);
+	totalExcitedPhotonsEarned = $state(0);
 	totalElectronsEarned = $state(0);
 	totalProtonises = $state(0);
 	totalProtonsEarned = $state(0);
@@ -271,6 +273,7 @@ export class GameManager {
 			atoms: this.atoms,
 			buildings: this.buildings,
 			electrons: this.electrons,
+			excitedPhotons: this.excitedPhotons,
 			highestAPS: this.highestAPS,
 			inGameTime: this.inGameTime,
 			lastInteractionTime: this.lastInteractionTime,
@@ -290,6 +293,7 @@ export class GameManager {
 			totalClicks: this.totalClicks,
 			totalClicksAllTime: this.totalClicksAllTime,
 			totalElectronizes: this.totalElectronizes,
+			totalExcitedPhotonsEarned: this.totalExcitedPhotonsEarned,
 			totalElectronsEarned: this.totalElectronsEarned,
 			totalProtonises: this.totalProtonises,
 			totalProtonsEarned: this.totalProtonsEarned,
@@ -366,6 +370,7 @@ export class GameManager {
 		if (price.currency === CurrenciesTypes.ELECTRONS) return this.electrons;
 		if (price.currency === CurrenciesTypes.PHOTONS) return this.photons;
 		if (price.currency === CurrenciesTypes.PROTONS) return this.protons;
+		if (price.currency === CurrenciesTypes.EXCITED_PHOTONS) return this.excitedPhotons;
 		return 0;
 	}
 
@@ -376,6 +381,7 @@ export class GameManager {
 		else if (price.currency === CurrenciesTypes.ELECTRONS) this.electrons -= price.amount;
 		else if (price.currency === CurrenciesTypes.PHOTONS) this.photons -= price.amount;
 		else if (price.currency === CurrenciesTypes.PROTONS) this.protons -= price.amount;
+		else if (price.currency === CurrenciesTypes.EXCITED_PHOTONS) this.excitedPhotons -= price.amount;
 		return true;
 	}
 
@@ -454,7 +460,7 @@ export class GameManager {
 
 		const cost = {
 			amount: getPhotonUpgradeCost(upgrade, currentLevel),
-			currency: CurrenciesTypes.PHOTONS
+			currency: upgrade.currency || CurrenciesTypes.PHOTONS
 		};
 
 		if (this.spendCurrency(cost)) {
@@ -584,6 +590,11 @@ export class GameManager {
 
 	addPhotons(amount: number) {
 		this.photons += amount;
+	}
+
+	addExcitedPhotons(amount: number) {
+		this.excitedPhotons += amount;
+		this.totalExcitedPhotonsEarned += amount;
 	}
 
 	incrementBonusHiggsBosonClicks() {

@@ -287,6 +287,20 @@ function createPhotonAchievements(): Achievement[] {
 	return [1, 100, 1000, 10_000, 100_000, 1_000_000].map(createPhotonAchievement);
 }
 
+function createExcitedPhotonAchievements(): Achievement[] {
+	function createExcitedPhotonAchievement(count: number): Achievement {
+		return {
+			id: `excited_photons_${count}`,
+			name: `Excited ${count >= 1000 ? (count >= 400000 ? '4' : '3') : (count >= 20 ? '2' : '')}`,
+			description: `Earn ${formatNumber(count)} Excited Photon${count > 1 ? 's' : ''}`,
+			condition: (manager: GameManager) => manager.totalExcitedPhotonsEarned >= count,
+			hiddenCondition: (manager: GameManager) => manager.totalExcitedPhotonsEarned === 0,
+		};
+	}
+
+	return [1, 20, 1000, 400_000].map(createExcitedPhotonAchievement);
+}
+
 function createPhotonUpgradeAchievements(): Achievement[] {
 	const achievements: Achievement[] = [];
 
@@ -319,6 +333,7 @@ const achievementsArray: Achievement[] = [
 	...createElectronizesAchievements(),
 	...createBonusHiggsBosonClicksAchievements(),
 	...createPhotonAchievements(),
+	...createExcitedPhotonAchievements(),
 	...createPhotonUpgradeAchievements(),
 	...SPECIAL_ACHIEVEMENTS,
 ];

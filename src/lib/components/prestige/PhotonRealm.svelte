@@ -13,8 +13,14 @@
 	export function simulateClick() {
 		if (!container || circles.length === 0) return;
 
-		// Get a random circle from our circles array
-		const randomCircle = circles[Math.floor(Math.random() * circles.length)];
+		// Filter valid targets
+		const allowExcited = (gameManager.photonUpgrades['excited_auto_click'] || 0) > 0;
+		const validCircles = circles.filter(c => allowExcited || c.type !== 'excited');
+
+		if (validCircles.length === 0) return;
+
+		// Get a random circle from our valid circles array
+		const randomCircle = validCircles[Math.floor(Math.random() * validCircles.length)];
 
 		// Get the container's position to calculate absolute coordinates
 		const containerRect = container.getBoundingClientRect();
@@ -41,6 +47,8 @@
 		lifetime: number;
 		maxLifetime: number;
 		rotation: number;
+		type?: 'normal' | 'excited';
+		baseValue?: number;
 	}
 
 	let circles: Circle[] = $state([]);
@@ -109,18 +117,36 @@
 	}
 
 	function getLifetimeBonus() {
-		const level = gameManager.photonUpgrades['circle_lifetime'] || 0;
-		if (level === 0) return 0;
+		// Normal lifetime bonus
+		let duration = 0;
+		const lifetimeLevel = gameManager.photonUpgrades['circle_lifetime'] || 0;
+		if (lifetimeLevel > 0) {
+			const upgrade = PHOTON_UPGRADES['circle_lifetime'];
+			const effects = upgrade.effects(lifetimeLevel);
+			duration += effects.reduce((bonus, effect) => {
+				if (effect.type === 'power_up_duration') {
+					return effect.apply(bonus, gameManager);
+				}
+				return bonus;
+			}, 0);
+		}
 
-		const upgrade = PHOTON_UPGRADES['circle_lifetime'];
+		return duration;
+	}
+
+	function getExcitedLifetimeMultiplier() {
+		const level = gameManager.photonUpgrades['energetic_decay'] || 0;
+		if (level === 0) return 1;
+
+		const upgrade = PHOTON_UPGRADES['energetic_decay'];
 		const effects = upgrade.effects(level);
 
-		return effects.reduce((bonus, effect) => {
-			if (effect.type === 'power_up_duration') {
-				return effect.apply(bonus, gameManager);
+		return effects.reduce((mult, effect) => {
+			if (effect.type === 'excited_photon_duration') {
+				return effect.apply(mult, gameManager);
 			}
-			return bonus;
-		}, 0);
+			return mult;
+		}, 1);
 	}
 
 	function getDoubleChance() {
@@ -129,6 +155,40 @@
 
 		// Simple calculation: 2% per level
 		return (level * 2) / 100;
+	}
+
+	function getExcitedDoubleChance() {
+		const level = gameManager.photonUpgrades['excited_yield'] || 0;
+		if (level === 0) return 0;
+
+		const upgrade = PHOTON_UPGRADES['excited_yield'];
+		const effects = upgrade.effects(level);
+
+		return effects.reduce((chance, effect) => {
+			if (effect.type === 'excited_photon_double') {
+				return effect.apply(chance, gameManager);
+			}
+			return chance;
+		}, 0);
+	}
+
+	function getIsExcited() {
+		const baseChance = 0.001; // 0.1%
+		const level = gameManager.photonUpgrades['quantum_fluctuation'] || 0;
+		let chance = baseChance;
+
+		if (level > 0) {
+			const upgrade = PHOTON_UPGRADES['quantum_fluctuation'];
+			const effects = upgrade.effects(level);
+			chance = effects.reduce((c, effect) => {
+				if (effect.type === 'excited_photon_chance') {
+					return effect.apply(c, gameManager);
+				}
+				return c;
+			}, chance);
+		}
+
+		return Math.random() < chance;
 	}
 
 	function spawnCircle() {
@@ -143,11 +203,27 @@
 		const lifetimeBonus = getLifetimeBonus();
 		const doubleChance = getDoubleChance();
 
+		const isExcited = getIsExcited();
+
 		const baseSize = Math.random() * (MAX_SIZE - MIN_SIZE) + MIN_SIZE;
 		const basePhotons = Math.floor(Math.random() * (MAX_PHOTONS - MIN_PHOTONS + 1)) + MIN_PHOTONS;
 
-		// Apply double chance
-		const finalPhotons = Math.random() < doubleChance ? (basePhotons + photonValueBonus) * 2 : basePhotons + photonValueBonus;
+		let finalPhotons = basePhotons;
+
+		if (isExcited) {
+			// Excited photons give 1 excited photon currency (or 2 if double chance)
+			const excitedDoubleChance = getExcitedDoubleChance();
+			finalPhotons = Math.random() < excitedDoubleChance ? 2 : 1;
+		} else {
+			// Apply double chance for normal photons
+			finalPhotons = Math.random() < doubleChance ? (basePhotons + photonValueBonus) * 2 : basePhotons + photonValueBonus;
+		}
+
+		// Calculate Max Lifetime
+		let maxLifetime = baseCircleLifetime + lifetimeBonus;
+		if (isExcited) {
+			maxLifetime *= getExcitedLifetimeMultiplier();
+		}
 
 		const circle: Circle = {
 			id: nextId++,
@@ -156,8 +232,10 @@
 			size: baseSize * sizeMultiplier,
 			photons: Math.floor(finalPhotons),
 			lifetime: 0,
-			maxLifetime: baseCircleLifetime + lifetimeBonus,
-			rotation: Math.random() * 360
+			maxLifetime: maxLifetime,
+			rotation: Math.random() * 360,
+			type: isExcited ? 'excited' : 'normal',
+			baseValue: isExcited ? 1 : 1
 		};
 
 		circles = [...circles, circle];
@@ -166,17 +244,73 @@
 	}
 
 	function clickCircle(circle: Circle, event: MouseEvent) {
-		gameManager.addPhotons(circle.photons);
+		if (circle.type === 'excited') {
+			gameManager.addExcitedPhotons(circle.photons);
+		} else {
+			gameManager.addPhotons(circle.photons);
+		}
+
 		circles = circles.filter((c) => c.id !== circle.id);
 
 		const particleCount = Math.floor(circle.photons / 2) + 1;
 		const addedParticles: Particle[] = [];
+		const currencyType = circle.type === 'excited' ? CurrenciesTypes.EXCITED_PHOTONS : CurrenciesTypes.PHOTONS;
+
 		for (let i = 0; i < particleCount; i++) {
-			const particle = createClickParticleSync(event.clientX, event.clientY, CurrenciesTypes.PHOTONS);
+			const particle = createClickParticleSync(event.clientX, event.clientY, currencyType);
 			if (particle) addedParticles.push(particle);
 		}
 		if (addedParticles.length > 0) {
 			addParticles(addedParticles);
+		}
+
+		// For excited stabilization, clicking on purple realm collapses the field (TODO check requirement)
+		// Requirement: "Excited Stabilization: ... but it now collapse also when you click on purple realm."
+		// Does simply clicking a circle count as "clicking on purple realm"?
+		// Or clicking the background? The requirement says "click on purple realm".
+		// Usually this means any interaction in the realm. Ideally clicking a circle is distinct, but let's assume it might trigger if implemented broadly.
+		// However, I'll stick to the requested mechanics. If needed I'd add a click handler on the container.
+
+		// Wait, "Excited Stabilization" effect logic says "Increase stability speed and bonus...".
+		// The collapsing part is likely a side effect I need to implement in GameManager or here.
+		// Since I don't see "collapse logic" in GameManager for clicking, I assume it's related to the "Stability" feature which resets if you don't interact?
+		// Actually, stability usually collapses if you switch realms. This upgrade makes it collapse on clicks in Purple realm too (presumably effectively nerfing it for active play here?).
+		// Let's implement the collapse trigger if the upgrade is active.
+		const excitedStabilizationLevel = gameManager.photonUpgrades['excited_stabilization'] || 0;
+		if (excitedStabilizationLevel > 0) {
+			// Trigger collapse or negative effect.
+			// Since I don't see a "collapse" method exposed, and stability logic is time-based.
+			// "Collapse also when you click on purple realm".
+			// I will simply reset `lastInteractionTime` to something far back? No, that would reduce progress.
+			// Currently stability decreases if `progress` goes down? No, it resets if you leave I guess.
+			// Let's look at GameManager stability logic.
+			// It uses `lastInteractionTime`.
+			// If I click, `lastInteractionTime` updates, keeping it ALIVE.
+			// "Collapse" means it should GO DOWN.
+			// So clicking should NOT update lastInteractionTime? Or it should explicitly REDUCE progress.
+			// Given the complexity and lack of "collapse" method config, I will skip implementing the collapse logic unless I see how stability works exactly.
+			// GameManager line 238: `const progress = Math.min(Math.max(elapsed / timeRequired, 0), 1);`
+			// `elapsed` is time SINCE last interaction. So the longer you DON'T interact, the more it grows (wait?).
+			// Line 232: `timeRequired`.
+			// Line 238: `elapsed`.
+			// Logic: `elapsed` increases -> progress increases.
+			// So interacting (updating `lastInteractionTime`) resets `elapsed` to 0, resetting progress to 0?
+			// Line 29: `lastInteractionTime = $state(Date.now());`
+			// `addPhotons` calls `addPhotons` -> doesn't update `lastInteractionTime`.
+			// `incrementClicks` updates `lastInteractionTime`.
+			// Use `addExcitedPhotons` -> updates `totalExcited...`.
+			// If `clickCircle` calls `gameManager.addPhotons`, it does NOT call `incrementClicks`.
+			// So clicking circles does NOT update `lastInteractionTime` currently?
+			// Let's check `addPhotons` in `GameManager`. It strictly adds `photons`.
+			// `GameManager` methods for powerups do update `lastInteractionTime`.
+			// So effectively, clicking circles is "passive" regarding stability?
+			// If "Collapse also when you click on purple realm", maybe it means it forces valid interaction?
+			// If interacting RESETS progress (because `elapsed` becomes 0), then clicking DOES collapse it.
+			// So if I call `gameManager.lastInteractionTime = Date.now()` it will collapse.
+			// I should probably check if clicking circles normally does this. It currently doesn't seem to.
+			// So I will add: `if (excitedStabilization > 0) gameManager.lastInteractionTime = Date.now();`
+			// This will make `elapsed` = 0, so `progress` = 0, so `stabilityMultiplier` = 1 (collapse).
+			gameManager.lastInteractionTime = Date.now();
 		}
 	}
 
@@ -286,13 +420,15 @@
 						"
 						onclick={(event) => clickCircle(circle, event)}
 					>
-						<Currency
-							name={CurrenciesTypes.PHOTONS}
-							class="w-full h-full object-contain"
-							style="transform: rotate({circle.rotation}deg);"
-						/>
+						<div class="w-full h-full {circle.type === 'excited' ? 'animate-pulse' : ''}">
+							<Currency
+								name={circle.type === 'excited' ? CurrenciesTypes.EXCITED_PHOTONS : CurrenciesTypes.PHOTONS}
+								class="w-full h-full object-contain drop-shadow-[0_0_10px_{circle.type === 'excited' ? 'rgba(255,215,0,0.8)' : 'rgba(139,69,191,0.5)'}]"
+								style="transform: rotate({circle.rotation}deg);"
+							/>
+						</div>
 						<span
-							class="absolute text-white font-bold text-xs pointer-events-none drop-shadow-[0_0_5px_rgba(0,0,0,0.8)]"
+							class="absolute font-bold text-xs pointer-events-none drop-shadow-[0_0_5px_rgba(0,0,0,0.8)] {circle.type === 'excited' ? 'text-[#FFD700]' : 'text-white'}"
 						>
 							+{circle.photons}
 						</span>

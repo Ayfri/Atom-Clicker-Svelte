@@ -1,3 +1,7 @@
+# What's new 30-12-2025
+
+- **Excited Photons**: New rare currency in the Purple Realm with dedicated upgrades and achievements.
+
 # What's new 29-12-2025
 
 - **New Icons**: Added new icons for currencies.
