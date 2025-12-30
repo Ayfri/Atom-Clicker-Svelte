@@ -43,6 +43,7 @@ Welcome to Atom Clicker, an engaging incremental game where you'll build your ow
 - ⚡ Power-up System
   - Random power-ups appear during gameplay
   - Stack multiple effects
+  - Collect **Higgs Bosons** for permanent bonuses
   - Upgrade their duration and effectiveness
 
 - 🤖 Automation
@@ -50,8 +51,9 @@ Welcome to Atom Clicker, an engaging incremental game where you'll build your ow
   - Auto-upgrade systems
   - Optimize your production
 
-- 🟣 Purple Realm
+- 🟣 Photon Realm
   - Unlock a mysterious gameplay dimension with interactive violet circles
+  - Discover rare **Excited Photons** for exotic upgrades
 
 ### Social Features
 - 📊 Global Leaderboard
