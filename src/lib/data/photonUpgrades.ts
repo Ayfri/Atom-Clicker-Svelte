@@ -317,6 +317,22 @@ export const EXCITED_PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 		maxLevel: 4,
 		name: 'Photon Overdrive',
 	},
+	resonant_frequency: {
+		id: 'resonant_frequency',
+		name: 'Resonant Frequency',
+		description: (level: number) => `+${level} auto-clicks every 5 seconds`,
+		baseCost: 500,
+		costMultiplier: 2.5,
+		currency: CurrenciesTypes.EXCITED_PHOTONS,
+		maxLevel: 5,
+		effects: (level: number) => [
+			{
+				type: 'photon_auto_click',
+				description: `+${level} auto-clicks every 5 seconds`,
+				apply: (currentValue) => currentValue + level,
+			},
+		],
+	},
 };
 
 export const ALL_PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
