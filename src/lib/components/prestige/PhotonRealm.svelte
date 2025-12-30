@@ -247,9 +247,9 @@
 
 	// Set up auto-clicker subscription
 	$effect(() => {
-		const clicksPerSecond = photonAutoClicksPer5Seconds;
-		if (clicksPerSecond > 0) {
-			const interval = setInterval(() => simulateClick(), 5000 / clicksPerSecond);
+		const clicksPer5Seconds = photonAutoClicksPer5Seconds;
+		if (clicksPer5Seconds > 0) {
+			const interval = setInterval(() => simulateClick(), 5000 / clicksPer5Seconds);
 			return () => clearInterval(interval);
 		}
 	});

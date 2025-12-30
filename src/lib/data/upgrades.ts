@@ -621,7 +621,7 @@ function createElectronUpgrades() {
 		{
 			id: 'electron_bypass_atom_autoclick_stability',
 			name: 'Stable Automation',
-			description: 'Auto-clicker on Atom Realm no longer unstabilizes the field',
+			description: 'Auto-clicker on Atom Realm no longer destabilizes the field',
 			cost: {
 				amount: 50,
 				currency: CurrenciesTypes.ELECTRONS,
@@ -631,7 +631,7 @@ function createElectronUpgrades() {
 		{
 			id: 'electron_bypass_photon_autoclick_stability',
 			name: 'Stable Quantum Flux',
-			description: 'Auto-clicker on Photon Realm no longer unstabilizes the field',
+			description: 'Auto-clicker on Photon Realm no longer destabilizes the field',
 			cost: {
 				amount: 100,
 				currency: CurrenciesTypes.ELECTRONS,
@@ -641,7 +641,7 @@ function createElectronUpgrades() {
 		{
 			id: 'electron_bypass_photon_click_stability',
 			name: 'Stable Interaction',
-			description: 'Manual clicking on Photon Realm no longer unstabilizes the field',
+			description: 'Manual clicking on Photon Realm no longer destabilizes the field',
 			cost: {
 				amount: 250,
 				currency: CurrenciesTypes.ELECTRONS,
@@ -651,7 +651,7 @@ function createElectronUpgrades() {
 		{
 			id: 'electron_bypass_atom_click_stability',
 			name: 'Stable Manipulation',
-			description: 'Manual clicking on Atom Realm no longer unstabilizes the field',
+			description: 'Manual clicking on Atom Realm no longer destabilizes the field',
 			cost: {
 				amount: 400,
 				currency: CurrenciesTypes.ELECTRONS,
@@ -661,7 +661,7 @@ function createElectronUpgrades() {
 		{
 			id: 'electron_bypass_bonus_click_stability',
 			name: 'Stable Anomalies',
-			description: 'Clicking bonuses no longer unstabilizes the field',
+			description: 'Clicking bonuses no longer destabilizes the field',
 			cost: {
 				amount: 500,
 				currency: CurrenciesTypes.ELECTRONS,

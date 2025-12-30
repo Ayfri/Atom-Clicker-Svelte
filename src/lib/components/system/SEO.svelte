@@ -6,7 +6,8 @@
 	const author = 'Ayfri';
 	const description =
 		'Atom Clicker is an addictive incremental game where you collect atoms, unlock powerful upgrades, and boost your production rates.';
-	const imageLink = `${site}/currencies/atom.svg`;
+	const imageLink = `/currencies/atom.svg`;
+	const absoluteImageLink = `${site}/currencies/atom.svg`;
 
 	const structuredData = {
 		'@context': 'https://schema.org',
@@ -39,11 +40,11 @@
 	<meta name="generator" content={`SvelteKit ${VERSION}`} />
 	<meta name="theme-color" content="#4a90e2" />
 
-	<link rel="icon" type="image/svg+xml" href={imageLink} />
+	<link rel="icon" type="image/svg+xml" href={absoluteImageLink} />
 
 	<meta property="og:title" content={name} />
 	<meta property="og:description" content={description} />
-	<meta property="og:image" content={imageLink} />
+	<meta property="og:image" content={absoluteImageLink} />
 	<meta property="og:url" content={site} />
 	<meta property="og:type" content="website" />
 
@@ -52,7 +53,7 @@
 	<meta name="twitter:site" content={site} />
 	<meta name="twitter:title" content={name} />
 	<meta name="twitter:description" content={description} />
-	<meta name="twitter:image" content={imageLink} />
+	<meta name="twitter:image" content={absoluteImageLink} />
 
 	<meta name="canonical" content={site} />
 	<meta name="robots" content="index, follow" />
