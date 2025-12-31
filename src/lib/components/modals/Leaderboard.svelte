@@ -4,9 +4,9 @@
 	import type { LeaderboardEntry } from '$lib/types/leaderboard';
 	import {capitalize, formatNumber} from '$lib/utils';
 	import { gameManager } from '$helpers/GameManager.svelte';
-	import {leaderboard, leaderboardStats, fetchLeaderboard} from '$stores/leaderboard.svelte';
-	import {supabaseAuth} from '$stores/supabaseAuth';
-	import {Info, LogOut, Edit2, Save, Search, Users, Trophy, Medal, Crown} from 'lucide-svelte';
+	import {leaderboard} from '$stores/leaderboard.svelte';
+	import {supabaseAuth} from '$stores/supabaseAuth.svelte';
+	import {LogOut, Edit2, Save, Search, Users, Trophy, Medal, Crown} from 'lucide-svelte';
 	import {onDestroy, onMount} from 'svelte';
 	import {fade} from 'svelte/transition';
 	import {VList} from 'virtua/svelte';
@@ -41,22 +41,22 @@
 	}
 
 	onMount(() => {
-		fetchLeaderboard();
-		refreshInterval = setInterval(() => fetchLeaderboard(), 60_000);
+		leaderboard.fetchLeaderboard();
+		refreshInterval = setInterval(() => leaderboard.fetchLeaderboard(), 60_000);
 	});
 
 	onDestroy(() => {
 		if (refreshInterval) clearInterval(refreshInterval);
 	});
 
-	let currentUserId = $derived($supabaseAuth.user?.id);
-	let username = $derived($supabaseAuth.profile?.username || $supabaseAuth.user?.user_metadata?.full_name || $supabaseAuth.user?.user_metadata?.username || $supabaseAuth.user?.email?.split('@')[0] || 'Anonymous');
-	let userRank = $derived($leaderboard.findIndex(entry => entry.userId === currentUserId) + 1);
-	let stats = $derived($leaderboardStats);
+	let currentUserId = $derived(supabaseAuth.user?.id);
+	let username = $derived(supabaseAuth.profile?.username || supabaseAuth.user?.user_metadata?.full_name || supabaseAuth.user?.user_metadata?.username || supabaseAuth.user?.email?.split('@')[0] || 'Anonymous');
+	let userRank = $derived(leaderboard.entries.findIndex(entry => entry.userId === currentUserId) + 1);
+	let stats = $derived(leaderboard.stats);
 
 	// Filter and search leaderboard
 	let filteredLeaderboard = $derived.by(() => {
-		let filtered = [...$leaderboard];
+		let filtered = [...leaderboard.entries];
 
 		// Apply search
 		if (searchQuery.trim()) {
@@ -123,7 +123,7 @@
 		event.preventDefault();
 
 		// Prevent multiple submissions
-		if (isSavingUsername || !$supabaseAuth.supabase) return;
+		if (isSavingUsername || !supabaseAuth.supabase) return;
 
 		const trimmedUsername = newUsername.trim();
 		if (!trimmedUsername || trimmedUsername === username) {
@@ -159,15 +159,15 @@
 			<div class="flex items-center gap-2 text-sm text-white/60">
 				<Users size={16} />
 				<span>{stats.totalUsers} players</span>
-				{#if $leaderboard.some(e => e.is_online)}
+				{#if leaderboard.entries.some(e => e.is_online)}
 					<span class="text-white/40">•</span>
-					<span class="text-green-400">{$leaderboard.filter(e => e.is_online).length} online</span>
+					<span class="text-green-400">{leaderboard.entries.filter(e => e.is_online).length} online</span>
 				{/if}
 			</div>
 		</div>
 	{/snippet}
 
-	{#if !$supabaseAuth.isAuthenticated}
+	{#if !supabaseAuth.isAuthenticated}
 		<div class="flex flex-col gap-2 text-center mb-3">
 			<h3 class="text-lg font-bold text-accent">Login Required</h3>
 			<p class="text-white/60">
@@ -181,14 +181,14 @@
 			</button>
 		</div>
 	{:else}
-		{@const authConnection = getAuthConnection($supabaseAuth.user?.identities?.[0]?.provider)}
+		{@const authConnection = getAuthConnection(supabaseAuth.user?.identities?.[0]?.provider)}
 
 		<div class="mb-4 rounded-lg bg-black/20 p-4">
 			<div class="flex items-center gap-4">
 				<div class="group relative">
-					{#if $supabaseAuth.profile?.picture || $supabaseAuth.user?.user_metadata?.avatar_url || $supabaseAuth.user?.user_metadata?.picture}
+					{#if supabaseAuth.profile?.picture || supabaseAuth.user?.user_metadata?.avatar_url || supabaseAuth.user?.user_metadata?.picture}
 						<img
-							src={$supabaseAuth.profile?.picture || $supabaseAuth.user?.user_metadata?.avatar_url || $supabaseAuth.user?.user_metadata?.picture}
+							src={supabaseAuth.profile?.picture || supabaseAuth.user?.user_metadata?.avatar_url || supabaseAuth.user?.user_metadata?.picture}
 							alt={username}
 							class="size-16 rounded-full object-cover ring-2 ring-accent-400 ring-offset-2 ring-offset-accent-900"
 						/>
@@ -338,9 +338,9 @@
 		</div>
 	</div>
 
-	{#if searchQuery.trim() && filteredLeaderboard.length > 0 && filteredLeaderboard.length < $leaderboard.length}
+	{#if searchQuery.trim() && filteredLeaderboard.length > 0 && filteredLeaderboard.length < leaderboard.entries.length}
 		<div class="mb-4 text-center text-sm text-white/60">
-			Found {filteredLeaderboard.length} of {$leaderboard.length} players
+			Found {filteredLeaderboard.length} of {leaderboard.entries.length} players
 		</div>
 	{/if}
 

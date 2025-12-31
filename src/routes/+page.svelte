@@ -9,16 +9,16 @@
 	import RemoteBanner from '@components/layout/RemoteBanner.svelte';
 	import SaveRecovery from '@components/modals/SaveRecovery.svelte';
 	import Toaster from '@components/layout/Toaster.svelte';
+	import Currency from '@components/ui/Currency.svelte';
 	import {gameManager} from '$helpers/GameManager.svelte';
 	import {realmManager} from '$helpers/RealmManager.svelte';
 	import {setGlobals} from '$lib/globals';
 	import {formatNumber} from '$lib/utils';
-	import {remoteMessage} from '$stores/remoteMessage';
+	import {remoteMessage} from '$stores/remoteMessage.svelte';
 	import {app} from '$stores/pixi';
 	import {saveRecovery} from '$stores/saveRecovery';
-	import {supabaseAuth} from '$stores/supabaseAuth';
+	import {supabaseAuth} from '$stores/supabaseAuth.svelte';
 	import {mobile} from '$stores/window.svelte';
-	import Currency from '@/lib/components/ui/Currency.svelte';
 
 	autoBuyManager.init();
 	autoUpgradeManager.init();
@@ -74,7 +74,7 @@
 	{#if realmManager.availableRealms.length > 1}
 		<div
 			class="fixed right-4 z-30 bg-black/10 backdrop-blur-xs border border-white/10 rounded-lg p-1 transition-all duration-300"
-			style="top: {$remoteMessage.message && $remoteMessage.isVisible ? 'calc(1.5rem + 5rem)' : '5rem'}"
+			style="top: {remoteMessage.message && remoteMessage.isVisible ? 'calc(1.5rem + 5rem)' : '5rem'}"
 		>
 			<div class="flex flex-col gap-1">
 				{#each realmManager.availableRealms as realm (realm.id)}
@@ -93,7 +93,7 @@
 
 	<main
 		class="relative flex-1 {mobile.current ? 'overflow-y-auto' : 'overflow-hidden'} lg:pb-4 transition-all duration-300"
-		style="padding-top: {$remoteMessage.message && $remoteMessage.isVisible ? 'calc(3rem + 1.5rem)' : '3rem'}; padding-bottom: 3rem;"
+		style="padding-top: {remoteMessage.message && remoteMessage.isVisible ? 'calc(3rem + 1.5rem)' : '3rem'}; padding-bottom: 3rem;"
 	>
 		{#if gameManager.upgrades.includes('feature_levels')}
 			<Levels/>

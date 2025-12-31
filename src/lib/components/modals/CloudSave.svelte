@@ -7,7 +7,7 @@
 	import type { GameState } from '$lib/types';
 	import { autoSaveEnabled, autoSaveState, shouldAutoSave } from '$stores/autoSave';
 	import { gameManager } from '$helpers/GameManager.svelte';
-	import { supabaseAuth } from '$stores/supabaseAuth';
+	import { supabaseAuth } from '$stores/supabaseAuth.svelte';
 	import { error as errorToast, info } from '$stores/toasts';
 	import { AlertCircle, Clock, CloudDownload, CloudUpload, RotateCcw } from 'lucide-svelte';
 	import { onMount } from 'svelte';
@@ -78,7 +78,7 @@
 	});
 
 	async function refreshCloudSaveInfo() {
-		if (!$supabaseAuth.isAuthenticated) return;
+		if (!supabaseAuth.isAuthenticated) return;
 		cloudSaveInfo = await supabaseAuth.getCloudSaveInfo();
 	}
 
@@ -105,7 +105,7 @@
 		if ($shouldAutoSave) startProgressTimer();
 
 		const handleBeforeUnload = async () => {
-			if ($autoSaveEnabled && $supabaseAuth.isAuthenticated) {
+			if ($autoSaveEnabled && supabaseAuth.isAuthenticated) {
 				try {
 					await supabaseAuth.saveGameToCloud();
 				} catch (e) {
@@ -122,7 +122,7 @@
 	});
 
 	async function handleSaveToCloud() {
-		if (!$supabaseAuth.isAuthenticated) {
+		if (!supabaseAuth.isAuthenticated) {
 			error = 'Please log in to use cloud saves';
 			return;
 		}
@@ -150,7 +150,7 @@
 	}
 
 	async function handleLoadFromCloud() {
-		if (!$supabaseAuth.isAuthenticated) {
+		if (!supabaseAuth.isAuthenticated) {
 			error = 'Please log in to use cloud saves';
 			return;
 		}
@@ -180,7 +180,7 @@
 </script>
 
 <Modal {onClose} title="Cloud Save" width="sm">
-    {#if !$supabaseAuth.isAuthenticated}
+    {#if !supabaseAuth.isAuthenticated}
         <div class="flex flex-col gap-4 text-center">
             <h3 class="text-lg font-bold text-accent">Login Required</h3>
             <p class="text-white/60">
@@ -314,3 +314,4 @@
 {#if showHardReset}
 	<HardReset onClose={() => showHardReset = false} />
 {/if}
+

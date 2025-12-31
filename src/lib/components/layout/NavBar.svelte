@@ -12,7 +12,7 @@
 	import { PROTONS_ATOMS_REQUIRED, ELECTRONS_PROTONS_REQUIRED } from '$lib/constants';
 	import { changelog } from '$stores/changelog';
 	import { gameManager } from '$helpers/GameManager.svelte';
-	import { remoteMessage } from '$stores/remoteMessage';
+	import { remoteMessage } from '$stores/remoteMessage.svelte';
 	import { mobile } from '$stores/window.svelte';
 	import { ChartNoAxesColumn, Network, Info, Atom, Trophy, MessageSquare, Orbit, FileText, Cloud, type Icon as IconType } from 'lucide-svelte';
 	import { onDestroy, onMount, type Component } from 'svelte';
@@ -121,7 +121,7 @@
 {:else}
 	<nav
 		class="fixed left-0 z-50 flex h-full flex-col items-center gap-5 bg-black/20 px-3 py-6 backdrop-blur-xs transition-all duration-300"
-		style="top: {$remoteMessage.message && $remoteMessage.isVisible ? '1.5rem' : '0'}"
+		style="top: {remoteMessage.message && remoteMessage.isVisible ? '1.5rem' : '0'}"
 	>
 		{#each visibleComponents as link}
 			<NotificationDot hasNotification={link.notification ? link.notification() : false}>
@@ -159,3 +159,4 @@
 		border-color: transparent var(--color-accent-900) transparent transparent;
 	}
 </style>
+

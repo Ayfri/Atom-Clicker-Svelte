@@ -2,7 +2,7 @@
 	import Modal from '@components/ui/Modal.svelte';
 	import Discord from '@components/icons/Discord.svelte';
 	import GitHub from '@components/icons/GitHub.svelte';
-	import { supabaseAuth } from '$stores/supabaseAuth';
+	import { supabaseAuth } from '$stores/supabaseAuth.svelte';
 
 	interface Props {
 		onClose: () => void;
@@ -13,8 +13,8 @@
 	// Generate the Tally URL with email parameter if user is logged in
 	const tallyUrl = $derived.by(() => {
 		const baseUrl = 'https://tally.so/r/mO8OxM';
-		if ($supabaseAuth.user?.email) {
-			return `${baseUrl}?email=${encodeURIComponent($supabaseAuth.user.email)}`;
+		if (supabaseAuth.user?.email) {
+			return `${baseUrl}?email=${encodeURIComponent(supabaseAuth.user.email)}`;
 		}
 		return baseUrl;
 	});

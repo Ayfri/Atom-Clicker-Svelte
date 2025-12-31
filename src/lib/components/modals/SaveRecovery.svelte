@@ -3,7 +3,7 @@
 	import Modal from '@components/ui/Modal.svelte';
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { saveRecovery } from '$stores/saveRecovery';
-	import { supabaseAuth } from '$stores/supabaseAuth';
+	import { supabaseAuth } from '$stores/supabaseAuth.svelte';
 	import { error as errorToast, info, success } from '$stores/toasts';
 	import { AlertTriangle, CloudDownload, Database, RefreshCw, Trash2 } from 'lucide-svelte';
 
@@ -25,7 +25,7 @@
 	};
 
 	async function handleLoadFromCloud() {
-		if (!$supabaseAuth.isAuthenticated) {
+		if (!supabaseAuth.isAuthenticated) {
 			showLoginModal = true;
 			return;
 		}
@@ -118,7 +118,7 @@
 				<div class="flex-1">
 					<div class="font-semibold text-white">Load from Cloud</div>
 					<div class="text-sm text-white/60">
-						{#if $supabaseAuth.isAuthenticated}
+						{#if supabaseAuth.isAuthenticated}
 							Restore your progress from your cloud backup.
 						{:else}
 							Log in to access your cloud saves.
@@ -174,7 +174,7 @@
 	<Login onClose={() => {
 		showLoginModal = false;
 		// Re-check authentication after login
-		if ($supabaseAuth.isAuthenticated) {
+		if (supabaseAuth.isAuthenticated) {
 			handleLoadFromCloud();
 		}
 	}} />

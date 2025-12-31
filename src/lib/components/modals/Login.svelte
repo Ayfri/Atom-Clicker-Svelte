@@ -44,7 +44,7 @@
 
 <script lang="ts">
 	import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_PUBLISHABLE_KEY } from '$env/static/public';
-	import {supabaseAuth} from '$stores/supabaseAuth';
+	import {supabaseAuth} from '$stores/supabaseAuth.svelte';
 	import Modal from '@components/ui/Modal.svelte';
 
 	interface Props {

@@ -5,16 +5,15 @@ import { ALL_PHOTON_UPGRADES, getPhotonUpgradeCost } from '$data/photonUpgrades'
 import { POWER_UP_DEFAULT_INTERVAL } from '$data/powerUp';
 import { SKILL_UPGRADES } from '$data/skillTree';
 import { UPGRADES } from '$data/upgrades';
-import { browser } from '$app/environment';
 import { BUILDING_COST_MULTIPLIER, ELECTRONS_PROTONS_REQUIRED, PROTONS_ATOMS_REQUIRED } from '$lib/constants';
 import { type Building, type GameState, type PowerUp, type Price, type Settings, type SkillUpgrade, type Upgrade } from '$lib/types';
 import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
 import { calculateEffects, getUpgradesWithEffects } from '$helpers/effects';
+import { SAVE_KEY, SAVE_VERSION, loadSavedState } from '$helpers/saves';
 import { LAYERS, type LayerType, statsConfig } from '$helpers/statConstants';
-import { leaderboardStats } from '$stores/leaderboard.svelte';
+import { leaderboard } from '$stores/leaderboard.svelte';
 import { saveRecovery } from '$stores/saveRecovery';
 import { info } from '$stores/toasts';
-import { SAVE_KEY, SAVE_VERSION, loadSavedState } from '$helpers/saves';
 
 export class GameManager {
 	// State
@@ -46,7 +45,7 @@ export class GameManager {
 	totalProtonisesAllTime = $state(0);
 	totalProtonisesRun = $state(0);
 	totalUpgradesPurchasedAllTime = $state(0);
-	totalUsers = $state(0);
+	totalUsers = $derived(leaderboard.stats.totalUsers);
 	totalXP = $state(0);
 	upgrades = $state<string[]>([]);
 
@@ -57,12 +56,6 @@ export class GameManager {
 	initialize() {
 		this.loadGame();
 		this.setupInterval();
-
-		if (browser) {
-			leaderboardStats.subscribe(stats => {
-				this.totalUsers = stats.totalUsers;
-			});
-		}
 	}
 
 	cleanup() {
