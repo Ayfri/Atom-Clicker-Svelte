@@ -180,21 +180,21 @@
 </script>
 
 <Modal {onClose} title="Cloud Save" width="sm">
-    {#if !supabaseAuth.isAuthenticated}
-        <div class="flex flex-col gap-4 text-center">
-            <h3 class="text-lg font-bold text-accent">Login Required</h3>
-            <p class="text-white/60">
-                Please log in to use cloud saves.
-            </p>
-            <button
-                onclick={() => showLoginModal = true}
-                class="mx-auto rounded-lg bg-accent px-6 py-2 font-semibold text-white transition-colors hover:bg-accent-600"
-            >
-                Login
-            </button>
-        </div>
-    {:else}
-        <div class="flex flex-col gap-6">
+    <div class="flex flex-col gap-6">
+        {#if !supabaseAuth.isAuthenticated}
+            <div class="flex flex-col gap-4 text-center">
+                <h3 class="text-lg font-bold text-accent">Login Required</h3>
+                <p class="text-white/60">
+                    Please log in to use cloud saves.
+                </p>
+                <button
+                    onclick={() => showLoginModal = true}
+                    class="mx-auto rounded-lg bg-accent px-6 py-2 font-semibold text-white transition-colors hover:bg-accent-600"
+                >
+                    Login
+                </button>
+            </div>
+        {:else}
             {#if error}
                 <div class="rounded-lg bg-red-500/20 p-4 text-red-200">
                     {error}
@@ -283,28 +283,29 @@
                     <CloudDownload class="size-5" />
                     Load from Cloud
                 </button>
-
-                <div class="h-px bg-white/10 my-2"></div>
-
-                <button
-                    class="flex items-center justify-center gap-2 rounded-lg bg-red-900/40 px-6 py-3 font-semibold text-red-200 transition-colors hover:bg-red-900/60"
-                    onclick={() => showHardReset = true}
-                >
-                    <RotateCcw class="size-5" />
-                    Hard Reset
-                </button>
             </div>
+        {/if}
 
-            <div class="mt-4 rounded-lg bg-black/20 p-4 text-sm text-white/80">
-                <div class="flex items-start gap-2">
-                    <AlertCircle class="mt-0.5 size-4 shrink-0 text-accent" />
-                    <p>
-                        Cloud saves allow you to backup your game progress and sync it across devices. Your local save will be overwritten when loading from the cloud.
-                    </p>
-                </div>
+        <div class="h-px bg-white/10 my-2"></div>
+
+        <button
+            class="flex items-center justify-center gap-2 rounded-lg bg-red-900/40 px-6 py-3 font-semibold text-red-200 transition-colors hover:bg-red-900/60"
+            onclick={() => showHardReset = true}
+        >
+            <RotateCcw class="size-5" />
+            Hard Reset
+        </button>
+
+        <div class="rounded-lg bg-black/20 p-4 text-sm text-white/80">
+            <div class="flex items-start gap-2">
+                <AlertCircle class="mt-0.5 size-4 shrink-0 text-accent" />
+                <p>
+                    Cloud saves allow you to backup your game progress and sync it across devices. Your local save will be overwritten when loading from the cloud.
+                </p>
             </div>
         </div>
-    {/if}
+    </div>
+
 </Modal>
 
 {#if showLoginModal}
