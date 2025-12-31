@@ -1,12 +1,11 @@
-import { createClient, type SupabaseClient, type User, type Session } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient, type User, type Session, type Provider } from '@supabase/supabase-js';
 import { browser } from '$app/environment';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_PUBLISHABLE_KEY } from '$env/static/public';
 import type { GameState } from '$lib/types';
-import type { Database } from '$lib/types/supabase';
+import type { Database, Profile } from '$lib/types/supabase';
 import { gameManager } from '$helpers/GameManager.svelte';
 import { isValidGameState, SAVE_VERSION, migrateSavedState, validateAndRepairGameState } from '$helpers/saves';
 
-type Profile = Database['public']['Tables']['profiles']['Row'];
 
 export class SupabaseAuth {
 	isAuthenticated = $state(false);
@@ -82,7 +81,7 @@ export class SupabaseAuth {
 				this.user = user;
 				this.loading = true;
 
-				console.log('Auth state change for user:', user.id, user.id);
+				console.log('Auth state change for user:', user.id);
 
 				// Fetch user profile
 				let { data: profile, error } = await this.supabase!
@@ -167,7 +166,7 @@ export class SupabaseAuth {
 		}
 	}
 
-	async signInWithProvider(provider: 'google' | 'discord' | 'twitter') {
+	async signInWithProvider(provider: Provider) {
 		if (!browser || !this.supabase) {
 			await this.init();
 			if (!this.supabase) return;
