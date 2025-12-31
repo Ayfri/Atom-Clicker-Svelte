@@ -5,7 +5,7 @@
 	import { saveRecovery } from '$stores/saveRecovery';
 	import { supabaseAuth } from '$stores/supabaseAuth.svelte';
 	import { error as errorToast, info, success } from '$stores/toasts';
-	import { AlertTriangle, CloudDownload, Database, RefreshCw, Trash2 } from 'lucide-svelte';
+	import { AlertTriangle, CloudDownload, Database, RefreshCw, Trash2, Trophy, X } from 'lucide-svelte';
 
 	interface Props {
 		onClose: () => void;
@@ -15,6 +15,7 @@
 
 	let loading = $state(false);
 	let showLoginModal = $state(false);
+	let isAlreadyUnlocked = $state(false); // Is achievement unlocked
 
 	const errorMessages: Record<string, string> = {
 		corrupted: 'Your save file appears to be corrupted.',
@@ -34,14 +35,14 @@
 		try {
 			const loaded = await supabaseAuth.loadGameFromCloud();
 			if (loaded) {
-				success('Recovery Successful', 'Your game has been loaded from the cloud save.');
+				success({ title: 'Recovery Successful', message: 'Your game has been loaded from the cloud save.' });
 				saveRecovery.clearError();
 				onClose();
 			} else {
-				errorToast('No Cloud Save', 'No cloud save was found for your account.');
+				errorToast({ title: 'No Cloud Save', message: 'No cloud save was found for your account.' });
 			}
 		} catch (e) {
-			errorToast('Error', e instanceof Error ? e.message : 'Failed to load from cloud');
+			errorToast({ title: 'Error', message: e instanceof Error ? e.message : 'Failed to load from cloud' });
 		} finally {
 			loading = false;
 		}
@@ -52,7 +53,12 @@
 		saveRecovery.cleanOldBackups();
 		// Reset game state
 		gameManager.reset();
-		info('New Game', 'A new game has been started. Your corrupted save has been backed up.');
+		info({
+			title: 'New Game',
+			message: 'A new game has been started. Your corrupted save has been backed up.',
+			duration: 5000,
+			icon: RefreshCw
+		});
 		saveRecovery.clearError();
 		onClose();
 	}
@@ -62,6 +68,14 @@
 		saveRecovery.clearError();
 		onClose();
 	}
+
+	// Unlock achievement when modal opens
+	$effect(() => {
+		if (showLoginModal && !isAlreadyUnlocked) {
+			gameManager.unlockAchievement('reset_modal_opener');
+			isAlreadyUnlocked = true; // Mark as unlocked to prevent repeated notifications
+		}
+	});
 </script>
 
 <Modal onClose={handleDismiss} title="Save Recovery" width="sm">

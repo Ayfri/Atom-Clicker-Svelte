@@ -4,6 +4,9 @@ import { formatNumber } from '$lib/utils';
 import { BUILDING_TYPES, BUILDINGS, type BuildingType } from '$data/buildings';
 import { CURRENCIES, CurrenciesTypes, type CurrencyName } from '$data/currencies';
 import { SKILL_UPGRADES } from '$data/skillTree';
+import GitHub from '@components/icons/GitHub.svelte';
+import Discord from '@components/icons/Discord.svelte';
+import { Award, Coffee, Globe, Trophy } from 'lucide-svelte';
 
 export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
 	{
@@ -31,6 +34,7 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
 		description: 'Found the hidden atom in the credits',
 		hiddenCondition: (manager: GameManager) => !manager.achievements.includes('hidden_atom_clicked'),
 		condition: (manager: GameManager) => manager.achievements.includes('hidden_atom_clicked'),
+		icon: Award,
 	},
 	{
 		id: 'skill_tree_master',
@@ -48,6 +52,7 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
 		description: 'Found the reset button... but decided not to press it',
 		hiddenCondition: (manager: GameManager) => !manager.achievements.includes('reset_modal_opener'),
 		condition: (manager: GameManager) => manager.achievements.includes('reset_modal_opener'),
+		icon: Trophy,
 	},
 	{
 		id: 'play_time_10min',
@@ -91,6 +96,7 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
 		description: 'Visited the creator\'s website',
 		hiddenCondition: (manager: GameManager) => !manager.achievements.includes('website_click'),
 		condition: (manager: GameManager) => manager.achievements.includes('website_click'),
+		icon: Globe,
 	},
 	{
 		id: 'coffee_click',
@@ -98,6 +104,7 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
 		description: 'Clicked on the Buy me a coffee link',
 		hiddenCondition: (manager: GameManager) => !manager.achievements.includes('coffee_click'),
 		condition: (manager: GameManager) => manager.achievements.includes('coffee_click'),
+		icon: Coffee,
 	},
 	{
 		id: 'discord_click',
@@ -105,6 +112,7 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
 		description: 'Joined the Discord community',
 		hiddenCondition: (manager: GameManager) => !manager.achievements.includes('discord_click'),
 		condition: (manager: GameManager) => manager.achievements.includes('discord_click'),
+		icon: Discord,
 	},
 	{
 		id: 'github_click',
@@ -112,6 +120,7 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
 		description: 'Visited the GitHub repository',
 		hiddenCondition: (manager: GameManager) => !manager.achievements.includes('github_click'),
 		condition: (manager: GameManager) => manager.achievements.includes('github_click'),
+		icon: GitHub,
 	},
 	{
 		id: 'changelog_modal_opener',

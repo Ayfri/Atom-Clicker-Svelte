@@ -5,7 +5,8 @@
 	import Modal from '@components/ui/Modal.svelte';
 	import { CurrenciesTypes } from '$data/currencies';
 	import { gameManager } from '$helpers/GameManager.svelte';
-	import { SquareArrowOutUpRight } from 'lucide-svelte';
+	import { Award, SquareArrowOutUpRight, Trophy } from 'lucide-svelte';
+	import { info } from '$stores/toasts';
 	import { fade } from 'svelte/transition';
 
 	// Check if achievements are already unlocked

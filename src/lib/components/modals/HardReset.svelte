@@ -1,7 +1,8 @@
 <script lang="ts">
 	import Modal from '@components/ui/Modal.svelte';
 	import { gameManager } from '$helpers/GameManager.svelte';
-    import { Trash2, X } from 'lucide-svelte';
+	import { info } from '$stores/toasts';
+	import { Trash2, Trophy, X } from 'lucide-svelte';
 
 	interface Props {
 		onClose: () => void;

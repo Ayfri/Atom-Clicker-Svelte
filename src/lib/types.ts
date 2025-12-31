@@ -1,7 +1,9 @@
 import type {BuildingType} from '$data/buildings';
 import type {CurrencyName} from '$data/currencies';
 import type {GameManager} from '$helpers/GameManager.svelte';
-import type {LayerType, StatName} from '$helpers/statConstants';
+import type {LayerType} from '$helpers/statConstants';
+import type { Component } from 'svelte';
+import type { Icon } from 'lucide-svelte';
 
 export interface Building {
 	count: number;
@@ -31,6 +33,7 @@ export interface Achievement {
 	condition: (manager: GameManager) => boolean;
 	description: string;
 	hiddenCondition?: (manager: GameManager) => boolean;
+	icon?: Component | typeof Icon;
 	id: string;
 	name: string;
 }

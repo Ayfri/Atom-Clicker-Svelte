@@ -1,9 +1,10 @@
 import {writable} from 'svelte/store';
 import type { Icon } from 'lucide-svelte';
+import type { Component } from 'svelte';
 
 export type Toast = {
 	duration: number;
-	icon?: typeof Icon;
+	icon?: Component | typeof Icon;
 	id: number;
 	is_infinite?: boolean;
 	message: string;
@@ -30,7 +31,7 @@ export function clearAllToasts() {
 
 export interface ToastOptions {
 	duration?: number;
-	icon?: typeof Icon;
+	icon?: Component | typeof Icon;
 	is_infinite?: boolean;
 	message: string;
 	title: string;

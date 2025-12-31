@@ -129,7 +129,7 @@
 
 		if (cooldownProgress < 1) {
 			const remainingTime = Math.ceil((SAVE_COOLDOWN * (1 - cooldownProgress)) / 1000);
-			info('Wait', `Please wait ${remainingTime} seconds before saving again`);
+			info({ title: 'Wait', message: `Please wait ${remainingTime} seconds before saving again` });
 			return;
 		}
 
@@ -139,11 +139,11 @@
 		try {
 			await supabaseAuth.saveGameToCloud();
 			await refreshCloudSaveInfo();
-			info('Success', 'Game saved to cloud');
+			info({ title: 'Success', message: 'Game saved to cloud' });
 			startCooldown();
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to save game to cloud';
-			errorToast('Error', error);
+			errorToast({ title: 'Error', message: error });
 		} finally {
 			loading = false;
 		}
@@ -161,15 +161,15 @@
 		try {
 			const loaded = await supabaseAuth.loadGameFromCloud();
 			if (loaded) {
-				info('Success', 'Game loaded from cloud');
+				info({ title: 'Success', message: 'Game loaded from cloud' });
 				onClose();
 			} else {
 				error = 'No saved game found in cloud';
-				errorToast('Error', error);
+				errorToast({ title: 'Error', message: error });
 			}
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load game from cloud';
-			errorToast('Error', error);
+			errorToast({ title: 'Error', message: error });
 		} finally {
 			loading = false;
 		}
@@ -314,4 +314,3 @@
 {#if showHardReset}
 	<HardReset onClose={() => showHardReset = false} />
 {/if}
-

@@ -11,6 +11,7 @@ import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
 import { calculateEffects, getUpgradesWithEffects } from '$helpers/effects';
 import { SAVE_KEY, SAVE_VERSION, loadSavedState } from '$helpers/saves';
 import { LAYERS, type LayerType, statsConfig } from '$helpers/statConstants';
+import { Trophy } from 'lucide-svelte';
 import { leaderboard } from '$stores/leaderboard.svelte';
 import { saveRecovery } from '$stores/saveRecovery';
 import { info } from '$stores/toasts';
@@ -644,6 +645,15 @@ export class GameManager {
 	unlockAchievement(achievementId: string) {
 		if (!this.achievements.includes(achievementId)) {
 			this.achievements = [...this.achievements, achievementId];
+			const achievement = ACHIEVEMENTS[achievementId];
+			if (achievement) {
+				info({
+					title: 'Achievement unlocked',
+					message: `<strong>${achievement.name}</strong><br>${achievement.description}`,
+					duration: 10000,
+					icon: achievement.icon || Trophy
+				});
+			}
 		}
 	}
 
@@ -746,8 +756,7 @@ export class GameManager {
 
 			Object.entries(ACHIEVEMENTS).forEach(([id, achievement]) => {
 				if (!this.achievements.includes(id) && achievement.condition(this)) {
-					this.achievements = [...this.achievements, id];
-					info("Achievement unlocked", `<strong>${achievement.name}</strong><br>${achievement.description}`);
+					this.unlockAchievement(id);
 				}
 			});
 

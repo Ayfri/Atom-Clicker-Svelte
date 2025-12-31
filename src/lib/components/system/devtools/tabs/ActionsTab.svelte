@@ -6,8 +6,9 @@
 	import { BUILDING_TYPES, BUILDINGS } from '$data/buildings';
 	import { ALL_PHOTON_UPGRADES } from '$data/photonUpgrades';
 	import { SAVE_KEY } from '$helpers/saves';
-	import { Save, Trash2, Zap, Unlock, Coins, Factory, Download, Upload, ToggleLeft, Sparkles } from 'lucide-svelte';
-	import { currenciesManager } from '@/lib/helpers/CurrenciesManager.svelte';
+	import { Save, Trash2, Zap, Unlock, Coins, Factory, Download, Upload, ToggleLeft, Sparkles, MessageSquare } from 'lucide-svelte';
+	import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
+	import { success, error, info, warning } from '$stores/toasts';
 
 	function toggleFeature(upgradeId: string) {
 		if (gameManager.upgrades.includes(upgradeId)) {
@@ -196,6 +197,46 @@
 			>
 				<Upload size={16} />
 				<span>Import Save</span>
+			</button>
+		</div>
+	</div>
+
+	<!-- UI Testing -->
+	<div class="bg-white/5 rounded-xl p-3 border border-white/5">
+		<h3 class="text-base font-bold mb-3 flex items-center gap-2 text-accent-300">
+			<MessageSquare size={18} />
+			<span>UI Testing & Toasts</span>
+		</h3>
+		<div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+			<button
+				class="flex items-center justify-center bg-green-600/20 hover:bg-green-600/40 border border-green-500/30 p-2 rounded-lg text-xs font-semibold text-green-300 transition-all cursor-pointer"
+				onclick={() => success({ title: 'Test Success', message: 'This is a success notification message.' })}
+			>
+				Success
+			</button>
+			<button
+				class="flex items-center justify-center bg-red-600/20 hover:bg-red-600/40 border border-red-500/30 p-2 rounded-lg text-xs font-semibold text-red-300 transition-all cursor-pointer"
+				onclick={() => error({ title: 'Test Error', message: 'This is an error notification message.' })}
+			>
+				Error
+			</button>
+			<button
+				class="flex items-center justify-center bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 p-2 rounded-lg text-xs font-semibold text-blue-300 transition-all cursor-pointer"
+				onclick={() => info({ title: 'Test Info', message: 'This is an information notification message.' })}
+			>
+				Info
+			</button>
+			<button
+				class="flex items-center justify-center bg-yellow-600/20 hover:bg-yellow-600/40 border border-yellow-500/30 p-2 rounded-lg text-xs font-semibold text-yellow-300 transition-all cursor-pointer"
+				onclick={() => warning({ title: 'Test Infinite', message: 'This is an infinite warning.', duration: 0, is_infinite: true })}
+			>
+				Warn Inf
+			</button>
+			<button
+				class="flex items-center justify-center bg-yellow-600/20 hover:bg-yellow-600/40 border border-yellow-500/30 p-2 rounded-lg text-xs font-semibold text-yellow-300 transition-all cursor-pointer"
+				onclick={() => warning({ title: 'Test Normal', message: 'This is a 5s warning.', duration: 5000 })}
+			>
+				Warn 5s
 			</button>
 		</div>
 	</div>
