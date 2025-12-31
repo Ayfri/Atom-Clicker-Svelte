@@ -12,9 +12,6 @@ const MIN_ATOMS_CHANGE_PERCENT = 0.05; // 5% minimum change in atoms
 
 interface LeaderboardStats {
 	totalUsers: number;
-	totalAtoms: number;
-	averageAtoms: number;
-	medianAtoms: number;
 }
 
 interface LeaderboardData {
@@ -25,10 +22,7 @@ interface LeaderboardData {
 function createLeaderboardStore() {
 	const { subscribe, set } = writable<LeaderboardEntry[]>([]);
 	const { subscribe: subscribeStats, set: setStats } = writable<LeaderboardStats>({
-		totalUsers: 0,
-		totalAtoms: 0,
-		averageAtoms: 0,
-		medianAtoms: 0
+		totalUsers: 0
 	});
 
 	// Update control variables

@@ -71,7 +71,7 @@
 	const MAX_PHOTONS = 10;
 
 	function getSizeMultiplier() {
-		const options = { type: 'circle_size' as const };
+		const options = { type: 'photon_size' as const };
 		const upgrades = getUpgradesWithEffects(gameManager.allEffectSources, options);
 		return calculateEffects(upgrades, gameManager, baseSizeMultiplier, options);
 	}
@@ -91,7 +91,7 @@
 	function getLifetimeBonus() {
 		const upgrade = gameManager.allEffectSources.find(u => u.id === 'circle_lifetime');
 		if (!upgrade) return 0;
-		return calculateEffects([upgrade], gameManager, 0, { type: 'power_up_duration' });
+		return calculateEffects([upgrade], gameManager, 0, { type: 'photon_duration' });
 	}
 
 	function getExcitedLifetimeMultiplier() {
@@ -101,11 +101,9 @@
 	}
 
 	function getDoubleChance() {
-		const level = gameManager.photonUpgrades['double_chance'] || 0;
-		if (level === 0) return 0;
-
-		// Simple calculation: 2% per level
-		return (level * 2) / 100;
+		const options = { type: 'photon_double_chance' as const };
+		const upgrades = getUpgradesWithEffects(gameManager.allEffectSources, options);
+		return calculateEffects(upgrades, gameManager, 0, options);
 	}
 
 	function getExcitedDoubleChance() {

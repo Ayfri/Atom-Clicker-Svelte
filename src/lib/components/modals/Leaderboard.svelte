@@ -159,6 +159,10 @@
 			<div class="flex items-center gap-2 text-sm text-white/60">
 				<Users size={16} />
 				<span>{stats.totalUsers} players</span>
+				{#if $leaderboard.some(e => e.is_online)}
+					<span class="text-white/40">•</span>
+					<span class="text-green-400">{$leaderboard.filter(e => e.is_online).length} online</span>
+				{/if}
 			</div>
 		</div>
 	{/snippet}
@@ -386,8 +390,11 @@
 								</div>
 							{/if}
 							<div>
-								<div class="font-bold capitalize text-white">
+								<div class="font-bold capitalize text-white flex items-center gap-2">
 									{getDisplayUsername(entry)}
+									{#if entry.is_online}
+										<div class="size-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse" title="Online"></div>
+									{/if}
 								</div>
 								<div class="text-sm text-white/60">
 									Level {entry.level}

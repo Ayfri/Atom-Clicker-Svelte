@@ -55,7 +55,7 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 		maxLevel: 10,
 		effects: (level: number) => [
 			{
-				type: 'power_up_duration',
+				type: 'photon_duration',
 				description: `Increase circle lifetime by ${0.25 * level} seconds`,
 				apply: (currentValue) => currentValue + (250 * level), // 250ms per level
 			},
@@ -72,7 +72,7 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 			{
 				apply: (currentValue) => currentValue * (1 + (0.05 * level)),
 				description: `Increase circle size by ${5 * level}%`,
-				type: 'circle_size',
+				type: 'photon_size',
 			},
 		],
 	},
@@ -85,9 +85,9 @@ export const PHOTON_UPGRADES: Record<string, PhotonUpgrade> = {
 		maxLevel: 10,
 		effects: (level: number) => [
 			{
-				type: 'power_up_multiplier',
+				type: 'photon_double_chance',
 				description: `${level * 2}% chance for double photons`,
-				apply: (currentValue) => currentValue,
+				apply: (currentValue) => currentValue + (level * 0.02),
 			},
 		],
 	},

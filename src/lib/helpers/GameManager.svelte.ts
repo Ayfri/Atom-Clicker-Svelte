@@ -371,6 +371,19 @@ export class GameManager {
 		if (data.lastInteractionTime) {
 			this.lastInteractionTime = data.lastInteractionTime;
 		}
+
+		// Filter expired power-ups and setup removal timeouts
+		if (this.activePowerUps.length > 0) {
+			const now = Date.now();
+			this.activePowerUps = this.activePowerUps.filter(p => {
+				if (!p.startTime) return false; // Remove malformed power-ups
+				return now < p.startTime + p.duration;
+			});
+			this.activePowerUps.forEach(p => {
+				const remaining = (p.startTime + p.duration) - now;
+				setTimeout(() => this.removePowerUp(p.id), remaining);
+			});
+		}
 	}
 
 	save() {
@@ -643,15 +656,17 @@ export class GameManager {
 
 	// Power-Ups
 	addPowerUp(powerUp: PowerUp) {
-		this.activePowerUps = [...this.activePowerUps, powerUp];
+		const newPowerUp = { ...powerUp };
+		if (!newPowerUp.startTime) newPowerUp.startTime = Date.now();
+		this.activePowerUps = [...this.activePowerUps, newPowerUp];
 		this.powerUpsCollected += 1;
 		if (!this.upgrades.includes('electron_bypass_bonus_click_stability')) {
 			this.lastInteractionTime = Date.now();
 		}
 
 		setTimeout(() => {
-			this.removePowerUp(powerUp.id);
-		}, powerUp.duration);
+			this.removePowerUp(newPowerUp.id);
+		}, newPowerUp.duration);
 	}
 
 	removePowerUp(id: string) {
@@ -742,6 +757,11 @@ export class GameManager {
 					info("Achievement unlocked", `<strong>${achievement.name}</strong><br>${achievement.description}`);
 				}
 			});
+
+			if (this.activePowerUps.length > 0) {
+				const now = Date.now();
+				this.activePowerUps = this.activePowerUps.filter((p) => now < p.startTime + p.duration);
+			}
 		}, 1000);
 	}
 }
