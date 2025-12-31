@@ -124,6 +124,7 @@ export type Database = {
 					last_updated: string
 					level: number
 					picture: string
+					updated_at: string
 					username: string
 				}[]
 			}

@@ -30,6 +30,34 @@ function createSupabaseAuthStore() {
 
 	let supabase: SupabaseClient<Database>;
 	let currentSession: Session | null = null;
+	let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
+
+	function startHeartbeat() {
+		stopHeartbeat();
+		heartbeatInterval = setInterval(async () => {
+			if (currentSession?.access_token) {
+				try {
+					await fetch('/api/auth/status', {
+						method: 'POST',
+						headers: {
+							'Authorization': `Bearer ${currentSession.access_token}`,
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({ is_online: true })
+					});
+				} catch (error) {
+					console.error('Heartbeat failed:', error);
+				}
+			}
+		}, 45_000); // Pulse every 45 seconds
+	}
+
+	function stopHeartbeat() {
+		if (heartbeatInterval) {
+			clearInterval(heartbeatInterval);
+			heartbeatInterval = null;
+		}
+	}
 
 	async function init() {
 		if (!browser) {
@@ -161,6 +189,7 @@ function createSupabaseAuthStore() {
 				}
 
 				console.log('Final profile result:', profile);
+				startHeartbeat();
 
 				update(state => ({
 					...state,
@@ -170,6 +199,7 @@ function createSupabaseAuthStore() {
 				}));
 			} else {
 				console.log('User signed out');
+				stopHeartbeat();
 				update(state => ({
 					...state,
 					isAuthenticated: false,

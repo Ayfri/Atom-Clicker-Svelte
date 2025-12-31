@@ -23,17 +23,25 @@ export const GET: RequestHandler = async ({ url }) => {
 		const sortedWithRank = addRankToLeaderboard(rawLeaderboard);
 
 		// Format response for frontend compatibility
-		const formattedLeaderboard = sortedWithRank.map((entry) => ({
-			atoms: parseFloat(entry.atoms), // Use parseFloat instead of parseInt
-			level: entry.level,
-			is_online: entry.is_online,
-			picture: entry.picture || '',
-			self: currentUserId ? entry.id === currentUserId : false, // Simple JavaScript check
-			lastUpdated: new Date(entry.last_updated).getTime(),
-			rank: entry.rank,
-			userId: entry.id,
-			username: entry.username || 'Anonymous',
-		}));
+		const formattedLeaderboard = sortedWithRank.map((entry) => {
+			// A user is considered online only if:
+			// 1. is_online is true in DB
+			// 2. updated_at is within the last 2 minutes (heartbeat mechanism)
+			const lastSeen = new Date(entry.updated_at).getTime();
+			const isTrulyOnline = entry.is_online && (Date.now() - lastSeen < 120_000);
+
+			return {
+				atoms: parseFloat(entry.atoms), // Use parseFloat instead of parseInt
+				level: entry.level,
+				is_online: isTrulyOnline,
+				picture: entry.picture || '',
+				self: currentUserId ? entry.id === currentUserId : false, // Simple JavaScript check
+				lastUpdated: new Date(entry.last_updated).getTime(),
+				rank: entry.rank,
+				userId: entry.id,
+				username: entry.username || 'Anonymous',
+			};
+		});
 
 		// Calculate statistics
 		const totalUsers = formattedLeaderboard.length;
