@@ -4,6 +4,7 @@ import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_PUBLISHABLE_KEY } from '$env/stati
 import type { GameState } from '$lib/types';
 import type { Database, Profile } from '$lib/types/supabase';
 import { gameManager } from '$helpers/GameManager.svelte';
+import { multiTabDetector } from '$stores/multiTab.svelte';
 import { isValidGameState, SAVE_VERSION, migrateSavedState, validateAndRepairGameState } from '$helpers/saves';
 
 
@@ -37,6 +38,8 @@ export class SupabaseAuth {
 					detectSessionInUrl: true
 				}
 			});
+
+			multiTabDetector.init();
 
 			this.initialized = true;
 
