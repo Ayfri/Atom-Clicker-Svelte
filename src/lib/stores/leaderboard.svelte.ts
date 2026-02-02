@@ -25,7 +25,7 @@ export class LeaderboardStore {
 
 	async fetchLeaderboard() {
 		try {
-			const userId = supabaseAuth.isAuthenticated ? supabaseAuth.user?.id : '';
+			const userId = supabaseAuth && supabaseAuth.isAuthenticated ? supabaseAuth.user?.id : '';
 			const response = await fetch(`/api/leaderboard?userId=${userId}`);
 			if (!response.ok) throw new Error('Failed to fetch leaderboard');
 			const data: LeaderboardData = await response.json();
@@ -41,9 +41,10 @@ export class LeaderboardStore {
 
 		try {
 			this.isUpdating = true;
-			if (!supabaseAuth.isAuthenticated || !supabaseAuth.user) return;
+			if (!supabaseAuth || !supabaseAuth.isAuthenticated || !supabaseAuth.user) return;
 
-			const username = supabaseAuth.profile?.username ??
+			const username =
+				supabaseAuth.profile?.username ??
 				supabaseAuth.user.user_metadata?.username ??
 				supabaseAuth.user.user_metadata?.full_name ??
 				supabaseAuth.user.email?.split('@')[0] ??
@@ -54,7 +55,10 @@ export class LeaderboardStore {
 				atoms,
 				level,
 				userId: supabaseAuth.user.id,
-				picture: supabaseAuth.profile?.picture ?? supabaseAuth.user.user_metadata?.avatar_url ?? supabaseAuth.user.user_metadata?.picture
+				picture:
+					supabaseAuth.profile?.picture ??
+					supabaseAuth.user.user_metadata?.avatar_url ??
+					supabaseAuth.user.user_metadata?.picture,
 			};
 
 			const obfuscatedData = obfuscateClientData(data);
@@ -62,7 +66,7 @@ export class LeaderboardStore {
 			const response = await fetch('/api/leaderboard', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(obfuscatedData)
+				body: JSON.stringify(obfuscatedData),
 			});
 
 			if (!response.ok) {
@@ -97,7 +101,8 @@ export class LeaderboardStore {
 					const atoms = gameManager.atoms;
 					const level = gameManager.playerLevel;
 
-					if (!supabaseAuth.isAuthenticated) return;
+					// Safely check for supabaseAuth presence
+					if (!supabaseAuth || !supabaseAuth.isAuthenticated) return;
 
 					const now = Date.now();
 					if (now - lastUpdate < MIN_UPDATE_INTERVAL) return;
