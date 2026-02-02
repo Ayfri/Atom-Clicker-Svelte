@@ -9,10 +9,11 @@ export const LAYERS = {
 	NEVER: 0,
 	PHOTON_REALM: 3,
 	PROTONIZER: 1,
-	SPECIAL: -1
+	RADIATION_REALM: 4,
+	SPECIAL: -1,
 } as const;
 
-export type LayerType = typeof LAYERS[keyof typeof LAYERS];
+export type LayerType = (typeof LAYERS)[keyof typeof LAYERS];
 
 export interface StatConfig<T = any> {
 	defaultValue: T;
@@ -34,8 +35,26 @@ export const statsConfig: Record<string, StatConfig> = {
 	lastSave: { defaultValue: Date.now(), layer: LAYERS.SPECIAL, minVersion: 1 },
 	photonUpgrades: { defaultValue: {}, layer: LAYERS.PHOTON_REALM, minVersion: 12 },
 	powerUpsCollected: { defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
-	realms: { defaultValue: { atoms: { unlocked: true }, photons: { unlocked: false } }, layer: LAYERS.NEVER, minVersion: 19 },
-	settings: { defaultValue: { automation: { autoClick: false, autoClickPhotons: false, buildings: [], upgrades: false }, gameplay: { offlineProgressEnabled: true }, upgrades: { displayAlreadyBought: false } }, layer: LAYERS.NEVER, minVersion: 8 },
+	radiation: {
+		defaultValue: { controlRodLevel: 0.5, lastTick: Date.now(), mass: 0, unlocked: false },
+		layer: LAYERS.NEVER,
+		minVersion: 22,
+	},
+	radiationUpgrades: { defaultValue: {}, layer: LAYERS.RADIATION_REALM, minVersion: 22 },
+	realms: {
+		defaultValue: { atoms: { unlocked: true }, photons: { unlocked: false }, radiation: { unlocked: false } },
+		layer: LAYERS.NEVER,
+		minVersion: 19,
+	},
+	settings: {
+		defaultValue: {
+			automation: { autoClick: false, autoClickPhotons: false, buildings: [], upgrades: false },
+			gameplay: { offlineProgressEnabled: true },
+			upgrades: { displayAlreadyBought: false },
+		},
+		layer: LAYERS.NEVER,
+		minVersion: 8,
+	},
 	skillUpgrades: { defaultValue: [], layer: LAYERS.PROTONIZER, minVersion: 3 },
 	startDate: { defaultValue: Date.now(), layer: LAYERS.NEVER, minVersion: 5 },
 	totalBuildingsPurchasedAllTime: { defaultValue: 0, layer: LAYERS.NEVER, minVersion: 16 },
@@ -48,7 +67,7 @@ export const statsConfig: Record<string, StatConfig> = {
 	totalUpgradesPurchasedAllTime: { defaultValue: 0, layer: LAYERS.NEVER, minVersion: 16 },
 	totalUsers: { defaultValue: 0, layer: LAYERS.NEVER, minVersion: 15, saveable: false },
 	totalXP: { defaultValue: 0, layer: LAYERS.PROTONIZER, minVersion: 3 },
-	upgrades: { defaultValue: [], layer: LAYERS.PROTONIZER, minVersion: 1 }
+	upgrades: { defaultValue: [], layer: LAYERS.PROTONIZER, minVersion: 1 },
 };
 
 export const STATS = {
@@ -77,10 +96,10 @@ export const STATS = {
 	TOTAL_UPGRADES_PURCHASED_ALL_TIME: 'totalUpgradesPurchasedAllTime',
 	TOTAL_USERS: 'totalUsers',
 	TOTAL_XP: 'totalXP',
-	UPGRADES: 'upgrades'
+	UPGRADES: 'upgrades',
 } as const;
 
-export type StatName = typeof STATS[keyof typeof STATS];
+export type StatName = (typeof STATS)[keyof typeof STATS];
 
 export const NUMBER_STATS = [
 	STATS.HIGHEST_APS,
@@ -97,15 +116,10 @@ export const NUMBER_STATS = [
 	STATS.TOTAL_PROTONISES_RUN,
 	STATS.TOTAL_UPGRADES_PURCHASED_ALL_TIME,
 	STATS.TOTAL_USERS,
-	STATS.TOTAL_XP
+	STATS.TOTAL_XP,
 ] as const;
 
-export const ARRAY_STATS = [
-	STATS.ACHIEVEMENTS,
-	STATS.ACTIVE_POWER_UPS,
-	STATS.SKILL_UPGRADES,
-	STATS.UPGRADES
-] as const;
+export const ARRAY_STATS = [STATS.ACHIEVEMENTS, STATS.ACTIVE_POWER_UPS, STATS.SKILL_UPGRADES, STATS.UPGRADES] as const;
 
-export type NumberStatName = typeof NUMBER_STATS[number];
-export type ArrayStatName = typeof ARRAY_STATS[number];
+export type NumberStatName = (typeof NUMBER_STATS)[number];
+export type ArrayStatName = (typeof ARRAY_STATS)[number];

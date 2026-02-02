@@ -1,5 +1,6 @@
 import AtomRealm from '@components/prestige/AtomRealm.svelte';
 import PhotonRealm from '@components/prestige/PhotonRealm.svelte';
+import RadiationRealm from '@components/prestige/RadiationRealm.svelte';
 import { CURRENCIES, CurrenciesTypes } from '$data/currencies';
 import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
 import { gameManager } from '$helpers/GameManager.svelte';
@@ -25,7 +26,7 @@ class RealmManager {
 			component: AtomRealm,
 			currency: CURRENCIES[CurrenciesTypes.ATOMS],
 			id: RealmTypes.ATOMS,
-			title: 'Atoms Realm'
+			title: 'Atoms Realm',
 		},
 		{
 			background:
@@ -33,12 +34,20 @@ class RealmManager {
 			component: PhotonRealm,
 			currency: CURRENCIES[CurrenciesTypes.PHOTONS],
 			id: RealmTypes.PHOTONS,
-			title: 'Photon Realm'
-		}
+			title: 'Photon Realm',
+		},
+		{
+			background:
+				'radial-gradient(circle at 30% 30%, rgba(30, 70, 32, 0.15) 0%, transparent 50%), radial-gradient(circle at 70% 70%, rgba(57, 255, 20, 0.1) 0%, transparent 40%)',
+			component: RadiationRealm,
+			currency: CURRENCIES[CurrenciesTypes.ELECTRONS],
+			id: RealmTypes.RADIATION,
+			title: 'Radiation Realm',
+		},
 	];
 
 	get availableRealms() {
-		return this.realms.filter((r) => gameManager.realms[r.id].unlocked);
+		return this.realms.filter(r => gameManager.realms[r.id].unlocked);
 	}
 
 	get realmValues() {
@@ -47,16 +56,16 @@ class RealmManager {
 				acc[realm.id] = currenciesManager.getAmount(realm.currency.name);
 				return acc;
 			},
-			{} as Record<RealmType, number>
+			{} as Record<RealmType, number>,
 		);
 	}
 
 	get selectedRealm() {
-		return this.realms.find((r) => r.id === this.selectedRealmId) || this.realms[0];
+		return this.realms.find(r => r.id === this.selectedRealmId) || this.realms[0];
 	}
 
 	selectRealm(id: RealmType) {
-		if (this.realms.find((r) => r.id === id && gameManager.realms[r.id].unlocked)) {
+		if (this.realms.find(r => r.id === id && gameManager.realms[r.id].unlocked)) {
 			this.selectedRealmId = id;
 		}
 	}

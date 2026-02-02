@@ -73,6 +73,12 @@ export interface Effect {
 		| 'power_up_interval'
 		| 'power_up_multiplier'
 		| 'proton_gain'
+		| 'radiation_control_precision'
+		| 'radiation_critical_chance'
+		| 'radiation_enrichment'
+		| 'radiation_mass_preservation'
+		| 'radiation_mass_regen'
+		| 'radiation_max_cpm'
 		| 'stability_boost'
 		| 'stability_capacity'
 		| 'stability_speed'
@@ -95,6 +101,13 @@ export interface PhotonUpgrade {
 
 export type CurrencyBoosts = Partial<Record<CurrencyName, number>>;
 
+export interface RadiationState {
+	controlRodLevel: number;
+	lastTick: number;
+	mass: number;
+	unlocked: boolean;
+}
+
 export interface GameState {
 	achievements: string[];
 	activePowerUps: PowerUp[];
@@ -108,6 +121,8 @@ export interface GameState {
 	lastSave: number;
 	photonUpgrades: Record<string, number>;
 	powerUpsCollected: number;
+	radiation: RadiationState;
+	radiationUpgrades: Record<string, number>;
 	realms: Record<RealmType, RealmState>;
 	settings: Settings;
 	skillUpgrades: string[];
@@ -147,6 +162,11 @@ export interface OfflineProgressSummary {
 	photonClickExpectedExcited: number;
 	photonClickExpectedNormal: number;
 	photonClickExpectedTotal: number;
+	radiationActive: boolean;
+	radiationAvgMultiplier: number;
+	radiationMassGained: number;
+	radiationMassLost: number;
+	radiationTimeToEmpty: number;
 	xpGained: number;
 }
 

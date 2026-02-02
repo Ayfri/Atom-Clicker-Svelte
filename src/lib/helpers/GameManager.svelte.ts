@@ -16,6 +16,7 @@ import {
 	type OfflineProgressSummary,
 	type PowerUp,
 	type Price,
+	type RadiationState,
 	type RealmState,
 	type Settings,
 	type SkillUpgrade,
@@ -25,6 +26,7 @@ import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
 import { calculateEffects, getUpgradesWithEffects } from '$helpers/effects';
 import { FeaturesManager } from '$helpers/FeaturesManager.svelte';
 import { applyOfflineProgress } from '$helpers/offlineProgress';
+import { radiationManager } from '$helpers/RadiationManager.svelte';
 import { SAVE_KEY, SAVE_VERSION, loadSavedState } from '$helpers/saves';
 import { LAYERS, type LayerType, statsConfig } from '$helpers/statConstants';
 import { Trophy } from 'lucide-svelte';
@@ -47,9 +49,11 @@ export class GameManager {
 	offlineProgressSummary = $state<OfflineProgressSummary | null>(null);
 	photonUpgrades = $state<Record<string, number>>({});
 	powerUpsCollected = $state(0);
+	radiationUpgrades = $state<Record<string, number>>({});
 	realms = $state<Record<RealmType, RealmState>>({
 		[RealmTypes.ATOMS]: { unlocked: true },
 		[RealmTypes.PHOTONS]: { unlocked: false },
+		[RealmTypes.RADIATION]: { unlocked: false },
 	});
 	settings = $state<Settings>({
 		automation: {
@@ -209,10 +213,14 @@ export class GameManager {
 		return calculateEffects(upgrades, this, baseChance, options);
 	});
 
+	radiationMultiplier = $derived(radiationManager.radiationMultiplier);
+
 	globalMultiplier = $derived.by(() => {
 		const options = { type: 'global' as const };
 		const globalUpgrades = getUpgradesWithEffects(this.allEffectSources, options);
-		return calculateEffects(globalUpgrades, this, 1, options);
+		const baseMultiplier = calculateEffects(globalUpgrades, this, 1, options);
+		// Radiation multiplier is applied multiplicatively
+		return baseMultiplier * this.radiationMultiplier;
 	});
 
 	hasAvailableSkillUpgrades = $derived.by(() => {
@@ -382,6 +390,8 @@ export class GameManager {
 			lastSave: this.lastSave,
 			photonUpgrades: this.photonUpgrades,
 			powerUpsCollected: this.powerUpsCollected,
+			radiation: radiationManager.getState(),
+			radiationUpgrades: this.radiationUpgrades,
 			realms: this.realms,
 			settings: this.settings,
 			skillUpgrades: this.skillUpgrades,
@@ -481,6 +491,14 @@ export class GameManager {
 					};
 				} else if (key === 'currencyBoosts') {
 					this.skillPointBoosts = data.currencyBoosts ?? {};
+				} else if (key === 'radiation') {
+					// Radiation state is handled by RadiationManager
+					if (data.radiation) {
+						radiationManager.loadState(data.radiation, data.radiationUpgrades ?? {});
+					}
+				} else if (key === 'radiationUpgrades') {
+					this.radiationUpgrades = data.radiationUpgrades ?? {};
+					radiationManager.upgradeLevels = this.radiationUpgrades;
 				} else {
 					this[key as keyof this] = data[key as keyof GameState] as any;
 				}
@@ -920,6 +938,9 @@ export class GameManager {
 			if (this.atomsPerSecond > this.highestAPS) {
 				this.highestAPS = this.atomsPerSecond;
 			}
+
+			// Process radiation decay
+			radiationManager.tick(1000);
 
 			Object.entries(ACHIEVEMENTS).forEach(([id, achievement]) => {
 				if (!this.achievements.includes(id) && achievement.condition(this)) {
