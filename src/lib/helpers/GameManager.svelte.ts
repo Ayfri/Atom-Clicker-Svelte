@@ -27,6 +27,7 @@ import { calculateEffects, getUpgradesWithEffects } from '$helpers/effects';
 import { FeaturesManager } from '$helpers/FeaturesManager.svelte';
 import { applyOfflineProgress } from '$helpers/offlineProgress';
 import { radiationManager } from '$helpers/RadiationManager.svelte';
+import { realmManager } from '$helpers/RealmManager.svelte';
 import { SAVE_KEY, SAVE_VERSION, loadSavedState } from '$helpers/saves';
 import { LAYERS, type LayerType, statsConfig } from '$helpers/statConstants';
 import { Trophy } from 'lucide-svelte';
@@ -393,6 +394,7 @@ export class GameManager {
 			radiation: radiationManager.getState(),
 			radiationUpgrades: this.radiationUpgrades,
 			realms: this.realms,
+			selectedRealmId: realmManager.selectedRealmId,
 			settings: this.settings,
 			skillUpgrades: this.skillUpgrades,
 			startDate: this.startDate,
@@ -499,6 +501,10 @@ export class GameManager {
 				} else if (key === 'radiationUpgrades') {
 					this.radiationUpgrades = data.radiationUpgrades ?? {};
 					radiationManager.upgradeLevels = this.radiationUpgrades;
+				} else if (key === 'selectedRealmId') {
+					if (data.selectedRealmId) {
+						realmManager.selectRealm(data.selectedRealmId);
+					}
 				} else {
 					this[key as keyof this] = data[key as keyof GameState] as any;
 				}

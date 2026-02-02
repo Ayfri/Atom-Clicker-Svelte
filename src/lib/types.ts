@@ -124,6 +124,7 @@ export interface GameState {
 	radiation: RadiationState;
 	radiationUpgrades: Record<string, number>;
 	realms: Record<RealmType, RealmState>;
+	selectedRealmId?: RealmType;
 	settings: Settings;
 	skillUpgrades: string[];
 	startDate: number;

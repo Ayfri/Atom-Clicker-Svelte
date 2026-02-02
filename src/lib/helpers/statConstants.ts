@@ -3,6 +3,7 @@
 // 1 = reset all stats at layer
 // 2 = reset all stats at layer and layer 1
 // 3 = reset all stats at layer and layer 1 and layer 2 etc...
+import { RealmTypes } from '$data/realms';
 
 export const LAYERS = {
 	ELECTRONIZE: 2,
@@ -55,6 +56,7 @@ export const statsConfig: Record<string, StatConfig> = {
 		layer: LAYERS.NEVER,
 		minVersion: 8,
 	},
+	selectedRealmId: { defaultValue: RealmTypes.ATOMS, layer: LAYERS.NEVER, minVersion: 22 },
 	skillUpgrades: { defaultValue: [], layer: LAYERS.PROTONIZER, minVersion: 3 },
 	startDate: { defaultValue: Date.now(), layer: LAYERS.NEVER, minVersion: 5 },
 	totalBuildingsPurchasedAllTime: { defaultValue: 0, layer: LAYERS.NEVER, minVersion: 16 },
@@ -83,6 +85,7 @@ export const STATS = {
 	PHOTON_UPGRADES: 'photonUpgrades',
 	POWER_UPS_COLLECTED: 'powerUpsCollected',
 	REALMS: 'realms',
+	SELECTED_REALM_ID: 'selectedRealmId',
 	SETTINGS: 'settings',
 	SKILL_UPGRADES: 'skillUpgrades',
 	START_DATE: 'startDate',
