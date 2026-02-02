@@ -5,24 +5,24 @@ import type { SkillUpgrade } from '$lib/types';
 
 export const GRID_SIZE = {
 	x: 400,
-	y: 200
+	y: 200,
 };
 
 function gridPos(x: number, y: number) {
 	return {
 		x: x * GRID_SIZE.x,
-		y: y * GRID_SIZE.y
+		y: y * GRID_SIZE.y,
 	};
 }
 
 function createBuildingsSkillUpgrades(
-	skillData: (buildingType: BuildingType, building: BuildingData, i: number) => SkillUpgrade
+	skillData: (buildingType: BuildingType, building: BuildingData, i: number) => SkillUpgrade,
 ): Record<string, SkillUpgrade> {
 	return Object.fromEntries(
 		Object.entries(BUILDINGS).map(([buildingType, building], i) => {
 			const builtSkillData = skillData?.(buildingType as BuildingType, building, i);
 			return [builtSkillData.id, builtSkillData];
-		})
+		}),
 	);
 }
 
@@ -36,14 +36,14 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		description: '2x atoms production',
 		effects: [
 			{
-				apply: (currentValue) => currentValue * 2,
+				apply: currentValue => currentValue * 2,
 				description: 'Multiply all production by 2',
-				type: 'global'
-			}
+				type: 'global',
+			},
 		],
 		id: 'globalMultiplier',
 		name: 'Global Multiplier',
-		position: gridPos(0, 0)
+		position: gridPos(0, 0),
 	},
 
 	unlockLevels: {
@@ -54,7 +54,7 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		id: 'unlockLevels',
 		name: 'Unlock Levels',
 		position: gridPos(1, 0),
-		requires: ['globalMultiplier']
+		requires: ['globalMultiplier'],
 	},
 
 	// ═══════════════════════════════════════════════════════════════════════════
@@ -66,28 +66,28 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		description: '1.5x production for first 3 building types',
 		effects: [
 			{
-				apply: (currentValue) => currentValue * 1.5,
+				apply: currentValue => currentValue * 1.5,
 				description: 'Multiply Molecule production by 1.5',
 				target: 'molecule',
-				type: 'building'
+				type: 'building',
 			},
 			{
-				apply: (currentValue) => currentValue * 1.5,
+				apply: currentValue => currentValue * 1.5,
 				description: 'Multiply Crystal production by 1.5',
 				target: 'crystal',
-				type: 'building'
+				type: 'building',
 			},
 			{
-				apply: (currentValue) => currentValue * 1.5,
+				apply: currentValue => currentValue * 1.5,
 				description: 'Multiply Nanostructure production by 1.5',
 				target: 'nanostructure',
-				type: 'building'
-			}
+				type: 'building',
+			},
 		],
 		id: 'atomicStability',
 		name: 'Atomic Stability',
 		position: gridPos(-1, 1),
-		requires: ['globalMultiplier']
+		requires: ['globalMultiplier'],
 	},
 
 	clickMastery: {
@@ -100,13 +100,13 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 					return currentValue * (1 + clickBonus);
 				},
 				description: 'Add 10% production per 100 total clicks',
-				type: 'global'
-			}
+				type: 'global',
+			},
 		],
 		id: 'clickMastery',
 		name: 'Click Mastery',
 		position: gridPos(1, 1),
-		requires: ['unlockLevels']
+		requires: ['unlockLevels'],
 	},
 
 	levelMastery: {
@@ -119,13 +119,13 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 					return currentValue * (1 + levelBonus);
 				},
 				description: 'Add 20% atoms production per 10 levels',
-				type: 'global'
-			}
+				type: 'global',
+			},
 		],
 		id: 'levelMastery',
 		name: 'Level Mastery',
 		position: gridPos(2, 0),
-		requires: ['unlockLevels']
+		requires: ['unlockLevels'],
 	},
 
 	molecularBoost: {
@@ -133,22 +133,22 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		description: '3x Molecule and Crystal production',
 		effects: [
 			{
-				apply: (currentValue) => currentValue * 3,
+				apply: currentValue => currentValue * 3,
 				description: 'Multiply Molecule production by 3',
 				target: 'molecule',
-				type: 'building'
+				type: 'building',
 			},
 			{
-				apply: (currentValue) => currentValue * 3,
+				apply: currentValue => currentValue * 3,
 				description: 'Multiply Crystal production by 3',
 				target: 'crystal',
-				type: 'building'
-			}
+				type: 'building',
+			},
 		],
 		id: 'molecularBoost',
 		name: 'Molecular Boost',
 		position: gridPos(-2, 1),
-		requires: ['atomicStability']
+		requires: ['atomicStability'],
 	},
 
 	// ═══════════════════════════════════════════════════════════════════════════
@@ -160,16 +160,16 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		description: '2.5x Nanostructure production',
 		effects: [
 			{
-				apply: (currentValue) => currentValue * 2.5,
+				apply: currentValue => currentValue * 2.5,
 				description: 'Multiply Nanostructure production by 2.5',
 				target: 'nanostructure',
-				type: 'building'
-			}
+				type: 'building',
+			},
 		],
 		id: 'nanoEnhancement',
 		name: 'Nano Enhancement',
 		position: gridPos(-3, 2),
-		requires: ['molecularBoost']
+		requires: ['molecularBoost'],
 	},
 
 	offlineProgress: {
@@ -180,7 +180,7 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		id: 'offlineProgress',
 		name: 'Offline Progress',
 		position: gridPos(2, 1),
-		requires: ['clickMastery']
+		requires: ['clickMastery'],
 	},
 
 	biologicalAmplifier: {
@@ -188,16 +188,16 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		description: '2.5x Micro-organism production',
 		effects: [
 			{
-				apply: (currentValue) => currentValue * 2.5,
+				apply: currentValue => currentValue * 2.5,
 				description: 'Multiply Micro-organism production by 2.5',
 				target: 'microorganism',
-				type: 'building'
-			}
+				type: 'building',
+			},
 		],
 		id: 'biologicalAmplifier',
 		name: 'Biological Amplifier',
 		position: gridPos(-4, 2),
-		requires: ['nanoEnhancement']
+		requires: ['nanoEnhancement'],
 	},
 
 	geologicalForce: {
@@ -205,22 +205,22 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		description: '2x Rock and Planet production',
 		effects: [
 			{
-				apply: (currentValue) => currentValue * 2,
+				apply: currentValue => currentValue * 2,
 				description: 'Multiply Rock production by 2',
 				target: 'rock',
-				type: 'building'
+				type: 'building',
 			},
 			{
-				apply: (currentValue) => currentValue * 2,
+				apply: currentValue => currentValue * 2,
 				description: 'Multiply Planet production by 2',
 				target: 'planet',
-				type: 'building'
-			}
+				type: 'building',
+			},
 		],
 		id: 'geologicalForce',
 		name: 'Geological Force',
 		position: gridPos(-5, 3),
-		requires: ['biologicalAmplifier']
+		requires: ['biologicalAmplifier'],
 	},
 
 	powerUpMastery: {
@@ -228,20 +228,20 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		description: '0.9x power-up interval, 1.1x duration',
 		effects: [
 			{
-				apply: (currentValue) => currentValue * 0.9,
+				apply: currentValue => currentValue * 0.9,
 				description: 'Multiply power-up interval by 0.9',
-				type: 'power_up_interval'
+				type: 'power_up_interval',
 			},
 			{
-				apply: (currentValue) => currentValue * 1.1,
+				apply: currentValue => currentValue * 1.1,
 				description: 'Multiply power-up duration by 1.1',
-				type: 'power_up_duration'
-			}
+				type: 'power_up_duration',
+			},
 		],
 		id: 'powerUpMastery',
 		name: 'Power-up Mastery',
 		position: gridPos(2, 2),
-		requires: ['offlineProgress']
+		requires: ['offlineProgress'],
 	},
 
 	purpleRealm: {
@@ -252,7 +252,7 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		id: 'purpleRealm',
 		name: 'Purple Realm',
 		position: gridPos(2, 3),
-		requires: ['powerUpMastery']
+		requires: ['powerUpMastery'],
 	},
 
 	// ═══════════════════════════════════════════════════════════════════════════
@@ -267,7 +267,7 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		id: 'stabilityField',
 		name: 'Stability Field',
 		position: gridPos(0, -1),
-		requires: ['globalMultiplier']
+		requires: ['globalMultiplier'],
 	},
 
 	electronHarvester: {
@@ -275,15 +275,15 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		description: '2x electron gain',
 		effects: [
 			{
-				apply: (currentValue) => currentValue * 2,
+				apply: currentValue => currentValue * 2,
 				description: 'Multiply electron gain by 2',
-				type: 'electron_gain'
-			}
+				type: 'electron_gain',
+			},
 		],
 		id: 'electronHarvester',
 		name: 'Electron Harvester',
 		position: gridPos(-1, -2),
-		requires: ['stabilityField']
+		requires: ['stabilityField'],
 	},
 
 	protonCollector: {
@@ -291,15 +291,15 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		description: '1.5x proton gain',
 		effects: [
 			{
-				apply: (currentValue) => currentValue * 1.5,
+				apply: currentValue => currentValue * 1.5,
 				description: 'Multiply proton gain by 1.5',
-				type: 'proton_gain'
-			}
+				type: 'proton_gain',
+			},
 		],
 		id: 'protonCollector',
 		name: 'Proton Collector',
 		position: gridPos(-1, -3),
-		requires: ['electronHarvester']
+		requires: ['electronHarvester'],
 	},
 
 	prestigeBonus: {
@@ -312,13 +312,13 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 					return currentValue * (1 + electronizeBonus);
 				},
 				description: 'Add 1% production per Electronize performed',
-				type: 'global'
-			}
+				type: 'global',
+			},
 		],
 		id: 'prestigeBonus',
 		name: 'Prestige Bonus',
 		position: gridPos(-1, -4),
-		requires: ['protonCollector']
+		requires: ['protonCollector'],
 	},
 
 	quantumResonance: {
@@ -327,51 +327,48 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		effects: [
 			{
 				apply: (currentValue, state) => {
-					const totalBuildings = Object.values(state.buildings || {}).reduce(
-						(sum, building) => sum + (building?.count || 0),
-						0
-					);
+					const totalBuildings = Object.values(state.buildings || {}).reduce((sum, building) => sum + (building?.count || 0), 0);
 					const bonus = Math.floor(totalBuildings / 100) * 0.2;
 					return currentValue * (1 + bonus);
 				},
 				description: 'Add 20% production per 100 buildings owned',
-				type: 'global'
-			}
+				type: 'global',
+			},
 		],
 		id: 'quantumResonance',
 		name: 'Quantum Resonance',
 		position: gridPos(-1, -5),
-		requires: ['prestigeBonus']
+		requires: ['prestigeBonus'],
 	},
 
 	stellarCore: {
-		condition: (state) => (state.buildings.star?.count ?? 0) >= 5,
+		condition: state => (state.buildings.star?.count ?? 0) >= 5,
 		cost: { amount: 25_000_000, currency: CurrenciesTypes.PROTONS },
 		description: '2x production for Star and higher buildings',
 		effects: [
 			{
-				apply: (currentValue) => currentValue * 2,
+				apply: currentValue => currentValue * 2,
 				description: 'Multiply Star production by 2',
 				target: 'star',
-				type: 'building'
+				type: 'building',
 			},
 			{
-				apply: (currentValue) => currentValue * 2,
+				apply: currentValue => currentValue * 2,
 				description: 'Multiply Neutron Star production by 2',
 				target: 'neutronStar',
-				type: 'building'
+				type: 'building',
 			},
 			{
-				apply: (currentValue) => currentValue * 2,
+				apply: currentValue => currentValue * 2,
 				description: 'Multiply Black Hole production by 2',
 				target: 'blackHole',
-				type: 'building'
-			}
+				type: 'building',
+			},
 		],
 		id: 'stellarCore',
 		name: 'Stellar Core',
 		position: gridPos(-1, -6),
-		requires: ['quantumResonance']
+		requires: ['quantumResonance'],
 	},
 
 	particleAccelerator: {
@@ -384,13 +381,13 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 					return currentValue * (1 + protoniseBonus);
 				},
 				description: 'Add 25% production per Protonise performed',
-				type: 'global'
-			}
+				type: 'global',
+			},
 		],
 		id: 'particleAccelerator',
 		name: 'Particle Accelerator',
 		position: gridPos(-1, -7),
-		requires: ['stellarCore']
+		requires: ['stellarCore'],
 	},
 
 	// ═══════════════════════════════════════════════════════════════════════════
@@ -407,13 +404,13 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 					return currentValue * (1 + boost);
 				},
 				description: '1% atom boost per thousand players',
-				type: 'global'
-			}
+				type: 'global',
+			},
 		],
 		id: 'communityPower',
 		name: 'Community Power',
 		position: gridPos(1, -2),
-		requires: ['stabilityField']
+		requires: ['stabilityField'],
 	},
 
 	cosmicSynergy: {
@@ -422,23 +419,21 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		effects: [
 			{
 				apply: (currentValue, state) => {
-					const ownedBuildings = Object.values(state.buildings || {}).filter(
-						(b) => b && b.count > 0
-					).length;
+					const ownedBuildings = Object.values(state.buildings || {}).filter(b => b && b.count > 0).length;
 					return currentValue * (1 + ownedBuildings * 0.05);
 				},
 				description: 'Add 5% production per building type owned',
-				type: 'global'
-			}
+				type: 'global',
+			},
 		],
 		id: 'cosmicSynergy',
 		name: 'Cosmic Synergy',
 		position: gridPos(1, -3),
-		requires: ['communityPower']
+		requires: ['communityPower'],
 	},
 
 	hoverCollection: {
-		condition: (manager) => Object.keys(manager.photonUpgrades || {}).length >= 1,
+		condition: manager => Object.keys(manager.photonUpgrades || {}).length >= 1,
 		cost: { amount: 1_000, currency: CurrenciesTypes.PHOTONS },
 		description: 'Collect photons by hovering over them',
 		effects: [],
@@ -446,30 +441,27 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		id: 'hoverCollection',
 		name: 'Quantum Magnetism',
 		position: gridPos(1, -4),
-		requires: ['cosmicSynergy']
+		requires: ['cosmicSynergy'],
 	},
 
 	photonEfficiency: {
-		condition: (state) => Object.keys(state.photonUpgrades || {}).length >= 3,
+		condition: state => Object.keys(state.photonUpgrades || {}).length >= 3,
 		cost: { amount: 5_000, currency: CurrenciesTypes.PHOTONS },
 		description: '+1% all production per photon upgrade owned',
 		effects: [
 			{
 				apply: (currentValue, state) => {
-					const photonUpgradeCount = Object.values(state.photonUpgrades || {}).reduce(
-						(sum, level) => sum + level,
-						0
-					);
+					const photonUpgradeCount = Object.values(state.photonUpgrades || {}).reduce((sum, level) => sum + level, 0);
 					return currentValue * (1 + photonUpgradeCount * 0.01);
 				},
 				description: 'Add 1% production per photon upgrade owned',
-				type: 'global'
-			}
+				type: 'global',
+			},
 		],
 		id: 'photonEfficiency',
 		name: 'Photon Efficiency',
 		position: gridPos(1, -5),
-		requires: ['hoverCollection']
+		requires: ['hoverCollection'],
 	},
 
 	photonProtonBoost: {
@@ -478,20 +470,28 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		effects: [
 			{
 				apply: (currentValue, state) => {
-					const photonUpgradeCount = Object.values(state.photonUpgrades || {}).reduce(
-						(sum, level) => sum + level,
-						0
-					);
+					const photonUpgradeCount = Object.values(state.photonUpgrades || {}).reduce((sum, level) => sum + level, 0);
 					return currentValue * (1 + photonUpgradeCount * 0.01);
 				},
 				description: 'Add 1% protons per photon upgrade owned',
-				type: 'proton_gain'
-			}
+				type: 'proton_gain',
+			},
 		],
 		id: 'photonProtonBoost',
 		name: 'Photon Proton Boost',
 		position: gridPos(1, -6),
-		requires: ['photonEfficiency']
+		requires: ['photonEfficiency'],
+	},
+
+	radiationRealm: {
+		cost: { amount: 100, currency: CurrenciesTypes.ELECTRONS },
+		description: 'Unlock the Radiation Realm - harness nuclear decay',
+		effects: [],
+		feature: FeatureTypes.RADIATION_REALM,
+		id: 'radiationRealm',
+		name: 'Radiation Realm',
+		position: gridPos(1, -7),
+		requires: ['photonProtonBoost'],
 	},
 
 	// ═══════════════════════════════════════════════════════════════════════════
@@ -503,23 +503,21 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 		const baseCost = 1_000_000 * Math.pow(10, i);
 
 		return {
-			condition: (manager) => (manager.buildings[buildingType]?.count ?? 0) >= 100,
+			condition: manager => (manager.buildings[buildingType]?.count ?? 0) >= 100,
 			cost: { amount: baseCost, currency: CurrenciesTypes.ATOMS },
 			description: `2x ${building.name} production`,
 			effects: [
 				{
-					apply: (currentValue) => currentValue * 2,
+					apply: currentValue => currentValue * 2,
 					description: `Multiply ${building.name} production by 2`,
 					target: buildingType,
-					type: 'building'
-				}
+					type: 'building',
+				},
 			],
 			id: `${buildingType}Multiplier`,
 			name: `${building.name} Multiplier`,
 			position: gridPos(-6 + Math.floor(i / 3), 4 + (i % 3)),
-			requires: previousBuildingType
-				? [`${previousBuildingType}Multiplier`]
-				: ['geologicalForce']
+			requires: previousBuildingType ? [`${previousBuildingType}Multiplier`] : ['geologicalForce'],
 		} satisfies SkillUpgrade;
 	}),
 
@@ -543,17 +541,15 @@ export const SKILL_UPGRADES: Record<string, SkillUpgrade> = {
 					},
 					description: `Add 10% ${building.name} production per 25 ${building.name} levels`,
 					target: buildingType,
-					type: 'building'
-				}
+					type: 'building',
+				},
 			],
 			id: `${buildingType}LevelMastery`,
 			name: `${building.name} Level Mastery`,
 			position: gridPos(3 + Math.floor(i / 3), 1 + (i % 3)),
-			requires: previousBuildingType
-				? [`${previousBuildingType}LevelMastery`]
-				: ['levelMastery']
+			requires: previousBuildingType ? [`${previousBuildingType}LevelMastery`] : ['levelMastery'],
 		} satisfies SkillUpgrade;
-	})
+	}),
 };
 
 // Check for duplicate positions in dev mode
@@ -575,5 +571,5 @@ if (import.meta.env.DEV) {
 
 // Skills that unlock persistent features (kept after prestige)
 export const PERSISTENT_SKILL_IDS = Object.values(SKILL_UPGRADES)
-	.filter((skill) => skill.feature && PERSISTENT_FEATURE_IDS.includes(skill.feature as FeatureType))
-	.map((skill) => skill.id);
+	.filter(skill => skill.feature && PERSISTENT_FEATURE_IDS.includes(skill.feature as FeatureType))
+	.map(skill => skill.id);
