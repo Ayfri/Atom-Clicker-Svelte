@@ -3,9 +3,25 @@
 	import { UPGRADES } from '$data/upgrades';
 	import { PHOTON_UPGRADES, EXCITED_PHOTON_UPGRADES } from '$data/photonUpgrades';
 	import { BUILDING_TYPES, BUILDINGS } from '$data/buildings';
-	import { Target, MousePointer, Globe, Building2, Sparkles, Check, X as XIcon, type Icon as IconType, Atom, Zap, Shield } from 'lucide-svelte';
-	import DevPhotonUpgrade from '@components/system/devtools/tabs/DevPhotonUpgrade.svelte';
-	import DevUpgrade from '@components/system/devtools/tabs/DevUpgrade.svelte';
+	import { RADIATION_UPGRADES } from '$data/radiationUpgrades';
+	import { radiationManager } from '$helpers/RadiationManager.svelte';
+	import {
+		Target,
+		MousePointer,
+		Globe,
+		Building2,
+		Sparkles,
+		Check,
+		X as XIcon,
+		type Icon as IconType,
+		Atom,
+		Zap,
+		Shield,
+		Activity,
+	} from 'lucide-svelte';
+	import DevPhotonUpgrade from './DevPhotonUpgrade.svelte';
+	import DevRadiationUpgrade from './DevRadiationUpgrade.svelte';
+	import DevUpgrade from './DevUpgrade.svelte';
 
 	let searchQuery = $state('');
 	let upgradeFilter = $state<'all' | 'owned' | 'not-owned'>('all');
@@ -24,43 +40,74 @@
 	const buildingDataForUpgrades = sortedBuildings.map(bId => ({
 		id: bId,
 		lowId: bId.toLowerCase(),
-		name: BUILDINGS[bId].name
+		name: BUILDINGS[bId].name,
 	}));
 
 	function formatSubName(name: string) {
-		const clean = name.replace(/^(click_power_|protonise_|proton_|electron_|stability_|global_boost_|level_boost_|auto_buy_speed_|auto_buy_)/g, '');
+		const clean = name.replace(
+			/^(click_power_|protonise_|proton_|electron_|stability_|global_boost_|level_boost_|auto_buy_speed_|auto_buy_)/g,
+			'',
+		);
 		const label = clean.replace(/_/g, ' ').trim() || 'General';
 		return label.charAt(0).toUpperCase() + label.slice(1);
 	}
 
 	const categorizedUpgradesList = $derived.by(() => {
-		const categories: Record<string, { icon: typeof IconType; subcategories: Record<string, Array<{ id: string; name: string; description: string; isOwned: boolean; displayIndex: string }>> }> = {};
+		const categories: Record<
+			string,
+			{
+				icon: typeof IconType;
+				subcategories: Record<
+					string,
+					Array<{ id: string; name: string; description: string; isOwned: boolean; displayIndex: string }>
+				>;
+			}
+		> = {};
 		const query = searchQuery.toLowerCase();
 		const ownedSet = new Set(gameManager.upgrades);
 
 		Object.entries(UPGRADES).forEach(([id, upgrade]) => {
 			const isOwned = ownedSet.has(id);
-			const matchesFilter = upgradeFilter === 'all' || (upgradeFilter === 'owned' && isOwned) || (upgradeFilter === 'not-owned' && !isOwned);
+			const matchesFilter =
+				upgradeFilter === 'all' || (upgradeFilter === 'owned' && isOwned) || (upgradeFilter === 'not-owned' && !isOwned);
 			if (!matchesFilter) return;
 
 			const matchesSearch = !query || [id, upgrade.name, upgrade.description].some(s => s.toLowerCase().includes(query));
 			if (!matchesSearch) return;
 
-			let cat = 'Global Boosts', icon = Globe, sub = id.replace(/_\d+$/, '');
+			let cat = 'Global Boosts',
+				icon = Globe,
+				sub = id.replace(/_\d+$/, '');
 
-			if (upgradeCategories.special(id)) { cat = 'Special Features'; icon = Target; sub = 'General'; }
-			else if (upgradeCategories.click(id)) { cat = 'Click Power'; icon = MousePointer; }
-			else if (upgradeCategories.powerup(id)) { cat = 'Power-up Upgrades'; icon = Sparkles; }
-			else if (upgradeCategories.proton(id)) { cat = 'Proton Upgrades'; icon = Atom; }
-			else if (upgradeCategories.electron(id)) { cat = 'Electron Upgrades'; icon = Zap; }
-			else if (upgradeCategories.stability(id)) { cat = 'Stability Upgrades'; icon = Shield; }
-			else {
+			if (upgradeCategories.special(id)) {
+				cat = 'Special Features';
+				icon = Target;
+				sub = 'General';
+			} else if (upgradeCategories.click(id)) {
+				cat = 'Click Power';
+				icon = MousePointer;
+			} else if (upgradeCategories.powerup(id)) {
+				cat = 'Power-up Upgrades';
+				icon = Sparkles;
+			} else if (upgradeCategories.proton(id)) {
+				cat = 'Proton Upgrades';
+				icon = Atom;
+			} else if (upgradeCategories.electron(id)) {
+				cat = 'Electron Upgrades';
+				icon = Zap;
+			} else if (upgradeCategories.stability(id)) {
+				cat = 'Stability Upgrades';
+				icon = Shield;
+			} else {
 				const lowId = id.toLowerCase();
 				for (const building of buildingDataForUpgrades) {
 					if (lowId.startsWith(building.lowId + '_') || lowId.endsWith(building.lowId)) {
 						cat = `${building.name} Upgrades`;
 						icon = Building2;
-						sub = id.includes('auto_buy_speed') ? 'auto_speed' : id.includes('auto_buy') ? 'auto_unlock' : 'production';
+						sub =
+							id.includes('auto_buy_speed') ? 'auto_speed'
+							: id.includes('auto_buy') ? 'auto_unlock'
+							: 'production';
 						break;
 					}
 				}
@@ -78,7 +125,7 @@
 				name: upgrade.name,
 				description: upgrade.description,
 				isOwned,
-				displayIndex
+				displayIndex,
 			});
 		});
 
@@ -90,9 +137,9 @@
 					.map(([subId, items]) => ({
 						id: subId,
 						displayName: formatSubName(subId),
-						items
+						items,
 					}))
-					.filter(sub => sub.items.length > 0)
+					.filter(sub => sub.items.length > 0),
 			}))
 			.filter(cat => cat.subcategories.length > 0)
 			.sort((a, b) => a.name.localeCompare(b.name));
@@ -197,16 +244,40 @@
 			<!-- Normal Photon Upgrades -->
 			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
 				{#each Object.entries(PHOTON_UPGRADES) as [id, upgrade]}
-					<DevPhotonUpgrade {id} {upgrade} />
+					<DevPhotonUpgrade
+						{id}
+						{upgrade}
+					/>
 				{/each}
 			</div>
 
 			<!-- Excited Photon Upgrades -->
 			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
 				{#each Object.entries(EXCITED_PHOTON_UPGRADES) as [id, upgrade]}
-					<DevPhotonUpgrade {id} {upgrade} isExcited />
+					<DevPhotonUpgrade
+						{id}
+						{upgrade}
+						isExcited
+					/>
 				{/each}
 			</div>
+		</div>
+	</div>
+
+	<!-- Radiation Upgrades -->
+	<div class="bg-green-950/20 rounded-lg p-4 border border-green-500/20">
+		<h3 class="text-base font-bold mb-4 flex items-center gap-2 text-green-300 border-b border-green-500/20 pb-2">
+			<Activity size={18} />
+			Radiation Upgrades
+		</h3>
+		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+			{#each Object.entries(RADIATION_UPGRADES) as [id, upgrade]}
+				<DevRadiationUpgrade
+					{id}
+					{upgrade}
+					level={radiationManager.upgradeLevels[id] || 0}
+				/>
+			{/each}
 		</div>
 	</div>
 </div>
