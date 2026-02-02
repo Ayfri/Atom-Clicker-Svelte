@@ -1,5 +1,6 @@
 import type { Achievement } from '$lib/types';
 import type { GameManager } from '$helpers/GameManager.svelte';
+import { radiationManager } from '$helpers/RadiationManager.svelte';
 import { formatNumber } from '$lib/utils';
 import { BUILDING_TYPES, BUILDINGS, type BuildingType } from '$data/buildings';
 import { CURRENCIES, CurrenciesTypes, type CurrencyName } from '$data/currencies';
@@ -74,7 +75,7 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
 	{
 		id: 'website_click',
 		name: 'Website Visitor',
-		description: 'Visited the creator\'s website',
+		description: "Visited the creator's website",
 		hiddenCondition: (manager: GameManager) => !manager.achievements.includes('website_click'),
 		condition: (manager: GameManager) => manager.achievements.includes('website_click'),
 		icon: Globe,
@@ -106,7 +107,7 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
 	{
 		id: 'changelog_modal_opener',
 		name: 'Changelog Reader',
-		description: 'Checked what\'s new in the game',
+		description: "Checked what's new in the game",
 		hiddenCondition: (manager: GameManager) => !manager.achievements.includes('changelog_modal_opener'),
 		condition: (manager: GameManager) => manager.achievements.includes('changelog_modal_opener'),
 	},
@@ -135,13 +136,19 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
 function createBuildingAchievements(buildingId: BuildingType): Achievement[] {
 	const name = BUILDINGS[buildingId].name;
 
-	function createBuildingCountAchievement(countName: string, number: number, description = `Own ${number} ${name} buildings`): Achievement {
+	function createBuildingCountAchievement(
+		countName: string,
+		number: number,
+		description = `Own ${number} ${name} buildings`,
+	): Achievement {
 		return {
 			id: `${number}_${buildingId}`,
 			name: `${countName} ${name}`,
 			description,
-			hiddenCondition: (manager: GameManager) => manager.buildings[buildingId] === undefined || manager.buildings[buildingId].count === 0,
-			condition: (manager: GameManager) => manager.buildings[buildingId] !== undefined && manager.buildings[buildingId].count >= number,
+			hiddenCondition: (manager: GameManager) =>
+				manager.buildings[buildingId] === undefined || manager.buildings[buildingId].count === 0,
+			condition: (manager: GameManager) =>
+				manager.buildings[buildingId] !== undefined && manager.buildings[buildingId].count >= number,
 		};
 	}
 
@@ -149,7 +156,7 @@ function createBuildingAchievements(buildingId: BuildingType): Achievement[] {
 		createBuildingCountAchievement('One', 1, `Buy your first ${name} building`),
 		createBuildingCountAchievement('Ten', 10),
 		createBuildingCountAchievement('Fifty', 50),
-		createBuildingCountAchievement('Hundred',  100),
+		createBuildingCountAchievement('Hundred', 100),
 		createBuildingCountAchievement('Two hundred', 200),
 		createBuildingCountAchievement('Three hundred', 300),
 		createBuildingCountAchievement('Five hundred', 500),
@@ -186,7 +193,7 @@ function createBuildingLevelsAchievements(): Achievement[] {
 				const totalLevels = Object.values(manager.buildings).reduce((sum, b) => sum + b.level, 0);
 				return totalLevels >= level;
 			},
-		}
+		};
 	}
 
 	return [1, 2, 3, 5, 7, 10, 15, 20, 30, 50].map(createBuildingLevelAchievement);
@@ -202,7 +209,9 @@ function createAtomsPerSecondAchievements(): Achievement[] {
 			condition: (manager: GameManager) => manager.atomsPerSecond >= count,
 		};
 	}
-	const numbers = Array(10).fill(0).map((_, i) => 10 ** (i * 2) * 10);
+	const numbers = Array(10)
+		.fill(0)
+		.map((_, i) => 10 ** (i * 2) * 10);
 
 	return numbers.map(createAtomsPerSecondAchievement);
 }
@@ -218,7 +227,9 @@ function createTotalClicksAchievements(): Achievement[] {
 		};
 	}
 
-	return [1, 100, 500, 1000, 5000, 10_000, 50_000, 100_000, 500_000, 1_000_000, 5_000_000, 10_000_000, 50_000_000, 100_000_000].map(createTotalClicksAchievement);
+	return [1, 100, 500, 1000, 5000, 10_000, 50_000, 100_000, 500_000, 1_000_000, 5_000_000, 10_000_000, 50_000_000, 100_000_000].map(
+		createTotalClicksAchievement,
+	);
 }
 
 function createTotalLevelsAchievements(): Achievement[] {
@@ -257,48 +268,57 @@ function createElectronizeAchievements(): Achievement[] {
 }
 
 function createCurrencyAchievements(): Achievement[] {
-	return Object.values(CURRENCIES).filter(c => c.achievementTiers && c.stat).flatMap(currency => {
-		return currency.achievementTiers!.map(tier => {
-			let name = `${formatNumber(tier)} ${currency.name}`;
-			let description = `Collect ${formatNumber(tier)} ${currency.name.toLowerCase()}`;
+	return Object.values(CURRENCIES)
+		.filter(c => c.achievementTiers && c.stat)
+		.flatMap(currency => {
+			return currency.achievementTiers!.map(tier => {
+				let name = `${formatNumber(tier)} ${currency.name}`;
+				let description = `Collect ${formatNumber(tier)} ${currency.name.toLowerCase()}`;
 
-			if (currency.name === CurrenciesTypes.HIGGS_BOSON) {
-				const countNames: Record<number, string> = {
-					1: 'First',
-					10: 'Ten',
-					64: '64',
-					512: '512',
-					4096: '4096'
+				if (currency.name === CurrenciesTypes.HIGGS_BOSON) {
+					const countNames: Record<number, string> = {
+						1: 'First',
+						10: 'Ten',
+						64: '64',
+						512: '512',
+						4096: '4096',
+					};
+					name = `${countNames[tier] || tier} Bonus Higgs Boson`;
+					description = `Click ${formatNumber(tier, 0)} bonus higgs boson${tier === 1 ? '' : 's'}`;
+				} else if (currency.name === CurrenciesTypes.EXCITED_PHOTONS) {
+					name = `Excited ${
+						tier >= 1000 ?
+							tier >= 400000 ?
+								'4'
+							:	'3'
+						: tier >= 20 ? '2'
+						: ''
+					}`;
+					description = `Earn ${formatNumber(tier)} Excited Photon${tier > 1 ? 's' : ''}`;
+				}
+
+				// Prefix mapping for backward compatibility and cleanliness
+				let prefix = currency.id;
+				if (currency.name === CurrenciesTypes.ATOMS) prefix = 'atoms';
+				if (currency.name === CurrenciesTypes.EXCITED_PHOTONS) prefix = 'excited_photons';
+				if (currency.name === CurrenciesTypes.HIGGS_BOSON) prefix = 'bonus_higgs_boson_clicked';
+				if (currency.name === CurrenciesTypes.PHOTONS) prefix = 'photons';
+
+				return {
+					id: `${prefix}_${tier}`,
+					name,
+					description,
+					condition: (manager: GameManager) => {
+						const currencyData = manager.currencies[currency.stat as CurrencyName];
+						return (currencyData?.earnedAllTime || 0) >= tier;
+					},
+					hiddenCondition: (manager: GameManager) => {
+						const currencyData = manager.currencies[currency.stat as CurrencyName];
+						return (currencyData?.earnedAllTime || 0) === 0;
+					},
 				};
-				name = `${countNames[tier] || tier} Bonus Higgs Boson`;
-				description = `Click ${formatNumber(tier, 0)} bonus higgs boson${tier === 1 ? '' : 's'}`;
-			} else if (currency.name === CurrenciesTypes.EXCITED_PHOTONS) {
-				name = `Excited ${tier >= 1000 ? (tier >= 400000 ? '4' : '3') : (tier >= 20 ? '2' : '')}`;
-				description = `Earn ${formatNumber(tier)} Excited Photon${tier > 1 ? 's' : ''}`;
-			}
-
-			// Prefix mapping for backward compatibility and cleanliness
-			let prefix = currency.id;
-			if (currency.name === CurrenciesTypes.ATOMS) prefix = 'atoms';
-			if (currency.name === CurrenciesTypes.EXCITED_PHOTONS) prefix = 'excited_photons';
-			if (currency.name === CurrenciesTypes.HIGGS_BOSON) prefix = 'bonus_higgs_boson_clicked';
-			if (currency.name === CurrenciesTypes.PHOTONS) prefix = 'photons';
-
-			return {
-				id: `${prefix}_${tier}`,
-				name,
-				description,
-				condition: (manager: GameManager) => {
-					const currencyData = manager.currencies[currency.stat as CurrencyName];
-					return (currencyData?.earnedAllTime || 0) >= tier;
-				},
-				hiddenCondition: (manager: GameManager) => {
-					const currencyData = manager.currencies[currency.stat as CurrencyName];
-					return (currencyData?.earnedAllTime || 0) === 0;
-				},
-			};
+			});
 		});
-	});
 }
 
 function createPhotonUpgradeAchievements(): Achievement[] {
@@ -340,9 +360,45 @@ function createCurrencyBoostAchievements(): Achievement[] {
 			description: 'Maximize a single currency boost (20 points)',
 			condition: (manager: GameManager) => {
 				const boosts = Object.values(manager.skillPointBoosts || {});
-				return boosts.some((points) => (points ?? 0) >= 20);
+				return boosts.some(points => (points ?? 0) >= 20);
 			},
 			hiddenCondition: (manager: GameManager) => manager.skillPointsTotal < 5,
+		},
+	];
+}
+function createRadiationAchievements(): Achievement[] {
+	return [
+		{
+			id: 'radiation_mass_500',
+			name: 'Critical Mass',
+			description: 'Accumulate 500 mass in the reactor',
+			condition: () => radiationManager.mass >= 500,
+			hiddenCondition: () => !radiationManager.unlocked,
+		},
+		{
+			id: 'radiation_power_100',
+			name: 'Maximum Power',
+			description: 'Reach 100% power level',
+			condition: () => radiationManager.controlRodLevel >= 1,
+			hiddenCondition: () => radiationManager.controlRodLevel < 0.1,
+		},
+		{
+			id: 'radiation_cpm_1000',
+			name: 'Radioactive',
+			description: 'Reach 1000 CPM',
+			condition: () => radiationManager.currentCpm >= 1000,
+			hiddenCondition: () => !radiationManager.unlocked,
+		},
+		{
+			id: 'radiation_upgrades_20',
+			name: 'Nuclear Engineer',
+			description: 'Purchase 20 radiation upgrades',
+			condition: (manager: GameManager) => {
+				const upgrades = manager.radiationUpgrades || {};
+				const count = Object.values(upgrades).reduce((a, b) => a + b, 0);
+				return count >= 20;
+			},
+			hiddenCondition: () => !radiationManager.unlocked,
 		},
 	];
 }
@@ -359,6 +415,7 @@ const achievementsArray: Achievement[] = [
 	...createCurrencyAchievements(),
 	...createCurrencyBoostAchievements(),
 	...createPhotonUpgradeAchievements(),
+	...createRadiationAchievements(),
 	...SPECIAL_ACHIEVEMENTS,
 ];
 
