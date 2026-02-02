@@ -16,7 +16,7 @@
 	import Tooltip from '@components/ui/Tooltip.svelte';
 	import Value from '@components/ui/Value.svelte';
 	import type { Component } from 'svelte';
-	import { Clock, Settings2, Star, TrendingUp, Zap } from 'lucide-svelte';
+	import { Clock, Settings2, Star, TrendingUp, Zap, Activity, Battery } from 'lucide-svelte';
 
 	const BUILDING_ICONS: Record<BuildingType, Component<{ color?: string; size?: number }>> = {
 		[BuildingTypes.BLACK_HOLE]: BlackHoleIcon,
@@ -125,7 +125,7 @@
 				</div>
 			{/if}
 
-			<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+			<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
 				<div class="rounded-xl border border-white/10 bg-black/20 p-4">
 					<div class="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40">
 						<Settings2 size={12} />
@@ -134,9 +134,9 @@
 					<div class="flex flex-col gap-2 text-sm text-white/80">
 						<div class="flex items-center justify-between">
 							<div class="flex items-center gap-2">
-								<span>Auto-bought buildings</span>
+								<span>Buildings</span>
 								<span class={autoPurchaseEnabled ? 'text-green-400' : 'text-white/40'}>
-									{autoPurchaseEnabled ? `Enabled (1/${summary.autoBuyFactor} speed)` : 'Disabled'}
+									{autoPurchaseEnabled ? `(1/${summary.autoBuyFactor})` : 'Disabled'}
 								</span>
 							</div>
 							<div class="flex items-center gap-2">
@@ -180,14 +180,14 @@
 							</div>
 						</div>
 						<div class="flex items-center justify-between">
-							<span>Auto-upgrades purchased</span>
+							<span>Upgrades</span>
 							<span>{formatNumber(summary.autoUpgradePurchases)}</span>
 						</div>
 						<div class="flex items-center justify-between">
 							<div class="flex items-center gap-2">
-								<span>Atom auto-clicks</span>
+								<span>Auto-clicks</span>
 								<span class={summary.atomAutoClickEnabled ? 'text-green-400' : 'text-white/40'}>
-									{summary.atomAutoClickEnabled ? `Enabled (1/${summary.autoBuyFactor} speed)` : 'Disabled'}
+									{summary.atomAutoClickEnabled ? `(1/${summary.autoBuyFactor})` : 'Disabled'}
 								</span>
 							</div>
 							<span>{formatNumber(summary.atomAutoClicks)}</span>
@@ -204,28 +204,62 @@
 						<div class="flex items-center justify-between">
 							<span>Auto-click</span>
 							<span class={summary.photonAutoClickEnabled ? 'text-green-400' : 'text-white/40'}>
-								{summary.photonAutoClickEnabled ? `Enabled (1/${summary.photonAutoClickFactor} speed)` : 'Disabled'}
+								{summary.photonAutoClickEnabled ? `Enabled (1/${summary.photonAutoClickFactor})` : 'Disabled'}
 							</span>
 						</div>
 						<div class="flex items-center justify-between">
-							<span>Auto-clicks</span>
+							<span>Clicks</span>
 							<span>{formatNumber(summary.photonAutoClicks)}</span>
 						</div>
 						<div class="flex items-center justify-between">
-							<span>Auto-clicks/s</span>
-							<span>{formatNumber(summary.photonAutoClicksPerSecond)}</span>
+							<span>Clicks/s</span>
+							<span>{formatNumber(summary.photonAutoClicksPerSecond, 2)}</span>
 						</div>
 						<div class="flex items-center justify-between">
-							<span>Expected / click</span>
-							<span>{formatNumber(summary.photonClickExpectedTotal)}</span>
+							<span>Yield/click</span>
+							<span>{formatNumber(summary.photonClickExpectedTotal, 1)}</span>
 						</div>
 					</div>
 				</div>
+
+				{#if summary.radiationActive}
+					<div class="rounded-xl border border-white/10 bg-black/20 p-4">
+						<div class="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40">
+							<Activity size={12} />
+							Radiation Realm
+						</div>
+						<div class="flex flex-col gap-2 text-sm text-white/80">
+							<div class="flex items-center justify-between">
+								<span class="opacity-60">Mass Lost</span>
+								<span class="text-red-400">-{formatNumber(summary.radiationMassLost, 2)}</span>
+							</div>
+							<div class="flex items-center justify-between">
+								<span class="opacity-60">Mass Gained</span>
+								<span class="text-green-400">+{formatNumber(summary.radiationMassGained, 2)}</span>
+							</div>
+							{#if summary.radiationTimeToEmpty !== Infinity && summary.radiationTimeToEmpty > 0}
+								<div class="flex items-center justify-between">
+									<span class="opacity-60">Fuel Time</span>
+									<span class="text-white/80">{formatDuration(summary.radiationTimeToEmpty * 1000)}</span>
+								</div>
+							{:else if summary.radiationTimeToEmpty === Infinity}
+								<div class="flex items-center justify-between">
+									<span class="opacity-60 text-accent-400">Fuel Time</span>
+									<span class="text-accent-400 font-medium">Sustainable</span>
+								</div>
+							{/if}
+							<div class="flex items-center justify-between pt-1 border-t border-white/5">
+								<span class="opacity-60">Avg. Multiplier</span>
+								<span class="font-bold text-accent-400">x{formatNumber(summary.radiationAvgMultiplier, 2)}</span>
+							</div>
+						</div>
+					</div>
+				{/if}
 			</div>
 
 			<div class="mt-4 flex justify-center">
 				<button
-					class="cursor-pointer rounded-xl bg-green-600 px-14 py-2 text-lg font-bold text-white shadow-lg transition-all hover:scale-105 hover:bg-green-500 active:scale-95"
+					class="cursor-pointer rounded-xl bg-accent-600 px-14 py-2 text-lg font-bold text-white shadow-lg transition-all hover:scale-105 hover:bg-accent-500 active:scale-95 shadow-accent-500/20"
 					onclick={handleClose}
 				>
 					Yay!
