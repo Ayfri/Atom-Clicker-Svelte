@@ -11,19 +11,19 @@
 	import StatsTab from './tabs/StatsTab.svelte';
 	import UpgradesTab from './tabs/UpgradesTab.svelte';
 	import {
+		Activity,
 		BarChart3,
+		ChartLine,
 		Cpu,
 		FileJson,
+		FlaskConical,
+		Hammer,
 		Image,
+		LayoutDashboard,
 		Settings,
 		TrendingUp,
 		Trophy,
 		Zap,
-		Activity,
-		Database,
-		Hammer,
-		LayoutDashboard,
-		FlaskConical,
 	} from 'lucide-svelte';
 
 	let isOpen = $state(false);
@@ -55,9 +55,12 @@
 			tabs: [{ icon: Activity, id: 'radiation', label: 'Radiation' }],
 		},
 		{
-			name: 'Design',
+			name: 'Tools',
 			icon: Hammer,
-			tabs: [{ icon: Image, id: 'icons', label: 'Icons' }],
+			tabs: [
+				{ icon: Image, id: 'icons', label: 'Icons' },
+				{ icon: ChartLine, id: 'benchmark', label: 'Benchmark', href: '/benchmark' },
+			],
 		},
 	];
 
@@ -100,20 +103,31 @@
 							<div class="flex flex-col gap-1">
 								{#each group.tabs as tab}
 									{@const TabIcon = tab.icon}
-									<button
-										class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer border-2 {(
-											activeTab === tab.id
-										) ?
-											'bg-accent-500/10 text-accent-400 border-accent-500/30'
-										:	'text-white/40 hover:text-white/80 hover:bg-white/5 border-transparent'}"
-										onclick={() => (activeTab = tab.id)}
-									>
-										<TabIcon
-											size={16}
-											class={activeTab === tab.id ? 'text-accent-400' : ''}
-										/>
-										<span>{tab.label}</span>
-									</button>
+									{#if tab.href}
+										<a
+											href={tab.href}
+											class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer border-2 text-white/40 hover:text-white/80 hover:bg-white/5 border-transparent"
+										>
+											<TabIcon size={16} />
+											<span>{tab.label}</span>
+											<span class="ml-auto text-xs opacity-50">↗</span>
+										</a>
+									{:else}
+										<button
+											class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer border-2 {(
+												activeTab === tab.id
+											) ?
+												'bg-accent-500/10 text-accent-400 border-accent-500/30'
+											:	'text-white/40 hover:text-white/80 hover:bg-white/5 border-transparent'}"
+											onclick={() => (activeTab = tab.id)}
+										>
+											<TabIcon
+												size={16}
+												class={activeTab === tab.id ? 'text-accent-400' : ''}
+											/>
+											<span>{tab.label}</span>
+										</button>
+									{/if}
 								{/each}
 							</div>
 						</div>
