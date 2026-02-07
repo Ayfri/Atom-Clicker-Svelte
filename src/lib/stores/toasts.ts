@@ -1,9 +1,9 @@
-import { writable } from 'svelte/store';
-import type { Icon, icons } from 'lucide-svelte';
 import type { Component } from 'svelte';
+import * as icons from 'lucide-svelte';
+import type { Icon } from 'lucide-svelte';
 
-import GitHub from '@components/icons/GitHub.svelte';
 import Discord from '@components/icons/Discord.svelte';
+import GitHub from '@components/icons/GitHub.svelte';
 
 export const toastIcons = {
 	Discord,
@@ -14,7 +14,9 @@ export type ToastIconName = keyof typeof toastIcons;
 
 export type ToastIcon = Component | typeof Icon | ToastIconName | keyof typeof icons;
 
-export type Toast = {
+export type ToastType = 'error' | 'info' | 'success' | 'warning';
+
+export interface Toast {
 	action?: () => void;
 	actionLabel?: string;
 	duration: number;
@@ -23,24 +25,7 @@ export type Toast = {
 	is_infinite?: boolean;
 	message: string;
 	title: string;
-	type: 'success' | 'error' | 'info' | 'warning';
-};
-
-export let toasts = writable<Toast[]>([]);
-
-export function addToast(toast: Toast) {
-	toasts.update(t => [...t, toast]);
-	if (!toast.is_infinite && toast.duration > 0) {
-		setTimeout(() => removeToast(toast.id), toast.duration);
-	}
-}
-
-export function removeToast(id: number) {
-	toasts.update(t => t.filter(toast => toast.id !== id));
-}
-
-export function clearAllToasts() {
-	toasts.set([]);
+	type: ToastType;
 }
 
 export interface ToastOptions {
@@ -53,21 +38,64 @@ export interface ToastOptions {
 	title: string;
 }
 
-function createToast(type: Toast['type'], options: ToastOptions) {
-	addToast({
-		action: options.action,
-		actionLabel: options.actionLabel,
-		id: Date.now() + Math.floor(Math.random() * 100_000),
-		duration: options.duration ?? 10_000,
-		icon: options.icon,
-		is_infinite: options.is_infinite ?? false,
-		message: options.message,
-		title: options.title,
-		type,
-	});
+class ToastStore {
+	list = $state<Toast[]>([]);
+
+	add = (toast: Toast) => {
+		this.list.push(toast);
+		if (!toast.is_infinite && toast.duration > 0) {
+			setTimeout(() => this.remove(toast.id), toast.duration);
+		}
+	};
+
+	clearAll = () => {
+		this.list = [];
+	};
+
+	remove = (id: number) => {
+		this.list = this.list.filter(t => t.id !== id);
+	};
+
+	private create(type: ToastType, options: ToastOptions) {
+		this.add({
+			action: options.action,
+			actionLabel: options.actionLabel,
+			duration: options.duration ?? 10_000,
+			icon: options.icon,
+			id: Date.now() + Math.floor(Math.random() * 100_000),
+			is_infinite: options.is_infinite ?? false,
+			message: options.message,
+			title: options.title,
+			type,
+		});
+	}
+
+	error = (options: ToastOptions) => this.create('error', options);
+	info = (options: ToastOptions) => this.create('info', options);
+	success = (options: ToastOptions) => this.create('success', options);
+	warning = (options: ToastOptions) => this.create('warning', options);
 }
 
-export const error = (options: ToastOptions) => createToast('error', options);
-export const info = (options: ToastOptions) => createToast('info', options);
-export const success = (options: ToastOptions) => createToast('success', options);
-export const warning = (options: ToastOptions) => createToast('warning', options);
+export const toastStore = new ToastStore();
+
+export const {
+	add: addToast,
+	clearAll: clearAllToasts,
+	error,
+	info,
+	remove: removeToast,
+	success,
+	warning,
+} = toastStore;
+
+export function getToastIcon(toast: Toast, fallbackIcon?: any) {
+	if (typeof toast.icon === 'string') {
+		if (toast.icon in toastIcons) {
+			return toastIcons[toast.icon as keyof typeof toastIcons];
+		}
+		if (toast.icon in icons) {
+			return icons[toast.icon as keyof typeof icons];
+		}
+	}
+	return toast.icon || fallbackIcon;
+}
