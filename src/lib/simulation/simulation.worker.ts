@@ -17,7 +17,7 @@ self.onmessage = async (e: MessageEvent) => {
 		const { config, initialState } = data;
 
 		try {
-			// Initialize the worker's isolated game instance
+			// Worker has its own game state; seed from main thread or start fresh.
 			if (initialState) {
 				gameManager.loadSaveData(initialState);
 			} else {

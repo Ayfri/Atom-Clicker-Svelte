@@ -1,13 +1,7 @@
 <script lang="ts">
-	/**
-	 * @file Chart component for comparing two benchmark runs side-by-side.
-	 * Shows overlay of both datasets with distinct styling.
-	 */
+	/** Comparison chart: two runs overlaid with distinct styling. */
 	import { formatNumber } from '$lib/utils';
 
-	/**
-	 * Line/area data configuration.
-	 */
 	export interface ChartSeries {
 		color: string;
 		dashArray?: string;

@@ -1,7 +1,5 @@
 <script lang="ts">
-	/**
-	 * @file Panel for viewing benchmark history and selecting reports for comparison.
-	 */
+	/** Benchmark history and comparison report selector. */
 	import { formatDuration, formatNumber } from '$lib/utils';
 	import { deleteReport, listReports, type BenchmarkReportSummary } from '$lib/stores/benchmarkHistory.svelte';
 	import { Clock, GitCompare, History, Trash2, X } from 'lucide-svelte';

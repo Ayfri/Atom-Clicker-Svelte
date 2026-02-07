@@ -1,12 +1,7 @@
-/**
- * Simulation types and data structures for headless game benchmarking.
- */
-
+/** Simulation types for headless game benchmarking. */
 import type { BuildingType } from '$data/buildings';
 
-/**
- * Configuration for a benchmark simulation.
- */
+/** Benchmark simulation config. */
 export interface BenchmarkConfig {
 	botBehavior: BotBehavior;
 	name: string;
@@ -16,9 +11,7 @@ export interface BenchmarkConfig {
 	tickRate: number;
 }
 
-/**
- * Bot behavior settings for the simulation.
- */
+/** Bot behavior for simulation. */
 export interface BotBehavior {
 	autoBuy: boolean;
 	autoBuyBuildings: boolean;
@@ -27,16 +20,11 @@ export interface BotBehavior {
 	autoBuyUpgrades: boolean;
 	buyStrategy: 'balanced' | 'cheapest' | 'mostEfficient';
 	clicksPerSecond: number;
-	/**
-	 * How well the bot knows the game (0-1).
-	 * Higher values mean more optimal play and access to hidden achievements.
-	 */
+	/** Bot game knowledge 0–1 (affects optimality and hidden achievements). */
 	gameKnowledge: number;
 }
 
-/**
- * Strategy for automatic prestige actions.
- */
+/** Auto-prestige strategy. */
 export interface PrestigeStrategy {
 	autoElectronize: boolean;
 	autoProtonise: boolean;
@@ -44,9 +32,7 @@ export interface PrestigeStrategy {
 	protoniseThreshold: number;
 }
 
-/**
- * Snapshot of the game state at a specific point in the simulation.
- */
+/** Game state snapshot at one simulation point. */
 export interface SimulationSnapshot {
 	achievements: number;
 	actions: SimulationAction[];
@@ -74,18 +60,14 @@ export interface SimulationSnapshot {
 	upgrades: number;
 }
 
-/**
- * Action taken by the bot during simulation.
- */
+/** Bot action during simulation. */
 export interface SimulationAction {
 	details?: string;
 	timestamp: number;
 	type: 'achievement' | 'building' | 'electronize' | 'photon_upgrade' | 'protonise' | 'skill' | 'upgrade';
 }
 
-/**
- * Definition of a benchmark milestone.
- */
+/** Benchmark milestone definition. */
 export interface MilestoneDefinition {
 	check?: (snapshot: SimulationSnapshot) => boolean;
 	description: string;
@@ -93,18 +75,14 @@ export interface MilestoneDefinition {
 	name: string;
 }
 
-/**
- * Recorded milestone hit during simulation.
- */
+/** Recorded milestone hit. */
 export interface MilestoneHit {
 	dayReached: number;
 	milestone: MilestoneDefinition;
 	timeReached: number;
 }
 
-/**
- * Results of a completed simulation.
- */
+/** Completed simulation result. */
 export interface SimulationResult {
 	cancelled: boolean;
 	config: BenchmarkConfig;
@@ -113,9 +91,7 @@ export interface SimulationResult {
 	snapshots: SimulationSnapshot[];
 }
 
-/**
- * Sparse milestones for checking game progression.
- */
+/** Milestones used for progression checks. */
 export const MILESTONES: MilestoneDefinition[] = [
 	{ description: 'Reached 1K Atoms', id: 'atoms_1k', name: '1K Atoms' },
 	{ description: 'Reached 1M Atoms', id: 'atoms_1m', name: '1M Atoms' },
@@ -222,9 +198,7 @@ export const MILESTONE_CHECKS: Record<string, (s: SimulationSnapshot) => boolean
 	player_level_200: s => s.playerLevel >= 200,
 };
 
-/**
- * Predefined bot profiles for common player behavior.
- */
+/** Predefined bot profiles. */
 export const BOT_PROFILES: Record<string, BenchmarkConfig> = {
 	afk: {
 		botBehavior: {

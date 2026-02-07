@@ -7,7 +7,6 @@
 	const finalStateJson = $derived.by(() => {
 		if (!result || result.snapshots.length === 0) return null;
 		const lastSnapshot = result.snapshots[result.snapshots.length - 1];
-		// Remove actions array to keep JSON cleaner
 		const { actions, ...state } = lastSnapshot;
 		return JSON.stringify(state, null, 2);
 	});

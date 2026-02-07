@@ -1,8 +1,4 @@
-/**
- * @file Headless simulation engine for game benchmarking.
- * Runs in chunks to avoid blocking the main thread using scheduler.yield().
- */
-
+/** Headless simulation engine (chunked with scheduler.yield). */
 import { ACHIEVEMENTS } from '$data/achievements';
 import { BUILDINGS, BUILDING_TYPES, type BuildingType } from '$data/buildings';
 import { CurrenciesTypes, type CurrencyName } from '$data/currencies';
@@ -21,25 +17,12 @@ import {
 	type SimulationSnapshot,
 } from './types';
 
-/**
- * Ticks per processing chunk before yielding to the main thread.
- * Larger values = faster simulation but less responsive UI updates.
- */
+// Chunk size: higher = faster run, less responsive UI. Achievements/milestones sampled every N ticks for perf.
 const CHUNK_SIZE = 500;
-
-/**
- * How often to check achievements (every N ticks) for performance.
- */
 const ACHIEVEMENT_CHECK_INTERVAL = 100;
-
-/**
- * How often to check milestones (every N ticks).
- */
 const MILESTONE_CHECK_INTERVAL = 50;
 
-/**
- * Current progress state of a running simulation.
- */
+/** Progress state of a running simulation. */
 export interface SimulationProgress {
 	currentHour: number;
 	estimatedTimeLeft: number;
@@ -51,14 +34,9 @@ export interface SimulationProgress {
 	totalHours: number;
 }
 
-/**
- * Callback function for simulation progress updates.
- */
 export type ProgressCallback = (progress: SimulationProgress) => void;
 
-/**
- * Yields control back to the main thread using scheduler.yield() or fallback.
- */
+// Yields to main thread so UI stays responsive; uses scheduler.yield when available.
 async function yieldToMain(): Promise<void> {
 	if ('scheduler' in globalThis && typeof (globalThis as any).scheduler?.yield === 'function') {
 		return (globalThis as any).scheduler.yield();
@@ -66,9 +44,6 @@ async function yieldToMain(): Promise<void> {
 	return new Promise(resolve => setTimeout(resolve, 0));
 }
 
-/**
- * Engine responsible for running the headless simulation.
- */
 export class SimulationEngine {
 	private abortController: AbortController | null = null;
 	private actions: SimulationAction[] = [];
@@ -83,26 +58,17 @@ export class SimulationEngine {
 		this.config = config;
 	}
 
-	/**
-	 * Cancels the currently running simulation.
-	 */
 	cancel() {
 		this.abortController?.abort();
 	}
 
-	/**
-	 * Runs the simulation asynchronously with progress updates.
-	 */
 	async runAsync(onProgress?: ProgressCallback): Promise<SimulationResult> {
 		this.abortController = new AbortController();
 		const { signal } = this.abortController;
 
 		const startRealTime = performance.now();
-
-		// Save current game state before starting simulation
+		// Simulation mutates global game state; save and restore so main game is unchanged.
 		this.savedState = JSON.stringify(gameManager.getCurrentState());
-
-		// Initialize simulation state
 		gameManager.resetAll();
 		currenciesManager.hardReset();
 		this.actions = [];
@@ -114,16 +80,12 @@ export class SimulationEngine {
 		const totalGameTimeMs = this.config.targetHours * 3600 * 1000;
 		const totalTicks = Math.floor(totalGameTimeMs / this.config.tickRate);
 		const snapshotIntervalTicks = Math.floor((this.config.snapshotInterval * 1000) / this.config.tickRate);
-
-		// Initial state capture
 		this.takeSnapshot();
 
 		let lastProgressUpdate = startRealTime;
 		let ticksSinceLastUpdate = 0;
 		let lastTicksPerSecond = 0;
 		let cancelled = false;
-
-		// Batch processing to reduce overhead
 		const tickRate = this.config.tickRate;
 
 		try {
@@ -132,20 +94,12 @@ export class SimulationEngine {
 					cancelled = true;
 					break;
 				}
-
-				// Game logic step - skip achievements for performance, we do it manually
 				gameManager.tick(tickRate, true);
-
-				// Simulated inputs
 				this.simulateClicks();
 				this.executeBotBehavior();
-
-				// Check achievements periodically
 				if (tick % ACHIEVEMENT_CHECK_INTERVAL === 0) {
 					this.checkAchievements();
 				}
-
-				// Goal tracking
 				if (tick % MILESTONE_CHECK_INTERVAL === 0) {
 					this.checkMilestones();
 				}
@@ -155,8 +109,6 @@ export class SimulationEngine {
 				}
 
 				ticksSinceLastUpdate++;
-
-				// Periodic UI yielding - yield more frequently
 				if (tick % CHUNK_SIZE === 0 && tick > 0) {
 					const now = performance.now();
 					const elapsed = now - lastProgressUpdate;
@@ -174,7 +126,7 @@ export class SimulationEngine {
 						milestoneCount: this.milestones.length,
 						percent: (tick / totalTicks) * 100,
 						recentMilestones: [...this.recentMilestones],
-						snapshots: this.snapshots, // Pass reference directly as we only append
+						snapshots: this.snapshots,
 						ticksPerSecond: lastTicksPerSecond,
 						totalHours: this.config.targetHours,
 					});
@@ -191,7 +143,7 @@ export class SimulationEngine {
 				this.takeSnapshot();
 			}
 		} finally {
-			// Restore original game state
+			// Restore main game state after simulation (see savedState at start of runAsync).
 			if (this.savedState) {
 				const originalState = JSON.parse(this.savedState);
 				gameManager.loadSaveData(originalState);
@@ -209,9 +161,6 @@ export class SimulationEngine {
 		};
 	}
 
-	/**
-	 * Checks and unlocks achievements based on current game state.
-	 */
 	private checkAchievements() {
 		for (const [id, achievement] of Object.entries(ACHIEVEMENTS)) {
 			if (!gameManager.achievements.includes(id)) {
@@ -225,7 +174,7 @@ export class SimulationEngine {
 						});
 					}
 				} catch {
-					// Some achievements may have conditions that fail in simulation context
+					// Some achievement conditions throw in simulation (e.g. DOM / optional deps).
 				}
 			}
 		}
@@ -264,11 +213,7 @@ export class SimulationEngine {
 
 		// Count photon upgrade levels
 		const photonUpgradeLevels = Object.values(gameManager.photonUpgrades || {}).reduce((sum, level) => sum + (level || 0), 0);
-
-		// Count skill points used
 		const skillPointsUsed = Object.values(gameManager.skillPointBoosts || {}).reduce((sum, points) => sum + (points ?? 0), 0);
-
-		// Player level
 		const playerLevel = gameManager.getLevelFromTotalXP(gameManager.totalXP);
 
 		return {
@@ -301,8 +246,6 @@ export class SimulationEngine {
 
 	private executeBotBehavior() {
 		const { botBehavior, prestigeStrategy } = this.config;
-
-		// Handle Prestige
 		if (prestigeStrategy.autoProtonise && gameManager.protoniseProtonsGain >= prestigeStrategy.protoniseThreshold) {
 			if (gameManager.protonise()) {
 				this.actions.push({
@@ -324,8 +267,6 @@ export class SimulationEngine {
 		}
 
 		if (!botBehavior.autoBuy) return;
-
-		// Handle Buildings
 		if (botBehavior.autoBuyBuildings) {
 			const building = this.selectBuilding();
 			if (building) {
@@ -340,8 +281,6 @@ export class SimulationEngine {
 				}
 			}
 		}
-
-		// Handle Upgrades
 		if (botBehavior.autoBuyUpgrades) {
 			const affordableUpgrade = this.getAffordableUpgrade();
 			if (affordableUpgrade) {
@@ -353,8 +292,6 @@ export class SimulationEngine {
 				});
 			}
 		}
-
-		// Handle Skills
 		if (botBehavior.autoBuySkills) {
 			const affordableSkill = this.getAffordableSkill();
 			if (affordableSkill) {
@@ -366,8 +303,6 @@ export class SimulationEngine {
 				});
 			}
 		}
-
-		// Handle Photon Upgrades
 		if (botBehavior.autoBuyPhotonUpgrades) {
 			const affordablePhotonUpgrade = this.getAffordablePhotonUpgrade();
 			if (affordablePhotonUpgrade) {
@@ -379,10 +314,7 @@ export class SimulationEngine {
 				});
 			}
 		}
-
-		// Handle Currency Boosts (Skill Points allocation)
 		if (gameManager.skillPointsAvailable > 0) {
-			// Prioritize Atoms boost, then distribute to other currencies
 			const boostPriority: CurrencyName[] = [
 				CurrenciesTypes.ATOMS,
 				CurrenciesTypes.PROTONS,
@@ -428,19 +360,12 @@ export class SimulationEngine {
 	private getAffordableSkill(): string | null {
 		const skills = Object.entries(SKILL_UPGRADES)
 			.filter(([id, skill]) => {
-				// Already purchased
 				if (gameManager.skillUpgrades.includes(id)) return false;
-
-				// Check requirements
 				if (skill.requires) {
 					const hasAllRequirements = skill.requires.every(req => gameManager.skillUpgrades.includes(req));
 					if (!hasAllRequirements) return false;
 				}
-
-				// Check condition if exists
 				if (skill.condition && !skill.condition(gameManager)) return false;
-
-				// Check affordability
 				return gameManager.canAfford(skill.cost);
 			})
 			.sort((a, b) => a[1].cost.amount - b[1].cost.amount);

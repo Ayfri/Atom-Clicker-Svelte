@@ -1,16 +1,10 @@
-/**
- * @file IndexedDB-backed store for benchmark report history.
- */
-
+/** IndexedDB store for benchmark report history. */
 import type { SimulationResult } from '$lib/simulation/types';
 
 const DB_NAME = 'atom-clicker-benchmarks';
 const DB_VERSION = 1;
 const STORE_NAME = 'reports';
 
-/**
- * Stored benchmark report with metadata.
- */
 export interface BenchmarkReport {
 	config: SimulationResult['config'];
 	createdAt: number;
@@ -23,9 +17,6 @@ export interface BenchmarkReport {
 	wasCompleted: boolean;
 }
 
-/**
- * Summary info for quick display without loading full data.
- */
 export interface BenchmarkReportSummary {
 	config: SimulationResult['config'];
 	createdAt: number;
@@ -65,16 +56,11 @@ async function openDB(): Promise<IDBDatabase> {
 	});
 }
 
-/**
- * Generates a unique ID for a report.
- */
 function generateId(): string {
 	return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-/**
- * Saves a benchmark report to IndexedDB.
- */
+/** Saves a report to IndexedDB. */
 export async function saveReport(result: SimulationResult, customName?: string): Promise<string> {
 	const database = await openDB();
 	const id = generateId();
@@ -92,19 +78,19 @@ export async function saveReport(result: SimulationResult, customName?: string):
 		wasCompleted: !result.cancelled,
 	};
 
+	// IDB structured clone fails on Svelte proxies and function refs; strip with JSON round-trip.
+	const plain = JSON.parse(JSON.stringify(report)) as BenchmarkReport;
+
 	return new Promise((resolve, reject) => {
 		const transaction = database.transaction(STORE_NAME, 'readwrite');
 		const store = transaction.objectStore(STORE_NAME);
-		const request = store.add(report);
+		const request = store.add(plain);
 
 		request.onerror = () => reject(request.error);
 		request.onsuccess = () => resolve(id);
 	});
 }
 
-/**
- * Lists all report summaries (without full snapshot data for performance).
- */
 export async function listReports(): Promise<BenchmarkReportSummary[]> {
 	const database = await openDB();
 
@@ -141,9 +127,6 @@ export async function listReports(): Promise<BenchmarkReportSummary[]> {
 	});
 }
 
-/**
- * Gets a full report by ID.
- */
 export async function getReport(id: string): Promise<BenchmarkReport | null> {
 	const database = await openDB();
 
@@ -157,9 +140,6 @@ export async function getReport(id: string): Promise<BenchmarkReport | null> {
 	});
 }
 
-/**
- * Deletes a report by ID.
- */
 export async function deleteReport(id: string): Promise<void> {
 	const database = await openDB();
 
@@ -173,9 +153,6 @@ export async function deleteReport(id: string): Promise<void> {
 	});
 }
 
-/**
- * Renames a report.
- */
 export async function renameReport(id: string, newName: string): Promise<void> {
 	const database = await openDB();
 	const report = await getReport(id);
@@ -193,9 +170,6 @@ export async function renameReport(id: string, newName: string): Promise<void> {
 	});
 }
 
-/**
- * Clears all benchmark reports.
- */
 export async function clearAllReports(): Promise<void> {
 	const database = await openDB();
 

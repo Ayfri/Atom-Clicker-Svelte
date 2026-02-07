@@ -1,9 +1,5 @@
 <script lang="ts">
-	/**
-	 * @file Main page for game balance benchmarking simulations.
-	 */
-	import { goto } from '$app/navigation';
-	import { dev } from '$app/environment';
+	/** Game balance benchmarking simulations. */
 	import { tick } from 'svelte';
 	import { BOT_PROFILES, type BenchmarkConfig, type MilestoneHit, type SimulationResult } from '$lib/simulation/types';
 	import { type SimulationProgress } from '$lib/simulation/engine';
@@ -19,7 +15,6 @@
 	import { getReport, saveReport, type BenchmarkReport } from '$lib/stores/benchmarkHistory.svelte';
 	import SimulationWorker from '$lib/simulation/simulation.worker?worker';
 
-	// Simulation state
 	let worker = $state<Worker | null>(null);
 	let isRunning = $state(false);
 	let liveMilestones = $state<MilestoneHit[]>([]);
@@ -27,24 +22,13 @@
 	let result = $state<SimulationResult | null>(null);
 	let selectedProfile = $state<string>('tryhard');
 	let targetHours = $state(10);
-
-	// Timer state
 	let elapsedTime = $state(0);
 	let startTime = 0;
-
-	// History & Comparison state
 	let showHistoryPanel = $state(false);
 	let comparisonReportId = $state<string | null>(null);
 	let comparisonReport = $state<BenchmarkReport | null>(null);
 	let lastSavedId = $state<string | null>(null);
 
-	// onMount(() => { // Removed onMount as it's not strictly needed for dev check, can be done in effect or directly.
-	// 	if (!dev) {
-	// 		goto('/');
-	// 	}
-	// });
-
-	// Timer effect
 	$effect(() => {
 		let interval: any;
 		if (isRunning) {
@@ -59,7 +43,6 @@
 		};
 	});
 
-	// Load comparison report when ID changes
 	$effect(() => {
 		if (comparisonReportId) {
 			getReport(comparisonReportId).then(report => {
@@ -70,13 +53,10 @@
 		}
 	});
 
-	// Auto-save result when simulation completes
 	$effect(() => {
 		if (result && !lastSavedId) {
-			console.log('Auto-saving benchmark result...');
 			saveReport(result)
 				.then(id => {
-					console.log('Benchmark saved with ID:', id);
 					lastSavedId = id;
 				})
 				.catch(err => {
@@ -97,20 +77,12 @@
 		}
 	}
 
-	/**
-	 * Configuration object derived from the selected bot profile.
-	 */
 	const currentConfig = $derived<BenchmarkConfig>({
 		...BOT_PROFILES[selectedProfile],
 		targetHours,
 	});
 
-	// Helpers to get current snapshots either from result (final) or progress (live)
 	const currentSnapshots = $derived(result?.snapshots ?? progress?.snapshots ?? []);
-
-	/**
-	 * Effective duration of the simulation to display on charts.
-	 */
 	const simulationDurationHours = $derived.by(() => {
 		if (result && result.snapshots.length > 0) {
 			const lastSnapshot = result.snapshots[result.snapshots.length - 1];
@@ -122,26 +94,18 @@
 		return 0.1;
 	});
 
-	// Comparison snapshots from history
 	const comparisonSnapshots = $derived(comparisonReport?.snapshots ?? []);
 	const hasComparison = $derived(comparisonSnapshots.length > 0);
 
-	/**
-	 * Starts the headless simulation.
-	 */
 	async function runSimulation() {
 		isRunning = true;
 		progress = null;
 		result = null;
 		liveMilestones = [];
 		lastSavedId = null;
-
-		// Allow UI update
 		await tick();
-		// await new Promise(resolve => setTimeout(resolve, 50)); // Removed this line as it's not strictly necessary
 
 		try {
-			// Instantiate worker
 			worker = new SimulationWorker();
 
 			worker.onmessage = e => {
@@ -165,13 +129,12 @@
 				terminateWorker();
 			};
 
-			// Start simulation
-			// Use $state.snapshot to ensure we send a plain object without proxies
+			// Plain object for postMessage; $state.snapshot strips proxies so worker receives cloneable config.
 			const configSnapshot = $state.snapshot(currentConfig);
 			worker.postMessage({
 				type: 'start',
 				config: configSnapshot,
-				initialState: null, // defaulting to fresh start as per original behavior
+				initialState: null,
 			});
 		} catch (e) {
 			console.error('Simulation failed to start:', e);
@@ -185,9 +148,6 @@
 		isRunning = false;
 	}
 
-	/**
-	 * Cancels the currently running simulation.
-	 */
 	function stopSimulation() {
 		worker?.postMessage({ type: 'stop' });
 	}

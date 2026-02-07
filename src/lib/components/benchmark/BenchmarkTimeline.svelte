@@ -12,17 +12,12 @@
 		targetHours: number;
 	}>();
 
-	/**
-	 * Calculate percentage position of a milestone.
-	 */
 	function getMilestonePosition(milestone: MilestoneHit): number {
 		const totalMs = targetHours * 3600 * 1000;
 		return (milestone.timeReached / totalMs) * 100;
 	}
 
-	/**
-	 * Compute milestones with layout offsets to avoid overlap.
-	 */
+	// Group milestones close in time (5% of run), then assign offset so labels stack and don’t overlap.
 	const milestonesWithOffsets = $derived.by(() => {
 		const sorted = [...milestones].sort((a, b) => a.timeReached - b.timeReached);
 		const groups: MilestoneHit[][] = [];
@@ -46,9 +41,7 @@
 		);
 	});
 
-	/**
-	 * Get style for milestone label positioning.
-	 */
+	// Alternate labels above/below bar by offset to avoid overlap.
 	function getLabelStyle(offset: number): string {
 		const isAbove = offset % 3 === 0;
 		const rowSpacing = 14;

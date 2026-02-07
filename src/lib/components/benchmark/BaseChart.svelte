@@ -1,14 +1,7 @@
 <script lang="ts">
-	/**
-	 * @file Reusable SVG chart component with interactivity (hover, tooltip, toggle series).
-	 * Switched from Canvas to SVG for sharper rendering on all devices.
-	 */
+	/** SVG chart with hover, tooltip, toggle series. */
 	import { formatNumber } from '$lib/utils';
-	import { onMount } from 'svelte';
 
-	/**
-	 * Line/area data configuration.
-	 */
 	export interface ChartSeries {
 		color: string;
 		data: number[];
@@ -17,9 +10,6 @@
 		visible?: boolean;
 	}
 
-	/**
-	 * Component properties.
-	 */
 	interface Props {
 		height?: number;
 		series: ChartSeries[];
@@ -33,14 +23,9 @@
 
 	let containerWidth = $state(800);
 	const padding = { bottom: 30, left: 60, right: 20, top: 20 };
-
-	// Interactivity state
 	let hoveredIndex = $state<number | null>(null);
 	let hiddenLabels = $state<Set<string>>(new Set());
 
-	/**
-	 * Action to observe element resize.
-	 */
 	function resize(node: HTMLElement) {
 		const observer = new ResizeObserver(entries => {
 			for (const entry of entries) {
@@ -57,11 +42,8 @@
 		};
 	}
 
-	// Derived chart dimensions
 	const chartWidth = $derived(Math.max(0, containerWidth - padding.left - padding.right));
 	const chartHeight = $derived(Math.max(0, height - padding.top - padding.bottom));
-
-	// Calculate max value across all visible series to scale Y axis
 	const maxVal = $derived.by(() => {
 		let max = useLog ? 0 : 0;
 		let hasData = false;
@@ -78,8 +60,6 @@
 		});
 
 		if (!hasData) return 0;
-
-		// Add headroom
 		max = max * 1.1;
 		return max < 0.0001 ? 1 : max;
 	});
@@ -89,18 +69,11 @@
 	const dataLen = $derived(series[0]?.data.length ?? 0);
 	const denominator = $derived(dataLen > 1 ? dataLen - 1 : 1);
 
-	/**
-	 * Transforms data for logarithmic scale if needed.
-	 */
 	function transformValue(val: number): number {
 		if (!useLog) return val;
-		// Handle 0 or negative values for log scale by clamping to 0 (log(1))
 		return Math.log10(Math.max(val, 1));
 	}
 
-	/**
-	 * Generates SVG path command for a line.
-	 */
 	function getLinePath(data: number[]): string {
 		if (data.length === 0) return '';
 
@@ -115,9 +88,6 @@
 			.join(' ');
 	}
 
-	/**
-	 * Generates SVG path command for a filled area.
-	 */
 	function getAreaPath(data: number[]): string {
 		const linePath = getLinePath(data);
 		if (!linePath) return '';
@@ -130,18 +100,12 @@
 
 	function handlePointerMove(e: PointerEvent) {
 		if (!hasVisibleSeries) return;
-
-		// Get x relative to the chart area (inside the SVG group)
-		// We need to account for padding since the event is on the container/svg
 		const rect = (e.currentTarget as Element).getBoundingClientRect();
 		const x = e.clientX - rect.left - padding.left;
-
 		if (x < 0 || x > chartWidth) {
 			hoveredIndex = null;
 			return;
 		}
-
-		// Map X to index
 		let index = 0;
 		if (dataLen > 1) {
 			index = Math.min(Math.max(0, Math.round((x / chartWidth) * denominator)), denominator);
@@ -177,15 +141,10 @@
 	});
 
 	const tooltipX = $derived(hoveredIndex !== null ? (chartWidth * hoveredIndex) / denominator : 0);
-
-	// Tooltip positioning
 	const tooltipStyle = $derived.by(() => {
 		if (hoveredIndex === null) return '';
-
 		const ttWidth = 180;
 		const ttLeft = padding.left + tooltipX + 15;
-
-		// Prevent overflow
 		let finalLeft = ttLeft;
 		if (ttLeft + ttWidth > containerWidth) {
 			finalLeft = padding.left + tooltipX - ttWidth - 15;
