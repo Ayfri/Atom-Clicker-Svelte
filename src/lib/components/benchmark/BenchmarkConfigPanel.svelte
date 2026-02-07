@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { Code, Pause, Play, RotateCcw, Settings, Zap } from 'lucide-svelte';
+	import Tooltip from '@components/ui/Tooltip.svelte';
+	import { Code, Info, Pause, Play, RotateCcw, Settings, Zap } from 'lucide-svelte';
 	import {
 		ACTIVITY_PRESETS,
 		BOT_PROFILES,
@@ -48,13 +49,13 @@
 		<h2 class="font-semibold text-gray-200 text-xl">Simulation Config</h2>
 	</div>
 
-	<div class="gap-10 grid grid-cols-1 mb-8 md:grid-cols-2 lg:grid-cols-4">
+	<div class="gap-8 grid grid-cols-1 mb-8 md:grid-cols-2 lg:grid-cols-3">
 		<!-- Core Config: min width so selects aren't squeezed -->
 		<div class="flex min-w-[260px] flex-col gap-4">
 			<h3 class="flex gap-2 items-center text-gray-400 text-sm uppercase">
 				<Settings size={14} /> Config
 			</h3>
-			<p class="text-gray-500 text-xs">Mix activity, playstyle and prestige. Or pick a quick profile.</p>
+			<p class="text-gray-500 text-sm">Mix activity, playstyle and prestige. Or pick a quick profile.</p>
 			<div class="flex flex-col gap-4">
 				<div class="flex flex-wrap gap-2">
 					{#each Object.entries(BOT_PROFILES) as [key, preset] (key)}
@@ -70,15 +71,17 @@
 						>
 							{key === 'afk'
 								? 'AFK'
-								: key === 'balanced'
-									? 'Balanced'
-									: 'Tryhard'}
+								: key === 'automated'
+									? 'Automated'
+									: key === 'balanced'
+										? 'Balanced'
+										: 'Tryhard'}
 						</button>
 					{/each}
 				</div>
 				<div class="flex min-w-0 flex-col gap-4">
 					<div class="flex flex-col gap-1.5 min-w-[200px]">
-						<label class="text-gray-500 text-xs" for="activity">Activity</label>
+						<label class="text-gray-500 text-sm" for="activity">Activity</label>
 						<select
 							bind:value={activityId}
 							class="simulation-config-select bg-slate-800 border border-white/10 disabled:cursor-not-allowed disabled:opacity-50 focus:border-green-400 focus:outline-none px-3 py-2 rounded-lg text-gray-200 text-sm w-full"
@@ -91,7 +94,7 @@
 						</select>
 					</div>
 					<div class="flex flex-col gap-1.5 min-w-[200px]">
-						<label class="text-gray-500 text-xs" for="playstyle">Playstyle</label>
+						<label class="text-gray-500 text-sm" for="playstyle">Playstyle</label>
 						<select
 							bind:value={playstyleId}
 							class="simulation-config-select bg-slate-800 border border-white/10 disabled:cursor-not-allowed disabled:opacity-50 focus:border-green-400 focus:outline-none px-3 py-2 rounded-lg text-gray-200 text-sm w-full"
@@ -104,7 +107,7 @@
 						</select>
 					</div>
 					<div class="flex flex-col gap-1.5 min-w-[200px]">
-						<label class="text-gray-500 text-xs" for="prestige">Prestige</label>
+						<label class="text-gray-500 text-sm" for="prestige">Prestige</label>
 						<select
 							bind:value={prestigeId}
 							class="simulation-config-select bg-slate-800 border border-white/10 disabled:cursor-not-allowed disabled:opacity-50 focus:border-green-400 focus:outline-none px-3 py-2 rounded-lg text-gray-200 text-sm w-full"
@@ -118,7 +121,7 @@
 					</div>
 				</div>
 				<div class="flex flex-col gap-1.5">
-					<label class="text-gray-500 text-xs" for="hours">Target Duration</label>
+					<label class="text-gray-500 text-sm" for="hours">Target Duration</label>
 					<div class="flex gap-2 items-center">
 						<input
 							bind:value={targetHours}
@@ -135,117 +138,229 @@
 		</div>
 
 		<!-- Bot Behavior -->
-		<div class="flex flex-col gap-4">
+		<div class="flex flex-col gap-3">
 			<h3 class="flex gap-2 items-center text-gray-400 text-sm uppercase">
 				<Zap size={14} /> Bot Behavior
 			</h3>
-			<p class="text-gray-500 text-xs">Defines how the bot interacts with the game. Knowledge affects efficiency and priority.</p>
-			<div class="gap-x-4 gap-y-3 grid grid-cols-2">
-				<div class="flex flex-col">
-					<span class="text-gray-500 text-xs">Strategy</span>
-					<span class="capitalize font-medium text-green-400 text-sm">{currentConfig.botBehavior.buyStrategy}</span>
+			<p class="text-gray-500 text-sm leading-relaxed">
+				Buy priority, knowledge, limits. Human-like playstyles cap actions (e.g. 1-2 prestiges per active session).
+			</p>
+			<div class="gap-x-6 gap-y-4 grid grid-cols-2 lg:grid-cols-3">
+				<div class="flex flex-col gap-1">
+					<span class="flex gap-1 items-center text-gray-500 text-sm">
+						Strategy
+						<Tooltip size="lg">
+							<Info size={14} class="text-gray-500 opacity-70" />
+							{#snippet content()}
+								<div class="prose prose-invert prose-sm max-w-xs">
+									<h4 class="mb-2 text-sm font-semibold">Strategy</h4>
+									<p class="mb-2">How the bot chooses which building or upgrade to buy next.</p>
+									<ul class="list-inside list-disc space-y-1 text-xs">
+										<li><strong>cheapest</strong> - buy the cheapest affordable</li>
+										<li><strong>balanced</strong> - prefer new types, then best rate</li>
+										<li><strong>mostEfficient</strong> - best production/cost ratio</li>
+									</ul>
+								</div>
+							{/snippet}
+						</Tooltip>
+					</span>
+					<span class="capitalize font-medium text-green-400 text-base">{currentConfig.botBehavior.buyStrategy}</span>
 				</div>
-				<div class="flex flex-col">
-					<span class="text-gray-500 text-xs">Knowledge</span>
-					<span class="font-medium text-cyan-400 text-sm">{Math.round(currentConfig.botBehavior.gameKnowledge * 100)}%</span>
+				<div class="flex flex-col gap-1">
+					<span class="flex gap-1 items-center text-gray-500 text-sm">
+						Knowledge
+						<Tooltip size="lg">
+							<Info size={14} class="text-gray-500 opacity-70" />
+							{#snippet content()}
+								<div class="prose prose-invert prose-sm max-w-xs">
+									<h4 class="mb-2 text-sm font-semibold">Knowledge</h4>
+									<p class="mb-2">How well the bot plays and what it can see.</p>
+									<ul class="list-inside list-disc space-y-1 text-xs">
+										<li>Affects the <strong>optimality</strong> of buy decisions</li>
+										<li>Determines visibility of <strong>hidden achievements</strong></li>
+										<li>0% = casual, 100% = perfect play</li>
+									</ul>
+								</div>
+							{/snippet}
+						</Tooltip>
+					</span>
+					<span class="font-medium text-cyan-400 text-base">{Math.round(currentConfig.botBehavior.gameKnowledge * 100)}%</span>
 				</div>
-				<div class="flex flex-col">
-					<span class="text-gray-500 text-xs">Clicks</span>
-					<span class="font-medium text-amber-500 text-sm">
+				<div class="flex flex-col gap-1">
+					<span class="flex gap-1 items-center text-gray-500 text-sm">
+						Clicks
+						<Tooltip size="lg">
+							<Info size={14} class="text-gray-500 opacity-70" />
+							{#snippet content()}
+								<div class="prose prose-invert prose-sm max-w-xs">
+									<h4 class="mb-2 text-sm font-semibold">Clicks</h4>
+									<p>Simulates manual clicks on the atom when the bot is active. Each click generates atoms based on <strong>click power</strong>. With AFK patterns, clicks only occur during active windows.</p>
+								</div>
+							{/snippet}
+						</Tooltip>
+					</span>
+					<span class="font-medium text-amber-500 text-base">
 						{currentConfig.botBehavior.clicksPerSecond}/s
 						{#if currentConfig.botBehavior.activityPattern}
-							<span class="text-gray-500 font-normal"
-								>({currentConfig.botBehavior.activityPattern.activeMinutes} min active/h)</span
+							<span class="text-gray-500 font-normal text-sm"
+								>({currentConfig.botBehavior.activityPattern.activeMinutes} min/h)</span
 							>
 						{/if}
 					</span>
 				</div>
-				<div class="flex flex-col">
-					<span class="text-gray-500 text-xs">Decision Flow</span>
-					<span class="font-medium text-purple-400 text-sm">{currentConfig.botBehavior.autoBuy ? 'Reactive' : 'Manual'}</span>
-				</div>
-			</div>
-		</div>
-
-		<!-- Prestige Strategy -->
-		<div class="flex flex-col gap-4">
-			<h3 class="flex gap-2 items-center text-gray-400 text-sm uppercase">
-				<RotateCcw size={14} /> Prestige Logic
-			</h3>
-			<p class="text-gray-500 text-xs">
-				Wait for a multiplier (gain vs current) before resetting. Higher means more efficient prestiges.
-			</p>
-			<div class="gap-x-4 gap-y-3 grid grid-cols-2">
-				<div class="flex flex-col">
-					<span class="text-gray-500 text-xs">Protonise</span>
-					<span class="font-medium text-amber-400 text-sm">
-						{currentConfig.prestigeStrategy.autoProtonise ?
-							`${currentConfig.prestigeStrategy.protoniseThreshold}x gain`
-						:	'Manual Only'}
+				<div class="flex flex-col gap-1">
+					<span class="flex gap-1 items-center text-gray-500 text-sm">
+						Decision Flow
+						<Tooltip size="lg">
+							<Info size={14} class="text-gray-500 opacity-70" />
+							{#snippet content()}
+								<div class="prose prose-invert prose-sm max-w-xs">
+									<h4 class="mb-2 text-sm font-semibold">Decision Flow</h4>
+									<p><strong>Reactive</strong> - bot auto-buys buildings, upgrades, skills, etc. every simulation tick. <strong>Manual</strong> - no auto-buy, only clicks and prestige.</p>
+								</div>
+							{/snippet}
+						</Tooltip>
 					</span>
+					<span class="font-medium text-purple-400 text-base">{currentConfig.botBehavior.autoBuy ? 'Reactive' : 'Manual'}</span>
 				</div>
-				<div class="flex flex-col">
-					<span class="text-gray-500 text-xs">Electronize</span>
-					<span class="font-medium text-blue-400 text-sm">
-						{currentConfig.prestigeStrategy.autoElectronize ?
-							`${currentConfig.prestigeStrategy.electronizeThreshold}x gain`
-						:	'Manual Only'}
-					</span>
-				</div>
+				{#if currentConfig.botBehavior.maxActionsPerTick != null}
+					{@const actionsPerSec = Math.round(
+						(currentConfig.botBehavior.maxActionsPerTick! * 1000) / currentConfig.tickRate,
+					)}
+					<div class="flex flex-col gap-1">
+						<span class="flex gap-1 items-center text-gray-500 text-sm">
+							Actions/s
+							<Tooltip size="lg">
+								<Info size={14} class="text-gray-500 opacity-70" />
+								{#snippet content()}
+									<div class="prose prose-invert prose-sm max-w-xs">
+										<h4 class="mb-2 text-sm font-semibold">Actions/s</h4>
+										<p>Max number of <strong>buy + prestige</strong> actions per second. Human-like playstyles cap this to mimic a real player who can't spam dozens of prestiges in one second. Derived from actions per tick and tick rate.</p>
+									</div>
+								{/snippet}
+							</Tooltip>
+						</span>
+						<span class="font-medium text-amber-400 text-base">≤{actionsPerSec}</span>
+					</div>
+					<div class="flex flex-col gap-1">
+						<span class="flex gap-1 items-center text-gray-500 text-sm">
+							Prestiges / session
+							<Tooltip size="lg">
+								<Info size={14} class="text-gray-500 opacity-70" />
+								{#snippet content()}
+									<div class="prose prose-invert prose-sm max-w-xs">
+										<h4 class="mb-2 text-sm font-semibold">Prestiges per session</h4>
+										<p class="mb-2">Max <strong>protonises + electronizes</strong> the bot can do in one active session.</p>
+										<ul class="list-inside list-disc space-y-1 text-xs">
+											<li><strong>With AFK</strong> - resets each active block (e.g. every 15 min)</li>
+											<li><strong>Always active</strong> - applies to the full run</li>
+										</ul>
+										<p class="mt-2 text-xs opacity-90">A real player typically does 1-2 prestiges then checks the game, hence the cap.</p>
+									</div>
+								{/snippet}
+							</Tooltip>
+						</span>
+						<span class="font-medium text-cyan-400 text-base"
+							>≤{currentConfig.botBehavior.maxPrestigesPerActiveWindow ?? '-'}</span
+						>
+					</div>
+				{:else}
+					<div class="flex flex-col gap-1">
+						<span class="flex gap-1 items-center text-gray-500 text-sm">
+							Limits
+							<Tooltip size="lg">
+								<Info size={14} class="text-gray-500 opacity-70" />
+								{#snippet content()}
+									<div class="prose prose-invert prose-sm max-w-xs">
+										<h4 class="mb-2 text-sm font-semibold">No limits</h4>
+										<p>Automated playstyle has <strong>no caps</strong> on actions or prestiges. Use for pure optimization benchmarks - the bot runs at max speed with no human-like constraints.</p>
+									</div>
+								{/snippet}
+							</Tooltip>
+						</span>
+						<span class="font-medium text-green-400 text-base">None</span>
+					</div>
+				{/if}
 			</div>
 		</div>
 
-		<!-- Engine Settings -->
-		<div class="flex flex-col gap-4">
-			<h3 class="flex gap-2 items-center text-gray-400 text-sm uppercase">
-				<Code size={14} /> Engine Stats
-			</h3>
-			<p class="text-gray-500 text-xs">Simulation fidelity. Resolution affects graph smoothness and simulation accuracy.</p>
-			<div class="gap-x-4 gap-y-3 grid grid-cols-2">
-				<div class="flex flex-col">
-					<span class="text-gray-500 text-xs">Tick Rate</span>
-					<span class="font-mono text-gray-300 text-sm">{currentConfig.tickRate}ms</span>
+		<!-- Prestige & Engine (compact row) -->
+		<div class="flex flex-col gap-4 md:flex-row md:gap-8">
+			<div class="flex flex-col gap-3">
+				<h3 class="flex gap-2 items-center text-gray-400 text-sm uppercase">
+					<RotateCcw size={14} /> Prestige
+				</h3>
+				<p class="flex gap-1 items-center text-gray-500 text-sm leading-relaxed">
+					Prestige when gain ≥ threshold. Higher = more efficient.
+					<Tooltip size="lg">
+						<Info size={14} class="text-gray-500 opacity-70" />
+						{#snippet content()}
+							<div class="prose prose-invert prose-sm max-w-xs">
+								<h4 class="mb-2 text-sm font-semibold">Prestige threshold</h4>
+								<p class="mb-2">The bot only prestiges when the <strong>gain</strong> (protons/electrons you'd earn) is <em>≥ threshold × current</em>.</p>
+								<p class="text-xs opacity-90">Higher threshold = fewer prestiges, but each one is more impactful. 1x = early & often, 100x = late & efficient.</p>
+							</div>
+						{/snippet}
+					</Tooltip>
+				</p>
+				<div class="flex gap-6">
+					<div class="flex flex-col gap-1">
+						<span class="flex gap-1 items-center text-gray-500 text-sm">Protonise</span>
+						<span class="font-medium text-amber-400 text-base">
+							{currentConfig.prestigeStrategy.autoProtonise ?
+								`${currentConfig.prestigeStrategy.protoniseThreshold}x`
+							:	'Manual'}
+						</span>
+					</div>
+					<div class="flex flex-col gap-1">
+						<span class="text-gray-500 text-sm">Electronize</span>
+						<span class="font-medium text-blue-400 text-base">
+							{currentConfig.prestigeStrategy.autoElectronize ?
+								`${currentConfig.prestigeStrategy.electronizeThreshold}x`
+							:	'Manual'}
+						</span>
+					</div>
 				</div>
-				<div class="flex flex-col">
-					<span class="text-gray-500 text-xs">Snapshots</span>
-					<span class="font-mono text-gray-300 text-sm">{currentConfig.snapshotInterval}s</span>
-				</div>
-				<div class="col-span-2 flex flex-col">
-					<span class="text-gray-500 text-xs">Resolution</span>
-					<span class="font-medium text-gray-400 text-xs uppercase"
-						>{(3600 / currentConfig.snapshotInterval).toFixed(1)} points/game-hour</span
-					>
+			</div>
+			<div class="flex flex-col gap-4 min-w-[180px]">
+				<h3 class="flex gap-2 items-center text-gray-400 text-sm uppercase">
+					<Code size={14} /> Engine
+				</h3>
+				<p class="flex gap-1 items-center text-gray-500 text-sm leading-relaxed">
+					Simulation resolution.
+					<Tooltip size="lg">
+						<Info size={14} class="text-gray-500 opacity-70" />
+						{#snippet content()}
+							<div class="prose prose-invert prose-sm max-w-xs">
+								<h4 class="mb-2 text-sm font-semibold">Simulation resolution</h4>
+								<ul class="list-inside list-disc space-y-1 text-xs">
+									<li><strong>Tick rate</strong> - how often the game state updates (ms). Lower = more accurate, slower</li>
+									<li><strong>Snapshots</strong> - how often data is saved for charts</li>
+									<li><strong>Resolution</strong> - chart data points per game-hour</li>
+								</ul>
+								<p class="mt-2 text-xs opacity-90">Higher resolution = smoother graphs but longer run time.</p>
+							</div>
+						{/snippet}
+					</Tooltip>
+				</p>
+				<div class="flex flex-col gap-3">
+					<div class="flex flex-col gap-1">
+						<span class="text-gray-500 text-sm">Tick rate</span>
+						<span class="font-mono text-gray-300 text-base">{currentConfig.tickRate}ms</span>
+					</div>
+					<div class="flex flex-col gap-1">
+						<span class="text-gray-500 text-sm">Snapshots</span>
+						<span class="font-mono text-gray-300 text-base">{currentConfig.snapshotInterval}s</span>
+					</div>
+					<div class="flex flex-col gap-1">
+						<span class="text-gray-500 text-sm">Resolution</span>
+						<span class="font-mono text-gray-300 text-base"
+							>{(3600 / currentConfig.snapshotInterval).toFixed(1)} pts/game-hour</span
+						>
+					</div>
 				</div>
 			</div>
 		</div>
-	</div>
-
-	<!-- Feature toggles -->
-	<div class="bg-black/20 flex flex-wrap gap-4 mb-6 p-4 rounded-lg text-sm">
-		<span class="flex gap-2 items-center">
-			<span class={currentConfig.botBehavior.autoBuyBuildings ? 'text-green-400' : 'text-gray-600'}>●</span>
-			Buildings
-		</span>
-		<span class="flex gap-2 items-center">
-			<span class={currentConfig.botBehavior.autoBuyUpgrades ? 'text-green-400' : 'text-gray-600'}>●</span>
-			Upgrades
-		</span>
-		<span class="flex gap-2 items-center">
-			<span class={currentConfig.botBehavior.autoBuySkills ? 'text-green-400' : 'text-gray-600'}>●</span>
-			Skills
-		</span>
-		<span class="flex gap-2 items-center">
-			<span class={currentConfig.botBehavior.autoBuyPhotonUpgrades ? 'text-green-400' : 'text-gray-600'}>●</span>
-			Photon Upgrades
-		</span>
-		<span class="flex gap-2 items-center">
-			<span class={currentConfig.botBehavior.clicksPerSecond > 0 ? 'text-green-400' : 'text-gray-600'}>●</span>
-			Clicks
-			({currentConfig.botBehavior.clicksPerSecond}/s
-			{#if currentConfig.botBehavior.activityPattern}
-				, {currentConfig.botBehavior.activityPattern.activeMinutes} min/h
-			{/if})
-		</span>
 	</div>
 
 	{#if isRunning}
