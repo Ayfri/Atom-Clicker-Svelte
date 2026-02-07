@@ -37,7 +37,7 @@
 		return [
 			{ color: '#fbbf24', data: currentSnapshots.map(s => s.achievements), fillOpacity: 0, label: 'Achievements' },
 			{ color: '#a78bfa', data: currentSnapshots.map(s => s.upgrades), fillOpacity: 0, label: 'Upgrades' },
-			{ color: '#34d399', data: currentSnapshots.map(s => s.skillPointsUsed), fillOpacity: 0, label: 'Boosts' },
+			{ color: '#34d399', data: currentSnapshots.map(s => s.skillPointsUsed), fillOpacity: 0, label: 'Currency Boosts' },
 			{ color: '#818cf8', data: currentSnapshots.map(s => s.skills), fillOpacity: 0, label: 'Skills' },
 		];
 	});
@@ -60,15 +60,15 @@
 		if (currentSnapshots.length === 0) return [];
 		return [
 			{ color: '#f59e0b', data: currentSnapshots.map(s => s.playerLevel), fillOpacity: 0.2, label: 'Player Level' },
-			{ color: '#10b981', data: currentSnapshots.map(s => s.buildingLevels), fillOpacity: 0.1, label: 'Bld Levels' },
-			{ color: '#f472b6', data: currentSnapshots.map(s => s.photonUpgradeLevels), fillOpacity: 0.1, label: 'Photon Upg' },
+			{ color: '#10b981', data: currentSnapshots.map(s => s.buildingLevels), fillOpacity: 0.1, label: 'Currency Boost Points' },
+			{ color: '#f472b6', data: currentSnapshots.map(s => s.photonUpgradeLevels), fillOpacity: 0.1, label: 'Photon Upgrades' },
 		];
 	});
 
 	const prestigeChartSeries = $derived.by<ChartSeries[]>(() => {
 		if (currentSnapshots.length === 0) return [];
 		return [
-			{ color: '#f59e0b', data: currentSnapshots.map(s => s.protonises), fillOpacity: 0.2, label: 'Protonises' },
+			{ color: '#f59e0b', data: currentSnapshots.map(s => s.protonises), fillOpacity: 0.2, label: 'Protonizes' },
 			{ color: '#06b6d4', data: currentSnapshots.map(s => s.electronizes), fillOpacity: 0.2, label: 'Electronizes' },
 		];
 	});
