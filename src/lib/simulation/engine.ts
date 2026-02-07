@@ -22,8 +22,8 @@ import {
 const ACHIEVEMENT_CHECK_INTERVAL = 100;
 const CHUNK_SIZE = 500;
 const MILESTONE_CHECK_INTERVAL = 50;
-// Yield often enough so the worker can process 'stop' messages promptly.
-const YIELD_INTERVAL = 50;
+// Yield often so the worker event loop can process 'stop' messages (every N ticks).
+const YIELD_INTERVAL = 10;
 
 /** Progress state of a running simulation. */
 export interface SimulationProgress {
@@ -97,6 +97,13 @@ export class SimulationEngine {
 
 		try {
 			for (let tick = 0; tick < totalTicks; tick++) {
+				if (tick % YIELD_INTERVAL === 0) {
+					await yieldToMain();
+					if (signal.aborted) {
+						cancelled = true;
+						break;
+					}
+				}
 				if (signal.aborted) {
 					cancelled = true;
 					break;
@@ -144,9 +151,6 @@ export class SimulationEngine {
 					this.recentMilestones = [];
 					lastProgressUpdate = now;
 					ticksSinceLastUpdate = 0;
-				}
-				if (tick % YIELD_INTERVAL === 0 && tick > 0) {
-					await yieldToMain();
 				}
 			}
 
