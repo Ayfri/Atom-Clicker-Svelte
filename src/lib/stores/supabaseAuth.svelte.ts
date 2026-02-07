@@ -28,6 +28,13 @@ export class SupabaseAuth {
 			return;
 		}
 
+		// Check for localStorage availability (not available in Web Workers)
+		if (typeof localStorage === 'undefined') {
+			console.warn('SupabaseAuth: localStorage not available, skipping init');
+			this.loading = false;
+			return;
+		}
+
 		try {
 			this.supabase = createClient<Database>(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
 				auth: {
