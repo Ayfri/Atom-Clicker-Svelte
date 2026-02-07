@@ -9,7 +9,14 @@ export interface BenchmarkConfig {
 	tickRate: number;
 }
 
+/** When set, bot only clicks during active windows (e.g. 15 min active / 45 min inactive per hour). */
+export interface ActivityPattern {
+	activeMinutes: number;
+	inactiveMinutes: number;
+}
+
 export interface BotBehavior {
+	activityPattern?: ActivityPattern;
 	autoBuy: boolean;
 	autoBuyBuildings: boolean;
 	autoBuyPhotonUpgrades: boolean;
@@ -191,13 +198,14 @@ export const MILESTONE_CHECKS: Record<string, (s: SimulationSnapshot) => boolean
 export const BOT_PROFILES = {
 	afk: {
 		botBehavior: {
+			activityPattern: { activeMinutes: 15, inactiveMinutes: 45 },
 			autoBuy: true,
 			autoBuyBuildings: true,
 			autoBuyPhotonUpgrades: false,
 			autoBuySkills: true,
 			autoBuyUpgrades: true,
 			buyStrategy: 'cheapest',
-			clicksPerSecond: 0,
+			clicksPerSecond: 5,
 			gameKnowledge: 0.3,
 		},
 		name: 'AFK Player',
@@ -213,13 +221,14 @@ export const BOT_PROFILES = {
 	},
 	balanced: {
 		botBehavior: {
+			activityPattern: { activeMinutes: 45, inactiveMinutes: 15 },
 			autoBuy: true,
 			autoBuyBuildings: true,
 			autoBuyPhotonUpgrades: true,
 			autoBuySkills: true,
 			autoBuyUpgrades: true,
 			buyStrategy: 'balanced',
-			clicksPerSecond: 2,
+			clicksPerSecond: 3,
 			gameKnowledge: 0.6,
 		},
 		name: 'Balanced Player',

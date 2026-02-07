@@ -96,7 +96,9 @@ export class SimulationEngine {
 				}
 				gameManager.tick(tickRate, true);
 				this.simulateClicks();
-				this.executeBotBehavior();
+				if (this.isInActiveWindow()) {
+					this.executeBotBehavior();
+				}
 				if (tick % ACHIEVEMENT_CHECK_INTERVAL === 0) {
 					this.checkAchievements();
 				}
@@ -433,8 +435,18 @@ export class SimulationEngine {
 		}
 	}
 
+	private isInActiveWindow(): boolean {
+		const { activityPattern } = this.config.botBehavior;
+		if (!activityPattern) return true;
+		const cycleMs = (activityPattern.activeMinutes + activityPattern.inactiveMinutes) * 60 * 1000;
+		const activeMs = activityPattern.activeMinutes * 60 * 1000;
+		const positionInCycle = gameManager.inGameTime % cycleMs;
+		return positionInCycle < activeMs;
+	}
+
 	private simulateClicks() {
 		const { clicksPerSecond } = this.config.botBehavior;
+		if (!this.isInActiveWindow()) return;
 		if (clicksPerSecond <= 0) return;
 
 		const clicksThisTick = clicksPerSecond * (this.config.tickRate / 1000);

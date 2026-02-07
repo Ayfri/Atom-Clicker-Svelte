@@ -90,7 +90,14 @@
 				</div>
 				<div class="flex flex-col">
 					<span class="text-gray-500 text-xs">Clicks</span>
-					<span class="font-medium text-amber-500 text-sm">{currentConfig.botBehavior.clicksPerSecond}/s</span>
+					<span class="font-medium text-amber-500 text-sm">
+						{currentConfig.botBehavior.clicksPerSecond}/s
+						{#if currentConfig.botBehavior.activityPattern}
+							<span class="text-gray-500 font-normal"
+								>({currentConfig.botBehavior.activityPattern.activeMinutes} min active/h)</span
+							>
+						{/if}
+					</span>
 				</div>
 				<div class="flex flex-col">
 					<span class="text-gray-500 text-xs">Decision Flow</span>
@@ -172,7 +179,11 @@
 		</span>
 		<span class="flex gap-2 items-center">
 			<span class={currentConfig.botBehavior.clicksPerSecond > 0 ? 'text-green-400' : 'text-gray-600'}>●</span>
-			Clicks ({currentConfig.botBehavior.clicksPerSecond}/s)
+			Clicks
+			({currentConfig.botBehavior.clicksPerSecond}/s
+			{#if currentConfig.botBehavior.activityPattern}
+				, {currentConfig.botBehavior.activityPattern.activeMinutes} min/h
+			{/if})
 		</span>
 	</div>
 
