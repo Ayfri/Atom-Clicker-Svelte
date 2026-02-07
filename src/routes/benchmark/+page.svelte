@@ -2,8 +2,8 @@
 	import { tick } from 'svelte';
 	import {
 		buildBenchmarkConfig,
+		configToPresets,
 		type ActivityPresetId,
-		type BenchmarkConfig,
 		type MilestoneHit,
 		type PlaystylePresetId,
 		type PrestigePresetId,
@@ -320,6 +320,13 @@
 				<HistoryPanel
 					comparisonId={comparisonReportId}
 					loadedId={loadedReport?.id ?? null}
+					onApplyConfig={config => {
+						const { activityId: a, playstyleId: p, prestigeId: pr, targetHours: t } = configToPresets(config);
+						activityId = a;
+						playstyleId = p;
+						prestigeId = pr;
+						targetHours = t;
+					}}
 					onClose={() => {
 						showHistoryPanel = false;
 					}}
