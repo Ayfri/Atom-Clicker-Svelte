@@ -20,9 +20,19 @@
 	import Toaster from '@components/layout/Toaster.svelte';
 	import OfflineProgress from '@components/modals/OfflineProgress.svelte';
 	import SaveRecovery from '@components/modals/SaveRecovery.svelte';
+	import AtomRealm from '@components/prestige/AtomRealm.svelte';
+	import PhotonRealm from '@components/prestige/PhotonRealm.svelte';
+	import RadiationRealm from '@components/prestige/RadiationRealm.svelte';
 	import AutoSaveIndicator from '@components/system/AutoSaveIndicator.svelte';
 	import Currency from '@components/ui/Currency.svelte';
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy, onMount, type Component } from 'svelte';
+
+	// Realm component mapping
+	const realmComponents: Record<string, Component> = {
+		AtomRealm: AtomRealm,
+		PhotonRealm: PhotonRealm,
+		RadiationRealm: RadiationRealm,
+	};
 
 	autoBuyManager.init();
 	autoUpgradeManager.init();
@@ -149,6 +159,8 @@
 
 		<!-- Use transform and opacity for virtual desktop swipe effect -->
 		{#each realmManager.availableRealms as realm, i (realm.id)}
+			{@const RealmComponent = realmComponents[realm.componentId]}
+
 			<div
 				class="absolute inset-0 transition-all duration-300 ease-in-out overflow-hidden"
 				class:opacity-100={realmManager.selectedRealm.id === realm.id}
@@ -162,7 +174,7 @@
 				<div class="absolute inset-0 overflow-y-auto custom-scrollbar">
 					<div class="flex flex-col min-h-full">
 						<div class="flex-1">
-							<realm.component />
+							<RealmComponent />
 						</div>
 						<RealmFooter />
 					</div>

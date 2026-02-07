@@ -5,7 +5,7 @@ import { FeatureTypes } from '$data/features';
 import { ALL_PHOTON_UPGRADES, getPhotonUpgradeCost } from '$data/photonUpgrades';
 import { POWER_UP_DEFAULT_INTERVAL } from '$data/powerUp';
 import { REALMS, RealmTypes, type RealmType } from '$data/realms';
-import { PERSISTENT_SKILL_IDS, SKILL_UPGRADES } from '$data/skillTree';
+import { SKILL_UPGRADES } from '$data/skillTree';
 import { UPGRADES } from '$data/upgrades';
 import { BUILDING_COST_MULTIPLIER, ELECTRONS_PROTONS_REQUIRED, PROTONS_ATOMS_REQUIRED } from '$lib/constants';
 import {
@@ -16,7 +16,6 @@ import {
 	type OfflineProgressSummary,
 	type PowerUp,
 	type Price,
-	type RadiationState,
 	type RealmState,
 	type Settings,
 	type SkillUpgrade,
@@ -30,7 +29,6 @@ import { radiationManager } from '$helpers/RadiationManager.svelte';
 import { realmManager } from '$helpers/RealmManager.svelte';
 import { SAVE_KEY, SAVE_VERSION, loadSavedState } from '$helpers/saves';
 import { LAYERS, type LayerType, statsConfig } from '$helpers/statConstants';
-import { Trophy } from 'lucide-svelte';
 import { leaderboard } from '$stores/leaderboard.svelte';
 import { saveRecovery } from '$stores/saveRecovery';
 import { info } from '$stores/toasts';
@@ -531,7 +529,9 @@ export class GameManager {
 	save() {
 		this.lastSave = Date.now();
 		const saveData = this.getCurrentState();
-		localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+		if (typeof localStorage !== 'undefined') {
+			localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+		}
 	}
 
 	// Reset Logic
@@ -715,7 +715,7 @@ export class GameManager {
 		Object.values(REALMS).forEach(realmDef => {
 			if (!this.realms[realmDef.id].unlocked && realmDef.condition(state)) {
 				this.realms[realmDef.id].unlocked = true;
-				info({ title: 'Realm Unlocked', message: `${realmDef.id} Realm is now available!` });
+				info({ title: 'Realm Unlocked', message: `${realmDef.id} Realm is now available!`, icon: 'Globe' });
 			}
 		});
 	}
@@ -842,7 +842,7 @@ export class GameManager {
 					title: 'Achievement unlocked',
 					message: `${achievement.name}\n${achievement.description}`,
 					duration: 10000,
-					icon: achievement.icon || Trophy,
+					icon: achievement.icon || 'Trophy',
 				});
 			}
 		}
@@ -934,30 +934,54 @@ export class GameManager {
 		return Math.floor(base * Math.pow(1 + taux, level - 1));
 	}
 
-	// Intervals
-	setupInterval() {
-		if (this.gameInterval) clearInterval(this.gameInterval);
+	tick(deltaTime: number = 1000, skipAchievements = false) {
+		this.inGameTime += deltaTime;
 
-		this.gameInterval = setInterval(() => {
-			this.inGameTime += 1000;
+		// Production - atoms per second scaled by deltaTime
+		const production = this.atomsPerSecond * (deltaTime / 1000);
+		if (production > 0) {
+			this.addAtoms(production);
+		}
 
-			if (this.atomsPerSecond > this.highestAPS) {
-				this.highestAPS = this.atomsPerSecond;
-			}
+		// Auto-click atoms
+		if (this.settings.automation.autoClick && this.autoClicksPerSecond > 0) {
+			const autoClicks = this.autoClicksPerSecond * (deltaTime / 1000);
+			this.addAtoms(this.clickPower * autoClicks);
+		}
 
-			// Process radiation decay
-			radiationManager.tick(1000);
+		// Update highest APS
+		if (this.atomsPerSecond > this.highestAPS) {
+			this.highestAPS = this.atomsPerSecond;
+		}
 
+		// Process radiation decay
+		radiationManager.tick(deltaTime);
+
+		// Check achievements
+		if (!skipAchievements) {
 			Object.entries(ACHIEVEMENTS).forEach(([id, achievement]) => {
 				if (!this.achievements.includes(id) && achievement.condition(this)) {
 					this.unlockAchievement(id);
 				}
 			});
+		}
 
-			if (this.activePowerUps.length > 0) {
-				const now = Date.now();
-				this.activePowerUps = this.activePowerUps.filter(p => now < p.startTime + p.duration);
-			}
+		// Clean expired power-ups
+		if (this.activePowerUps.length > 0) {
+			const expireTime = this.inGameTime;
+			this.activePowerUps = this.activePowerUps.filter(p => {
+				const elapsed = expireTime - (p.startTime ?? 0);
+				return elapsed < p.duration;
+			});
+		}
+	}
+
+	// Intervals
+	setupInterval() {
+		if (this.gameInterval) clearInterval(this.gameInterval);
+
+		this.gameInterval = setInterval(() => {
+			this.tick(1000);
 		}, 1000);
 	}
 }

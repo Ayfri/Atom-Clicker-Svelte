@@ -3,14 +3,13 @@ import type { CurrencyName } from '$data/currencies';
 import type { RealmType } from '$data/realms';
 import type { GameManager } from '$helpers/GameManager.svelte';
 import type { LayerType } from '$helpers/statConstants';
-import type { Icon } from 'lucide-svelte';
-import type { Component } from 'svelte';
+import type { ToastIcon } from '$stores/toasts';
 
 export interface Achievement {
 	condition: (manager: GameManager) => boolean;
 	description: string;
 	hiddenCondition?: (manager: GameManager) => boolean;
-	icon?: Component | typeof Icon;
+	icon?: ToastIcon;
 	id: string;
 	name: string;
 }

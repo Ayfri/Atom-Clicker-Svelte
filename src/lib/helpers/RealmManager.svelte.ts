@@ -1,16 +1,12 @@
-import AtomRealm from '@components/prestige/AtomRealm.svelte';
-import PhotonRealm from '@components/prestige/PhotonRealm.svelte';
-import RadiationRealm from '@components/prestige/RadiationRealm.svelte';
 import { CURRENCIES, CurrenciesTypes } from '$data/currencies';
 import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
 import { gameManager } from '$helpers/GameManager.svelte';
 import { RealmTypes, type RealmType } from '$data/realms';
 import type { Currency } from '$lib/types';
-import type { Component } from 'svelte';
 
 export interface RealmConfig {
 	background?: string;
-	component: Component;
+	componentId: string;
 	currency: Currency;
 	id: RealmType;
 	title: string;
@@ -23,7 +19,7 @@ class RealmManager {
 		{
 			background:
 				'radial-gradient(circle at 10% 20%, color-mix(in srgb, var(--color-accent-400), transparent 88%) 0%, color-mix(in srgb, var(--color-accent-400), transparent 92%) 30%, transparent 60%), radial-gradient(circle at 95% 90%, color-mix(in srgb, var(--color-accent-400), transparent 88%) 0%, color-mix(in srgb, var(--color-accent-400), transparent 92%) 25%, transparent 50%)',
-			component: AtomRealm,
+			componentId: 'AtomRealm',
 			currency: CURRENCIES[CurrenciesTypes.ATOMS],
 			id: RealmTypes.ATOMS,
 			title: 'Atoms Realm',
@@ -31,7 +27,7 @@ class RealmManager {
 		{
 			background:
 				'linear-gradient(135deg, color-mix(in srgb, var(--color-realm-500), transparent 90%) 0%, color-mix(in srgb, var(--color-realm-950), transparent 90%) 50%, color-mix(in srgb, var(--color-realm-500), transparent 90%) 100%)',
-			component: PhotonRealm,
+			componentId: 'PhotonRealm',
 			currency: CURRENCIES[CurrenciesTypes.PHOTONS],
 			id: RealmTypes.PHOTONS,
 			title: 'Photon Realm',
@@ -39,7 +35,7 @@ class RealmManager {
 		{
 			background:
 				'radial-gradient(circle at 30% 30%, rgba(30, 70, 32, 0.15) 0%, transparent 50%), radial-gradient(circle at 70% 70%, rgba(57, 255, 20, 0.1) 0%, transparent 40%)',
-			component: RadiationRealm,
+			componentId: 'RadiationRealm',
 			currency: CURRENCIES[CurrenciesTypes.ELECTRONS],
 			id: RealmTypes.RADIATION,
 			title: 'Radiation Realm',
@@ -47,7 +43,7 @@ class RealmManager {
 	];
 
 	get availableRealms() {
-		return this.realms.filter(r => gameManager.realms[r.id].unlocked);
+		return this.realms.filter(r => gameManager.realms[r.id]?.unlocked);
 	}
 
 	get realmValues() {

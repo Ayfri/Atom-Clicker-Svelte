@@ -1,12 +1,24 @@
-import {writable} from 'svelte/store';
-import type { Icon } from 'lucide-svelte';
+import { writable } from 'svelte/store';
+import type { Icon, icons } from 'lucide-svelte';
 import type { Component } from 'svelte';
+
+import GitHub from '@components/icons/GitHub.svelte';
+import Discord from '@components/icons/Discord.svelte';
+
+export const toastIcons = {
+	Discord,
+	GitHub,
+} as const;
+
+export type ToastIconName = keyof typeof toastIcons;
+
+export type ToastIcon = Component | typeof Icon | ToastIconName | keyof typeof icons;
 
 export type Toast = {
 	action?: () => void;
 	actionLabel?: string;
 	duration: number;
-	icon?: Component | typeof Icon;
+	icon?: ToastIcon;
 	id: number;
 	is_infinite?: boolean;
 	message: string;
@@ -35,7 +47,7 @@ export interface ToastOptions {
 	action?: () => void;
 	actionLabel?: string;
 	duration?: number;
-	icon?: Component | typeof Icon;
+	icon?: ToastIcon;
 	is_infinite?: boolean;
 	message: string;
 	title: string;
@@ -51,7 +63,7 @@ function createToast(type: Toast['type'], options: ToastOptions) {
 		is_infinite: options.is_infinite ?? false,
 		message: options.message,
 		title: options.title,
-		type
+		type,
 	});
 }
 
