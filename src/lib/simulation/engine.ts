@@ -3,6 +3,7 @@ import { ACHIEVEMENTS } from '$data/achievements';
 import { BUILDINGS, BUILDING_TYPES, type BuildingType } from '$data/buildings';
 import { CurrenciesTypes, type CurrencyName } from '$data/currencies';
 import { ALL_PHOTON_UPGRADES, getPhotonUpgradeCost } from '$data/photonUpgrades';
+import { RealmTypes } from '$data/realms';
 import { SKILL_UPGRADES } from '$data/skillTree';
 import { UPGRADES } from '$data/upgrades';
 import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
@@ -18,9 +19,11 @@ import {
 } from './types';
 
 // Chunk size: higher = faster run, less responsive UI. Achievements/milestones sampled every N ticks for perf.
-const CHUNK_SIZE = 500;
 const ACHIEVEMENT_CHECK_INTERVAL = 100;
+const CHUNK_SIZE = 500;
 const MILESTONE_CHECK_INTERVAL = 50;
+// Yield often enough so the worker can process 'stop' messages promptly.
+const YIELD_INTERVAL = 50;
 
 /** Progress state of a running simulation. */
 export interface SimulationProgress {
@@ -100,6 +103,7 @@ export class SimulationEngine {
 				}
 				gameManager.tick(tickRate, true);
 				this.simulateClicks();
+				this.simulatePhotonRealmClicks();
 				if (this.isInActiveWindow()) {
 					this.executeBotBehavior();
 				}
@@ -140,7 +144,8 @@ export class SimulationEngine {
 					this.recentMilestones = [];
 					lastProgressUpdate = now;
 					ticksSinceLastUpdate = 0;
-
+				}
+				if (tick % YIELD_INTERVAL === 0 && tick > 0) {
 					await yieldToMain();
 				}
 			}
@@ -482,6 +487,23 @@ export class SimulationEngine {
 		gameManager.addAtoms(clickPower * clicksThisTick);
 		gameManager.totalClicksAllTime += Math.floor(clicksThisTick);
 		gameManager.totalClicksRun += Math.floor(clicksThisTick);
+	}
+
+	/** Simulate photon gains when Photon (Purple) Realm is unlocked (headless equivalent of clicking realm circles). */
+	private simulatePhotonRealmClicks() {
+		if (!gameManager.realms[RealmTypes.PHOTONS]?.unlocked) return;
+		if (!this.isInActiveWindow()) return;
+
+		const { clicksPerSecond } = this.config.botBehavior;
+		if (clicksPerSecond <= 0) return;
+
+		const clicksThisTick = clicksPerSecond * (this.config.tickRate / 1000);
+		const avgPhotonPerClick = (1 + 10) / 2;
+		const multiplier = gameManager.getCurrencyBoostMultiplier(CurrenciesTypes.PHOTONS);
+		const photonsThisTick = clicksThisTick * avgPhotonPerClick * multiplier;
+		if (photonsThisTick > 0) {
+			currenciesManager.add(CurrenciesTypes.PHOTONS, photonsThisTick);
+		}
 	}
 
 	private takeSnapshot() {

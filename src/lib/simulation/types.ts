@@ -335,6 +335,50 @@ export const PRESTIGE_PRESETS = {
 
 export type PrestigePresetId = keyof typeof PRESTIGE_PRESETS;
 
+/** Infer preset IDs from a saved config so the form (selects, target hours) can be updated. */
+export function configToPresets(config: BenchmarkConfig): {
+	activityId: ActivityPresetId;
+	playstyleId: PlaystylePresetId;
+	prestigeId: PrestigePresetId;
+	targetHours: number;
+} {
+	const { botBehavior, prestigeStrategy, snapshotInterval, targetHours, tickRate } = config;
+
+	const activityId: ActivityPresetId = (() => {
+		const ap = botBehavior.activityPattern;
+		if (!ap) return 'always';
+		const key = Object.entries(ACTIVITY_PRESETS).find(
+			([_, a]) =>
+				'activityPattern' in a &&
+				a.activityPattern?.activeMinutes === ap.activeMinutes &&
+				a.activityPattern?.inactiveMinutes === ap.inactiveMinutes,
+		)?.[0];
+		return (key as ActivityPresetId) ?? 'always';
+	})();
+
+	const prestigeId: PrestigePresetId = (() => {
+		const key = Object.entries(PRESTIGE_PRESETS).find(
+			([_, p]) =>
+				p.protoniseThreshold === prestigeStrategy.protoniseThreshold &&
+				p.electronizeThreshold === prestigeStrategy.electronizeThreshold,
+		)?.[0];
+		return (key as PrestigePresetId) ?? 'balanced';
+	})();
+
+	const playstyleId: PlaystylePresetId = (() => {
+		const key = Object.entries(PLAYSTYLE_PRESETS).find(
+			([_, p]) =>
+				p.tickRate === tickRate &&
+				p.snapshotInterval === snapshotInterval &&
+				p.buyStrategy === botBehavior.buyStrategy &&
+				p.clicksPerSecond === botBehavior.clicksPerSecond,
+		)?.[0];
+		return (key as PlaystylePresetId) ?? 'balanced';
+	})();
+
+	return { activityId, playstyleId, prestigeId, targetHours };
+}
+
 export function buildBenchmarkConfig(
 	activityId: ActivityPresetId,
 	playstyleId: PlaystylePresetId,
