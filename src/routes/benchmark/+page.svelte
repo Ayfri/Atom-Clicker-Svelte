@@ -1,7 +1,6 @@
 <script lang="ts">
-	/** Game balance benchmarking simulations. */
 	import { tick } from 'svelte';
-	import { BOT_PROFILES, type BenchmarkConfig, type MilestoneHit, type SimulationResult } from '$lib/simulation/types';
+	import { BOT_PROFILES, type BenchmarkConfig, type MilestoneHit, type SimulationResult, type BotProfileName } from '$lib/simulation/types';
 	import { type SimulationProgress } from '$lib/simulation/engine';
 	import { ChartLine, GitCompare, History, Save } from 'lucide-svelte';
 
@@ -20,7 +19,8 @@
 	let liveMilestones = $state<MilestoneHit[]>([]);
 	let progress = $state<SimulationProgress | null>(null);
 	let result = $state<SimulationResult | null>(null);
-	let selectedProfile = $state<string>('tryhard');
+	let loadedReport = $state<BenchmarkReport | null>(null);
+	let selectedProfile = $state<BotProfileName>('balanced');
 	let targetHours = $state(10);
 	let elapsedTime = $state(0);
 	let startTime = 0;
@@ -28,6 +28,23 @@
 	let comparisonReportId = $state<string | null>(null);
 	let comparisonReport = $state<BenchmarkReport | null>(null);
 	let lastSavedId = $state<string | null>(null);
+
+	function reportToDisplayResult(report: BenchmarkReport): SimulationResult & { milestoneCount: number } {
+		return {
+			cancelled: !report.wasCompleted,
+			config: report.config,
+			durationMs: report.durationMs,
+			milestoneCount: report.milestoneCount,
+			milestones: [],
+			snapshots: report.snapshots,
+		};
+	}
+
+	const displayResult = $derived.by(() => {
+		if (loadedReport) return reportToDisplayResult(loadedReport);
+		if (result) return { ...result, milestoneCount: result.milestones.length };
+		return null;
+	});
 
 	$effect(() => {
 		let interval: any;
@@ -82,17 +99,24 @@
 		targetHours,
 	});
 
-	const currentSnapshots = $derived(result?.snapshots ?? progress?.snapshots ?? []);
+	const currentSnapshots = $derived(
+		loadedReport?.snapshots ?? result?.snapshots ?? progress?.snapshots ?? [],
+	);
 	const simulationDurationHours = $derived.by(() => {
-		if (result && result.snapshots.length > 0) {
-			const lastSnapshot = result.snapshots[result.snapshots.length - 1];
-			return lastSnapshot.timestamp / 3600000;
+		const snapshots = loadedReport?.snapshots ?? result?.snapshots;
+		if (snapshots && snapshots.length > 0) {
+			return snapshots[snapshots.length - 1].timestamp / 3600000;
 		}
 		if (isRunning && progress) {
 			return progress.currentHour;
 		}
 		return 0.1;
 	});
+	const displaySnapshotInterval = $derived(
+		loadedReport?.config.snapshotInterval ??
+			result?.config.snapshotInterval ??
+			currentConfig.snapshotInterval,
+	);
 
 	const comparisonSnapshots = $derived(comparisonReport?.snapshots ?? []);
 	const hasComparison = $derived(comparisonSnapshots.length > 0);
@@ -101,6 +125,7 @@
 		isRunning = true;
 		progress = null;
 		result = null;
+		loadedReport = null;
 		liveMilestones = [];
 		lastSavedId = null;
 		await tick();
@@ -190,7 +215,7 @@
 					</div>
 				{/if}
 
-				{#if result && !lastSavedId}
+				{#if result && !lastSavedId && !loadedReport}
 					<button
 						onclick={handleManualSave}
 						class="bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/30 flex gap-1.5 items-center px-3 py-2 rounded-lg text-xs transition-colors cursor-pointer"
@@ -233,7 +258,7 @@
 				{stopSimulation}
 			/>
 
-			{#if isRunning || result}
+			{#if isRunning || (result && !loadedReport)}
 				<BenchmarkTimeline
 					{isRunning}
 					{elapsedTime}
@@ -243,23 +268,37 @@
 				/>
 			{/if}
 
-			{#if result}
-				<BenchmarkResults {result} />
+			{#if loadedReport}
+				<div
+					class="bg-amber-500/10 border border-amber-500/30 flex gap-2 items-center justify-between px-4 py-2 rounded-lg text-amber-400 text-sm"
+				>
+					<span>Viewing saved run: <strong>{loadedReport.name}</strong></span>
+					<button
+						class="cursor-pointer hover:bg-amber-500/20 px-2 py-1 rounded text-xs transition-colors"
+						onclick={() => (loadedReport = null)}
+					>
+						Close
+					</button>
+				</div>
 			{/if}
 
-			{#if isRunning || result}
+			{#if displayResult}
+				<BenchmarkResults result={displayResult} />
+			{/if}
+
+			{#if isRunning || displayResult}
 				<BenchmarkCharts
 					{currentSnapshots}
 					{comparisonSnapshots}
 					{hasComparison}
 					comparisonName={comparisonReport?.name}
 					{simulationDurationHours}
-					snapshotInterval={result?.config.snapshotInterval ?? currentConfig.snapshotInterval}
+					snapshotInterval={displaySnapshotInterval}
 				/>
 			{/if}
 
-			{#if result}
-				<BenchmarkJson {result} />
+			{#if displayResult}
+				<BenchmarkJson result={displayResult} />
 			{/if}
 		</main>
 
@@ -268,11 +307,16 @@
 			<aside class="fixed h-[calc(100vh-8rem)] right-8 top-28 w-80 z-20">
 				<HistoryPanel
 					comparisonId={comparisonReportId}
+					loadedId={loadedReport?.id ?? null}
 					onClose={() => {
 						showHistoryPanel = false;
 					}}
 					onCompare={id => {
 						comparisonReportId = id;
+					}}
+					onLoad={async id => {
+						const report = await getReport(id);
+						if (report) loadedReport = report;
 					}}
 				/>
 			</aside>

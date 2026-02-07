@@ -1,7 +1,5 @@
-/** Simulation types for headless game benchmarking. */
 import type { BuildingType } from '$data/buildings';
 
-/** Benchmark simulation config. */
 export interface BenchmarkConfig {
 	botBehavior: BotBehavior;
 	name: string;
@@ -11,7 +9,6 @@ export interface BenchmarkConfig {
 	tickRate: number;
 }
 
-/** Bot behavior for simulation. */
 export interface BotBehavior {
 	autoBuy: boolean;
 	autoBuyBuildings: boolean;
@@ -24,7 +21,6 @@ export interface BotBehavior {
 	gameKnowledge: number;
 }
 
-/** Auto-prestige strategy. */
 export interface PrestigeStrategy {
 	autoElectronize: boolean;
 	autoProtonise: boolean;
@@ -32,7 +28,6 @@ export interface PrestigeStrategy {
 	protoniseThreshold: number;
 }
 
-/** Game state snapshot at one simulation point. */
 export interface SimulationSnapshot {
 	achievements: number;
 	actions: SimulationAction[];
@@ -60,14 +55,12 @@ export interface SimulationSnapshot {
 	upgrades: number;
 }
 
-/** Bot action during simulation. */
 export interface SimulationAction {
 	details?: string;
 	timestamp: number;
 	type: 'achievement' | 'building' | 'electronize' | 'photon_upgrade' | 'protonise' | 'skill' | 'upgrade';
 }
 
-/** Benchmark milestone definition. */
 export interface MilestoneDefinition {
 	check?: (snapshot: SimulationSnapshot) => boolean;
 	description: string;
@@ -75,14 +68,12 @@ export interface MilestoneDefinition {
 	name: string;
 }
 
-/** Recorded milestone hit. */
 export interface MilestoneHit {
 	dayReached: number;
 	milestone: MilestoneDefinition;
 	timeReached: number;
 }
 
-/** Completed simulation result. */
 export interface SimulationResult {
 	cancelled: boolean;
 	config: BenchmarkConfig;
@@ -91,7 +82,6 @@ export interface SimulationResult {
 	snapshots: SimulationSnapshot[];
 }
 
-/** Milestones used for progression checks. */
 export const MILESTONES: MilestoneDefinition[] = [
 	{ description: 'Reached 1K Atoms', id: 'atoms_1k', name: '1K Atoms' },
 	{ description: 'Reached 1M Atoms', id: 'atoms_1m', name: '1M Atoms' },
@@ -198,8 +188,7 @@ export const MILESTONE_CHECKS: Record<string, (s: SimulationSnapshot) => boolean
 	player_level_200: s => s.playerLevel >= 200,
 };
 
-/** Predefined bot profiles. */
-export const BOT_PROFILES: Record<string, BenchmarkConfig> = {
+export const BOT_PROFILES = {
 	afk: {
 		botBehavior: {
 			autoBuy: true,
@@ -266,4 +255,6 @@ export const BOT_PROFILES: Record<string, BenchmarkConfig> = {
 		targetHours: 10,
 		tickRate: 250,
 	},
-};
+} as const satisfies Record<string, BenchmarkConfig>;
+
+export type BotProfileName = keyof typeof BOT_PROFILES;

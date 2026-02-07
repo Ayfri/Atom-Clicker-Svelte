@@ -3,7 +3,10 @@
 	import { formatDuration, formatNumber } from '$lib/utils';
 	import { MILESTONES, type SimulationResult } from '$lib/simulation/types';
 
-	let { result }: { result: SimulationResult } = $props();
+	type ResultWithCount = SimulationResult & { milestoneCount?: number };
+	let { result }: { result: ResultWithCount } = $props();
+
+	const milestoneCount = $derived(result.milestoneCount ?? result.milestones.length);
 
 	let showRemainingMilestones = $state(false);
 
@@ -50,7 +53,7 @@
 		<div class="bg-black/20 flex gap-4 items-center p-4 rounded-xl text-green-400">
 			<Target size={24} />
 			<div class="flex flex-col">
-				<span class="font-bold text-xl">{result.milestones.length}</span>
+				<span class="font-bold text-xl">{milestoneCount}</span>
 				<span class="text-gray-500 text-xs">Milestones</span>
 			</div>
 		</div>
@@ -107,10 +110,10 @@
 		<div class="flex flex-col gap-2">
 			<div class="flex gap-4">
 				<span class="text-gray-500 text-sm">
-					<span class="text-green-400">{result.milestones.length}</span> reached
+					<span class="text-green-400">{milestoneCount}</span> reached
 				</span>
 				<span class="text-gray-500 text-sm">
-					<span class="text-red-400">{MILESTONES.length - result.milestones.length}</span> remaining
+					<span class="text-red-400">{MILESTONES.length - milestoneCount}</span> remaining
 				</span>
 			</div>
 		</div>
@@ -137,7 +140,7 @@
 			</div>
 
 			<!-- Unreached Milestones (Collapsible) -->
-			{#if MILESTONES.length - result.milestones.length > 0}
+			{#if MILESTONES.length - milestoneCount > 0}
 				<div class="flex flex-col gap-2">
 					<button
 						class="flex gap-2 hover:text-white items-center text-gray-400 text-xs transition-colors uppercase"
@@ -148,7 +151,7 @@
 						{:else}
 							<ChevronDown size={14} />
 						{/if}
-						Remaining Milestones ({MILESTONES.length - result.milestones.length})
+						Remaining Milestones ({MILESTONES.length - milestoneCount})
 					</button>
 
 					{#if showRemainingMilestones}

@@ -1,16 +1,17 @@
 <script lang="ts">
-	/** Benchmark history and comparison report selector. */
 	import { formatDuration, formatNumber } from '$lib/utils';
 	import { deleteReport, listReports, type BenchmarkReportSummary } from '$lib/stores/benchmarkHistory.svelte';
-	import { Clock, GitCompare, History, Trash2, X } from 'lucide-svelte';
+	import { Clock, FolderOpen, GitCompare, History, Trash2, X } from 'lucide-svelte';
 
 	interface Props {
 		comparisonId: string | null;
+		loadedId: string | null;
 		onClose: () => void;
 		onCompare: (id: string | null) => void;
+		onLoad: (id: string) => void | Promise<void>;
 	}
 
-	let { comparisonId, onClose, onCompare }: Props = $props();
+	let { comparisonId, loadedId = null, onClose, onCompare, onLoad }: Props = $props();
 
 	let reports = $state<BenchmarkReportSummary[]>([]);
 	let loading = $state(true);
@@ -96,10 +97,13 @@
 			<div class="flex flex-col gap-3">
 				{#each reports as report (report.id)}
 					{@const isSelected = comparisonId === report.id}
+					{@const isLoaded = loadedId === report.id}
 					<div
-						class="bg-white/5 border flex flex-col gap-3 p-4 rounded-xl transition-all {isSelected ?
-							'border-cyan-500/50 shadow-lg shadow-cyan-500/10'
-						:	'border-white/10'}"
+						class="bg-white/5 border flex flex-col gap-3 p-4 rounded-xl transition-all {isLoaded
+							? 'border-amber-500/50 shadow-lg shadow-amber-500/10'
+							: isSelected
+								? 'border-cyan-500/50 shadow-lg shadow-cyan-500/10'
+								: 'border-white/10'}"
 					>
 						<div class="flex items-start justify-between">
 							<div class="flex flex-col gap-1">
@@ -114,10 +118,19 @@
 							</div>
 							<div class="flex gap-1">
 								<button
+									onclick={() => onLoad(report.id)}
+									class="cursor-pointer p-2 rounded-lg transition-colors {isLoaded
+										? 'bg-amber-500/30 text-amber-400'
+										: 'hover:bg-amber-500/20 text-gray-500'}"
+									title={isLoaded ? 'Currently displayed' : 'Load and view graphs'}
+								>
+									<FolderOpen size={16} />
+								</button>
+								<button
 									onclick={() => handleCompare(report.id)}
-									class="cursor-pointer p-2 rounded-lg transition-colors {isSelected ? 'bg-cyan-500/30 text-cyan-400' : (
-										'hover:bg-cyan-500/20 text-gray-500'
-									)}"
+									class="cursor-pointer p-2 rounded-lg transition-colors {isSelected
+										? 'bg-cyan-500/30 text-cyan-400'
+										: 'hover:bg-cyan-500/20 text-gray-500'}"
 									title={isSelected ? 'Remove from comparison' : 'Compare with current'}
 								>
 									<GitCompare size={16} />
