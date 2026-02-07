@@ -1,6 +1,14 @@
 <script lang="ts">
 	import { tick } from 'svelte';
-	import { BOT_PROFILES, type BenchmarkConfig, type MilestoneHit, type SimulationResult, type BotProfileName } from '$lib/simulation/types';
+	import {
+		buildBenchmarkConfig,
+		type ActivityPresetId,
+		type BenchmarkConfig,
+		type MilestoneHit,
+		type PlaystylePresetId,
+		type PrestigePresetId,
+		type SimulationResult,
+	} from '$lib/simulation/types';
 	import { type SimulationProgress } from '$lib/simulation/engine';
 	import { ChartLine, GitCompare, History, Save } from 'lucide-svelte';
 
@@ -20,7 +28,9 @@
 	let progress = $state<SimulationProgress | null>(null);
 	let result = $state<SimulationResult | null>(null);
 	let loadedReport = $state<BenchmarkReport | null>(null);
-	let selectedProfile = $state<BotProfileName>('balanced');
+	let activityId = $state<ActivityPresetId>('always');
+	let playstyleId = $state<PlaystylePresetId>('balanced');
+	let prestigeId = $state<PrestigePresetId>('balanced');
 	let targetHours = $state(10);
 	let elapsedTime = $state(0);
 	let startTime = 0;
@@ -94,10 +104,9 @@
 		}
 	}
 
-	const currentConfig = $derived<BenchmarkConfig>({
-		...BOT_PROFILES[selectedProfile],
-		targetHours,
-	});
+	const currentConfig = $derived<BenchmarkConfig>(
+		buildBenchmarkConfig(activityId, playstyleId, prestigeId, targetHours),
+	);
 
 	const currentSnapshots = $derived(
 		loadedReport?.snapshots ?? result?.snapshots ?? progress?.snapshots ?? [],
@@ -251,7 +260,9 @@
 		<!-- Main Content -->
 		<main class="flex flex-col flex-1 gap-8 {showHistoryPanel ? 'mr-80' : ''}">
 			<BenchmarkConfigPanel
-				bind:selectedProfile
+				bind:activityId
+				bind:playstyleId
+				bind:prestigeId
 				bind:targetHours
 				{isRunning}
 				{runSimulation}

@@ -1,63 +1,124 @@
 <script lang="ts">
-	import { Settings, Zap, RotateCcw, Code, Pause, Play } from 'lucide-svelte';
-	import { BOT_PROFILES, type BenchmarkConfig } from '$lib/simulation/types';
+	import { Code, Pause, Play, RotateCcw, Settings, Zap } from 'lucide-svelte';
+	import {
+		ACTIVITY_PRESETS,
+		BOT_PROFILES,
+		PLAYSTYLE_PRESETS,
+		PRESTIGE_PRESETS,
+		buildBenchmarkConfig,
+		type ActivityPresetId,
+		type BenchmarkConfig,
+		type PlaystylePresetId,
+		type PrestigePresetId,
+	} from '$lib/simulation/types';
 
 	let {
-		selectedProfile = $bindable(),
+		activityId = $bindable(),
+		playstyleId = $bindable(),
+		prestigeId = $bindable(),
 		targetHours = $bindable(),
 		isRunning,
 		runSimulation,
 		stopSimulation,
 	} = $props<{
-		selectedProfile: string;
+		activityId: ActivityPresetId;
+		playstyleId: PlaystylePresetId;
+		prestigeId: PrestigePresetId;
 		targetHours: number;
 		isRunning: boolean;
 		runSimulation: () => void;
 		stopSimulation: () => void;
 	}>();
 
-	const currentConfig = $derived<BenchmarkConfig>({
-		...BOT_PROFILES[selectedProfile],
-		targetHours,
-	});
+	const currentConfig = $derived<BenchmarkConfig>(
+		buildBenchmarkConfig(activityId, playstyleId, prestigeId, targetHours),
+	);
+
+	function applyQuickProfile(profileKey: keyof typeof BOT_PROFILES) {
+		const p = BOT_PROFILES[profileKey];
+		activityId = p.activityId;
+		playstyleId = p.playstyleId;
+		prestigeId = p.prestigeId;
+	}
 </script>
 
-<section class="backdrop-blur-xl bg-white/5 border border-white/10 p-6 rounded-2xl">
+<section class="simulation-config backdrop-blur-xl bg-white/5 border border-white/10 p-6 rounded-2xl">
 	<div class="flex gap-3 items-center mb-6 text-gray-400">
 		<Settings size={20} />
 		<h2 class="font-semibold text-gray-200 text-xl">Simulation Config</h2>
 	</div>
 
 	<div class="gap-10 grid grid-cols-1 mb-8 md:grid-cols-2 lg:grid-cols-4">
-		<!-- Core Config -->
-		<div class="flex flex-col gap-4">
+		<!-- Core Config: min width so selects aren't squeezed -->
+		<div class="flex min-w-[260px] flex-col gap-4">
 			<h3 class="flex gap-2 items-center text-gray-400 text-sm uppercase">
-				<Settings size={14} /> Basic Config
+				<Settings size={14} /> Config
 			</h3>
-			<p class="text-gray-500 text-xs">Standard simulation parameters. Choose a profile to see how different playstyles progress.</p>
+			<p class="text-gray-500 text-xs">Mix activity, playstyle and prestige. Or pick a quick profile.</p>
 			<div class="flex flex-col gap-4">
-				<div class="flex flex-col gap-1.5">
-					<label
-						class="text-gray-500 text-xs"
-						for="profile">Bot Profile</label
-					>
-					<select
-						bind:value={selectedProfile}
-						class="bg-black/30 border border-white/10 disabled:cursor-not-allowed disabled:opacity-50 focus:border-green-400 focus:outline-none px-3 py-2 rounded-lg text-gray-200 text-sm"
-						disabled={isRunning}
-						id="profile"
-					>
-						{#each Object.entries(BOT_PROFILES) as [key, profile] (key)}
-							<option value={key}>{profile.name}</option>
-						{/each}
-					</select>
+				<div class="flex flex-wrap gap-2">
+					{#each Object.entries(BOT_PROFILES) as [key, preset] (key)}
+						<button
+							class="cursor-pointer px-3 py-1.5 rounded-lg text-xs transition-colors {activityId === preset.activityId &&
+							playstyleId === preset.playstyleId &&
+							prestigeId === preset.prestigeId
+								? 'bg-cyan-500/30 text-cyan-400'
+								: 'bg-white/5 hover:bg-white/10 text-gray-400'}"
+							disabled={isRunning}
+							onclick={() => applyQuickProfile(key as keyof typeof BOT_PROFILES)}
+							type="button"
+						>
+							{key === 'afk'
+								? 'AFK'
+								: key === 'balanced'
+									? 'Balanced'
+									: 'Tryhard'}
+						</button>
+					{/each}
 				</div>
-
+				<div class="flex min-w-0 flex-col gap-4">
+					<div class="flex flex-col gap-1.5 min-w-[200px]">
+						<label class="text-gray-500 text-xs" for="activity">Activity</label>
+						<select
+							bind:value={activityId}
+							class="simulation-config-select bg-slate-800 border border-white/10 disabled:cursor-not-allowed disabled:opacity-50 focus:border-green-400 focus:outline-none px-3 py-2 rounded-lg text-gray-200 text-sm w-full"
+							disabled={isRunning}
+							id="activity"
+						>
+							{#each Object.entries(ACTIVITY_PRESETS) as [id, a] (id)}
+								<option value={id} class="text-gray-200 bg-slate-900">{a.name}</option>
+							{/each}
+						</select>
+					</div>
+					<div class="flex flex-col gap-1.5 min-w-[200px]">
+						<label class="text-gray-500 text-xs" for="playstyle">Playstyle</label>
+						<select
+							bind:value={playstyleId}
+							class="simulation-config-select bg-slate-800 border border-white/10 disabled:cursor-not-allowed disabled:opacity-50 focus:border-green-400 focus:outline-none px-3 py-2 rounded-lg text-gray-200 text-sm w-full"
+							disabled={isRunning}
+							id="playstyle"
+						>
+							{#each Object.entries(PLAYSTYLE_PRESETS) as [id, p] (id)}
+								<option value={id} class="text-gray-200 bg-slate-900">{p.name}</option>
+							{/each}
+						</select>
+					</div>
+					<div class="flex flex-col gap-1.5 min-w-[200px]">
+						<label class="text-gray-500 text-xs" for="prestige">Prestige</label>
+						<select
+							bind:value={prestigeId}
+							class="simulation-config-select bg-slate-800 border border-white/10 disabled:cursor-not-allowed disabled:opacity-50 focus:border-green-400 focus:outline-none px-3 py-2 rounded-lg text-gray-200 text-sm w-full"
+							disabled={isRunning}
+							id="prestige"
+						>
+							{#each Object.entries(PRESTIGE_PRESETS) as [id, p] (id)}
+								<option value={id} class="text-gray-200 bg-slate-900">{p.name}</option>
+							{/each}
+						</select>
+					</div>
+				</div>
 				<div class="flex flex-col gap-1.5">
-					<label
-						class="text-gray-500 text-xs"
-						for="hours">Target Duration</label
-					>
+					<label class="text-gray-500 text-xs" for="hours">Target Duration</label>
 					<div class="flex gap-2 items-center">
 						<input
 							bind:value={targetHours}

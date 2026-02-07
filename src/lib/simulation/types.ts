@@ -195,75 +195,164 @@ export const MILESTONE_CHECKS: Record<string, (s: SimulationSnapshot) => boolean
 	player_level_200: s => s.playerLevel >= 200,
 };
 
-export const BOT_PROFILES = {
+/** Activity schedule: when the bot is "active" (clicking and buying) vs idle. */
+export const ACTIVITY_PRESETS = {
+	always: {
+		id: 'always',
+		name: 'Always active',
+	},
+	afk_5: {
+		activityPattern: { activeMinutes: 5, inactiveMinutes: 55 },
+		id: 'afk_5',
+		name: 'AFK (5 min/h)',
+	},
+	afk_15: {
+		activityPattern: { activeMinutes: 15, inactiveMinutes: 45 },
+		id: 'afk_15',
+		name: 'AFK (15 min/h)',
+	},
+} as const;
+
+export type ActivityPresetId = keyof typeof ACTIVITY_PRESETS;
+
+/** How the bot plays when active: strategy, knowledge, engine resolution. */
+export const PLAYSTYLE_PRESETS = {
 	afk: {
-		botBehavior: {
-			activityPattern: { activeMinutes: 15, inactiveMinutes: 45 },
-			autoBuy: true,
-			autoBuyBuildings: true,
-			autoBuyPhotonUpgrades: false,
-			autoBuySkills: true,
-			autoBuyUpgrades: true,
-			buyStrategy: 'cheapest',
-			clicksPerSecond: 5,
-			gameKnowledge: 0.3,
-		},
-		name: 'AFK Player',
-		prestigeStrategy: {
-			autoElectronize: true,
-			autoProtonise: true,
-			electronizeThreshold: 1,
-			protoniseThreshold: 1,
-		},
+		autoBuy: true,
+		autoBuyBuildings: true,
+		autoBuyPhotonUpgrades: false,
+		autoBuySkills: true,
+		autoBuyUpgrades: true,
+		buyStrategy: 'cheapest' as const,
+		clicksPerSecond: 2,
+		gameKnowledge: 0.3,
+		id: 'afk',
+		name: 'AFK-style',
 		snapshotInterval: 300,
-		targetHours: 10,
 		tickRate: 1000,
 	},
 	balanced: {
-		botBehavior: {
-			activityPattern: { activeMinutes: 45, inactiveMinutes: 15 },
-			autoBuy: true,
-			autoBuyBuildings: true,
-			autoBuyPhotonUpgrades: true,
-			autoBuySkills: true,
-			autoBuyUpgrades: true,
-			buyStrategy: 'balanced',
-			clicksPerSecond: 3,
-			gameKnowledge: 0.6,
-		},
-		name: 'Balanced Player',
-		prestigeStrategy: {
-			autoElectronize: true,
-			autoProtonise: true,
-			electronizeThreshold: 5,
-			protoniseThreshold: 5,
-		},
+		autoBuy: true,
+		autoBuyBuildings: true,
+		autoBuyPhotonUpgrades: true,
+		autoBuySkills: true,
+		autoBuyUpgrades: true,
+		buyStrategy: 'balanced' as const,
+		clicksPerSecond: 3,
+		gameKnowledge: 0.6,
+		id: 'balanced',
+		name: 'Balanced',
 		snapshotInterval: 120,
-		targetHours: 10,
 		tickRate: 500,
 	},
 	tryhard: {
-		botBehavior: {
-			autoBuy: true,
-			autoBuyBuildings: true,
-			autoBuyPhotonUpgrades: true,
-			autoBuySkills: true,
-			autoBuyUpgrades: true,
-			buyStrategy: 'mostEfficient',
-			clicksPerSecond: 10,
-			gameKnowledge: 1.0,
-		},
-		name: 'Tryhard Player',
-		prestigeStrategy: {
-			autoElectronize: true,
-			autoProtonise: true,
-			electronizeThreshold: 10,
-			protoniseThreshold: 10,
-		},
+		autoBuy: true,
+		autoBuyBuildings: true,
+		autoBuyPhotonUpgrades: true,
+		autoBuySkills: true,
+		autoBuyUpgrades: true,
+		buyStrategy: 'mostEfficient' as const,
+		clicksPerSecond: 10,
+		gameKnowledge: 1.0,
+		id: 'tryhard',
+		name: 'Tryhard',
 		snapshotInterval: 60,
-		targetHours: 10,
 		tickRate: 250,
 	},
-} as const satisfies Record<string, BenchmarkConfig>;
+} as const;
+
+export type PlaystylePresetId = keyof typeof PLAYSTYLE_PRESETS;
+
+/** When to prestige (reset for multipliers). */
+export const PRESTIGE_PRESETS = {
+	early: {
+		autoElectronize: true,
+		autoProtonise: true,
+		electronizeThreshold: 1,
+		id: 'early',
+		name: 'Early (1x)',
+		protoniseThreshold: 1,
+	},
+	balanced: {
+		autoElectronize: true,
+		autoProtonise: true,
+		electronizeThreshold: 5,
+		id: 'balanced',
+		name: 'Balanced (5x)',
+		protoniseThreshold: 5,
+	},
+	late: {
+		autoElectronize: true,
+		autoProtonise: true,
+		electronizeThreshold: 15,
+		id: 'late',
+		name: 'Late (15x)',
+		protoniseThreshold: 15,
+	},
+	ultra: {
+		autoElectronize: true,
+		autoProtonise: true,
+		electronizeThreshold: 100,
+		id: 'ultra',
+		name: 'Ultra (100x)',
+		protoniseThreshold: 100,
+	},
+} as const;
+
+export type PrestigePresetId = keyof typeof PRESTIGE_PRESETS;
+
+export function buildBenchmarkConfig(
+	activityId: ActivityPresetId,
+	playstyleId: PlaystylePresetId,
+	prestigeId: PrestigePresetId,
+	targetHours: number,
+): BenchmarkConfig {
+	const activity = ACTIVITY_PRESETS[activityId];
+	const playstyle = PLAYSTYLE_PRESETS[playstyleId];
+	const prestige = PRESTIGE_PRESETS[prestigeId];
+	const activityPattern = 'activityPattern' in activity ? activity.activityPattern : undefined;
+	return {
+		botBehavior: {
+			...(activityPattern && { activityPattern }),
+			autoBuy: playstyle.autoBuy,
+			autoBuyBuildings: playstyle.autoBuyBuildings,
+			autoBuyPhotonUpgrades: playstyle.autoBuyPhotonUpgrades,
+			autoBuySkills: playstyle.autoBuySkills,
+			autoBuyUpgrades: playstyle.autoBuyUpgrades,
+			buyStrategy: playstyle.buyStrategy,
+			clicksPerSecond: playstyle.clicksPerSecond,
+			gameKnowledge: playstyle.gameKnowledge,
+		},
+		name: `${activity.name} · ${playstyle.name} · ${prestige.name}`,
+		prestigeStrategy: {
+			autoElectronize: prestige.autoElectronize,
+			autoProtonise: prestige.autoProtonise,
+			electronizeThreshold: prestige.electronizeThreshold,
+			protoniseThreshold: prestige.protoniseThreshold,
+		},
+		snapshotInterval: playstyle.snapshotInterval,
+		targetHours,
+		tickRate: playstyle.tickRate,
+	};
+}
+
+/** One-click presets that set activity + playstyle + prestige together (for backward compat / quick pick). */
+export const BOT_PROFILES = {
+	afk: {
+		activityId: 'afk_15' as const,
+		playstyleId: 'afk' as const,
+		prestigeId: 'early' as const,
+	},
+	balanced: {
+		activityId: 'always' as const,
+		playstyleId: 'balanced' as const,
+		prestigeId: 'balanced' as const,
+	},
+	tryhard: {
+		activityId: 'always' as const,
+		playstyleId: 'tryhard' as const,
+		prestigeId: 'late' as const,
+	},
+} as const;
 
 export type BotProfileName = keyof typeof BOT_PROFILES;
