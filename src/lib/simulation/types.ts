@@ -26,6 +26,10 @@ export interface BotBehavior {
 	clicksPerSecond: number;
 	/** Bot game knowledge 0–1 (affects optimality and hidden achievements). */
 	gameKnowledge: number;
+	/** Max buy+prestige actions per tick. undefined = no limit (Automated). */
+	maxActionsPerTick?: number;
+	/** Max protonises+electronizes per active window. undefined = no limit. */
+	maxPrestigesPerActiveWindow?: number;
 }
 
 export interface PrestigeStrategy {
@@ -215,7 +219,7 @@ export const ACTIVITY_PRESETS = {
 
 export type ActivityPresetId = keyof typeof ACTIVITY_PRESETS;
 
-/** How the bot plays when active: strategy, knowledge, engine resolution. */
+/** How the bot plays when active: strategy, knowledge, limits. Automated = no limits. */
 export const PLAYSTYLE_PRESETS = {
 	afk: {
 		autoBuy: true,
@@ -227,9 +231,27 @@ export const PLAYSTYLE_PRESETS = {
 		clicksPerSecond: 2,
 		gameKnowledge: 0.3,
 		id: 'afk',
+		maxActionsPerTick: 2,
+		maxPrestigesPerActiveWindow: 1,
 		name: 'AFK-style',
 		snapshotInterval: 300,
 		tickRate: 1000,
+	},
+	automated: {
+		autoBuy: true,
+		autoBuyBuildings: true,
+		autoBuyPhotonUpgrades: true,
+		autoBuySkills: true,
+		autoBuyUpgrades: true,
+		buyStrategy: 'mostEfficient' as const,
+		clicksPerSecond: 15,
+		gameKnowledge: 1.0,
+		id: 'automated',
+		maxActionsPerTick: undefined,
+		maxPrestigesPerActiveWindow: undefined,
+		name: 'Automated (no limits)',
+		snapshotInterval: 60,
+		tickRate: 100,
 	},
 	balanced: {
 		autoBuy: true,
@@ -241,6 +263,8 @@ export const PLAYSTYLE_PRESETS = {
 		clicksPerSecond: 3,
 		gameKnowledge: 0.6,
 		id: 'balanced',
+		maxActionsPerTick: 5,
+		maxPrestigesPerActiveWindow: 2,
 		name: 'Balanced',
 		snapshotInterval: 120,
 		tickRate: 500,
@@ -252,9 +276,11 @@ export const PLAYSTYLE_PRESETS = {
 		autoBuySkills: true,
 		autoBuyUpgrades: true,
 		buyStrategy: 'mostEfficient' as const,
-		clicksPerSecond: 10,
-		gameKnowledge: 1.0,
+		clicksPerSecond: 8,
+		gameKnowledge: 0.9,
 		id: 'tryhard',
+		maxActionsPerTick: 10,
+		maxPrestigesPerActiveWindow: 3,
 		name: 'Tryhard',
 		snapshotInterval: 60,
 		tickRate: 250,
@@ -263,7 +289,7 @@ export const PLAYSTYLE_PRESETS = {
 
 export type PlaystylePresetId = keyof typeof PLAYSTYLE_PRESETS;
 
-/** When to prestige (reset for multipliers). */
+/** When to prestige (reset for multipliers). Higher threshold = fewer prestiges, each more impactful. */
 export const PRESTIGE_PRESETS = {
 	early: {
 		autoElectronize: true,
@@ -288,6 +314,14 @@ export const PRESTIGE_PRESETS = {
 		id: 'late',
 		name: 'Late (15x)',
 		protoniseThreshold: 15,
+	},
+	patient: {
+		autoElectronize: true,
+		autoProtonise: true,
+		electronizeThreshold: 50,
+		id: 'patient',
+		name: 'Patient (50x)',
+		protoniseThreshold: 50,
 	},
 	ultra: {
 		autoElectronize: true,
@@ -322,6 +356,10 @@ export function buildBenchmarkConfig(
 			buyStrategy: playstyle.buyStrategy,
 			clicksPerSecond: playstyle.clicksPerSecond,
 			gameKnowledge: playstyle.gameKnowledge,
+			...(playstyle.maxActionsPerTick !== undefined && { maxActionsPerTick: playstyle.maxActionsPerTick }),
+			...(playstyle.maxPrestigesPerActiveWindow !== undefined && {
+				maxPrestigesPerActiveWindow: playstyle.maxPrestigesPerActiveWindow,
+			}),
 		},
 		name: `${activity.name} · ${playstyle.name} · ${prestige.name}`,
 		prestigeStrategy: {
@@ -336,12 +374,17 @@ export function buildBenchmarkConfig(
 	};
 }
 
-/** One-click presets that set activity + playstyle + prestige together (for backward compat / quick pick). */
+/** One-click presets that set activity + playstyle + prestige together. */
 export const BOT_PROFILES = {
 	afk: {
 		activityId: 'afk_15' as const,
 		playstyleId: 'afk' as const,
-		prestigeId: 'early' as const,
+		prestigeId: 'balanced' as const,
+	},
+	automated: {
+		activityId: 'always' as const,
+		playstyleId: 'automated' as const,
+		prestigeId: 'ultra' as const,
 	},
 	balanced: {
 		activityId: 'always' as const,
@@ -351,7 +394,7 @@ export const BOT_PROFILES = {
 	tryhard: {
 		activityId: 'always' as const,
 		playstyleId: 'tryhard' as const,
-		prestigeId: 'late' as const,
+		prestigeId: 'patient' as const,
 	},
 } as const;
 

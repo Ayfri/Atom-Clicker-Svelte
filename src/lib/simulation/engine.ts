@@ -49,7 +49,9 @@ export class SimulationEngine {
 	private actions: SimulationAction[] = [];
 	private config: BenchmarkConfig;
 	private hitMilestones = new Set<string>();
+	private lastWasActive = false;
 	private milestones: MilestoneHit[] = [];
+	private prestigesThisActiveWindow = 0;
 	private recentMilestones: MilestoneHit[] = [];
 	private savedState: string | null = null;
 	private snapshots: SimulationSnapshot[] = [];
@@ -73,7 +75,9 @@ export class SimulationEngine {
 		currenciesManager.hardReset();
 		this.actions = [];
 		this.hitMilestones.clear();
+		this.lastWasActive = false;
 		this.milestones = [];
+		this.prestigesThisActiveWindow = 0;
 		this.recentMilestones = [];
 		this.snapshots = [];
 
@@ -247,29 +251,47 @@ export class SimulationEngine {
 	}
 
 	private executeBotBehavior() {
+		const inActive = this.isInActiveWindow();
+		if (inActive && !this.lastWasActive) {
+			this.prestigesThisActiveWindow = 0;
+		}
+		this.lastWasActive = inActive;
+
 		const { botBehavior, prestigeStrategy } = this.config;
-		if (prestigeStrategy.autoProtonise && gameManager.protoniseProtonsGain >= prestigeStrategy.protoniseThreshold) {
+		const maxActionsPerTick = botBehavior.maxActionsPerTick;
+		const maxPrestigesPerActiveWindow = botBehavior.maxPrestigesPerActiveWindow;
+		let actionsThisTick = 0;
+
+		const canDoAction = (): boolean => maxActionsPerTick == null || actionsThisTick < maxActionsPerTick;
+		const canPrestige = (): boolean =>
+			maxPrestigesPerActiveWindow == null || this.prestigesThisActiveWindow < maxPrestigesPerActiveWindow;
+
+		if (canDoAction() && canPrestige() && prestigeStrategy.autoProtonise && gameManager.protoniseProtonsGain >= prestigeStrategy.protoniseThreshold) {
 			if (gameManager.protonise()) {
 				this.actions.push({
 					details: `+${gameManager.protoniseProtonsGain} protons`,
 					timestamp: gameManager.inGameTime,
 					type: 'protonise',
 				});
+				this.prestigesThisActiveWindow++;
+				actionsThisTick++;
 			}
 		}
 
-		if (prestigeStrategy.autoElectronize && gameManager.electronizeElectronsGain >= prestigeStrategy.electronizeThreshold) {
+		if (canDoAction() && canPrestige() && prestigeStrategy.autoElectronize && gameManager.electronizeElectronsGain >= prestigeStrategy.electronizeThreshold) {
 			if (gameManager.electronize()) {
 				this.actions.push({
 					details: `+${gameManager.electronizeElectronsGain} electrons`,
 					timestamp: gameManager.inGameTime,
 					type: 'electronize',
 				});
+				this.prestigesThisActiveWindow++;
+				actionsThisTick++;
 			}
 		}
 
 		if (!botBehavior.autoBuy) return;
-		if (botBehavior.autoBuyBuildings) {
+		if (canDoAction() && botBehavior.autoBuyBuildings) {
 			const building = this.selectBuilding();
 			if (building) {
 				const maxAffordable = gameManager.getMaxAffordableBuilding(building);
@@ -280,10 +302,11 @@ export class SimulationEngine {
 						timestamp: gameManager.inGameTime,
 						type: 'building',
 					});
+					actionsThisTick++;
 				}
 			}
 		}
-		if (botBehavior.autoBuyUpgrades) {
+		if (canDoAction() && botBehavior.autoBuyUpgrades) {
 			const affordableUpgrade = this.getAffordableUpgrade();
 			if (affordableUpgrade) {
 				gameManager.purchaseUpgrade(affordableUpgrade);
@@ -292,9 +315,10 @@ export class SimulationEngine {
 					timestamp: gameManager.inGameTime,
 					type: 'upgrade',
 				});
+				actionsThisTick++;
 			}
 		}
-		if (botBehavior.autoBuySkills) {
+		if (canDoAction() && botBehavior.autoBuySkills) {
 			const affordableSkill = this.getAffordableSkill();
 			if (affordableSkill) {
 				gameManager.purchaseSkill(affordableSkill);
@@ -303,9 +327,10 @@ export class SimulationEngine {
 					timestamp: gameManager.inGameTime,
 					type: 'skill',
 				});
+				actionsThisTick++;
 			}
 		}
-		if (botBehavior.autoBuyPhotonUpgrades) {
+		if (canDoAction() && botBehavior.autoBuyPhotonUpgrades) {
 			const affordablePhotonUpgrade = this.getAffordablePhotonUpgrade();
 			if (affordablePhotonUpgrade) {
 				gameManager.purchasePhotonUpgrade(affordablePhotonUpgrade);
@@ -314,9 +339,10 @@ export class SimulationEngine {
 					timestamp: gameManager.inGameTime,
 					type: 'photon_upgrade',
 				});
+				actionsThisTick++;
 			}
 		}
-		if (gameManager.skillPointsAvailable > 0) {
+		if (canDoAction() && gameManager.skillPointsAvailable > 0) {
 			const boostPriority: CurrencyName[] = [
 				CurrenciesTypes.ATOMS,
 				CurrenciesTypes.PROTONS,
@@ -325,8 +351,9 @@ export class SimulationEngine {
 			];
 
 			for (const currency of boostPriority) {
-				if (gameManager.skillPointsAvailable > 0) {
+				if (gameManager.skillPointsAvailable > 0 && canDoAction()) {
 					gameManager.addCurrencyBoost(currency);
+					actionsThisTick++;
 				}
 			}
 		}
