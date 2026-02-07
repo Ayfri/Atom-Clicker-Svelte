@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { clearAllToasts, toastStore } from '$stores/toasts';
+	import { toastStore, type ToastStyle, type ToastType } from '$stores/toasts.svelte';
 	import { AlertCircle, AlertTriangle, CheckCircle, Info, Trash2 } from 'lucide-svelte';
 	import { fade } from 'svelte/transition';
 	import Toast from './Toast.svelte';
@@ -33,7 +33,7 @@
 			progressBarColor: 'bg-yellow-500',
 			title: 'text-yellow-500',
 		},
-	} as const;
+	} as const satisfies Record<ToastType, ToastStyle>;
 </script>
 
 <div
@@ -49,7 +49,7 @@
 	{#if toastStore.list.length > 1}
 		<button
 			class="flex w-fit items-center self-end gap-2 rounded-lg bg-red-900/70 p-2 text-white transition-all duration-300 hover:bg-red-800/70"
-			onclick={clearAllToasts}
+			onclick={toastStore.clearAll}
 			title="Clear All"
 			transition:fade={{ duration: 400 }}
 		>

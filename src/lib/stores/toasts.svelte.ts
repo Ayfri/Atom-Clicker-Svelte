@@ -11,10 +11,16 @@ export const toastIcons = {
 } as const;
 
 export type ToastIconName = keyof typeof toastIcons;
-
 export type ToastIcon = Component | typeof Icon | ToastIconName | keyof typeof icons;
-
 export type ToastType = 'error' | 'info' | 'success' | 'warning';
+
+export interface ToastStyle {
+	border: string;
+	icon: Component | typeof Icon;
+	iconColor: string;
+	progressBarColor: string;
+	title: string;
+}
 
 export interface Toast {
 	action?: () => void;
@@ -28,15 +34,9 @@ export interface Toast {
 	type: ToastType;
 }
 
-export interface ToastOptions {
-	action?: () => void;
-	actionLabel?: string;
+export type ToastOptions = Omit<Toast, 'id' | 'duration' | 'type'> & {
 	duration?: number;
-	icon?: ToastIcon;
-	is_infinite?: boolean;
-	message: string;
-	title: string;
-}
+};
 
 class ToastStore {
 	list = $state<Toast[]>([]);
@@ -77,16 +77,6 @@ class ToastStore {
 }
 
 export const toastStore = new ToastStore();
-
-export const {
-	add: addToast,
-	clearAll: clearAllToasts,
-	error,
-	info,
-	remove: removeToast,
-	success,
-	warning,
-} = toastStore;
 
 export function getToastIcon(toast: Toast, fallbackIcon?: any) {
 	if (typeof toast.icon === 'string') {

@@ -4,7 +4,7 @@ import { CurrenciesTypes, type CurrencyName } from '$data/currencies';
 import { FeatureTypes } from '$data/features';
 import { ALL_PHOTON_UPGRADES, getPhotonUpgradeCost } from '$data/photonUpgrades';
 import { POWER_UP_DEFAULT_INTERVAL } from '$data/powerUp';
-import { REALMS, RealmTypes, type RealmType } from '$data/realms';
+import { REALMS, RealmTypes } from '$data/realms';
 import { SKILL_UPGRADES } from '$data/skillTree';
 import { UPGRADES } from '$data/upgrades';
 import { BUILDING_COST_MULTIPLIER, ELECTRONS_PROTONS_REQUIRED, PROTONS_ATOMS_REQUIRED } from '$lib/constants';
@@ -31,7 +31,7 @@ import { SAVE_KEY, SAVE_VERSION, loadSavedState } from '$helpers/saves';
 import { LAYERS, type LayerType, statsConfig } from '$helpers/statConstants';
 import { leaderboard } from '$stores/leaderboard.svelte';
 import { saveRecovery } from '$stores/saveRecovery';
-import { info } from '$stores/toasts';
+import { toastStore } from '$stores/toasts.svelte';
 
 export class GameManager {
 	// State
@@ -49,7 +49,7 @@ export class GameManager {
 	photonUpgrades = $state<Record<string, number>>({});
 	powerUpsCollected = $state(0);
 	radiationUpgrades = $state<Record<string, number>>({});
-	realms = $state<Record<RealmType, RealmState>>({
+	realms = $state<Record<string, RealmState>>({
 		[RealmTypes.ATOMS]: { unlocked: true },
 		[RealmTypes.PHOTONS]: { unlocked: false },
 		[RealmTypes.RADIATION]: { unlocked: false },
@@ -713,9 +713,9 @@ export class GameManager {
 	checkRealmUnlocks() {
 		const state = this.getCurrentState();
 		Object.values(REALMS).forEach(realmDef => {
-			if (!this.realms[realmDef.id].unlocked && realmDef.condition(state)) {
-				this.realms[realmDef.id].unlocked = true;
-				info({ title: 'Realm Unlocked', message: `${realmDef.id} Realm is now available!`, icon: 'Globe' });
+			const realmState = this.realms[realmDef.id];
+			if (realmState && !realmState.unlocked && realmDef.condition(state)) {
+				realmState.unlocked = true;
 			}
 		});
 	}
@@ -838,7 +838,7 @@ export class GameManager {
 			this.achievements = [...this.achievements, achievementId];
 			const achievement = ACHIEVEMENTS[achievementId];
 			if (achievement) {
-				info({
+				toastStore.info({
 					title: 'Achievement unlocked',
 					message: `${achievement.name}\n${achievement.description}`,
 					duration: 10000,

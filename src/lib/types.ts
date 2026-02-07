@@ -3,7 +3,7 @@ import type { CurrencyName } from '$data/currencies';
 import type { RealmType } from '$data/realms';
 import type { GameManager } from '$helpers/GameManager.svelte';
 import type { LayerType } from '$helpers/statConstants';
-import type { ToastIcon } from '$stores/toasts';
+import type { ToastIcon } from '$stores/toasts.svelte';
 
 export interface Achievement {
 	condition: (manager: GameManager) => boolean;

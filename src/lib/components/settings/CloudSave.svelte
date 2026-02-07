@@ -8,7 +8,7 @@
 	import { formatDuration } from '$lib/utils';
 	import { autoSave } from '$stores/autoSave.svelte';
 	import { supabaseAuth } from '$stores/supabaseAuth.svelte';
-	import { error as errorToast, info } from '$stores/toasts';
+	import { toastStore } from '$stores/toasts.svelte';
 	import { AlertCircle, AlertTriangle, Clock, CloudDownload, CloudUpload, RotateCcw } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 
@@ -134,7 +134,7 @@
 
 		if (cooldownProgress < 1) {
 			const remainingTime = Math.ceil((SAVE_COOLDOWN * (1 - cooldownProgress)) / 1000);
-			info({ title: 'Wait', message: `Please wait ${remainingTime} seconds before saving again` });
+			toastStore.info({ title: 'Wait', message: `Please wait ${remainingTime} seconds before saving again` });
 			return;
 		}
 
@@ -144,11 +144,11 @@
 		try {
 			await supabaseAuth.saveGameToCloud(gameManager.getCurrentState());
 			await refreshCloudSaveInfo();
-			info({ title: 'Success', message: 'Game saved to cloud' });
+			toastStore.info({ title: 'Success', message: 'Game saved to cloud' });
 			startCooldown();
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to save game to cloud';
-			errorToast({ title: 'Error', message: error });
+			toastStore.error({ title: 'Error', message: error });
 		} finally {
 			loading = false;
 		}
@@ -167,15 +167,15 @@
 			const loadedState = await supabaseAuth.loadGameFromCloud();
 			if (loadedState) {
 				gameManager.loadSaveData(loadedState);
-				info({ title: 'Success', message: 'Game loaded from cloud' });
+				toastStore.info({ title: 'Success', message: 'Game loaded from cloud' });
 				onClose();
 			} else {
 				error = 'No saved game found in cloud';
-				errorToast({ title: 'Error', message: error });
+				toastStore.error({ title: 'Error', message: error });
 			}
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load game from cloud';
-			errorToast({ title: 'Error', message: error });
+			toastStore.error({ title: 'Error', message: error });
 		} finally {
 			loading = false;
 		}

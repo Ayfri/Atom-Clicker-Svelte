@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getToastIcon, removeToast, type Toast as ToastStore } from '$stores/toasts';
+	import { getToastIcon, toastStore, type Toast, type ToastStyle } from '$stores/toasts.svelte';
 	import { X } from 'lucide-svelte';
 	import { linear } from 'svelte/easing';
 	import { Tween } from 'svelte/motion';
@@ -7,8 +7,8 @@
 	import { fly } from 'svelte/transition';
 
 	interface Props {
-		config: any;
-		toast: ToastStore;
+		config: ToastStyle;
+		toast: Toast;
 	}
 
 	let { config, toast }: Props = $props();
@@ -51,7 +51,7 @@
 					class="mt-3 inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 font-semibold px-3 py-1.5 text-white/90 text-xs transition-colors hover:bg-white/10"
 					onclick={() => {
 						toast.action?.();
-						removeToast(toast.id);
+						toastStore.remove(toast.id);
 					}}
 				>
 					{toast.actionLabel}
@@ -62,7 +62,7 @@
 		<!-- Close Button -->
 		<button
 			class="absolute right-3 top-3 flex size-7 shrink-0 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-white/10 hover:text-white"
-			onclick={() => removeToast(toast.id)}
+			onclick={() => toastStore.remove(toast.id)}
 		>
 			<X size={16} />
 		</button>

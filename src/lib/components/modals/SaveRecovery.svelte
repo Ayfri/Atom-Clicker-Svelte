@@ -4,7 +4,7 @@
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { saveRecovery } from '$stores/saveRecovery';
 	import { supabaseAuth } from '$stores/supabaseAuth.svelte';
-	import { error as errorToast, info, success } from '$stores/toasts';
+	import { toastStore } from '$stores/toasts.svelte';
 	import { AlertTriangle, CloudDownload, Database, RefreshCw, Trash2, Trophy, X } from 'lucide-svelte';
 
 	interface Props {
@@ -36,14 +36,14 @@
 			const loadedState = await supabaseAuth.loadGameFromCloud();
 			if (loadedState) {
 				gameManager.loadSaveData(loadedState);
-				success({ title: 'Recovery Successful', message: 'Your game has been loaded from the cloud save.' });
+				toastStore.success({ title: 'Recovery Successful', message: 'Your game has been loaded from the cloud save.' });
 				saveRecovery.clearError();
 				onClose();
 			} else {
-				errorToast({ title: 'No Cloud Save', message: 'No cloud save was found for your account.' });
+				toastStore.error({ title: 'No Cloud Save', message: 'No cloud save was found for your account.' });
 			}
 		} catch (e) {
-			errorToast({ title: 'Error', message: e instanceof Error ? e.message : 'Failed to load from cloud' });
+			toastStore.error({ title: 'Error', message: e instanceof Error ? e.message : 'Failed to load from cloud' });
 		} finally {
 			loading = false;
 		}
@@ -54,7 +54,7 @@
 		saveRecovery.cleanOldBackups();
 		// Reset game state
 		gameManager.reset();
-		info({
+		toastStore.info({
 			title: 'New Game',
 			message: 'A new game has been started. Your corrupted save has been backed up.',
 			duration: 5000,

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Modal from '@components/ui/Modal.svelte';
 	import { gameManager } from '$helpers/GameManager.svelte';
-	import { info } from '$stores/toasts';
+	import { toastStore } from '$stores/toasts.svelte';
 	import { Trash2, Trophy, X } from 'lucide-svelte';
 
 	interface Props {
@@ -22,6 +22,10 @@
 
 	function handleReset() {
 		gameManager.reset();
+		toastStore.info({
+			title: 'Game Reset',
+			message: 'Your progress has been completely wiped.'
+		});
 		onClose();
 	}
 </script>

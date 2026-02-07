@@ -10,7 +10,7 @@
 	import { remoteMessage } from '$stores/remoteMessage.svelte';
 	import { saveRecovery } from '$stores/saveRecovery';
 	import { supabaseAuth } from '$stores/supabaseAuth.svelte';
-	import { warning } from '$stores/toasts';
+	import { toastStore } from '$stores/toasts.svelte';
 	import { ui } from '$stores/ui.svelte';
 	import { mobile } from '$stores/window.svelte';
 	import Levels from '@components/game/Levels.svelte';
@@ -58,7 +58,7 @@
 
 			const localGameTime = gameManager.inGameTime || 0;
 			if (cloudSaveInfo.inGameTime > localGameTime + CLOUD_PULL_WARNING_THRESHOLD_MS) {
-				warning({
+				toastStore.warning({
 					action: () => ui.openSettings('cloud'),
 					actionLabel: 'Open Cloud Save',
 					title: 'Cloud Save Available',
