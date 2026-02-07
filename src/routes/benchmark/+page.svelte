@@ -4,6 +4,7 @@
 		buildBenchmarkConfig,
 		configToPresets,
 		type ActivityPresetId,
+		type BenchmarkConfig,
 		type MilestoneHit,
 		type PlaystylePresetId,
 		type PrestigePresetId,
@@ -184,7 +185,16 @@
 	}
 
 	function stopSimulation() {
-		worker?.postMessage({ type: 'stop' });
+		if (!worker) return;
+		const durationMs = Date.now() - startTime;
+		result = {
+			cancelled: true,
+			config: currentConfig,
+			durationMs,
+			milestones: liveMilestones,
+			snapshots: progress?.snapshots ?? [],
+		};
+		terminateWorker();
 	}
 </script>
 
