@@ -40,12 +40,13 @@
 	let lastSavedId = $state<string | null>(null);
 
 	function reportToDisplayResult(report: BenchmarkReport): SimulationResult & { milestoneCount: number } {
+		const milestones = report.milestones ?? [];
 		return {
 			cancelled: !report.wasCompleted,
 			config: report.config,
 			durationMs: report.durationMs,
-			milestoneCount: report.milestoneCount,
-			milestones: [],
+			milestoneCount: milestones.length || report.milestoneCount,
+			milestones,
 			snapshots: report.snapshots,
 		};
 	}

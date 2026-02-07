@@ -17,11 +17,13 @@
 
 	// --- Primary Series ---
 
-	const atomsChartSeries = $derived.by<ChartSeries[]>(() => {
+	const allCurrenciesChartSeries = $derived.by<ChartSeries[]>(() => {
 		if (currentSnapshots.length === 0) return [];
 		return [
-			{ color: '#4ade80', data: currentSnapshots.map(s => s.atoms), fillOpacity: 0.3, label: 'Atoms' },
-			{ color: '#60a5fa', data: currentSnapshots.map(s => s.protons), fillOpacity: 0.2, label: 'Protons' },
+			{ color: '#4ade80', data: currentSnapshots.map(s => s.atoms), fillOpacity: 0.1, label: 'Atoms' },
+			{ color: '#fbbf24', data: currentSnapshots.map(s => s.protons), fillOpacity: 0.1, label: 'Protons' },
+			{ color: '#60a5fa', data: currentSnapshots.map(s => s.electrons), fillOpacity: 0.1, label: 'Electrons' },
+			{ color: '#c084fc', data: currentSnapshots.map(s => s.photons), fillOpacity: 0.1, label: 'Photons' },
 		];
 	});
 
@@ -63,30 +65,15 @@
 		];
 	});
 
-	const allCurrenciesChartSeries = $derived.by<ChartSeries[]>(() => {
+	const prestigeChartSeries = $derived.by<ChartSeries[]>(() => {
 		if (currentSnapshots.length === 0) return [];
 		return [
-			{ color: '#4ade80', data: currentSnapshots.map(s => s.atoms), fillOpacity: 0.1, label: 'Atoms' },
-			{ color: '#fbbf24', data: currentSnapshots.map(s => s.protons), fillOpacity: 0.1, label: 'Protons' },
-			{ color: '#60a5fa', data: currentSnapshots.map(s => s.electrons), fillOpacity: 0.1, label: 'Electrons' },
-			{ color: '#c084fc', data: currentSnapshots.map(s => s.photons), fillOpacity: 0.1, label: 'Photons' },
+			{ color: '#f59e0b', data: currentSnapshots.map(s => s.protonises), fillOpacity: 0.2, label: 'Protonises' },
+			{ color: '#06b6d4', data: currentSnapshots.map(s => s.electronizes), fillOpacity: 0.2, label: 'Electronizes' },
 		];
 	});
 
 	// --- Comparison Series ---
-
-	const atomsComparisonSeries = $derived.by<ChartSeries[]>(() => {
-		if (!hasComparison) return [];
-		return [
-			{ color: '#4ade80', data: comparisonSnapshots.map(s => s.atoms), label: 'Atoms (comparison)' },
-			{ color: '#60a5fa', data: comparisonSnapshots.map(s => s.protons), label: 'Protons (comparison)' },
-		];
-	});
-
-	const apsComparisonSeries = $derived.by<ChartSeries[]>(() => {
-		if (!hasComparison) return [];
-		return [{ color: '#f472b6', data: comparisonSnapshots.map(s => s.atomsPerSecond), label: 'APS (comparison)' }];
-	});
 
 	const currenciesComparisonSeries = $derived.by<ChartSeries[]>(() => {
 		if (!hasComparison) return [];
@@ -97,25 +84,38 @@
 			{ color: '#c084fc', data: comparisonSnapshots.map(s => s.photons), label: 'Photons (comparison)' },
 		];
 	});
+
+	const prestigeComparisonSeries = $derived.by<ChartSeries[]>(() => {
+		if (!hasComparison) return [];
+		return [
+			{ color: '#f59e0b', data: comparisonSnapshots.map(s => s.protonises), label: 'Protonises (comparison)' },
+			{ color: '#06b6d4', data: comparisonSnapshots.map(s => s.electronizes), label: 'Electronizes (comparison)' },
+		];
+	});
+
+	const apsComparisonSeries = $derived.by<ChartSeries[]>(() => {
+		if (!hasComparison) return [];
+		return [{ color: '#f472b6', data: comparisonSnapshots.map(s => s.atomsPerSecond), label: 'APS (comparison)' }];
+	});
 </script>
 
 <section class="flex flex-col gap-6">
-	<!-- Atoms Chart -->
+	<!-- All Currencies Chart -->
 	<div class="backdrop-blur-xl bg-white/5 border border-white/10 flex items-center justify-center min-h-[360px] p-6 rounded-2xl">
 		{#if hasComparison}
 			<ComparisonChart
-				comparisonSeries={atomsComparisonSeries}
+				comparisonSeries={currenciesComparisonSeries}
 				comparisonTitle={comparisonName?.slice(0, 20) ?? 'Comparison'}
-				primarySeries={atomsChartSeries}
+				primarySeries={allCurrenciesChartSeries}
 				primaryTitle="Current"
-				title="Atoms & Protons (Log Scale)"
+				title="All Currencies (Log Scale)"
 				totalHours={simulationDurationHours}
 				useLog={true}
 			/>
 		{:else}
 			<BaseChart
-				series={atomsChartSeries}
-				title="Atoms & Protons (Log Scale)"
+				series={allCurrenciesChartSeries}
+				title="All Currencies (Log Scale)"
 				totalHours={simulationDurationHours}
 				useLog={true}
 			/>
@@ -174,24 +174,22 @@
 		/>
 	</div>
 
-	<!-- All Currencies Chart -->
-	<div class="backdrop-blur-xl bg-white/5 border border-white/10 flex items-center justify-center min-h-[360px] p-6 rounded-2xl">
+	<!-- Protonises & Electronizes Chart -->
+	<div class="backdrop-blur-xl bg-white/5 border border-white/10 flex items-center justify-center min-h-[340px] p-6 rounded-2xl">
 		{#if hasComparison}
 			<ComparisonChart
-				comparisonSeries={currenciesComparisonSeries}
+				comparisonSeries={prestigeComparisonSeries}
 				comparisonTitle={comparisonName?.slice(0, 20) ?? 'Comparison'}
-				primarySeries={allCurrenciesChartSeries}
+				primarySeries={prestigeChartSeries}
 				primaryTitle="Current"
-				title="All Currencies (Log Scale)"
+				title="Protonises & Electronizes"
 				totalHours={simulationDurationHours}
-				useLog={true}
 			/>
 		{:else}
 			<BaseChart
-				series={allCurrenciesChartSeries}
-				title="All Currencies (Log Scale)"
+				series={prestigeChartSeries}
+				title="Protonises & Electronizes"
 				totalHours={simulationDurationHours}
-				useLog={true}
 			/>
 		{/if}
 	</div>
