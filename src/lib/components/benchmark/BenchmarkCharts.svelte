@@ -1,280 +1,176 @@
 <script lang="ts">
 	import APSBreakdownChart from '$lib/components/benchmark/APSBreakdownChart.svelte';
-	import BaseChart, { type ChartSeries } from '$lib/components/benchmark/BaseChart.svelte';
-	import ComparisonChart from '$lib/components/benchmark/ComparisonChart.svelte';
+	import Chart from '$lib/components/benchmark/Chart.svelte';
+	import type { ChartSeries } from '$lib/components/benchmark/BaseChart.svelte';
 	import type { SimulationSnapshot } from '$lib/simulation/types';
 
+	interface SeriesDef {
+		color: string;
+		fillOpacity?: number;
+		getValue: (s: SimulationSnapshot, intervalMin: number) => number;
+		label: string;
+	}
+
+	interface ChartDef {
+		height?: number;
+		series: SeriesDef[];
+		title: string;
+		useLog?: boolean;
+		yAxisSuffix?: string;
+	}
+
+	const CHART_DEFS: ChartDef[] = [
+		{
+			height: 360,
+			series: [
+				{ color: '#4ade80', fillOpacity: 0.1, getValue: s => s.atoms, label: 'Atoms' },
+				{ color: '#fbbf24', fillOpacity: 0.1, getValue: s => s.protons, label: 'Protons' },
+				{ color: '#60a5fa', fillOpacity: 0.1, getValue: s => s.electrons, label: 'Electrons' },
+				{ color: '#c084fc', fillOpacity: 0.1, getValue: s => s.photons, label: 'Photons' },
+			],
+			title: 'All Currencies (Log Scale)',
+			useLog: true,
+		},
+		{
+			height: 360,
+			series: [
+				{ color: '#f472b6', fillOpacity: 0.3, getValue: s => s.atomsPerSecond, label: 'APS' },
+				{ color: '#38bdf8', fillOpacity: 0.1, getValue: s => s.atomsPerClick, label: 'APC' },
+			],
+			title: 'Atoms Per Second & Per Click (Log Scale)',
+			useLog: true,
+		},
+		{
+			series: [
+				{ color: '#facc15', fillOpacity: 0.08, getValue: s => s.globalMultiplier, label: 'Global' },
+				{ color: '#f87171', fillOpacity: 0.08, getValue: s => s.baseGlobalMultiplier, label: 'Upgrades Only' },
+				{ color: '#fb923c', fillOpacity: 0.08, getValue: s => s.radiationMultiplier, label: 'Radiation' },
+				{ color: '#34d399', fillOpacity: 0.08, getValue: s => s.stabilityMultiplier, label: 'Stability' },
+				{ color: '#c084fc', fillOpacity: 0.08, getValue: s => s.bonusMultiplier, label: 'Power-Up' },
+				{ color: '#38bdf8', fillOpacity: 0.08, getValue: s => s.atomsCurrencyBoost, label: 'Atoms Boost' },
+			],
+			title: 'Multipliers Stack (Log Scale)',
+			useLog: true,
+		},
+		{
+			series: [
+				{ color: '#4ade80', fillOpacity: 0.05, getValue: s => s.buildings.molecule ?? 0, label: 'Molecule' },
+				{ color: '#60a5fa', fillOpacity: 0.05, getValue: s => s.buildings.crystal ?? 0, label: 'Crystal' },
+				{ color: '#f472b6', fillOpacity: 0.05, getValue: s => s.buildings.nanostructure ?? 0, label: 'Nanostructure' },
+				{ color: '#a78bfa', fillOpacity: 0.05, getValue: s => s.buildings.microorganism ?? 0, label: 'Microorganism' },
+				{ color: '#fb923c', fillOpacity: 0.05, getValue: s => s.buildings.rock ?? 0, label: 'Rock' },
+				{ color: '#34d399', fillOpacity: 0.05, getValue: s => s.buildings.planet ?? 0, label: 'Planet' },
+				{ color: '#fbbf24', fillOpacity: 0.05, getValue: s => s.buildings.star ?? 0, label: 'Star' },
+				{ color: '#38bdf8', fillOpacity: 0.05, getValue: s => s.buildings.neutronStar ?? 0, label: 'Neutron Star' },
+				{ color: '#e879f9', fillOpacity: 0.05, getValue: s => s.buildings.blackHole ?? 0, label: 'Black Hole' },
+			],
+			title: 'Building Counts per Type (Log Scale)',
+			useLog: true,
+		},
+		{
+			series: [
+				{ color: '#fbbf24', fillOpacity: 0, getValue: s => s.achievements, label: 'Achievements' },
+				{ color: '#a78bfa', fillOpacity: 0, getValue: s => s.upgrades, label: 'Upgrades Owned' },
+				{ color: '#6366f1', fillOpacity: 0, getValue: s => s.totalUpgrades, label: 'Upgrades All-Time' },
+				{ color: '#34d399', fillOpacity: 0, getValue: s => s.skillPointsUsed, label: 'Currency Boosts' },
+				{ color: '#818cf8', fillOpacity: 0, getValue: s => s.skills, label: 'Skills' },
+			],
+			title: 'Progression (Achievements, Upgrades, Boosts, Skills)',
+		},
+		{
+			series: [
+				{ color: '#f59e0b', fillOpacity: 0.2, getValue: s => s.playerLevel, label: 'Player Level' },
+				{ color: '#10b981', fillOpacity: 0.1, getValue: s => s.buildingLevels, label: 'Currency Boost Points' },
+				{ color: '#f472b6', fillOpacity: 0.1, getValue: s => s.photonUpgradeLevels, label: 'Photon Upgrades' },
+			],
+			title: 'Levels',
+		},
+		{
+			series: [
+				{ color: '#f59e0b', fillOpacity: 0.15, getValue: s => s.totalXP, label: 'Total XP' },
+				{ color: '#60a5fa', fillOpacity: 0.1, getValue: s => s.clicks, label: 'Total Clicks' },
+				{ color: '#4ade80', fillOpacity: 0.1, getValue: s => s.totalBuildings, label: 'Total Buildings' },
+				{ color: '#c084fc', fillOpacity: 0.1, getValue: s => s.buildingsPurchased, label: 'Buildings All-Time' },
+			],
+			title: 'Activity (XP, Clicks, Buildings, Log Scale)',
+			useLog: true,
+		},
+		{
+			series: [
+				{ color: '#f87171', fillOpacity: 0.4, getValue: (s, iMin) => s.actions.length / iMin, label: 'Actions / min' },
+			],
+			title: 'Game Pace (Actions per Minute)',
+			yAxisSuffix: '/m',
+		},
+		{
+			series: [
+				{ color: '#f59e0b', fillOpacity: 0.2, getValue: s => s.protonises, label: 'Protonizes' },
+				{ color: '#06b6d4', fillOpacity: 0.2, getValue: s => s.electronizes, label: 'Electronizes' },
+			],
+			title: 'Protonises & Electronizes',
+		},
+	];
+
 	interface Props {
-		currentSnapshots: SimulationSnapshot[];
-		comparisonSnapshots: SimulationSnapshot[];
-		hasComparison: boolean;
 		comparisonName?: string;
+		comparisonSnapshots: SimulationSnapshot[];
+		currentSnapshots: SimulationSnapshot[];
+		hasComparison: boolean;
 		simulationDurationHours: number;
 		snapshotInterval: number;
 	}
 
-	let { currentSnapshots, comparisonSnapshots, hasComparison, comparisonName, simulationDurationHours, snapshotInterval }: Props =
+	let { comparisonName, comparisonSnapshots, currentSnapshots, hasComparison, simulationDurationHours, snapshotInterval }: Props =
 		$props();
 
-	const comparisonDurationHours = $derived.by(() => {
-		if (comparisonSnapshots.length === 0) return 0;
-		return comparisonSnapshots[comparisonSnapshots.length - 1].timestamp / 3_600_000;
-	});
+	const comparisonDurationHours = $derived(
+		comparisonSnapshots.length > 0 ? comparisonSnapshots[comparisonSnapshots.length - 1].timestamp / 3_600_000 : 0,
+	);
 
-	// --- Primary Series ---
+	const primaryIntervalMin = $derived(snapshotInterval / 60);
+	const cmpIntervalMin = $derived(
+		comparisonSnapshots.length > 1 ? (comparisonSnapshots[1].timestamp - comparisonSnapshots[0].timestamp) / 60_000 : primaryIntervalMin,
+	);
 
-	const allCurrenciesChartSeries = $derived.by<ChartSeries[]>(() => {
-		if (currentSnapshots.length === 0) return [];
-		return [
-			{ color: '#4ade80', data: currentSnapshots.map(s => s.atoms), fillOpacity: 0.1, label: 'Atoms' },
-			{ color: '#fbbf24', data: currentSnapshots.map(s => s.protons), fillOpacity: 0.1, label: 'Protons' },
-			{ color: '#60a5fa', data: currentSnapshots.map(s => s.electrons), fillOpacity: 0.1, label: 'Electrons' },
-			{ color: '#c084fc', data: currentSnapshots.map(s => s.photons), fillOpacity: 0.1, label: 'Photons' },
-		];
-	});
+	function buildSeries(defs: SeriesDef[], snapshots: SimulationSnapshot[], intervalMin: number): ChartSeries[] {
+		if (snapshots.length === 0) return [];
+		return defs.map(d => ({
+			color: d.color,
+			data: snapshots.map(s => d.getValue(s, intervalMin)),
+			fillOpacity: d.fillOpacity,
+			label: d.label,
+		}));
+	}
 
-	const apsChartSeries = $derived.by<ChartSeries[]>(() => {
-		if (currentSnapshots.length === 0) return [];
-		return [
-			{ color: '#f472b6', data: currentSnapshots.map(s => s.atomsPerSecond), fillOpacity: 0.3, label: 'APS' },
-			{ color: '#38bdf8', data: currentSnapshots.map(s => s.atomsPerClick), fillOpacity: 0.1, label: 'APC' },
-		];
-	});
-
-	const progressionChartSeries = $derived.by<ChartSeries[]>(() => {
-		if (currentSnapshots.length === 0) return [];
-		return [
-			{ color: '#fbbf24', data: currentSnapshots.map(s => s.achievements), fillOpacity: 0, label: 'Achievements' },
-			{ color: '#a78bfa', data: currentSnapshots.map(s => s.upgrades), fillOpacity: 0, label: 'Upgrades' },
-			{ color: '#34d399', data: currentSnapshots.map(s => s.skillPointsUsed), fillOpacity: 0, label: 'Currency Boosts' },
-			{ color: '#818cf8', data: currentSnapshots.map(s => s.skills), fillOpacity: 0, label: 'Skills' },
-		];
-	});
-
-	const actionDensityChartSeries = $derived.by<ChartSeries[]>(() => {
-		if (currentSnapshots.length === 0) return [];
-		const intervalMinutes = snapshotInterval / 60;
-		const data = currentSnapshots.map(s => s.actions.length / intervalMinutes);
-		return [
-			{
-				color: '#f87171',
-				data,
-				fillOpacity: 0.4,
-				label: 'Actions / min',
-			},
-		];
-	});
-
-	const levelChartSeries = $derived.by<ChartSeries[]>(() => {
-		if (currentSnapshots.length === 0) return [];
-		return [
-			{ color: '#f59e0b', data: currentSnapshots.map(s => s.playerLevel), fillOpacity: 0.2, label: 'Player Level' },
-			{ color: '#10b981', data: currentSnapshots.map(s => s.buildingLevels), fillOpacity: 0.1, label: 'Currency Boost Points' },
-			{ color: '#f472b6', data: currentSnapshots.map(s => s.photonUpgradeLevels), fillOpacity: 0.1, label: 'Photon Upgrades' },
-		];
-	});
-
-	const prestigeChartSeries = $derived.by<ChartSeries[]>(() => {
-		if (currentSnapshots.length === 0) return [];
-		return [
-			{ color: '#f59e0b', data: currentSnapshots.map(s => s.protonises), fillOpacity: 0.2, label: 'Protonizes' },
-			{ color: '#06b6d4', data: currentSnapshots.map(s => s.electronizes), fillOpacity: 0.2, label: 'Electronizes' },
-		];
-	});
-
-	// --- Comparison Series ---
-
-	const currenciesComparisonSeries = $derived.by<ChartSeries[]>(() => {
-		if (!hasComparison) return [];
-		return [
-			{ color: '#4ade80', data: comparisonSnapshots.map(s => s.atoms), label: 'Atoms (comparison)' },
-			{ color: '#fbbf24', data: comparisonSnapshots.map(s => s.protons), label: 'Protons (comparison)' },
-			{ color: '#60a5fa', data: comparisonSnapshots.map(s => s.electrons), label: 'Electrons (comparison)' },
-			{ color: '#c084fc', data: comparisonSnapshots.map(s => s.photons), label: 'Photons (comparison)' },
-		];
-	});
-
-	const prestigeComparisonSeries = $derived.by<ChartSeries[]>(() => {
-		if (!hasComparison) return [];
-		return [
-			{ color: '#f59e0b', data: comparisonSnapshots.map(s => s.protonises), label: 'Protonises (comparison)' },
-			{ color: '#06b6d4', data: comparisonSnapshots.map(s => s.electronizes), label: 'Electronizes (comparison)' },
-		];
-	});
-
-	const apsComparisonSeries = $derived.by<ChartSeries[]>(() => {
-		if (!hasComparison) return [];
-		return [
-			{ color: '#f472b6', data: comparisonSnapshots.map(s => s.atomsPerSecond), label: 'APS (comparison)' },
-			{ color: '#38bdf8', data: comparisonSnapshots.map(s => s.atomsPerClick ?? 0), label: 'APC (comparison)' },
-		];
-	});
-
-	const progressionComparisonSeries = $derived.by<ChartSeries[]>(() => {
-		if (!hasComparison) return [];
-		return [
-			{ color: '#fbbf24', data: comparisonSnapshots.map(s => s.achievements), fillOpacity: 0, label: 'Achievements' },
-			{ color: '#a78bfa', data: comparisonSnapshots.map(s => s.upgrades), fillOpacity: 0, label: 'Upgrades' },
-			{ color: '#34d399', data: comparisonSnapshots.map(s => s.skillPointsUsed), fillOpacity: 0, label: 'Currency Boosts' },
-			{ color: '#818cf8', data: comparisonSnapshots.map(s => s.skills), fillOpacity: 0, label: 'Skills' },
-		];
-	});
-
-	const levelComparisonSeries = $derived.by<ChartSeries[]>(() => {
-		if (!hasComparison) return [];
-		return [
-			{ color: '#f59e0b', data: comparisonSnapshots.map(s => s.playerLevel), fillOpacity: 0.2, label: 'Player Level' },
-			{ color: '#10b981', data: comparisonSnapshots.map(s => s.buildingLevels), fillOpacity: 0.1, label: 'Currency Boost Points' },
-			{ color: '#f472b6', data: comparisonSnapshots.map(s => s.photonUpgradeLevels), fillOpacity: 0.1, label: 'Photon Upgrades' },
-		];
-	});
-
-	const actionDensityComparisonSeries = $derived.by<ChartSeries[]>(() => {
-		if (!hasComparison || comparisonSnapshots.length < 2) return [];
-		const cmpIntervalMin = (comparisonSnapshots[1].timestamp - comparisonSnapshots[0].timestamp) / 60_000;
-		return [{
-			color: '#f87171',
-			data: comparisonSnapshots.map(s => s.actions.length / cmpIntervalMin),
-			fillOpacity: 0.4,
-			label: 'Actions / min',
-		}];
-	});
+	const allChartData = $derived.by(() =>
+		CHART_DEFS.map(def => ({
+			comparison: hasComparison ? buildSeries(def.series, comparisonSnapshots, cmpIntervalMin) : [],
+			def,
+			primary: buildSeries(def.series, currentSnapshots, primaryIntervalMin),
+		})),
+	);
 </script>
 
 <section class="flex flex-col gap-6">
-	<!-- All Currencies Chart -->
-	<div class="backdrop-blur-xl bg-white/5 border border-white/10 flex items-center justify-center min-h-[360px] p-6 rounded-2xl">
-		{#if hasComparison}
-			<ComparisonChart
+	{#each allChartData as { def, primary, comparison } (def.title)}
+		<div
+			class="backdrop-blur-xl bg-white/5 border border-white/10 flex items-center justify-center p-6 rounded-2xl"
+			style="min-height: {def.height ?? 340}px"
+		>
+			<Chart
 				{comparisonDurationHours}
-				comparisonSeries={currenciesComparisonSeries}
+				comparisonSeries={comparison}
 				comparisonTitle={comparisonName?.slice(0, 20) ?? 'Comparison'}
-				primarySeries={allCurrenciesChartSeries}
-				primaryTitle="Current"
-				title="All Currencies (Log Scale)"
+				height={def.height ?? 340}
+				primarySeries={primary}
+				title={def.title}
 				totalHours={simulationDurationHours}
-				useLog={true}
+				useLog={def.useLog}
+				yAxisSuffix={def.yAxisSuffix}
 			/>
-		{:else}
-			<BaseChart
-				series={allCurrenciesChartSeries}
-				title="All Currencies (Log Scale)"
-				totalHours={simulationDurationHours}
-				useLog={true}
-			/>
-		{/if}
-	</div>
+		</div>
+	{/each}
 
-	<!-- APS Chart -->
-	<div class="backdrop-blur-xl bg-white/5 border border-white/10 flex items-center justify-center min-h-[360px] p-6 rounded-2xl">
-		{#if hasComparison}
-			<ComparisonChart
-				{comparisonDurationHours}
-				comparisonSeries={apsComparisonSeries}
-				comparisonTitle={comparisonName?.slice(0, 20) ?? 'Comparison'}
-				primarySeries={apsChartSeries}
-				primaryTitle="Current"
-				title="Atoms Per Second &amp; Per Click (Log Scale)"
-				totalHours={simulationDurationHours}
-				useLog={true}
-			/>
-		{:else}
-			<BaseChart
-				series={apsChartSeries}
-				title="Atoms Per Second &amp; Per Click (Log Scale)"
-				totalHours={simulationDurationHours}
-				useLog={true}
-			/>
-		{/if}
-	</div>
-
-	<!-- Progression Chart -->
-	<div class="backdrop-blur-xl bg-white/5 border border-white/10 flex items-center justify-center min-h-[340px] p-6 rounded-2xl">
-		{#if hasComparison}
-			<ComparisonChart
-				{comparisonDurationHours}
-				comparisonSeries={progressionComparisonSeries}
-				comparisonTitle={comparisonName?.slice(0, 20) ?? 'Comparison'}
-				primarySeries={progressionChartSeries}
-				primaryTitle="Current"
-				title="Progression (Achievements, Upgrades, Boosts, Skills)"
-				totalHours={simulationDurationHours}
-			/>
-		{:else}
-			<BaseChart
-				series={progressionChartSeries}
-				title="Progression (Achievements, Upgrades, Boosts, Skills)"
-				totalHours={simulationDurationHours}
-			/>
-		{/if}
-	</div>
-
-	<!-- Levels Chart -->
-	<div class="backdrop-blur-xl bg-white/5 border border-white/10 flex items-center justify-center min-h-[340px] p-6 rounded-2xl">
-		{#if hasComparison}
-			<ComparisonChart
-				{comparisonDurationHours}
-				comparisonSeries={levelComparisonSeries}
-				comparisonTitle={comparisonName?.slice(0, 20) ?? 'Comparison'}
-				primarySeries={levelChartSeries}
-				primaryTitle="Current"
-				title="Levels"
-				totalHours={simulationDurationHours}
-			/>
-		{:else}
-			<BaseChart
-				series={levelChartSeries}
-				title="Levels"
-				totalHours={simulationDurationHours}
-			/>
-		{/if}
-	</div>
-
-	<!-- Action Density Chart -->
-	<div class="backdrop-blur-xl bg-white/5 border border-white/10 flex items-center justify-center min-h-[340px] p-6 rounded-2xl">
-		{#if hasComparison}
-			<ComparisonChart
-				{comparisonDurationHours}
-				comparisonSeries={actionDensityComparisonSeries}
-				comparisonTitle={comparisonName?.slice(0, 20) ?? 'Comparison'}
-				primarySeries={actionDensityChartSeries}
-				primaryTitle="Current"
-				title="Game Pace (Actions per Minute)"
-				totalHours={simulationDurationHours}
-				yAxisSuffix="/m"
-			/>
-		{:else}
-			<BaseChart
-				series={actionDensityChartSeries}
-				title="Game Pace (Actions per Minute)"
-				totalHours={simulationDurationHours}
-				yAxisSuffix="/m"
-			/>
-		{/if}
-	</div>
-
-	<!-- Protonises & Electronizes Chart -->
-	<div class="backdrop-blur-xl bg-white/5 border border-white/10 flex items-center justify-center min-h-[340px] p-6 rounded-2xl">
-		{#if hasComparison}
-			<ComparisonChart
-				{comparisonDurationHours}
-				comparisonSeries={prestigeComparisonSeries}
-				comparisonTitle={comparisonName?.slice(0, 20) ?? 'Comparison'}
-				primarySeries={prestigeChartSeries}
-				primaryTitle="Current"
-				title="Protonises & Electronizes"
-				totalHours={simulationDurationHours}
-			/>
-		{:else}
-			<BaseChart
-				series={prestigeChartSeries}
-				title="Protonises & Electronizes"
-				totalHours={simulationDurationHours}
-			/>
-		{/if}
-	</div>
-
-	<!-- APS Breakdown Chart -->
 	<APSBreakdownChart
 		snapshots={currentSnapshots}
 		totalHours={simulationDurationHours}
