@@ -1,22 +1,11 @@
 import type { Component } from 'svelte';
-import * as icons from '@lucide/svelte';
-import type { Icon } from '@lucide/svelte';
 
-import Discord from '@components/icons/Discord.svelte';
-import GitHub from '@components/icons/GitHub.svelte';
-
-export const toastIcons = {
-	Discord,
-	GitHub,
-} as const;
-
-export type ToastIconName = keyof typeof toastIcons;
-export type ToastIcon = Component | typeof Icon | ToastIconName | keyof typeof icons;
+export type ToastIcon = Component | string;
 export type ToastType = 'error' | 'info' | 'success' | 'warning';
 
 export interface ToastStyle {
 	border: string;
-	icon: Component | typeof Icon;
+	icon: Component;
 	iconColor: string;
 	progressBarColor: string;
 	title: string;
@@ -78,14 +67,3 @@ class ToastStore {
 
 export const toastStore = new ToastStore();
 
-export function getToastIcon(toast: Toast, fallbackIcon?: any) {
-	if (typeof toast.icon === 'string') {
-		if (toast.icon in toastIcons) {
-			return toastIcons[toast.icon as keyof typeof toastIcons];
-		}
-		if (toast.icon in icons) {
-			return icons[toast.icon as keyof typeof icons];
-		}
-	}
-	return toast.icon || fallbackIcon;
-}

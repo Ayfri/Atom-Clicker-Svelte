@@ -1,10 +1,15 @@
 <script lang="ts">
-	import { getToastIcon, toastStore, type Toast, type ToastStyle } from '$stores/toasts.svelte';
-	import { X } from '@lucide/svelte';
+	import type { Component } from 'svelte';
+	import { toastStore, type Toast, type ToastStyle } from '$stores/toasts.svelte';
+	import { Award, Coffee, Globe, Trophy, X } from '@lucide/svelte';
+	import Discord from '@components/icons/Discord.svelte';
+	import GitHub from '@components/icons/GitHub.svelte';
 	import { linear } from 'svelte/easing';
 	import { Tween } from 'svelte/motion';
 	import { onMount } from 'svelte';
 	import { fly } from 'svelte/transition';
+
+	const namedIcons = { Award, Coffee, Discord, GitHub, Globe, Trophy } as const;
 
 	interface Props {
 		config: ToastStyle;
@@ -24,7 +29,15 @@
 		}
 	});
 
-	const IconComponent = $derived(getToastIcon(toast, config.icon));
+	function resolveIcon(icon: Toast['icon'], fallback: Component): Component {
+		if (typeof icon === 'string') {
+			if (icon in namedIcons) return namedIcons[icon as keyof typeof namedIcons];
+			return fallback;
+		}
+		return icon ?? fallback;
+	}
+
+	const IconComponent = $derived(resolveIcon(toast.icon, config.icon));
 </script>
 
 <div
