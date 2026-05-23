@@ -16,6 +16,11 @@
 	let { currentSnapshots, comparisonSnapshots, hasComparison, comparisonName, simulationDurationHours, snapshotInterval }: Props =
 		$props();
 
+	const comparisonDurationHours = $derived.by(() => {
+		if (comparisonSnapshots.length === 0) return 0;
+		return comparisonSnapshots[comparisonSnapshots.length - 1].timestamp / 3_600_000;
+	});
+
 	// --- Primary Series ---
 
 	const allCurrenciesChartSeries = $derived.by<ChartSeries[]>(() => {
@@ -104,6 +109,36 @@
 			{ color: '#38bdf8', data: comparisonSnapshots.map(s => s.atomsPerClick ?? 0), label: 'APC (comparison)' },
 		];
 	});
+
+	const progressionComparisonSeries = $derived.by<ChartSeries[]>(() => {
+		if (!hasComparison) return [];
+		return [
+			{ color: '#fbbf24', data: comparisonSnapshots.map(s => s.achievements), fillOpacity: 0, label: 'Achievements' },
+			{ color: '#a78bfa', data: comparisonSnapshots.map(s => s.upgrades), fillOpacity: 0, label: 'Upgrades' },
+			{ color: '#34d399', data: comparisonSnapshots.map(s => s.skillPointsUsed), fillOpacity: 0, label: 'Currency Boosts' },
+			{ color: '#818cf8', data: comparisonSnapshots.map(s => s.skills), fillOpacity: 0, label: 'Skills' },
+		];
+	});
+
+	const levelComparisonSeries = $derived.by<ChartSeries[]>(() => {
+		if (!hasComparison) return [];
+		return [
+			{ color: '#f59e0b', data: comparisonSnapshots.map(s => s.playerLevel), fillOpacity: 0.2, label: 'Player Level' },
+			{ color: '#10b981', data: comparisonSnapshots.map(s => s.buildingLevels), fillOpacity: 0.1, label: 'Currency Boost Points' },
+			{ color: '#f472b6', data: comparisonSnapshots.map(s => s.photonUpgradeLevels), fillOpacity: 0.1, label: 'Photon Upgrades' },
+		];
+	});
+
+	const actionDensityComparisonSeries = $derived.by<ChartSeries[]>(() => {
+		if (!hasComparison || comparisonSnapshots.length < 2) return [];
+		const cmpIntervalMin = (comparisonSnapshots[1].timestamp - comparisonSnapshots[0].timestamp) / 60_000;
+		return [{
+			color: '#f87171',
+			data: comparisonSnapshots.map(s => s.actions.length / cmpIntervalMin),
+			fillOpacity: 0.4,
+			label: 'Actions / min',
+		}];
+	});
 </script>
 
 <section class="flex flex-col gap-6">
@@ -111,6 +146,7 @@
 	<div class="backdrop-blur-xl bg-white/5 border border-white/10 flex items-center justify-center min-h-[360px] p-6 rounded-2xl">
 		{#if hasComparison}
 			<ComparisonChart
+				{comparisonDurationHours}
 				comparisonSeries={currenciesComparisonSeries}
 				comparisonTitle={comparisonName?.slice(0, 20) ?? 'Comparison'}
 				primarySeries={allCurrenciesChartSeries}
@@ -133,6 +169,7 @@
 	<div class="backdrop-blur-xl bg-white/5 border border-white/10 flex items-center justify-center min-h-[360px] p-6 rounded-2xl">
 		{#if hasComparison}
 			<ComparisonChart
+				{comparisonDurationHours}
 				comparisonSeries={apsComparisonSeries}
 				comparisonTitle={comparisonName?.slice(0, 20) ?? 'Comparison'}
 				primarySeries={apsChartSeries}
@@ -153,36 +190,74 @@
 
 	<!-- Progression Chart -->
 	<div class="backdrop-blur-xl bg-white/5 border border-white/10 flex items-center justify-center min-h-[340px] p-6 rounded-2xl">
-		<BaseChart
-			series={progressionChartSeries}
-			title="Progression (Achievements, Upgrades, Boosts, Skills)"
-			totalHours={simulationDurationHours}
-		/>
+		{#if hasComparison}
+			<ComparisonChart
+				{comparisonDurationHours}
+				comparisonSeries={progressionComparisonSeries}
+				comparisonTitle={comparisonName?.slice(0, 20) ?? 'Comparison'}
+				primarySeries={progressionChartSeries}
+				primaryTitle="Current"
+				title="Progression (Achievements, Upgrades, Boosts, Skills)"
+				totalHours={simulationDurationHours}
+			/>
+		{:else}
+			<BaseChart
+				series={progressionChartSeries}
+				title="Progression (Achievements, Upgrades, Boosts, Skills)"
+				totalHours={simulationDurationHours}
+			/>
+		{/if}
 	</div>
 
 	<!-- Levels Chart -->
 	<div class="backdrop-blur-xl bg-white/5 border border-white/10 flex items-center justify-center min-h-[340px] p-6 rounded-2xl">
-		<BaseChart
-			series={levelChartSeries}
-			title="Levels"
-			totalHours={simulationDurationHours}
-		/>
+		{#if hasComparison}
+			<ComparisonChart
+				{comparisonDurationHours}
+				comparisonSeries={levelComparisonSeries}
+				comparisonTitle={comparisonName?.slice(0, 20) ?? 'Comparison'}
+				primarySeries={levelChartSeries}
+				primaryTitle="Current"
+				title="Levels"
+				totalHours={simulationDurationHours}
+			/>
+		{:else}
+			<BaseChart
+				series={levelChartSeries}
+				title="Levels"
+				totalHours={simulationDurationHours}
+			/>
+		{/if}
 	</div>
 
 	<!-- Action Density Chart -->
 	<div class="backdrop-blur-xl bg-white/5 border border-white/10 flex items-center justify-center min-h-[340px] p-6 rounded-2xl">
-		<BaseChart
-			series={actionDensityChartSeries}
-			title="Game Pace (Actions per Minute)"
-			totalHours={simulationDurationHours}
-			yAxisSuffix="/m"
-		/>
+		{#if hasComparison}
+			<ComparisonChart
+				{comparisonDurationHours}
+				comparisonSeries={actionDensityComparisonSeries}
+				comparisonTitle={comparisonName?.slice(0, 20) ?? 'Comparison'}
+				primarySeries={actionDensityChartSeries}
+				primaryTitle="Current"
+				title="Game Pace (Actions per Minute)"
+				totalHours={simulationDurationHours}
+				yAxisSuffix="/m"
+			/>
+		{:else}
+			<BaseChart
+				series={actionDensityChartSeries}
+				title="Game Pace (Actions per Minute)"
+				totalHours={simulationDurationHours}
+				yAxisSuffix="/m"
+			/>
+		{/if}
 	</div>
 
 	<!-- Protonises & Electronizes Chart -->
 	<div class="backdrop-blur-xl bg-white/5 border border-white/10 flex items-center justify-center min-h-[340px] p-6 rounded-2xl">
 		{#if hasComparison}
 			<ComparisonChart
+				{comparisonDurationHours}
 				comparisonSeries={prestigeComparisonSeries}
 				comparisonTitle={comparisonName?.slice(0, 20) ?? 'Comparison'}
 				primarySeries={prestigeChartSeries}

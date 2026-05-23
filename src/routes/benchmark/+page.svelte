@@ -323,7 +323,7 @@
 				/>
 			{/if}
 
-			{#if isRunning || displayResult}
+			{#if isRunning || displayResult || hasComparison}
 				<BenchmarkCharts
 					{currentSnapshots}
 					{comparisonSnapshots}
