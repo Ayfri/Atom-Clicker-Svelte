@@ -59,7 +59,13 @@ export interface SimulationSnapshot {
 	dayNumber: number;
 	electrons: number;
 	electronizes: number;
+	globalAchievementMultiplier: number;
+	globalFlatMultiplier: number;
+	globalLevelMultiplier: number;
 	globalMultiplier: number;
+	globalProtonBoostMultiplier: number;
+	globalProtoniseMultiplier: number;
+	globalSkillsMultiplier: number;
 	photons: number;
 	photonUpgradeLevels: number;
 	playerLevel: number;

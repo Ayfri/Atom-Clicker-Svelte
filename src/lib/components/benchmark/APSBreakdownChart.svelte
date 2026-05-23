@@ -80,15 +80,45 @@
 		const series: ChartSeries[] = [
 			{
 				color: '#facc15',
-				data: snapshots.map(s => s.baseGlobalMultiplier),
-				fillOpacity: 0.08,
-				label: 'Global Upgrades ×',
+				data: snapshots.map(s => s.globalMultiplier),
+				fillOpacity: 0.1,
+				label: 'Total ×',
+			},
+			{
+				color: '#f9a8d4',
+				data: snapshots.map(s => s.globalSkillsMultiplier),
+				fillOpacity: 0.05,
+				label: 'Skills ×',
+			},
+			{
+				color: '#fcd34d',
+				data: snapshots.map(s => s.globalFlatMultiplier),
+				fillOpacity: 0.05,
+				label: 'Flat Upgrades ×',
 			},
 			{
 				color: '#f87171',
-				data: snapshots.map(s => s.radiationMultiplier),
-				fillOpacity: 0.08,
-				label: 'Radiation ×',
+				data: snapshots.map(s => s.globalProtonBoostMultiplier),
+				fillOpacity: 0.05,
+				label: 'Proton Boosts ×',
+			},
+			{
+				color: '#fb923c',
+				data: snapshots.map(s => s.globalProtoniseMultiplier),
+				fillOpacity: 0.05,
+				label: 'Protonise Upgrades ×',
+			},
+			{
+				color: '#a78bfa',
+				data: snapshots.map(s => s.globalAchievementMultiplier),
+				fillOpacity: 0.05,
+				label: 'Achievement Upgrades ×',
+			},
+			{
+				color: '#86efac',
+				data: snapshots.map(s => s.globalLevelMultiplier),
+				fillOpacity: 0.05,
+				label: 'Level Upgrades ×',
 			},
 			{
 				color: '#34d399',

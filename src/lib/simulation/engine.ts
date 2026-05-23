@@ -331,6 +331,20 @@ export class SimulationEngine {
 		const radiationMultiplier = gameManager.radiationMultiplier;
 		const baseGlobalMultiplier = radiationMultiplier > 0 ? gameManager.globalMultiplier / radiationMultiplier : gameManager.globalMultiplier;
 
+		const globalOptions = { type: 'global' as const };
+		const skillSources = gameManager.allEffectSources.filter(s => s.id in SKILL_UPGRADES);
+		const globalSkillsMultiplier = calculateEffects(getUpgradesWithEffects(skillSources, globalOptions), gameManager, 1, globalOptions);
+
+		const computeGlobalForPrefix = (prefix: string) => {
+			const sources = gameManager.allEffectSources.filter(s => s.id.startsWith(prefix));
+			return calculateEffects(getUpgradesWithEffects(sources, globalOptions), gameManager, 1, globalOptions);
+		};
+		const globalFlatMultiplier = computeGlobalForPrefix('global_boost_');
+		const globalAchievementMultiplier = computeGlobalForPrefix('global_achievements_mul_');
+		const globalLevelMultiplier = computeGlobalForPrefix('level_boost_');
+		const globalProtonBoostMultiplier = computeGlobalForPrefix('proton_boost_');
+		const globalProtoniseMultiplier = computeGlobalForPrefix('protonise_boost_');
+
 		return {
 			achievements: gameManager.achievements.length,
 			actions: [...this.actions],
@@ -351,7 +365,13 @@ export class SimulationEngine {
 			dayNumber: gameManager.inGameTime / (24 * 3600 * 1000),
 			electrons: currenciesManager.getAmount(CurrenciesTypes.ELECTRONS),
 			electronizes: gameManager.totalElectronizesAllTime,
+			globalAchievementMultiplier,
+			globalFlatMultiplier,
+			globalLevelMultiplier,
 			globalMultiplier: gameManager.globalMultiplier,
+			globalProtonBoostMultiplier,
+			globalProtoniseMultiplier,
+			globalSkillsMultiplier,
 			photons: currenciesManager.getAmount(CurrenciesTypes.PHOTONS),
 			photonUpgradeLevels,
 			playerLevel,
