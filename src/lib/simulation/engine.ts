@@ -4,12 +4,14 @@ import { BUILDINGS, BUILDING_TYPES, type BuildingType } from '$data/buildings';
 import { CurrenciesTypes, type CurrencyName } from '$data/currencies';
 import { ALL_PHOTON_UPGRADES, getPhotonUpgradeCost } from '$data/photonUpgrades';
 import { POWER_UPS } from '$data/powerUp';
+import { RADIATION_UPGRADES, getRadiationUpgradePrice } from '$data/radiationUpgrades';
 import { RealmTypes } from '$data/realms';
 import { SKILL_UPGRADES } from '$data/skillTree';
 import { UPGRADES } from '$data/upgrades';
 import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
 import { calculateEffects, getUpgradesWithEffects } from '$helpers/effects';
 import { gameManager } from '$helpers/GameManager.svelte';
+import { radiationManager } from '$helpers/RadiationManager.svelte';
 import {
 	MILESTONES,
 	MILESTONE_CHECKS,
@@ -21,9 +23,7 @@ import {
 	type SpikeEvent,
 } from './types';
 
-const ACHIEVEMENT_CHECK_INTERVAL = 100;
 const CHUNK_SIZE = 500;
-const MILESTONE_CHECK_INTERVAL = 50;
 const YIELD_INTERVAL = 10;
 
 const ACHIEVEMENT_ENTRIES = Object.entries(ACHIEVEMENTS);
@@ -121,6 +121,9 @@ export class SimulationEngine {
 		const totalGameTimeMs = this.config.targetHours * 3600 * 1000;
 		const totalTicks = Math.floor(totalGameTimeMs / this.config.tickRate);
 		const snapshotIntervalTicks = Math.floor((this.config.snapshotInterval * 1000) / this.config.tickRate);
+		// Scale check intervals to simulated time: achievements every ~1s, milestones every ~5s.
+		const achievementCheckInterval = Math.max(1, Math.round(1000 / this.config.tickRate));
+		const milestoneCheckInterval = Math.max(1, Math.round(5000 / this.config.tickRate));
 		this.takeSnapshot();
 
 		let lastProgressUpdate = startRealTime;
@@ -151,10 +154,10 @@ export class SimulationEngine {
 					this.executeBotBehavior();
 				}
 				this.flushSpikeWindowIfNeeded();
-				if (tick % ACHIEVEMENT_CHECK_INTERVAL === 0) {
+				if (tick % achievementCheckInterval === 0) {
 					this.checkAchievements();
 				}
-				if (tick % MILESTONE_CHECK_INTERVAL === 0) {
+				if (tick % milestoneCheckInterval === 0) {
 					this.checkMilestones();
 				}
 
@@ -457,6 +460,29 @@ export class SimulationEngine {
 				}
 			}
 		}
+
+		if (radiationManager.unlocked) {
+			// Passive: fuel the core - keep enough electrons for the next electronize, spend surplus on mass.
+			const electrons = currenciesManager.getAmount(CurrenciesTypes.ELECTRONS);
+			const electronizeReserve = gameManager.electronizeElectronsGain > 0
+				? gameManager.electronizeElectronsGain * 3
+				: 50;
+			const surplus = electrons - electronizeReserve;
+			if (surplus > 0 && (radiationManager.mass === 0 || radiationManager.timeToEmpty < 3_600_000)) {
+				radiationManager.bombardCore(Math.min(Math.floor(surplus * 0.3), 20));
+			}
+			// Set control rods once the core has fuel.
+			if (radiationManager.mass > 0 && radiationManager.controlRodLevel === 0) {
+				radiationManager.setControlRodLevel(0.5);
+			}
+			// Buy cheapest radiation upgrade (costs electrons, counts as an action).
+			if (canDoAction()) {
+				const upgradeId = this.getAffordableRadiationUpgrade();
+				if (upgradeId && radiationManager.purchaseUpgrade(upgradeId)) {
+					actionsThisTick++;
+				}
+			}
+		}
 	}
 
 	private getAffordablePhotonUpgrade(photons: number, excitedPhotons: number): string | null {
@@ -472,6 +498,24 @@ export class SimulationEngine {
 			if (available < cost) continue;
 			if (upgrade.condition && !upgrade.condition(gameManager)) continue;
 			bestCost = cost;
+			bestId = id;
+		}
+
+		return bestId;
+	}
+
+	private getAffordableRadiationUpgrade(): string | null {
+		let bestId: string | null = null;
+		let bestCost = Infinity;
+		const electrons = currenciesManager.getAmount(CurrenciesTypes.ELECTRONS);
+
+		for (const [id, upgrade] of Object.entries(RADIATION_UPGRADES)) {
+			const currentLevel = radiationManager.upgradeLevels[id] ?? 0;
+			if (currentLevel >= upgrade.maxLevel) continue;
+			const price = getRadiationUpgradePrice(upgrade, currentLevel);
+			if (price.amount >= bestCost) continue;
+			if (electrons < price.amount) continue;
+			bestCost = price.amount;
 			bestId = id;
 		}
 

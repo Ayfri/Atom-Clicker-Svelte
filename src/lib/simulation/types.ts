@@ -213,9 +213,9 @@ export const MILESTONE_CHECKS: Record<string, (s: SimulationSnapshot) => boolean
 	achievements_50: s => s.achievements >= 50,
 	achievements_100: s => s.achievements >= 100,
 
-	currency_boost_1: s => s.buildingLevels >= 1,
-	currency_boost_10: s => s.buildingLevels >= 10,
-	currency_boost_50: s => s.buildingLevels >= 50,
+	currency_boost_1: s => s.skillPointsUsed >= 1,
+	currency_boost_10: s => s.skillPointsUsed >= 10,
+	currency_boost_50: s => s.skillPointsUsed >= 50,
 
 	player_level_1: s => s.playerLevel >= 1,
 	player_level_10: s => s.playerLevel >= 10,
