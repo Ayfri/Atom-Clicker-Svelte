@@ -23,9 +23,9 @@
   "dependencies": {
     "@lucide/svelte": "^1.16.0",
     "@supabase/supabase-js": "2.106.1",
-    "@types/node": "24.10.9",
+    "@types/node": "^24",
     "@xyflow/svelte": "1.5.2",
-    "marked": "17.0.1",
+    "marked": "18",
     "pixi.js": "8.18.1",
     "virtua": "^0.49.1"
   },
