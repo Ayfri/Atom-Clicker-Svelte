@@ -7,7 +7,7 @@
 	import {formatNumber} from '$lib/utils';
 	import {leaderboard} from '$stores/leaderboard.svelte';
 	import {supabaseAuth} from '$stores/supabaseAuth.svelte';
-	import {Search, Users, Trophy, Medal, Crown} from 'lucide-svelte';
+	import {Search, Users, Trophy, Medal, Crown} from '@lucide/svelte';
 	import {onDestroy, onMount} from 'svelte';
 	import {VList} from 'virtua/svelte';
 

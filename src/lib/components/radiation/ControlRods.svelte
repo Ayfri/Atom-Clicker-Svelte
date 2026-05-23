@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Tooltip from '@components/ui/Tooltip.svelte';
 	import { radiationManager } from '$helpers/RadiationManager.svelte';
-	import { CircleHelp } from 'lucide-svelte';
+	import { CircleHelp } from '@lucide/svelte';
 
 	const controlLevel = $derived(radiationManager.controlRodLevel);
 	const cpm = $derived(radiationManager.currentCpm);

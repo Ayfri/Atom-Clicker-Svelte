@@ -4,7 +4,7 @@
 	import { CURRENCIES, CurrenciesTypes, type CurrencyName } from '$data/currencies';
 	import Currency from '@components/ui/Currency.svelte';
 	import PhotonUpgradeItem from './PhotonUpgradeItem.svelte';
-	import { Eye, EyeOff } from 'lucide-svelte';
+	import { Eye, EyeOff } from '@lucide/svelte';
 
 	let selectedCurrency = $state<CurrencyName>(CurrenciesTypes.PHOTONS);
 
@@ -26,7 +26,7 @@
 	const showExcitedTab = $derived(gameManager.currencies[CurrenciesTypes.EXCITED_PHOTONS].earnedAllTime > 0);
 </script>
 
-<div id="photon-upgrades" class="bg-black/10 backdrop-blur-xs rounded-lg p-3 flex flex-col gap-2 h-[600px] lg:h-[calc(100vh-180px)]">
+<div id="photon-upgrades" class="bg-black/10 backdrop-blur-xs rounded-lg p-3 flex flex-col gap-2 h-150 lg:h-[calc(100vh-180px)]">
 	<div class="header flex justify-between items-center gap-2">
 		<h2 class="text-sm lg:text-base text-realm-400">Photon Upgrades</h2>
 		<button

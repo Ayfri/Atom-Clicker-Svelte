@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { radiationManager } from '$helpers/RadiationManager.svelte';
 	import { formatNumber } from '$lib/utils';
-	import { Zap, Activity, Battery, Thermometer, Shield } from 'lucide-svelte';
+	import { Zap, Activity, Battery, Thermometer, Shield } from '@lucide/svelte';
 
 	const mass = $derived(radiationManager.mass);
 	const cpm = $derived(radiationManager.currentCpm);

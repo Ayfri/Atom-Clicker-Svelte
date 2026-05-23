@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Code, Copy } from 'lucide-svelte';
+	import { Code, Copy } from '@lucide/svelte';
 	import type { SimulationResult } from '$lib/simulation/types';
 
 	let { result } = $props<{ result: SimulationResult }>();

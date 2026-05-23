@@ -13,7 +13,7 @@
 	import { remoteMessage } from '$stores/remoteMessage.svelte';
 	import { ui } from '$stores/ui.svelte';
 	import { mobile } from '$stores/window.svelte';
-	import { Atom, Network, Orbit, Settings as SettingsIcon, Trophy, Zap, type Icon as IconType } from 'lucide-svelte';
+	import { Atom, Network, Orbit, Settings as SettingsIcon, Trophy, Zap, type Icon as IconType } from '@lucide/svelte';
 	import { onDestroy, onMount, type Component } from 'svelte';
 
 	type NavBarComponent = Component<{ onClose: () => void }>;

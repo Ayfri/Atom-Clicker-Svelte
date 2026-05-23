@@ -9,7 +9,7 @@
 	import { autoSave } from '$stores/autoSave.svelte';
 	import { supabaseAuth } from '$stores/supabaseAuth.svelte';
 	import { toastStore } from '$stores/toasts.svelte';
-	import { AlertCircle, AlertTriangle, Clock, CloudDownload, CloudUpload, RotateCcw } from 'lucide-svelte';
+	import { AlertCircle, AlertTriangle, Clock, CloudDownload, CloudUpload, RotateCcw } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 
 	interface Props {

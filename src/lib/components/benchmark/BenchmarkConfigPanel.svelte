@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Tooltip from '@components/ui/Tooltip.svelte';
-	import { Code, Info, Pause, Play, RotateCcw, Settings, Zap } from 'lucide-svelte';
+	import { Code, Info, Pause, Play, RotateCcw, Settings, Zap } from '@lucide/svelte';
 	import {
 		ACTIVITY_PRESETS,
 		BOT_PROFILES,
@@ -51,7 +51,7 @@
 
 	<div class="gap-8 grid grid-cols-1 mb-8 md:grid-cols-2 lg:grid-cols-3">
 		<!-- Core Config: min width so selects aren't squeezed -->
-		<div class="flex min-w-[260px] flex-col gap-4">
+		<div class="flex min-w-65 flex-col gap-4">
 			<h3 class="flex gap-2 items-center text-gray-400 text-sm uppercase">
 				<Settings size={14} /> Config
 			</h3>
@@ -80,7 +80,7 @@
 					{/each}
 				</div>
 				<div class="flex min-w-0 flex-col gap-4">
-					<div class="flex flex-col gap-1.5 min-w-[200px]">
+					<div class="flex flex-col gap-1.5 min-w-50">
 						<label class="text-gray-500 text-sm" for="activity">Activity</label>
 						<select
 							bind:value={activityId}
@@ -93,7 +93,7 @@
 							{/each}
 						</select>
 					</div>
-					<div class="flex flex-col gap-1.5 min-w-[200px]">
+					<div class="flex flex-col gap-1.5 min-w-50">
 						<label class="text-gray-500 text-sm" for="playstyle">Playstyle</label>
 						<select
 							bind:value={playstyleId}
@@ -106,7 +106,7 @@
 							{/each}
 						</select>
 					</div>
-					<div class="flex flex-col gap-1.5 min-w-[200px]">
+					<div class="flex flex-col gap-1.5 min-w-50">
 						<label class="text-gray-500 text-sm" for="prestige">Prestige</label>
 						<select
 							bind:value={prestigeId}
@@ -322,7 +322,7 @@
 					</div>
 				</div>
 			</div>
-			<div class="flex flex-col gap-4 min-w-[180px]">
+			<div class="flex flex-col gap-4 min-w-45">
 				<h3 class="flex gap-2 items-center text-gray-400 text-sm uppercase">
 					<Code size={14} /> Engine
 				</h3>

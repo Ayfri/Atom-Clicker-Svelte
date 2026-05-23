@@ -2,7 +2,7 @@
 	import type { BenchmarkConfig } from '$lib/simulation/types';
 	import { formatDuration, formatNumber } from '$lib/utils';
 	import { deleteReport, listReports, type BenchmarkReportSummary } from '$lib/stores/benchmarkHistory.svelte';
-	import { ClipboardList, Clock, FolderOpen, GitCompare, History, Trash2, X } from 'lucide-svelte';
+	import { ClipboardList, Clock, FolderOpen, GitCompare, History, Trash2, X } from '@lucide/svelte';
 
 	interface Props {
 		comparisonId: string | null;

@@ -16,7 +16,7 @@
 	import Tooltip from '@components/ui/Tooltip.svelte';
 	import Value from '@components/ui/Value.svelte';
 	import type { Component } from 'svelte';
-	import { Clock, Settings2, Star, TrendingUp, Zap, Activity, Battery } from 'lucide-svelte';
+	import { Clock, Settings2, Star, TrendingUp, Zap, Activity, Battery } from '@lucide/svelte';
 
 	const BUILDING_ICONS: Record<BuildingType, Component<{ color?: string; size?: number }>> = {
 		[BuildingTypes.BLACK_HOLE]: BlackHoleIcon,

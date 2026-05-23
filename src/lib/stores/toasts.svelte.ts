@@ -1,6 +1,6 @@
 import type { Component } from 'svelte';
-import * as icons from 'lucide-svelte';
-import type { Icon } from 'lucide-svelte';
+import * as icons from '@lucide/svelte';
+import type { Icon } from '@lucide/svelte';
 
 import Discord from '@components/icons/Discord.svelte';
 import GitHub from '@components/icons/GitHub.svelte';

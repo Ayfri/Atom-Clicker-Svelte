@@ -43,8 +43,8 @@
             <span>GitHub</span>
         </a>
     </div>
-    <div class="flex-1 min-h-[600px] rounded-xl overflow-hidden border border-white/5 shadow-inner bg-[#161b21] flex justify-center">
-        <div class="w-full max-w-[700px] h-full pt-12">
+    <div class="flex-1 min-h-150 rounded-xl overflow-hidden border border-white/5 shadow-inner bg-[#161b21] flex justify-center">
+        <div class="w-full max-w-175 h-full pt-12">
             <iframe
                 src={tallyUrl}
                 class="w-full h-full"

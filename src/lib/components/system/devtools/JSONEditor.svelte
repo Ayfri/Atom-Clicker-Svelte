@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Edit2, Save, X, Copy, Check } from 'lucide-svelte';
+	import { Edit2, Save, X, Copy, Check } from '@lucide/svelte';
 
 	let { value = $bindable(), onSave }: { value: unknown; onSave?: (newValue: unknown) => void } = $props();
 

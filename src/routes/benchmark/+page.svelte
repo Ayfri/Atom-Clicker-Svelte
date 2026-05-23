@@ -11,7 +11,7 @@
 		type SimulationResult,
 	} from '$lib/simulation/types';
 	import { type SimulationProgress } from '$lib/simulation/engine';
-	import { ChartLine, GitCompare, History, Save } from 'lucide-svelte';
+	import { ChartLine, GitCompare, History, Save } from '@lucide/svelte';
 
 	import BenchmarkConfigPanel from '$lib/components/benchmark/BenchmarkConfigPanel.svelte';
 	import BenchmarkTimeline from '$lib/components/benchmark/BenchmarkTimeline.svelte';

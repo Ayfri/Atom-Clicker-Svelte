@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { radiationManager } from '$helpers/RadiationManager.svelte';
 	import { formatNumber } from '$lib/utils';
-	import { Check, TrendingDown, TrendingUp } from 'lucide-svelte';
+	import { Check, TrendingDown, TrendingUp } from '@lucide/svelte';
 
 	interface Props {
 		previewMass?: number;

@@ -5,7 +5,7 @@
 	import { saveRecovery } from '$stores/saveRecovery';
 	import { supabaseAuth } from '$stores/supabaseAuth.svelte';
 	import { toastStore } from '$stores/toasts.svelte';
-	import { AlertTriangle, CloudDownload, Database, RefreshCw, Trash2, Trophy, X } from 'lucide-svelte';
+	import { AlertTriangle, CloudDownload, Database, RefreshCw, Trash2, Trophy, X } from '@lucide/svelte';
 
 	interface Props {
 		onClose: () => void;

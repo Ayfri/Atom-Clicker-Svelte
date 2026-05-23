@@ -2,7 +2,7 @@
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { onDestroy, onMount } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
-	import { Zap } from 'lucide-svelte';
+	import { Zap } from '@lucide/svelte';
 
 	let now = $state(Date.now());
 	let interval: ReturnType<typeof setInterval>;

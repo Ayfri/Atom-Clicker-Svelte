@@ -8,7 +8,7 @@
 	import { CurrenciesTypes } from '$data/currencies';
 	import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
 	import { radiationManager } from '$helpers/RadiationManager.svelte';
-	import { CircleHelp, Lock, Zap } from 'lucide-svelte';
+	import { CircleHelp, Lock, Zap } from '@lucide/svelte';
 
 	let bombardAmount = $state(10);
 	const electronBalance = $derived(currenciesManager.getAmount(CurrenciesTypes.ELECTRONS));
@@ -40,17 +40,17 @@
 	{#if mass > 0}
 		<div class="fixed inset-0 -z-50 pointer-events-none overflow-hidden">
 			<div
-				class="absolute h-[400px] -left-20 rounded-full top-[20%] w-[400px]"
+				class="absolute h-100 -left-20 rounded-full top-[20%] w-100"
 				style="background: radial-gradient(circle, rgba(57, 255, 20, {0.05 + controlLevel * 0.1}) 0%, transparent 60%);"
 			></div>
 		</div>
 	{/if}
 
-	<div class="flex flex-col lg:flex-row px-3 lg:px-6 pt-4 pb-6 max-w-[1500px] mx-auto gap-5">
+	<div class="flex flex-col lg:flex-row px-3 lg:px-6 pt-4 pb-6 max-w-375 mx-auto gap-5">
 		<!-- Left: Nucleus + Add Fuel -->
 		<div class="lg:w-[42%] flex flex-col items-center gap-4">
 			<!-- Nucleus container with fixed size -->
-			<div class="w-full max-w-[420px] lg:max-w-[480px] aspect-square shrink-0">
+			<div class="w-full max-w-105 lg:max-w-120 aspect-square shrink-0">
 				<UnstableNucleus />
 			</div>
 

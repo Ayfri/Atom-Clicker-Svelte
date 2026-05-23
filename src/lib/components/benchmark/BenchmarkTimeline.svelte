@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { RotateCcw, Target } from 'lucide-svelte';
+	import { RotateCcw, Target } from '@lucide/svelte';
 	import { formatDuration, formatNumber } from '$lib/utils';
 	import type { MilestoneHit } from '$lib/simulation/types';
 	import type { SimulationProgress } from '$lib/simulation/engine';

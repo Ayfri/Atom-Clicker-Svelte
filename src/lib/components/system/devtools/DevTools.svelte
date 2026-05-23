@@ -24,7 +24,7 @@
 		TrendingUp,
 		Trophy,
 		Zap,
-	} from 'lucide-svelte';
+	} from '@lucide/svelte';
 
 	let isOpen = $state(false);
 	let activeTab = $state<string>('stats');

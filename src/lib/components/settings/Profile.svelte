@@ -32,7 +32,7 @@
 		User,
 		X,
 		Zap,
-	} from 'lucide-svelte';
+	} from '@lucide/svelte';
 	import { onDestroy } from 'svelte';
 	import { fade, scale, slide } from 'svelte/transition';
 

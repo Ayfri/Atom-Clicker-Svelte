@@ -7,7 +7,7 @@
 	import SEO from '@components/system/SEO.svelte';
 	import TooltipPortal from '@components/ui/TooltipPortal.svelte';
 	import { prestigeStore } from '$stores/prestige.svelte';
-	import { LoaderCircle } from 'lucide-svelte';
+	import { LoaderCircle } from '@lucide/svelte';
 	import type { Snippet } from 'svelte';
 
 	interface Props {

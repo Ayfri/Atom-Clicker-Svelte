@@ -18,7 +18,7 @@
 		Zap,
 		Shield,
 		Activity,
-	} from 'lucide-svelte';
+	} from '@lucide/svelte';
 	import DevPhotonUpgrade from './DevPhotonUpgrade.svelte';
 	import DevRadiationUpgrade from './DevRadiationUpgrade.svelte';
 	import DevUpgrade from './DevUpgrade.svelte';

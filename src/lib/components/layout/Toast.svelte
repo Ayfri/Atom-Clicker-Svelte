@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getToastIcon, toastStore, type Toast, type ToastStyle } from '$stores/toasts.svelte';
-	import { X } from 'lucide-svelte';
+	import { X } from '@lucide/svelte';
 	import { linear } from 'svelte/easing';
 	import { Tween } from 'svelte/motion';
 	import { onMount } from 'svelte';

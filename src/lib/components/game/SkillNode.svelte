@@ -7,7 +7,7 @@
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import type { SkillUpgrade } from '$lib/types';
 	import { formatNumber } from '$lib/utils';
-	import { Info, Sparkles } from 'lucide-svelte';
+	import { Info, Sparkles } from '@lucide/svelte';
 
 	interface SkillNodeData extends SkillUpgrade {
 		available: boolean;

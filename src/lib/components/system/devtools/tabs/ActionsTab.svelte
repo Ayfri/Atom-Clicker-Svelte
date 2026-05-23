@@ -29,7 +29,7 @@
 		Unlock,
 		Upload,
 		Zap,
-	} from 'lucide-svelte';
+	} from '@lucide/svelte';
 
 	// Get skills that unlock features
 	const featureSkills = Object.values(SKILL_UPGRADES).filter(skill => skill.feature);

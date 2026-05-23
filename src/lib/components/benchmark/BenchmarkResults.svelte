@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Award, ChevronDown, ChevronUp, Clock, Layers, Sparkles, Star, Target, TrendingUp, Zap } from 'lucide-svelte';
+	import { Award, ChevronDown, ChevronUp, Clock, Layers, Sparkles, Star, Target, TrendingUp, Zap } from '@lucide/svelte';
 	import { formatDuration, formatNumber } from '$lib/utils';
 	import { MILESTONES, type SimulationResult } from '$lib/simulation/types';
 

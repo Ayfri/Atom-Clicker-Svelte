@@ -13,7 +13,7 @@
 	import PlanetIcon from '@components/icons/buildings/Planet.svelte';
 	import RockIcon from '@components/icons/buildings/Rock.svelte';
 	import StarIcon from '@components/icons/buildings/Star.svelte';
-	import { Zap, Factory, TrendingUp, Clock, CheckCircle2, XCircle, MousePointer2, Play, Lock } from 'lucide-svelte';
+	import { Zap, Factory, TrendingUp, Clock, CheckCircle2, XCircle, MousePointer2, Play, Lock } from '@lucide/svelte';
 	import { formatNumber } from '$lib/utils';
 	import { getUpgradesWithEffects } from '$helpers/effects';
 	import type { Component } from 'svelte';

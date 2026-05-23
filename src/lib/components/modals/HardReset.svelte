@@ -2,7 +2,7 @@
 	import Modal from '@components/ui/Modal.svelte';
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { toastStore } from '$stores/toasts.svelte';
-	import { Trash2, Trophy, X } from 'lucide-svelte';
+	import { Trash2, Trophy, X } from '@lucide/svelte';
 
 	interface Props {
 		onClose: () => void;
