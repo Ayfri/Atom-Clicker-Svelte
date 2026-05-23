@@ -3,6 +3,7 @@
 	import {
 		buildBenchmarkConfig,
 		configToPresets,
+		PLAYSTYLE_PRESETS,
 		type ActivityPresetId,
 		type BenchmarkConfig,
 		type MilestoneHit,
@@ -35,6 +36,11 @@
 	let playstyleId = $state<PlaystylePresetId>('balanced');
 	let prestigeId = $state<PrestigePresetId>('balanced');
 	let targetHours = $state(10);
+	let snapshotInterval = $state<number>(PLAYSTYLE_PRESETS.balanced.snapshotInterval);
+
+	$effect(() => {
+		snapshotInterval = PLAYSTYLE_PRESETS[playstyleId].snapshotInterval;
+	});
 	let elapsedTime = $state(0);
 	let startTime = 0;
 	let showHistoryPanel = $state(false);
@@ -110,7 +116,7 @@
 	}
 
 	const currentConfig = $derived<BenchmarkConfig>(
-		buildBenchmarkConfig(activityId, playstyleId, prestigeId, targetHours),
+		buildBenchmarkConfig(activityId, playstyleId, prestigeId, targetHours, snapshotInterval),
 	);
 
 	const currentSnapshots = $derived(
@@ -282,6 +288,7 @@
 				bind:activityId
 				bind:playstyleId
 				bind:prestigeId
+				bind:snapshotInterval
 				bind:targetHours
 				{isRunning}
 				{runSimulation}
@@ -344,6 +351,7 @@
 						playstyleId = p;
 						prestigeId = pr;
 						targetHours = t;
+						snapshotInterval = config.snapshotInterval;
 					}}
 					onClose={() => {
 						showHistoryPanel = false;

@@ -418,6 +418,7 @@ export function buildBenchmarkConfig(
 	playstyleId: PlaystylePresetId,
 	prestigeId: PrestigePresetId,
 	targetHours: number,
+	snapshotIntervalOverride?: number,
 ): BenchmarkConfig {
 	const activity = ACTIVITY_PRESETS[activityId];
 	const playstyle = PLAYSTYLE_PRESETS[playstyleId];
@@ -446,7 +447,7 @@ export function buildBenchmarkConfig(
 			electronizeThreshold: prestige.electronizeThreshold,
 			protoniseThreshold: prestige.protoniseThreshold,
 		},
-		snapshotInterval: playstyle.snapshotInterval,
+		snapshotInterval: snapshotIntervalOverride ?? playstyle.snapshotInterval,
 		targetHours,
 		tickRate: playstyle.tickRate,
 	};

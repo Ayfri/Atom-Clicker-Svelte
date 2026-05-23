@@ -17,6 +17,7 @@
 		activityId = $bindable(),
 		playstyleId = $bindable(),
 		prestigeId = $bindable(),
+		snapshotInterval = $bindable(),
 		targetHours = $bindable(),
 		isRunning,
 		runSimulation,
@@ -25,14 +26,26 @@
 		activityId: ActivityPresetId;
 		playstyleId: PlaystylePresetId;
 		prestigeId: PrestigePresetId;
+		snapshotInterval: number;
 		targetHours: number;
 		isRunning: boolean;
 		runSimulation: () => void;
 		stopSimulation: () => void;
 	}>();
 
+	const SNAPSHOT_PRESETS = [
+		{ label: '1s', value: 1 },
+		{ label: '5s', value: 5 },
+		{ label: '15s', value: 15 },
+		{ label: '30s', value: 30 },
+		{ label: '1m', value: 60 },
+		{ label: '2m', value: 120 },
+		{ label: '5m', value: 300 },
+		{ label: '10m', value: 600 },
+	] as const;
+
 	const currentConfig = $derived<BenchmarkConfig>(
-		buildBenchmarkConfig(activityId, playstyleId, prestigeId, targetHours),
+		buildBenchmarkConfig(activityId, playstyleId, prestigeId, targetHours, snapshotInterval),
 	);
 
 	function applyQuickProfile(profileKey: keyof typeof BOT_PROFILES) {
@@ -335,7 +348,7 @@
 								<h4 class="mb-2 text-sm font-semibold">Simulation resolution</h4>
 								<ul class="list-inside list-disc space-y-1 text-xs">
 									<li><strong>Tick rate</strong> - how often the game state updates (ms). Lower = more accurate, slower</li>
-									<li><strong>Snapshots</strong> - how often data is saved for charts</li>
+									<li><strong>Snapshot interval</strong> - how often data is saved for charts</li>
 									<li><strong>Resolution</strong> - chart data points per game-hour</li>
 								</ul>
 								<p class="mt-2 text-xs opacity-90">Higher resolution = smoother graphs but longer run time.</p>
@@ -348,15 +361,33 @@
 						<span class="text-gray-500 text-sm">Tick rate</span>
 						<span class="font-mono text-gray-300 text-base">{currentConfig.tickRate}ms</span>
 					</div>
-					<div class="flex flex-col gap-1">
-						<span class="text-gray-500 text-sm">Snapshots</span>
-						<span class="font-mono text-gray-300 text-base">{currentConfig.snapshotInterval}s</span>
-					</div>
-					<div class="flex flex-col gap-1">
-						<span class="text-gray-500 text-sm">Resolution</span>
-						<span class="font-mono text-gray-300 text-base"
-							>{(3600 / currentConfig.snapshotInterval).toFixed(1)} pts/game-hour</span
-						>
+					<div class="flex flex-col gap-2">
+						<span class="text-gray-500 text-sm">Snapshot interval</span>
+						<div class="flex flex-wrap gap-1.5">
+							{#each SNAPSHOT_PRESETS as preset (preset.value)}
+								<button
+									class="cursor-pointer px-2.5 py-1 rounded-md text-xs font-mono transition-colors disabled:cursor-not-allowed disabled:opacity-50 {snapshotInterval === preset.value
+										? 'bg-green-500/25 text-green-400 border border-green-500/40'
+										: 'bg-white/5 hover:bg-white/10 text-gray-400 border border-transparent'}"
+									disabled={isRunning}
+									onclick={() => (snapshotInterval = preset.value)}
+									type="button"
+								>
+									{preset.label}
+								</button>
+							{/each}
+						</div>
+						<div class="flex gap-2 items-center">
+							<input
+								bind:value={snapshotInterval}
+								class="bg-black/30 border border-white/10 disabled:cursor-not-allowed disabled:opacity-50 focus:border-green-400 focus:outline-none px-2 py-1 rounded-md text-gray-200 text-sm font-mono w-20"
+								disabled={isRunning}
+								min="5"
+								max="3600"
+								type="number"
+							/>
+							<span class="text-gray-500 text-xs">s / {(3600 / snapshotInterval).toFixed(1)} pts/h</span>
+						</div>
 					</div>
 				</div>
 			</div>
