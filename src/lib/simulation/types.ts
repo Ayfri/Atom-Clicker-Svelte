@@ -43,9 +43,15 @@ export interface SimulationSnapshot {
 	achievements: number;
 	actions: SimulationAction[];
 	atoms: number;
+	atomsCurrencyBoost: number;
 	atomsPerClick: number;
 	atomsPerSecond: number;
+	baseGlobalMultiplier: number;
+	bonusMultiplier: number;
 	buildingLevels: number;
+	buildingLevelFactors: Partial<Record<BuildingType, number>>;
+	buildingProductions: Partial<Record<BuildingType, number>>;
+	buildingUpgradeFactors: Partial<Record<BuildingType, number>>;
 	buildings: Record<BuildingType, number>;
 	buildingsEverPurchased: string[];
 	buildingsPurchased: number;
@@ -59,8 +65,10 @@ export interface SimulationSnapshot {
 	playerLevel: number;
 	protons: number;
 	protonises: number;
+	radiationMultiplier: number;
 	skillPointsUsed: number;
 	skills: number;
+	stabilityMultiplier: number;
 	timestamp: number;
 	totalBuildings: number;
 	totalUpgrades: number;

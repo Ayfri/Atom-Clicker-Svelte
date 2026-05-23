@@ -300,6 +300,8 @@ export class SimulationEngine {
 
 	private createSnapshotData(): SimulationSnapshot {
 		const buildings: Record<BuildingType, number> = {} as Record<BuildingType, number>;
+		const buildingLevelFactors: Partial<Record<BuildingType, number>> = {};
+		const buildingUpgradeFactors: Partial<Record<BuildingType, number>> = {};
 		let totalBuildings = 0;
 		let buildingLevels = 0;
 
@@ -309,20 +311,39 @@ export class SimulationEngine {
 			buildings[type] = count;
 			totalBuildings += count;
 			buildingLevels += building?.level ?? 0;
+
+			if (building && count > 0) {
+				const options = { target: type, type: 'building' as const };
+				const upgrades = getUpgradesWithEffects(gameManager.allEffectSources, options);
+				const effectiveRate = calculateEffects(upgrades, gameManager, building.rate, options);
+				buildingUpgradeFactors[type] = effectiveRate / building.rate;
+
+				const oldMultiplier = Math.pow(count / 2, building.level + 1) / 5;
+				const linearMultiplier = (building.level + 1) * 100;
+				buildingLevelFactors[type] = building.level > 0 ? Math.sqrt(oldMultiplier * linearMultiplier) : 1;
+			}
 		}
 
 		// Count photon upgrade levels
 		const photonUpgradeLevels = Object.values(gameManager.photonUpgrades || {}).reduce((sum, level) => sum + (level || 0), 0);
 		const skillPointsUsed = Object.values(gameManager.skillPointBoosts || {}).reduce((sum, points) => sum + (points ?? 0), 0);
 		const playerLevel = gameManager.getLevelFromTotalXP(gameManager.totalXP);
+		const radiationMultiplier = gameManager.radiationMultiplier;
+		const baseGlobalMultiplier = radiationMultiplier > 0 ? gameManager.globalMultiplier / radiationMultiplier : gameManager.globalMultiplier;
 
 		return {
 			achievements: gameManager.achievements.length,
 			actions: [...this.actions],
 			atoms: currenciesManager.getAmount(CurrenciesTypes.ATOMS),
+			atomsCurrencyBoost: gameManager.getCurrencyBoostMultiplier(CurrenciesTypes.ATOMS),
 			atomsPerClick: gameManager.clickPower,
 			atomsPerSecond: gameManager.atomsPerSecond,
+			baseGlobalMultiplier,
+			bonusMultiplier: gameManager.bonusMultiplier,
+			buildingLevelFactors,
 			buildingLevels,
+			buildingProductions: { ...gameManager.buildingProductions },
+			buildingUpgradeFactors,
 			buildings,
 			buildingsEverPurchased: [...this.everPurchasedBuildings],
 			buildingsPurchased: gameManager.totalBuildingsPurchasedAllTime,
@@ -336,8 +357,10 @@ export class SimulationEngine {
 			playerLevel,
 			protons: currenciesManager.getAmount(CurrenciesTypes.PROTONS),
 			protonises: gameManager.totalProtonisesAllTime,
+			radiationMultiplier,
 			skillPointsUsed,
 			skills: gameManager.skillUpgrades.length,
+			stabilityMultiplier: gameManager.stabilityMultiplier,
 			timestamp: gameManager.inGameTime,
 			totalBuildings,
 			totalUpgrades: gameManager.totalUpgradesPurchasedAllTime,

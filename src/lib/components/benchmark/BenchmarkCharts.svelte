@@ -1,4 +1,5 @@
 <script lang="ts">
+	import APSBreakdownChart from '$lib/components/benchmark/APSBreakdownChart.svelte';
 	import BaseChart, { type ChartSeries } from '$lib/components/benchmark/BaseChart.svelte';
 	import ComparisonChart from '$lib/components/benchmark/ComparisonChart.svelte';
 	import type { SimulationSnapshot } from '$lib/simulation/types';
@@ -197,4 +198,10 @@
 			/>
 		{/if}
 	</div>
+
+	<!-- APS Breakdown Chart -->
+	<APSBreakdownChart
+		snapshots={currentSnapshots}
+		totalHours={simulationDurationHours}
+	/>
 </section>
