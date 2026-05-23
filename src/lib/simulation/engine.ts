@@ -142,7 +142,12 @@ export class SimulationEngine {
 				this.simulateClicks();
 				this.simulatePhotonRealmClicks();
 				this.tickPowerUps();
-				if (this.isInActiveWindow()) {
+				const activeNow = this.isInActiveWindow();
+				if (activeNow && !this.lastWasActive) {
+					this.prestigesThisActiveWindow = 0;
+				}
+				this.lastWasActive = activeNow;
+				if (activeNow) {
 					this.executeBotBehavior();
 				}
 				this.flushSpikeWindowIfNeeded();
@@ -339,12 +344,6 @@ export class SimulationEngine {
 	}
 
 	private executeBotBehavior() {
-		const inActive = this.isInActiveWindow();
-		if (inActive && !this.lastWasActive) {
-			this.prestigesThisActiveWindow = 0;
-		}
-		this.lastWasActive = inActive;
-
 		const { botBehavior, prestigeStrategy } = this.config;
 		const maxActionsPerTick = botBehavior.maxActionsPerTick;
 		const maxPrestigesPerActiveWindow = botBehavior.maxPrestigesPerActiveWindow;
@@ -575,6 +574,9 @@ export class SimulationEngine {
 		const { clicksPerSecond } = this.config.botBehavior;
 		if (!this.isInActiveWindow()) return;
 		if (clicksPerSecond <= 0) return;
+		// When another realm is active the player is clicking there, not the atom button.
+		// Atom auto-click (via upgrades) still fires through gameManager.tick().
+		if (gameManager.realms[RealmTypes.PHOTONS]?.unlocked) return;
 
 		const clicksThisTick = clicksPerSecond * (this.config.tickRate / 1000);
 		const clickPower = gameManager.clickPower;
