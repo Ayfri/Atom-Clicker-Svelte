@@ -69,7 +69,7 @@ export interface SimulationSnapshot {
 export interface SimulationAction {
 	details?: string;
 	timestamp: number;
-	type: 'achievement' | 'building' | 'electronize' | 'photon_upgrade' | 'protonise' | 'skill' | 'upgrade';
+	type: 'achievement' | 'building' | 'electronize' | 'photon_upgrade' | 'power_up' | 'protonise' | 'skill' | 'upgrade';
 }
 
 export interface MilestoneDefinition {

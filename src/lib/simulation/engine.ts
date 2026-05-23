@@ -3,10 +3,12 @@ import { ACHIEVEMENTS } from '$data/achievements';
 import { BUILDINGS, BUILDING_TYPES, type BuildingType } from '$data/buildings';
 import { CurrenciesTypes, type CurrencyName } from '$data/currencies';
 import { ALL_PHOTON_UPGRADES, getPhotonUpgradeCost } from '$data/photonUpgrades';
+import { POWER_UPS } from '$data/powerUp';
 import { RealmTypes } from '$data/realms';
 import { SKILL_UPGRADES } from '$data/skillTree';
 import { UPGRADES } from '$data/upgrades';
 import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
+import { calculateEffects, getUpgradesWithEffects } from '$helpers/effects';
 import { gameManager } from '$helpers/GameManager.svelte';
 import {
 	MILESTONES,
@@ -57,6 +59,8 @@ export class SimulationEngine {
 	private hitMilestones = new Set<string>();
 	private lastWasActive = false;
 	private milestones: MilestoneHit[] = [];
+	private nextPowerUpTime = 0;
+	private powerUpCounter = 0;
 	private prestigesThisActiveWindow = 0;
 	private recentMilestones: MilestoneHit[] = [];
 	private savedState: string | null = null;
@@ -79,10 +83,16 @@ export class SimulationEngine {
 		this.savedState = JSON.stringify(gameManager.getCurrentState());
 		gameManager.resetAll();
 		currenciesManager.hardReset();
+
+		// A real engaged player turns auto-click on as soon as upgrades unlock it; the derived returns 0 if no upgrade.
+		if (!gameManager.settings.automation.autoClick) gameManager.toggleAutoClick();
+		if (!gameManager.settings.automation.autoClickPhotons) gameManager.toggleAutoClickPhotons();
 		this.actions = [];
 		this.hitMilestones.clear();
 		this.lastWasActive = false;
 		this.milestones = [];
+		this.nextPowerUpTime = this.rollPowerUpInterval();
+		this.powerUpCounter = 0;
 		this.prestigesThisActiveWindow = 0;
 		this.recentMilestones = [];
 		this.snapshots = [];
@@ -110,6 +120,7 @@ export class SimulationEngine {
 				gameManager.tick(tickRate, true);
 				this.simulateClicks();
 				this.simulatePhotonRealmClicks();
+				this.tickPowerUps();
 				if (this.isInActiveWindow()) {
 					this.executeBotBehavior();
 				}
@@ -315,9 +326,9 @@ export class SimulationEngine {
 			if (building) {
 				const maxAffordable = gameManager.getMaxAffordableBuilding(building);
 				if (maxAffordable > 0) {
-					gameManager.purchaseBuilding(building, 1);
+					gameManager.purchaseBuilding(building, maxAffordable);
 					this.actions.push({
-						details: building,
+						details: `${building} x${maxAffordable}`,
 						timestamp: gameManager.inGameTime,
 						type: 'building',
 					});
@@ -506,21 +517,84 @@ export class SimulationEngine {
 		gameManager.totalClicksRun += Math.floor(clicksThisTick);
 	}
 
-	/** Simulate photon gains when Photon (Purple) Realm is unlocked (headless equivalent of clicking realm circles). */
+	/** Headless equivalent of clicking realm circles. Mirrors offlineProgress.ts photon math + adds auto-click. */
 	private simulatePhotonRealmClicks() {
 		if (!gameManager.realms[RealmTypes.PHOTONS]?.unlocked) return;
+
+		const deltaSeconds = this.config.tickRate / 1000;
+		const manualClicks = this.isInActiveWindow() ? this.config.botBehavior.clicksPerSecond * deltaSeconds : 0;
+		const autoClicks = gameManager.photonAutoClicksPer5Seconds > 0 ? (gameManager.photonAutoClicksPer5Seconds / 5) * deltaSeconds : 0;
+		const totalClicks = manualClicks + autoClicks;
+		if (totalClicks <= 0) return;
+
+		const photonValueBonus = this.getPhotonValueBonus();
+		const doubleChance = this.getEffect('photon_double_chance');
+		const excitedDoubleChance = this.getEffect('excited_photon_double');
+		const excitedFromMaxBonus = this.getEffect('excited_photon_from_max');
+		// Photon realm caps excited chance behind 'excited_auto_click' upgrade for auto-clicks only.
+		const autoAllowsExcited = (gameManager.photonUpgrades['excited_auto_click'] || 0) > 0;
+		const excitedChanceManual = gameManager.excitedPhotonChance;
+		const excitedChanceAuto = autoAllowsExcited ? excitedChanceManual : 0;
+
+		const basePhotonAvg = (1 + 10) / 2;
+		const normalPhotonsPerClick = (basePhotonAvg + photonValueBonus) * (1 + doubleChance);
+		const excitedPhotonsPerClick = (1 + excitedDoubleChance) + (10 + photonValueBonus) * excitedFromMaxBonus;
+
+		const photonsMultiplier = gameManager.getCurrencyBoostMultiplier(CurrenciesTypes.PHOTONS);
+		const excitedMultiplier = gameManager.getCurrencyBoostMultiplier(CurrenciesTypes.EXCITED_PHOTONS);
+
+		const normalClicks = manualClicks * (1 - excitedChanceManual) + autoClicks * (1 - excitedChanceAuto);
+		const excitedClicks = manualClicks * excitedChanceManual + autoClicks * excitedChanceAuto;
+
+		const photonsGain = normalClicks * normalPhotonsPerClick * photonsMultiplier;
+		const excitedGain = excitedClicks * excitedPhotonsPerClick * excitedMultiplier;
+
+		if (photonsGain > 0) currenciesManager.add(CurrenciesTypes.PHOTONS, photonsGain);
+		if (excitedGain > 0) currenciesManager.add(CurrenciesTypes.EXCITED_PHOTONS, excitedGain);
+	}
+
+	private getEffect(type: 'excited_photon_double' | 'excited_photon_from_max' | 'photon_double_chance'): number {
+		const options = { type } as const;
+		const upgrades = getUpgradesWithEffects(gameManager.allEffectSources, options);
+		return calculateEffects(upgrades, gameManager, 0, options);
+	}
+
+	private getPhotonValueBonus(): number {
+		const upgrade = gameManager.allEffectSources.find(source => source.id === 'photon_value');
+		if (!upgrade) return 0;
+		return calculateEffects([upgrade], gameManager, 0, { type: 'click' });
+	}
+
+	private rollPowerUpInterval(): number {
+		const [min, max] = gameManager.powerUpInterval;
+		return gameManager.inGameTime + min + Math.random() * (max - min);
+	}
+
+	/** Spawn power-ups at gameManager.powerUpInterval; if active window, "click" them (apply boost + Higgs Boson). */
+	private tickPowerUps() {
+		if (gameManager.inGameTime < this.nextPowerUpTime) return;
+
+		this.nextPowerUpTime = this.rollPowerUpInterval();
 		if (!this.isInActiveWindow()) return;
 
-		const { clicksPerSecond } = this.config.botBehavior;
-		if (clicksPerSecond <= 0) return;
+		const base = POWER_UPS[Math.floor(Math.random() * POWER_UPS.length)];
+		const multiplier = base.multiplier * gameManager.powerUpEffectMultiplier;
+		const duration = base.duration * gameManager.powerUpDurationMultiplier;
 
-		const clicksThisTick = clicksPerSecond * (this.config.tickRate / 1000);
-		const avgPhotonPerClick = (1 + 10) / 2;
-		const multiplier = gameManager.getCurrencyBoostMultiplier(CurrenciesTypes.PHOTONS);
-		const photonsThisTick = clicksThisTick * avgPhotonPerClick * multiplier;
-		if (photonsThisTick > 0) {
-			currenciesManager.add(CurrenciesTypes.PHOTONS, photonsThisTick);
-		}
+		gameManager.addPowerUp({
+			description: `Multiplies atoms by ${multiplier} for ${duration / 1000}s`,
+			duration,
+			id: `sim_${this.powerUpCounter++}`,
+			multiplier,
+			startTime: gameManager.inGameTime,
+		});
+		gameManager.incrementBonusHiggsBosonClicks();
+
+		this.actions.push({
+			details: `×${multiplier.toFixed(1)} / ${(duration / 1000).toFixed(0)}s`,
+			timestamp: gameManager.inGameTime,
+			type: 'power_up',
+		});
 	}
 
 	private takeSnapshot() {
