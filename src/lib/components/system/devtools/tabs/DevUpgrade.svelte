@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import type { Upgrade } from '$lib/types';
+	import { formatNumber } from '$lib/utils';
+	import Currency from '@components/ui/Currency.svelte';
 	import Tooltip from '@components/ui/Tooltip.svelte';
 
 	interface Props {
@@ -56,10 +58,16 @@
 				<span class="text-[10px] font-mono text-white/40">{id}</span>
 			</div>
 			<p class="text-xs text-white/70 leading-relaxed">{upgrade.description}</p>
-			<div class="pt-1 flex items-center gap-1.5">
-				<div class="size-1.5 rounded-full {isOwned ? 'bg-green-500' : 'bg-red-500'}"></div>
-				<span class="text-[10px] uppercase tracking-wider font-bold {isOwned ? 'text-green-400' : 'text-red-400'}">
-					{isOwned ? 'Owned' : 'Not Owned'}
+			<div class="pt-1 flex items-center justify-between gap-3">
+				<div class="flex items-center gap-1.5">
+					<div class="size-1.5 rounded-full {isOwned ? 'bg-green-500' : 'bg-red-500'}"></div>
+					<span class="text-[10px] uppercase tracking-wider font-bold {isOwned ? 'text-green-400' : 'text-red-400'}">
+						{isOwned ? 'Owned' : 'Not Owned'}
+					</span>
+				</div>
+				<span class="text-[10px] font-mono text-yellow-300/80 flex items-center gap-1">
+					{formatNumber(upgrade.cost.amount)}
+					<Currency name={upgrade.cost.currency} size={16} />
 				</span>
 			</div>
 		</div>
