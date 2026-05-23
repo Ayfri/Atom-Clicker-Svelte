@@ -59,7 +59,7 @@
 	});
 
 	$effect(() => {
-		let interval: any;
+		let interval: ReturnType<typeof setInterval> | undefined;
 		if (isRunning) {
 			startTime = Date.now();
 			elapsedTime = 0;

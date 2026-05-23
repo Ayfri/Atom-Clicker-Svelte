@@ -18,12 +18,15 @@ import {
 	type SimulationSnapshot,
 } from './types';
 
-// Chunk size: higher = faster run, less responsive UI. Achievements/milestones sampled every N ticks for perf.
 const ACHIEVEMENT_CHECK_INTERVAL = 100;
 const CHUNK_SIZE = 500;
 const MILESTONE_CHECK_INTERVAL = 50;
-// Yield often so the worker event loop can process 'stop' messages (every N ticks).
 const YIELD_INTERVAL = 10;
+
+const ACHIEVEMENT_ENTRIES = Object.entries(ACHIEVEMENTS);
+const UPGRADE_ENTRIES = Object.entries(UPGRADES);
+const SKILL_ENTRIES = Object.entries(SKILL_UPGRADES);
+const PHOTON_UPGRADE_ENTRIES = Object.entries(ALL_PHOTON_UPGRADES);
 
 /** Progress state of a running simulation. */
 export interface SimulationProgress {
@@ -104,10 +107,6 @@ export class SimulationEngine {
 						break;
 					}
 				}
-				if (signal.aborted) {
-					cancelled = true;
-					break;
-				}
 				gameManager.tick(tickRate, true);
 				this.simulateClicks();
 				this.simulatePhotonRealmClicks();
@@ -177,21 +176,28 @@ export class SimulationEngine {
 	}
 
 	private checkAchievements() {
-		for (const [id, achievement] of Object.entries(ACHIEVEMENTS)) {
-			if (!gameManager.achievements.includes(id)) {
-				try {
-					if (achievement.condition(gameManager)) {
-						gameManager.achievements = [...gameManager.achievements, id];
-						this.actions.push({
-							details: achievement.name,
-							timestamp: gameManager.inGameTime,
-							type: 'achievement',
-						});
-					}
-				} catch {
-					// Some achievement conditions throw in simulation (e.g. DOM / optional deps).
+		const owned = new Set(gameManager.achievements);
+		const newlyEarned: string[] = [];
+
+		for (const [id, achievement] of ACHIEVEMENT_ENTRIES) {
+			if (owned.has(id)) continue;
+			try {
+				if (achievement.condition(gameManager)) {
+					owned.add(id);
+					newlyEarned.push(id);
+					this.actions.push({
+						details: achievement.name,
+						timestamp: gameManager.inGameTime,
+						type: 'achievement',
+					});
 				}
+			} catch {
+				// Some achievement conditions throw in simulation (e.g. DOM / optional deps).
 			}
+		}
+
+		if (newlyEarned.length > 0) {
+			gameManager.achievements = [...gameManager.achievements, ...newlyEarned];
 		}
 	}
 
@@ -300,6 +306,10 @@ export class SimulationEngine {
 		}
 
 		if (!botBehavior.autoBuy) return;
+
+		const ownedUpgrades = new Set(gameManager.upgrades);
+		const ownedSkills = new Set(gameManager.skillUpgrades);
+
 		if (canDoAction() && botBehavior.autoBuyBuildings) {
 			const building = this.selectBuilding();
 			if (building) {
@@ -316,7 +326,7 @@ export class SimulationEngine {
 			}
 		}
 		if (canDoAction() && botBehavior.autoBuyUpgrades) {
-			const affordableUpgrade = this.getAffordableUpgrade();
+			const affordableUpgrade = this.getAffordableUpgrade(ownedUpgrades);
 			if (affordableUpgrade) {
 				gameManager.purchaseUpgrade(affordableUpgrade);
 				this.actions.push({
@@ -328,7 +338,7 @@ export class SimulationEngine {
 			}
 		}
 		if (canDoAction() && botBehavior.autoBuySkills) {
-			const affordableSkill = this.getAffordableSkill();
+			const affordableSkill = this.getAffordableSkill(ownedSkills);
 			if (affordableSkill) {
 				gameManager.purchaseSkill(affordableSkill);
 				this.actions.push({
@@ -340,7 +350,9 @@ export class SimulationEngine {
 			}
 		}
 		if (canDoAction() && botBehavior.autoBuyPhotonUpgrades) {
-			const affordablePhotonUpgrade = this.getAffordablePhotonUpgrade();
+			const photons = currenciesManager.getAmount(CurrenciesTypes.PHOTONS);
+			const excitedPhotons = currenciesManager.getAmount(CurrenciesTypes.EXCITED_PHOTONS);
+			const affordablePhotonUpgrade = this.getAffordablePhotonUpgrade(photons, excitedPhotons);
 			if (affordablePhotonUpgrade) {
 				gameManager.purchasePhotonUpgrade(affordablePhotonUpgrade);
 				this.actions.push({
@@ -351,7 +363,8 @@ export class SimulationEngine {
 				actionsThisTick++;
 			}
 		}
-		if (canDoAction() && gameManager.skillPointsAvailable > 0) {
+		let availableSkillPoints = gameManager.skillPointsAvailable;
+		if (canDoAction() && availableSkillPoints > 0) {
 			const boostPriority: CurrencyName[] = [
 				CurrenciesTypes.ATOMS,
 				CurrenciesTypes.PROTONS,
@@ -360,67 +373,67 @@ export class SimulationEngine {
 			];
 
 			for (const currency of boostPriority) {
-				if (gameManager.skillPointsAvailable > 0 && canDoAction()) {
-					gameManager.addCurrencyBoost(currency);
+				if (availableSkillPoints <= 0 || !canDoAction()) break;
+				if (gameManager.addCurrencyBoost(currency)) {
+					availableSkillPoints--;
 					actionsThisTick++;
 				}
 			}
 		}
 	}
 
-	private getAffordablePhotonUpgrade(): string | null {
-		const photons = currenciesManager.getAmount(CurrenciesTypes.PHOTONS);
-		const excitedPhotons = currenciesManager.getAmount(CurrenciesTypes.EXCITED_PHOTONS);
+	private getAffordablePhotonUpgrade(photons: number, excitedPhotons: number): string | null {
+		let bestId: string | null = null;
+		let bestCost = Infinity;
 
-		const upgrades = Object.entries(ALL_PHOTON_UPGRADES)
-			.filter(([id, upgrade]) => {
-				const currentLevel = gameManager.photonUpgrades[id] ?? 0;
-				if (currentLevel >= upgrade.maxLevel) return false;
-				if (upgrade.condition && !upgrade.condition(gameManager)) return false;
+		for (const [id, upgrade] of PHOTON_UPGRADE_ENTRIES) {
+			const currentLevel = gameManager.photonUpgrades[id] ?? 0;
+			if (currentLevel >= upgrade.maxLevel) continue;
+			const cost = getPhotonUpgradeCost(upgrade, currentLevel);
+			if (cost >= bestCost) continue;
+			const available = upgrade.currency === CurrenciesTypes.EXCITED_PHOTONS ? excitedPhotons : photons;
+			if (available < cost) continue;
+			if (upgrade.condition && !upgrade.condition(gameManager)) continue;
+			bestCost = cost;
+			bestId = id;
+		}
 
-				const cost = getPhotonUpgradeCost(upgrade, currentLevel);
-				const currency = upgrade.currency || CurrenciesTypes.PHOTONS;
-
-				if (currency === CurrenciesTypes.EXCITED_PHOTONS) {
-					return excitedPhotons >= cost;
-				}
-				return photons >= cost;
-			})
-			.sort((a, b) => {
-				const costA = getPhotonUpgradeCost(a[1], gameManager.photonUpgrades[a[0]] ?? 0);
-				const costB = getPhotonUpgradeCost(b[1], gameManager.photonUpgrades[b[0]] ?? 0);
-				return costA - costB;
-			});
-
-		return upgrades[0]?.[0] ?? null;
+		return bestId;
 	}
 
-	private getAffordableSkill(): string | null {
-		const skills = Object.entries(SKILL_UPGRADES)
-			.filter(([id, skill]) => {
-				if (gameManager.skillUpgrades.includes(id)) return false;
-				if (skill.requires) {
-					const hasAllRequirements = skill.requires.every(req => gameManager.skillUpgrades.includes(req));
-					if (!hasAllRequirements) return false;
-				}
-				if (skill.condition && !skill.condition(gameManager)) return false;
-				return gameManager.canAfford(skill.cost);
-			})
-			.sort((a, b) => a[1].cost.amount - b[1].cost.amount);
+	private getAffordableSkill(ownedSkills: Set<string>): string | null {
+		let bestId: string | null = null;
+		let bestCost = Infinity;
 
-		return skills[0]?.[0] ?? null;
+		for (const [id, skill] of SKILL_ENTRIES) {
+			if (ownedSkills.has(id)) continue;
+			const cost = skill.cost.amount;
+			if (cost >= bestCost) continue;
+			if (currenciesManager.getAmount(skill.cost.currency) < cost) continue;
+			if (skill.requires && !skill.requires.every(req => ownedSkills.has(req))) continue;
+			if (skill.condition && !skill.condition(gameManager)) continue;
+			bestCost = cost;
+			bestId = id;
+		}
+
+		return bestId;
 	}
 
-	private getAffordableUpgrade(): string | null {
-		const upgrades = Object.entries(UPGRADES)
-			.filter(([id, upgrade]) => {
-				if (gameManager.upgrades.includes(id)) return false;
-				if (upgrade.condition && !upgrade.condition(gameManager)) return false;
-				return gameManager.canAfford(upgrade.cost);
-			})
-			.sort((a, b) => a[1].cost.amount - b[1].cost.amount);
+	private getAffordableUpgrade(ownedUpgrades: Set<string>): string | null {
+		let bestId: string | null = null;
+		let bestCost = Infinity;
 
-		return upgrades[0]?.[0] ?? null;
+		for (const [id, upgrade] of UPGRADE_ENTRIES) {
+			if (ownedUpgrades.has(id)) continue;
+			const cost = upgrade.cost.amount;
+			if (cost >= bestCost) continue;
+			if (currenciesManager.getAmount(upgrade.cost.currency) < cost) continue;
+			if (upgrade.condition && !upgrade.condition(gameManager)) continue;
+			bestCost = cost;
+			bestId = id;
+		}
+
+		return bestId;
 	}
 
 	private selectBuilding(): BuildingType | null {
