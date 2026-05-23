@@ -586,6 +586,7 @@ export class SimulationEngine {
 			duration,
 			id: `sim_${this.powerUpCounter++}`,
 			multiplier,
+			name: base.name,
 			startTime: gameManager.inGameTime,
 		});
 		gameManager.incrementBonusHiggsBosonClicks();

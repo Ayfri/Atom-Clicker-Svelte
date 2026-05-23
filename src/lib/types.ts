@@ -175,6 +175,7 @@ export interface PowerUp {
 	duration: number;
 	id: string;
 	multiplier: number;
+	name: string;
 	startTime: number;
 }
 

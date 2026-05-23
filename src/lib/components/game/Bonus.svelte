@@ -18,6 +18,7 @@
 		duration: 0,
 		id: Date.now().toString(),
 		multiplier: 0,
+		name: '',
 		startTime: Date.now(),
 	} satisfies PowerUp);
 
@@ -46,6 +47,7 @@
 		// powerUp.duration = 60000; // Debug
 		powerUp.description = `Multiplies atoms by ${formatNumber(powerUp.multiplier)} for ${formatNumber(powerUp.duration / 1000)} seconds`;
 		powerUp.id = Date.now().toString();
+		powerUp.name = randomPowerUp.name;
 
 		showBonus = true;
 		isFadingOut = false;

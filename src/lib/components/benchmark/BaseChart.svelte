@@ -1,6 +1,6 @@
-<script lang="ts">
+﻿<script lang="ts">
 	/** SVG chart with hover, tooltip, toggle series. */
-	import { formatNumber } from '$lib/utils';
+	import { formatNumber, formatSimTimePrecise } from '$lib/utils';
 
 	export interface ChartSeries {
 		color: string;
@@ -153,7 +153,7 @@
 		return `left: ${finalLeft}px; top: ${padding.top + 10}px; width: ${ttWidth}px;`;
 	});
 
-	const simulatedTime = $derived(hoveredIndex !== null ? (totalHours * hoveredIndex) / denominator : 0);
+	const simulatedTimeMs = $derived(hoveredIndex !== null ? (totalHours * hoveredIndex * 3600000) / denominator : 0);
 </script>
 
 <div class="flex flex-col gap-4 w-full">
@@ -377,7 +377,7 @@
 				class="absolute backdrop-blur-md bg-slate-900/95 border border-slate-600/50 p-3 pointer-events-none rounded-2xl shadow-2xl text-xs z-10"
 				style={tooltipStyle}
 			>
-				<div class="font-bold mb-2 text-slate-50">Time: {simulatedTime.toFixed(2)}h</div>
+				<div class="font-bold mb-2 text-slate-50">Time: {formatSimTimePrecise(simulatedTimeMs)}</div>
 				<div class="flex flex-col gap-1.5">
 					{#each tooltipData as { s, val }}
 						<div class="flex items-center justify-between gap-4">

@@ -1,6 +1,6 @@
-<script lang="ts">
+﻿<script lang="ts">
 	import { Award, ChevronDown, ChevronUp, Clock, Layers, Sparkles, Star, Target, TrendingUp, Zap } from '@lucide/svelte';
-	import { formatDuration, formatNumber } from '$lib/utils';
+	import { formatDuration, formatNumber, formatSimTimePrecise } from '$lib/utils';
 	import { MILESTONES, type SimulationResult } from '$lib/simulation/types';
 
 	type ResultWithCount = SimulationResult & { milestoneCount?: number };
@@ -126,11 +126,10 @@
 					<div class="flex flex-col gap-2 max-h-72 overflow-y-auto pr-2">
 						{#each result.milestones as hit (hit.milestone.id)}
 							<div
-								class="bg-black/20 border-green-500/50 border-l-[3px] gap-4 grid grid-cols-[1fr_auto_auto] px-4 py-2 rounded-lg text-sm"
+								class="bg-black/20 border-green-500/50 border-l-[3px] gap-4 grid grid-cols-[1fr_auto] px-4 py-2 rounded-lg text-sm"
 							>
 								<span class="font-medium">{hit.milestone.name}</span>
-								<span class="font-mono text-cyan-400">{formatDuration(hit.timeReached)}</span>
-								<span class="text-gray-500 text-xs">Hour {(hit.timeReached / (3600 * 1000)).toFixed(2)}</span>
+								<span class="font-mono text-cyan-400 text-xs">{formatSimTimePrecise(hit.timeReached)}</span>
 							</div>
 						{/each}
 					</div>

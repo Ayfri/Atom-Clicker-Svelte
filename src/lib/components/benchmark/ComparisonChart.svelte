@@ -1,6 +1,6 @@
-<script lang="ts">
+﻿<script lang="ts">
 	/** Comparison chart: two runs overlaid with distinct styling. */
-	import { formatNumber } from '$lib/utils';
+	import { formatNumber, formatSimTimePrecise } from '$lib/utils';
 
 	export interface ChartSeries {
 		color: string;
@@ -151,12 +151,12 @@
 		return `left: ${ttLeft}px; top: ${padding.top + 10}px; width: ${ttWidth}px;`;
 	});
 
-	const primaryTime = $derived(
-		hoveredIndex !== null && primaryDataLen > 0 ? (totalHours * hoveredIndex) / (primaryDataLen > 1 ? primaryDataLen - 1 : 1) : 0,
+	const primaryTimeMs = $derived(
+		hoveredIndex !== null && primaryDataLen > 0 ? (totalHours * hoveredIndex * 3600000) / (primaryDataLen > 1 ? primaryDataLen - 1 : 1) : 0,
 	);
-	const comparisonTime = $derived(
+	const comparisonTimeMs = $derived(
 		hoveredIndex !== null && comparisonDataLen > 0 ?
-			(totalHours * hoveredIndex) / (comparisonDataLen > 1 ? comparisonDataLen - 1 : 1)
+			(totalHours * hoveredIndex * 3600000) / (comparisonDataLen > 1 ? comparisonDataLen - 1 : 1)
 		:	0,
 	);
 </script>
@@ -377,7 +377,7 @@
 							<div
 								class="border-b border-slate-700 font-bold mb-1 pb-1 text-emerald-400 text-[10px] uppercase tracking-wider"
 							>
-								{primaryTitle} ({primaryTime.toFixed(2)}h)
+								{primaryTitle} ({formatSimTimePrecise(primaryTimeMs)})
 							</div>
 							{#each primaryTooltipData as { color, label, val } (label)}
 								<div class="flex items-center justify-between gap-3">
@@ -396,7 +396,7 @@
 						<!-- Comparison Column -->
 						<div class="border-l border-slate-700 flex flex-col gap-2 pl-4">
 							<div class="border-b border-slate-700 font-bold mb-1 pb-1 text-cyan-400 text-[10px] uppercase tracking-wider">
-								{comparisonTitle} ({comparisonTime.toFixed(2)}h)
+								{comparisonTitle} ({formatSimTimePrecise(comparisonTimeMs)})
 							</div>
 							{#each comparisonTooltipData as { color, label, val } (label)}
 								<div class="flex items-center justify-between gap-3">
@@ -413,7 +413,7 @@
 						</div>
 					</div>
 				{:else}
-					<div class="font-bold mb-2 text-slate-50">Time: {primaryTime.toFixed(2)}h</div>
+					<div class="font-bold mb-2 text-slate-50">Time: {formatSimTimePrecise(primaryTimeMs)}</div>
 					<div class="flex flex-col gap-1.5">
 						{#each primaryTooltipData as { color, label, val } (label)}
 							<div class="flex items-center justify-between gap-4">

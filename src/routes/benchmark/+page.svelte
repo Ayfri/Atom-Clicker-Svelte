@@ -280,16 +280,6 @@
 				{stopSimulation}
 			/>
 
-			{#if isRunning || (result && !loadedReport)}
-				<BenchmarkTimeline
-					{isRunning}
-					{elapsedTime}
-					{progress}
-					milestones={result?.milestones ?? liveMilestones}
-					{targetHours}
-				/>
-			{/if}
-
 			{#if loadedReport}
 				<div
 					class="bg-amber-500/10 border border-amber-500/30 flex gap-2 items-center justify-between px-4 py-2 rounded-lg text-amber-400 text-sm"
@@ -306,6 +296,16 @@
 
 			{#if displayResult}
 				<BenchmarkResults result={displayResult} />
+			{/if}
+
+			{#if isRunning || (result && !loadedReport)}
+				<BenchmarkTimeline
+					{isRunning}
+					{elapsedTime}
+					{progress}
+					milestones={result?.milestones ?? liveMilestones}
+					{targetHours}
+				/>
 			{/if}
 
 			{#if isRunning || displayResult}
