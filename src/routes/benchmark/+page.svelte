@@ -269,7 +269,7 @@
 
 	<div class="flex gap-6 max-w-7xl mx-auto relative">
 		<!-- Main Content -->
-		<main class="flex flex-col flex-1 gap-8 {showHistoryPanel ? 'mr-80' : ''}">
+		<main class="flex flex-col flex-1 gap-8 {showHistoryPanel ? 'mr-96' : ''}">
 			<BenchmarkConfigPanel
 				bind:activityId
 				bind:playstyleId
@@ -326,7 +326,7 @@
 
 		<!-- History Panel Sidebar -->
 		{#if showHistoryPanel}
-			<aside class="fixed h-[calc(100vh-8rem)] right-8 top-28 w-80 z-20">
+			<aside class="fixed h-[calc(100vh-8rem)] right-8 top-28 w-96 z-20">
 				<HistoryPanel
 					comparisonId={comparisonReportId}
 					loadedId={loadedReport?.id ?? null}
