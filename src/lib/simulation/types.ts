@@ -43,9 +43,11 @@ export interface SimulationSnapshot {
 	achievements: number;
 	actions: SimulationAction[];
 	atoms: number;
+	atomsPerClick: number;
 	atomsPerSecond: number;
 	buildingLevels: number;
 	buildings: Record<BuildingType, number>;
+	buildingsEverPurchased: string[];
 	buildingsPurchased: number;
 	clicks: number;
 	dayNumber: number;
@@ -67,7 +69,9 @@ export interface SimulationSnapshot {
 }
 
 export interface SimulationAction {
+	apsDelta?: number;
 	details?: string;
+	isFirstPurchase?: boolean;
 	timestamp: number;
 	type: 'achievement' | 'building' | 'electronize' | 'photon_upgrade' | 'power_up' | 'protonise' | 'skill' | 'upgrade';
 }
@@ -85,12 +89,22 @@ export interface MilestoneHit {
 	timeReached: number;
 }
 
+export interface SpikeEvent {
+	actions: SimulationAction[];
+	apsEnd: number;
+	apsStart: number;
+	avgRatePerMin: number;
+	peakRatePerMin: number;
+	timestamp: number;
+}
+
 export interface SimulationResult {
 	cancelled: boolean;
 	config: BenchmarkConfig;
 	durationMs: number;
 	milestones: MilestoneHit[];
 	snapshots: SimulationSnapshot[];
+	spikes: SpikeEvent[];
 }
 
 export const MILESTONES: MilestoneDefinition[] = [
@@ -148,6 +162,16 @@ export const MILESTONES: MilestoneDefinition[] = [
 	{ description: 'Reached player level 10', id: 'player_level_10', name: 'Level 10' },
 	{ description: 'Reached player level 50', id: 'player_level_50', name: 'Level 50' },
 	{ description: 'Reached player level 200', id: 'player_level_200', name: 'Level 200' },
+
+	{ description: 'Purchased first Molecule', id: 'first_building_molecule', name: 'First Molecule' },
+	{ description: 'Purchased first Crystal', id: 'first_building_crystal', name: 'First Crystal' },
+	{ description: 'Purchased first Nanostructure', id: 'first_building_nanostructure', name: 'First Nanostructure' },
+	{ description: 'Purchased first Microorganism', id: 'first_building_microorganism', name: 'First Microorganism' },
+	{ description: 'Purchased first Rock', id: 'first_building_rock', name: 'First Rock' },
+	{ description: 'Purchased first Planet', id: 'first_building_planet', name: 'First Planet' },
+	{ description: 'Purchased first Star', id: 'first_building_star', name: 'First Star' },
+	{ description: 'Purchased first Neutron Star', id: 'first_building_neutronStar', name: 'First Neutron Star' },
+	{ description: 'Purchased first Black Hole', id: 'first_building_blackHole', name: 'First Black Hole' },
 ];
 
 export const MILESTONE_CHECKS: Record<string, (s: SimulationSnapshot) => boolean> = {
@@ -197,6 +221,16 @@ export const MILESTONE_CHECKS: Record<string, (s: SimulationSnapshot) => boolean
 	player_level_10: s => s.playerLevel >= 10,
 	player_level_50: s => s.playerLevel >= 50,
 	player_level_200: s => s.playerLevel >= 200,
+
+	first_building_molecule: s => s.buildingsEverPurchased.includes('molecule'),
+	first_building_crystal: s => s.buildingsEverPurchased.includes('crystal'),
+	first_building_nanostructure: s => s.buildingsEverPurchased.includes('nanostructure'),
+	first_building_microorganism: s => s.buildingsEverPurchased.includes('microorganism'),
+	first_building_rock: s => s.buildingsEverPurchased.includes('rock'),
+	first_building_planet: s => s.buildingsEverPurchased.includes('planet'),
+	first_building_star: s => s.buildingsEverPurchased.includes('star'),
+	first_building_neutronStar: s => s.buildingsEverPurchased.includes('neutronStar'),
+	first_building_blackHole: s => s.buildingsEverPurchased.includes('blackHole'),
 };
 
 /** Activity schedule: when the bot is "active" (clicking and buying) vs idle. */

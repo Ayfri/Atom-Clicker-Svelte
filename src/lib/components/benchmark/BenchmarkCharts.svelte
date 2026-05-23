@@ -29,7 +29,10 @@
 
 	const apsChartSeries = $derived.by<ChartSeries[]>(() => {
 		if (currentSnapshots.length === 0) return [];
-		return [{ color: '#f472b6', data: currentSnapshots.map(s => s.atomsPerSecond), fillOpacity: 0.3, label: 'APS' }];
+		return [
+			{ color: '#f472b6', data: currentSnapshots.map(s => s.atomsPerSecond), fillOpacity: 0.3, label: 'APS' },
+			{ color: '#38bdf8', data: currentSnapshots.map(s => s.atomsPerClick), fillOpacity: 0.1, label: 'APC' },
+		];
 	});
 
 	const progressionChartSeries = $derived.by<ChartSeries[]>(() => {
@@ -95,7 +98,10 @@
 
 	const apsComparisonSeries = $derived.by<ChartSeries[]>(() => {
 		if (!hasComparison) return [];
-		return [{ color: '#f472b6', data: comparisonSnapshots.map(s => s.atomsPerSecond), label: 'APS (comparison)' }];
+		return [
+			{ color: '#f472b6', data: comparisonSnapshots.map(s => s.atomsPerSecond), label: 'APS (comparison)' },
+			{ color: '#38bdf8', data: comparisonSnapshots.map(s => s.atomsPerClick ?? 0), label: 'APC (comparison)' },
+		];
 	});
 </script>
 
@@ -130,18 +136,16 @@
 				comparisonTitle={comparisonName?.slice(0, 20) ?? 'Comparison'}
 				primarySeries={apsChartSeries}
 				primaryTitle="Current"
-				title="Atoms Per Second (Log Scale)"
+				title="Atoms Per Second &amp; Per Click (Log Scale)"
 				totalHours={simulationDurationHours}
 				useLog={true}
-				yAxisSuffix="/s"
 			/>
 		{:else}
 			<BaseChart
 				series={apsChartSeries}
-				title="Atoms Per Second (Log Scale)"
+				title="Atoms Per Second &amp; Per Click (Log Scale)"
 				totalHours={simulationDurationHours}
 				useLog={true}
-				yAxisSuffix="/s"
 			/>
 		{/if}
 	</div>

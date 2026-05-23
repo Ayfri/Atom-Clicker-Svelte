@@ -2,6 +2,7 @@
 	import { Award, ChevronDown, ChevronUp, Clock, Layers, Sparkles, Star, Target, TrendingUp, Zap } from '@lucide/svelte';
 	import { formatDuration, formatNumber, formatSimTimePrecise } from '$lib/utils';
 	import { MILESTONES, type SimulationResult } from '$lib/simulation/types';
+	import SpikeBreakdown from './SpikeBreakdown.svelte';
 
 	type ResultWithCount = SimulationResult & { milestoneCount?: number };
 	let { result }: { result: ResultWithCount } = $props();
@@ -15,6 +16,8 @@
 		const reachedIds = new Set(result.milestones.map(m => m.milestone.id));
 		return MILESTONES.filter(m => !reachedIds.has(m.id));
 	});
+
+	const spikes = $derived(result.spikes ?? []);
 </script>
 
 <section class="backdrop-blur-xl bg-white/5 border border-white/10 p-6 rounded-2xl">
@@ -104,6 +107,18 @@
 	</div>
 
 	<div class="bg-black/30 h-px my-6 w-full"></div>
+
+	<!-- Runtime action-rate spikes -->
+	{#if spikes.length > 0}
+		<div class="flex flex-col gap-2 mb-6">
+			<div class="flex gap-2 items-center mb-2 text-amber-400 text-xs uppercase tracking-wider">
+				<span>Action Rate Spikes ({spikes.length})</span>
+			</div>
+			{#each spikes as spike, i (spike.timestamp)}
+				<SpikeBreakdown index={i} {spike} />
+			{/each}
+		</div>
+	{/if}
 
 	<!-- Milestones List -->
 	<div class="gap-8 grid grid-cols-1 md:grid-cols-2">

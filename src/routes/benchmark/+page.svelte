@@ -9,6 +9,7 @@
 		type PlaystylePresetId,
 		type PrestigePresetId,
 		type SimulationResult,
+		type SpikeEvent,
 	} from '$lib/simulation/types';
 	import { type SimulationProgress } from '$lib/simulation/engine';
 	import { ChartLine, GitCompare, History, Save } from '@lucide/svelte';
@@ -26,6 +27,7 @@
 	let worker = $state<Worker | null>(null);
 	let isRunning = $state(false);
 	let liveMilestones = $state<MilestoneHit[]>([]);
+	let liveSpikes = $state<SpikeEvent[]>([]);
 	let progress = $state<SimulationProgress | null>(null);
 	let result = $state<SimulationResult | null>(null);
 	let loadedReport = $state<BenchmarkReport | null>(null);
@@ -49,6 +51,7 @@
 			milestoneCount: milestones.length || report.milestoneCount,
 			milestones,
 			snapshots: report.snapshots,
+			spikes: report.spikes ?? [],
 		};
 	}
 
@@ -138,6 +141,7 @@
 		result = null;
 		loadedReport = null;
 		liveMilestones = [];
+		liveSpikes = [];
 		lastSavedId = null;
 		await tick();
 
@@ -150,6 +154,9 @@
 					progress = payload;
 					if (payload.recentMilestones.length > 0) {
 						liveMilestones = [...liveMilestones, ...payload.recentMilestones];
+					}
+					if (payload.recentSpikes.length > 0) {
+						liveSpikes = [...liveSpikes, ...payload.recentSpikes];
 					}
 				} else if (type === 'result') {
 					result = payload;
@@ -193,6 +200,7 @@
 			durationMs,
 			milestones: liveMilestones,
 			snapshots: progress?.snapshots ?? [],
+			spikes: liveSpikes,
 		};
 		terminateWorker();
 	}

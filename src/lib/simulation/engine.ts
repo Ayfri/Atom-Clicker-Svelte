@@ -18,6 +18,7 @@ import {
 	type SimulationAction,
 	type SimulationResult,
 	type SimulationSnapshot,
+	type SpikeEvent,
 } from './types';
 
 const ACHIEVEMENT_CHECK_INTERVAL = 100;
@@ -37,6 +38,7 @@ export interface SimulationProgress {
 	milestoneCount: number;
 	percent: number;
 	recentMilestones: MilestoneHit[];
+	recentSpikes: SpikeEvent[];
 	snapshots: SimulationSnapshot[];
 	ticksPerSecond: number;
 	totalHours: number;
@@ -52,10 +54,16 @@ async function yieldToMain(): Promise<void> {
 	return new Promise(resolve => setTimeout(resolve, 0));
 }
 
+const SPIKE_WINDOW_MS = 60_000;
+const SPIKE_MIN_HISTORY = 5;
+const SPIKE_MULTIPLIER = 4;
+const SPIKE_MIN_RATE = 50;
+
 export class SimulationEngine {
 	private abortController: AbortController | null = null;
 	private actions: SimulationAction[] = [];
 	private config: BenchmarkConfig;
+	private everPurchasedBuildings = new Set<string>();
 	private hitMilestones = new Set<string>();
 	private lastWasActive = false;
 	private milestones: MilestoneHit[] = [];
@@ -63,8 +71,14 @@ export class SimulationEngine {
 	private powerUpCounter = 0;
 	private prestigesThisActiveWindow = 0;
 	private recentMilestones: MilestoneHit[] = [];
+	private recentSpikes: SpikeEvent[] = [];
 	private savedState: string | null = null;
 	private snapshots: SimulationSnapshot[] = [];
+	private spikeRateHistory: number[] = [];
+	private spikes: SpikeEvent[] = [];
+	private spikeWindowActions: SimulationAction[] = [];
+	private spikeWindowAps = 0;
+	private spikeWindowStart = 0;
 
 	constructor(config: BenchmarkConfig) {
 		this.config = config;
@@ -88,6 +102,7 @@ export class SimulationEngine {
 		if (!gameManager.settings.automation.autoClick) gameManager.toggleAutoClick();
 		if (!gameManager.settings.automation.autoClickPhotons) gameManager.toggleAutoClickPhotons();
 		this.actions = [];
+		this.everPurchasedBuildings.clear();
 		this.hitMilestones.clear();
 		this.lastWasActive = false;
 		this.milestones = [];
@@ -95,7 +110,13 @@ export class SimulationEngine {
 		this.powerUpCounter = 0;
 		this.prestigesThisActiveWindow = 0;
 		this.recentMilestones = [];
+		this.recentSpikes = [];
 		this.snapshots = [];
+		this.spikeRateHistory = [];
+		this.spikes = [];
+		this.spikeWindowActions = [];
+		this.spikeWindowAps = gameManager.atomsPerSecond;
+		this.spikeWindowStart = 0;
 
 		const totalGameTimeMs = this.config.targetHours * 3600 * 1000;
 		const totalTicks = Math.floor(totalGameTimeMs / this.config.tickRate);
@@ -124,6 +145,7 @@ export class SimulationEngine {
 				if (this.isInActiveWindow()) {
 					this.executeBotBehavior();
 				}
+				this.flushSpikeWindowIfNeeded();
 				if (tick % ACHIEVEMENT_CHECK_INTERVAL === 0) {
 					this.checkAchievements();
 				}
@@ -153,12 +175,14 @@ export class SimulationEngine {
 						milestoneCount: this.milestones.length,
 						percent: (tick / totalTicks) * 100,
 						recentMilestones: [...this.recentMilestones],
+						recentSpikes: [...this.recentSpikes],
 						snapshots: this.snapshots,
 						ticksPerSecond: lastTicksPerSecond,
 						totalHours: this.config.targetHours,
 					});
 
 					this.recentMilestones = [];
+					this.recentSpikes = [];
 					lastProgressUpdate = now;
 					ticksSinceLastUpdate = 0;
 				}
@@ -183,7 +207,43 @@ export class SimulationEngine {
 			durationMs,
 			milestones: this.milestones,
 			snapshots: this.snapshots,
+			spikes: this.spikes,
 		};
+	}
+
+	private flushSpikeWindowIfNeeded() {
+		const simTime = gameManager.inGameTime;
+		if (simTime - this.spikeWindowStart < SPIKE_WINDOW_MS) return;
+
+		const windowDurationMs = simTime - this.spikeWindowStart;
+		const ratePerMin = (this.spikeWindowActions.length / windowDurationMs) * 60_000;
+
+		if (this.spikeRateHistory.length >= SPIKE_MIN_HISTORY && ratePerMin >= SPIKE_MIN_RATE) {
+			const recentHistory = this.spikeRateHistory.slice(-SPIKE_MIN_HISTORY);
+			const avgRate = recentHistory.reduce((a, b) => a + b, 0) / recentHistory.length;
+			if (avgRate > 0 && ratePerMin > avgRate * SPIKE_MULTIPLIER) {
+				const spike: SpikeEvent = {
+					actions: [...this.spikeWindowActions],
+					apsEnd: gameManager.atomsPerSecond,
+					apsStart: this.spikeWindowAps,
+					avgRatePerMin: avgRate,
+					peakRatePerMin: ratePerMin,
+					timestamp: this.spikeWindowStart,
+				};
+				this.spikes.push(spike);
+				this.recentSpikes.push(spike);
+			}
+		}
+
+		this.spikeRateHistory.push(ratePerMin);
+		this.spikeWindowActions = [];
+		this.spikeWindowAps = gameManager.atomsPerSecond;
+		this.spikeWindowStart = simTime;
+	}
+
+	private pushAction(action: SimulationAction) {
+		this.actions.push(action);
+		this.spikeWindowActions.push(action);
 	}
 
 	private checkAchievements() {
@@ -196,7 +256,7 @@ export class SimulationEngine {
 				if (achievement.condition(gameManager)) {
 					owned.add(id);
 					newlyEarned.push(id);
-					this.actions.push({
+					this.pushAction({
 						details: achievement.name,
 						timestamp: gameManager.inGameTime,
 						type: 'achievement',
@@ -252,9 +312,11 @@ export class SimulationEngine {
 			achievements: gameManager.achievements.length,
 			actions: [...this.actions],
 			atoms: currenciesManager.getAmount(CurrenciesTypes.ATOMS),
+			atomsPerClick: gameManager.clickPower,
 			atomsPerSecond: gameManager.atomsPerSecond,
 			buildingLevels,
 			buildings,
+			buildingsEverPurchased: [...this.everPurchasedBuildings],
 			buildingsPurchased: gameManager.totalBuildingsPurchasedAllTime,
 			clicks: gameManager.totalClicksAllTime,
 			dayNumber: gameManager.inGameTime / (24 * 3600 * 1000),
@@ -294,7 +356,7 @@ export class SimulationEngine {
 
 		if (canDoAction() && canPrestige() && prestigeStrategy.autoProtonise && gameManager.protoniseProtonsGain >= prestigeStrategy.protoniseThreshold) {
 			if (gameManager.protonise()) {
-				this.actions.push({
+				this.pushAction({
 					details: `+${gameManager.protoniseProtonsGain} protons`,
 					timestamp: gameManager.inGameTime,
 					type: 'protonise',
@@ -306,7 +368,7 @@ export class SimulationEngine {
 
 		if (canDoAction() && canPrestige() && prestigeStrategy.autoElectronize && gameManager.electronizeElectronsGain >= prestigeStrategy.electronizeThreshold) {
 			if (gameManager.electronize()) {
-				this.actions.push({
+				this.pushAction({
 					details: `+${gameManager.electronizeElectronsGain} electrons`,
 					timestamp: gameManager.inGameTime,
 					type: 'electronize',
@@ -326,9 +388,14 @@ export class SimulationEngine {
 			if (building) {
 				const maxAffordable = gameManager.getMaxAffordableBuilding(building);
 				if (maxAffordable > 0) {
+					const isFirstPurchase = !this.everPurchasedBuildings.has(building);
+					const apsBeforeBuy = gameManager.atomsPerSecond;
 					gameManager.purchaseBuilding(building, maxAffordable);
-					this.actions.push({
+					this.everPurchasedBuildings.add(building);
+					this.pushAction({
+						apsDelta: gameManager.atomsPerSecond - apsBeforeBuy,
 						details: `${building} x${maxAffordable}`,
+						isFirstPurchase,
 						timestamp: gameManager.inGameTime,
 						type: 'building',
 					});
@@ -340,7 +407,7 @@ export class SimulationEngine {
 			const affordableUpgrade = this.getAffordableUpgrade(ownedUpgrades);
 			if (affordableUpgrade) {
 				gameManager.purchaseUpgrade(affordableUpgrade);
-				this.actions.push({
+				this.pushAction({
 					details: affordableUpgrade,
 					timestamp: gameManager.inGameTime,
 					type: 'upgrade',
@@ -352,7 +419,7 @@ export class SimulationEngine {
 			const affordableSkill = this.getAffordableSkill(ownedSkills);
 			if (affordableSkill) {
 				gameManager.purchaseSkill(affordableSkill);
-				this.actions.push({
+				this.pushAction({
 					details: affordableSkill,
 					timestamp: gameManager.inGameTime,
 					type: 'skill',
@@ -366,7 +433,7 @@ export class SimulationEngine {
 			const affordablePhotonUpgrade = this.getAffordablePhotonUpgrade(photons, excitedPhotons);
 			if (affordablePhotonUpgrade) {
 				gameManager.purchasePhotonUpgrade(affordablePhotonUpgrade);
-				this.actions.push({
+				this.pushAction({
 					details: affordablePhotonUpgrade,
 					timestamp: gameManager.inGameTime,
 					type: 'photon_upgrade',
@@ -591,7 +658,7 @@ export class SimulationEngine {
 		});
 		gameManager.incrementBonusHiggsBosonClicks();
 
-		this.actions.push({
+		this.pushAction({
 			details: `×${multiplier.toFixed(1)} / ${(duration / 1000).toFixed(0)}s`,
 			timestamp: gameManager.inGameTime,
 			type: 'power_up',
