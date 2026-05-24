@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { leaderboardService } from '$lib/server/supabase.server';
+import { leaderboardService, supabaseAdmin } from '$lib/server/supabase.server';
 import { verifyAndDecryptClientData } from '$lib/server/obfuscation.server';
 import { addRankToLeaderboard } from '$lib/utils/number-parser';
 
@@ -16,8 +16,11 @@ export const GET: RequestHandler = async ({ url }) => {
 		// Only use userId if it's not empty, otherwise set to undefined
 		const currentUserId = userIdParam && userIdParam.trim().length > 0 ? userIdParam : undefined;
 
-		// Get leaderboard data from Supabase (simplified function)
-		const rawLeaderboard = await leaderboardService.getLeaderboard(1000);
+		// Get leaderboard data and total user count in parallel
+		const [rawLeaderboard, { count: totalUsersCount }] = await Promise.all([
+			leaderboardService.getLeaderboard(1000),
+			supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }),
+		]);
 
 		// Sort and rank the entries by atoms value using JavaScript
 		const sortedWithRank = addRankToLeaderboard(rawLeaderboard);
@@ -43,14 +46,11 @@ export const GET: RequestHandler = async ({ url }) => {
 			};
 		});
 
-		// Calculate statistics
-		const totalUsers = formattedLeaderboard.length;
-
 		return json({
 			entries: formattedLeaderboard,
 			stats: {
-				totalUsers
-			}
+				totalUsers: totalUsersCount ?? formattedLeaderboard.length,
+			},
 		});
 	} catch (error) {
 		console.error('Failed to fetch leaderboard:', error);
