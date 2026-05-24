@@ -154,10 +154,7 @@ function createGlobalUpgrades() {
 			condition: (i, state) => (i > 1 ? state.achievements.length > 10 * i : true),
 			name: i => `Atom Soup ${i}`,
 			description: i => `+${Math.ceil(i / 5)}% production per achievement`,
-			cost: i => {
-				const baseCost = 500 * 2 ** (i * 6);
-				return i > 5 ? baseCost * i ** 4 : baseCost;
-			},
+			cost: i => Math.pow(10, i * 3 + 2),
 			effects: i => [
 				{
 					type: 'global',
@@ -254,10 +251,7 @@ function createLevelBoostUpgrades() {
 			name: `Level Boost ${i}`,
 			description: `+${1 + Math.ceil(i / 2)}% production per level`,
 			cost: {
-				amount:
-					i === 1
-						? Math.ceil(20000 * 1.1)
-						: Math.ceil(5 ** (i * 4) * (i > 3 ? i ** 4 : 1) * 1.1),
+				amount: 1e5 * 2_500_000 ** (i - 1),
 				currency: 'Atoms',
 			},
 			condition: state => state.features[FeatureTypes.LEVELS] === true,
