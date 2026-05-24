@@ -13,6 +13,7 @@
 		comparisonDurationHours?: number;
 		comparisonSeries?: ChartSeries[];
 		comparisonTitle?: string;
+		description?: string;
 		height?: number;
 		primarySeries: ChartSeries[];
 		primaryTitle?: string;
@@ -26,6 +27,7 @@
 		comparisonDurationHours = 0,
 		comparisonSeries = [],
 		comparisonTitle = 'Comparison',
+		description,
 		height = 360,
 		primarySeries,
 		primaryTitle = 'Current',
@@ -177,7 +179,12 @@
 
 <div class="flex flex-col gap-4 w-full">
 	<div class="flex flex-wrap gap-4 items-center justify-between px-2 w-full">
-		<h3 class="font-semibold text-gray-300 text-sm">{title}</h3>
+		<div class="flex flex-col gap-0.5">
+			<h3 class="font-semibold text-gray-300 text-sm">{title}</h3>
+			{#if description}
+				<p class="text-[11px] text-slate-500 leading-tight">{description}</p>
+			{/if}
+		</div>
 
 		{#if hasComparison}
 			<div class="flex gap-5 text-xs">

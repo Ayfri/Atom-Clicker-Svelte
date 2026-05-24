@@ -11,6 +11,7 @@
 	}
 
 	interface Props {
+		description?: string;
 		height?: number;
 		series: ChartSeries[];
 		title: string;
@@ -19,7 +20,7 @@
 		yAxisSuffix?: string;
 	}
 
-	let { height = 320, series, title, totalHours, useLog = false, yAxisSuffix = '' }: Props = $props();
+	let { description, height = 320, series, title, totalHours, useLog = false, yAxisSuffix = '' }: Props = $props();
 
 	let containerWidth = $state(800);
 	const padding = { bottom: 30, left: 60, right: 20, top: 20 };
@@ -158,7 +159,12 @@
 
 <div class="flex flex-col gap-4 w-full">
 	<div class="flex flex-wrap gap-4 items-center justify-between px-2 w-full">
-		<h3 class="font-semibold text-gray-300 text-sm">{title}</h3>
+		<div class="flex flex-col gap-0.5">
+			<h3 class="font-semibold text-gray-300 text-sm">{title}</h3>
+			{#if description}
+				<p class="text-[11px] text-slate-500 leading-tight">{description}</p>
+			{/if}
+		</div>
 
 		<!-- Interactive Legend -->
 		<div class="flex flex-wrap gap-x-4 gap-y-2 justify-end">

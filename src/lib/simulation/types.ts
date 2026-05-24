@@ -63,6 +63,14 @@ export interface SimulationSnapshot {
 	globalFlatMultiplier: number;
 	globalLevelMultiplier: number;
 	globalMultiplier: number;
+	groupContributions: {
+		achievementMul: number[];
+		globalBoostTiers: number[];
+		levelBoost: number[];
+		protonBoost: number[];
+		protoniseBoost: number[];
+	};
+	levelBoostCount: number;
 	globalProtonBoostMultiplier: number;
 	globalProtoniseMultiplier: number;
 	globalSkillsMultiplier: number;

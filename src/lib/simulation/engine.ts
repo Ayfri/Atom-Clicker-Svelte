@@ -344,6 +344,32 @@ export class SimulationEngine {
 		const globalLevelMultiplier = computeGlobalForPrefix('level_boost_');
 		const globalProtonBoostMultiplier = computeGlobalForPrefix('proton_boost_');
 		const globalProtoniseMultiplier = computeGlobalForPrefix('protonise_boost_');
+		const levelBoostCount = gameManager.upgrades.filter(id => id.startsWith('level_boost_')).length;
+
+		const getUpgradeContribution = (id: string): number => {
+			if (!gameManager.upgrades.includes(id)) return 1;
+			const upgrade = UPGRADES[id];
+			if (!upgrade) return 1;
+			const globalEffect = upgrade.effects.find(e => e.type === 'global');
+			if (!globalEffect) return 1;
+			return globalEffect.apply(1, gameManager);
+		};
+
+		const computeGroupContributions = (prefix: string, count: number): number[] =>
+			Array.from({ length: count }, (_, i) => getUpgradeContribution(`${prefix}_${i + 1}`));
+
+		const globalBoostRaw = computeGroupContributions('global_boost', 50);
+		const globalBoostTiers = Array.from({ length: 5 }, (_, tier) =>
+			globalBoostRaw.slice(tier * 10, tier * 10 + 10).reduce((acc, v) => acc * v, 1),
+		);
+
+		const groupContributions = {
+			achievementMul: computeGroupContributions('global_achievements_mul', 11),
+			globalBoostTiers,
+			levelBoost: computeGroupContributions('level_boost', 10),
+			protonBoost: computeGroupContributions('proton_boost', 10),
+			protoniseBoost: computeGroupContributions('protonise_boost', 5),
+		};
 
 		return {
 			achievements: gameManager.achievements.length,
@@ -372,6 +398,8 @@ export class SimulationEngine {
 			globalProtonBoostMultiplier,
 			globalProtoniseMultiplier,
 			globalSkillsMultiplier,
+			groupContributions,
+			levelBoostCount,
 			photons: currenciesManager.getAmount(CurrenciesTypes.PHOTONS),
 			photonUpgradeLevels,
 			playerLevel,

@@ -6,6 +6,7 @@
 		comparisonDurationHours?: number;
 		comparisonSeries?: ChartSeries[];
 		comparisonTitle?: string;
+		description?: string;
 		height?: number;
 		primarySeries: ChartSeries[];
 		primaryTitle?: string;
@@ -19,6 +20,7 @@
 		comparisonDurationHours = 0,
 		comparisonSeries = [],
 		comparisonTitle = 'Comparison',
+		description,
 		height = 340,
 		primarySeries,
 		primaryTitle = 'Current',
@@ -36,6 +38,7 @@
 		{comparisonDurationHours}
 		{comparisonSeries}
 		{comparisonTitle}
+		{description}
 		{height}
 		{primarySeries}
 		{primaryTitle}
@@ -46,6 +49,7 @@
 	/>
 {:else}
 	<BaseChart
+		{description}
 		{height}
 		series={primarySeries}
 		{title}
