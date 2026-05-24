@@ -6,6 +6,7 @@ import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
 import { calculateEffects, getUpgradesWithEffects } from '$helpers/effects';
 import type { GameManager } from '$helpers/GameManager.svelte';
 import { radiationManager } from '$helpers/RadiationManager.svelte';
+import { XP_PER_ATOM } from '$lib/constants';
 import type { BuildingCountMap, CurrencyAmountMap, OfflineProgressSummary } from '$lib/types';
 
 const OFFLINE_AUTO_FACTOR = 120;
@@ -23,7 +24,6 @@ const OFFLINE_MIN_MS = 30_000;
 const OFFLINE_PHOTON_MAX = 10;
 const OFFLINE_PHOTON_MIN = 1;
 const OFFLINE_UNLOCK_FEATURE = FeatureTypes.OFFLINE_PROGRESS;
-const XP_PER_ATOM = 0.1;
 
 export function applyOfflineProgress(manager: GameManager, forcedAwayMs?: number): OfflineProgressSummary | null {
 	if (!manager.settings.gameplay.offlineProgressEnabled) return null;

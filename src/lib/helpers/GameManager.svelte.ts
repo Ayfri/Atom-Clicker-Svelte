@@ -7,7 +7,7 @@ import { POWER_UP_DEFAULT_INTERVAL } from '$data/powerUp';
 import { REALMS, RealmTypes } from '$data/realms';
 import { SKILL_UPGRADES } from '$data/skillTree';
 import { UPGRADES } from '$data/upgrades';
-import { BUILDING_COST_MULTIPLIER, ELECTRONS_PROTONS_REQUIRED, PROTONS_ATOMS_REQUIRED } from '$lib/constants';
+import { BUILDING_COST_MULTIPLIER, ELECTRONS_PROTONS_REQUIRED, PROTONS_ATOMS_REQUIRED, XP_PER_ATOM } from '$lib/constants';
 import {
 	type Building,
 	type CurrencyBoosts,
@@ -806,8 +806,7 @@ export class GameManager {
 		currenciesManager.add(CurrenciesTypes.ATOMS, amount);
 		if (amount > 0) {
 			if (this.features[FeatureTypes.LEVELS]) {
-				const xpPerAtom = 0.1;
-				this.totalXP += amount * xpPerAtom * this.xpGainMultiplier;
+				this.totalXP += amount * XP_PER_ATOM * this.xpGainMultiplier;
 			}
 		}
 	}
@@ -929,9 +928,11 @@ export class GameManager {
 	}
 
 	getXPForLevel(level: number) {
-		const base = 100;
-		const taux = 0.42;
-		return Math.floor(base * Math.pow(1 + taux, level - 1));
+		const base = 100; // Base XP cost for level 1
+		const poly = 1.1;
+		const rate = 1.55;
+		// XP(L) = base * L^poly * rate^(L-1): L^poly scales the base cost linearly so early levels stay gentle, rate^(L-1) compounds each step exponentially making late levels significantly harder
+		return Math.floor(base * Math.pow(level, poly) * Math.pow(rate, level - 1));
 	}
 
 	tick(deltaTime: number = 1000, skipAchievements = false) {
