@@ -923,6 +923,7 @@ export class GameManager {
 
 	// XP Helpers
 	getLevelFromTotalXP(totalXP: number) {
+		if (!isFinite(totalXP) || totalXP <= 0) return 0;
 		let level = 0;
 		let remainingXP = totalXP;
 		while (remainingXP >= this.getXPForLevel(level + 1)) {
