@@ -445,6 +445,8 @@ export class GameManager {
 
 		if (result.success && result.state) {
 			this.loadSaveData(result.state);
+			this.syncFeatures();
+			this.checkRealmUnlocks();
 			this.lastLoadedSave = typeof result.state.lastSave === 'number' ? result.state.lastSave : 0;
 			const offlineSummary = applyOfflineProgress(this);
 			if (offlineSummary) {
@@ -713,8 +715,11 @@ export class GameManager {
 	checkRealmUnlocks() {
 		const state = this.getCurrentState();
 		Object.values(REALMS).forEach(realmDef => {
+			if (!this.realms[realmDef.id]) {
+				this.realms[realmDef.id] = { unlocked: false };
+			}
 			const realmState = this.realms[realmDef.id];
-			if (realmState && !realmState.unlocked && realmDef.condition(state)) {
+			if (!realmState.unlocked && realmDef.condition(state)) {
 				realmState.unlocked = true;
 			}
 		});

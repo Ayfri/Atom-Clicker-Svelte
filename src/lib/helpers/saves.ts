@@ -451,6 +451,7 @@ export function migrateSavedState(savedState: unknown): GameState | undefined {
 			state.realms = {
 				[RealmTypes.ATOMS]: { unlocked: true },
 				[RealmTypes.PHOTONS]: { unlocked: state.photonRealmUnlocked ?? state.purpleRealmUnlocked ?? false },
+				[RealmTypes.RADIATION]: { unlocked: false },
 			};
 			delete state.photonRealmUnlocked;
 			delete state.purpleRealmUnlocked;
