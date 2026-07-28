@@ -1,16 +1,46 @@
 <script lang="ts">
+	import LeaderboardRow from '@components/ui/LeaderboardRow.svelte';
 	import { getQuestTarget, pickDailyQuests } from '$data/dailyQuests';
-	import { QUARK_SHOP } from '$data/quarkShop';
+	import { QUARK_SHOP, type QuarkShopItem } from '$data/quarkShop';
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { quarksManager } from '$helpers/QuarksManager.svelte';
+	import type { LeaderboardEntry } from '$lib/types/leaderboard';
 	import { formatNumber } from '$lib/utils';
 	import { supabaseAuth } from '$stores/supabaseAuth.svelte';
-	import { Calendar, Gem, ShoppingBag, Sparkles, Target, Wifi, WifiOff } from '@lucide/svelte';
+	import { Calendar, Gem, ShoppingBag, Sparkles, Target, Wifi, WifiOff, Zap } from '@lucide/svelte';
 
 	const shopItems = Object.values(QUARK_SHOP);
 
 	let inspectorDate = $state(new Date().toISOString().slice(0, 10));
 	const inspectorQuests = $derived(pickDailyQuests(inspectorDate));
+
+	function getItemTypeLabel(item: QuarkShopItem): string {
+		switch (item.type) {
+			case 'banner':
+				return 'Banner';
+			case 'boost':
+				return 'Boost';
+			case 'convenience':
+				return 'Convenience';
+			case 'theme':
+				return 'Realms Themes';
+		}
+	}
+
+	function getThemeRealmLabel(item: QuarkShopItem): string {
+		return item.theme?.realmId === 'photons' ? 'Photon Realm' : item.theme?.realmId === 'radiation' ? 'Radiation Realm' : 'Atom Realm';
+	}
+
+	function getBannerPreview(itemId: string): LeaderboardEntry {
+		return {
+			atoms: 1_250_000,
+			equippedBanner: itemId,
+			lastUpdated: Date.now(),
+			level: 42,
+			rank: 1,
+			username: 'Preview Player',
+		};
+	}
 
 	function completeQuest(questId: string) {
 		const quest = quarksManager.quests.find(q => q.id === questId);
@@ -171,15 +201,51 @@
 		<div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
 			{#each shopItems as item (item.id)}
 				{@const owned = quarksManager.entitlements.includes(item.id)}
-				<div class="flex items-center justify-between gap-2 bg-white/5 rounded-lg px-3 py-2 text-xs">
-					<span class="text-white/70">{item.name} <span class="text-white/30">({item.cost})</span></span>
+				<div class="flex items-center gap-3 bg-white/5 rounded-lg px-3 py-2 text-xs">
+					<div class="w-36 shrink-0 overflow-hidden rounded-md border border-white/10">
+						{#if item.type === 'banner' && item.banner}
+							<div class="h-12 w-[200%] origin-top-left scale-50">
+								<LeaderboardRow entry={getBannerPreview(item.id)} />
+							</div>
+						{:else if item.type === 'theme' && item.theme}
+							<div class="relative h-12 overflow-hidden p-2" style="background-image: {item.theme.background}">
+								<div class="absolute inset-x-0 top-0 h-0.5" style:background-color={item.theme.accent}></div>
+								<div class="relative flex h-full flex-col justify-end">
+									<span class="text-[9px] font-bold text-white">{getThemeRealmLabel(item)}</span>
+									<span class="text-[8px] text-white/60">{item.name}</span>
+								</div>
+							</div>
+						{:else}
+							<div class="flex h-12 items-center gap-2 bg-black/20 px-3">
+								<Zap size={15} class={item.type === 'boost' ? 'text-yellow-300' : 'text-accent-300'} />
+								<span class="text-[9px] font-semibold text-white/70">{item.type === 'boost' ? 'Permanent bonus' : 'Quality of life'}</span>
+							</div>
+						{/if}
+					</div>
+					<div class="min-w-0 flex-1">
+						<div class="flex flex-wrap items-center gap-1.5">
+							<span class="font-medium text-white/70">{item.name}</span>
+							<span class="rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white/50">{getItemTypeLabel(item)}</span>
+						</div>
+						<div class="mt-1 text-white/30">{item.cost} quarks</div>
+					</div>
 					<div class="flex gap-1 shrink-0">
-						{#if item.type === 'skin'}
+						{#if item.type === 'theme' && item.theme}
+							{@const realmId = item.theme.realmId}
+							{@const previewing = quarksManager.equippedThemes[realmId] === item.id}
 							<button
 								class="text-[10px] bg-white/5 px-2 py-0.5 rounded hover:bg-white/10 cursor-pointer"
-								onclick={() => quarksManager.previewSkin(quarksManager.equippedSkin === item.id ? null : item.id)}
+								onclick={() => quarksManager.previewTheme(realmId, previewing ? null : item.id)}
 							>
-								{quarksManager.equippedSkin === item.id ? 'Stop preview' : 'Preview'}
+								{previewing ? 'Stop preview' : 'Preview'}
+							</button>
+						{/if}
+						{#if item.type === 'banner'}
+							<button
+								class="text-[10px] bg-white/5 px-2 py-0.5 rounded hover:bg-white/10 cursor-pointer"
+								onclick={() => quarksManager.previewBanner(quarksManager.equippedBanner === item.id ? null : item.id)}
+							>
+								{quarksManager.equippedBanner === item.id ? 'Stop preview' : 'Preview'}
 							</button>
 						{/if}
 						{#if owned}
