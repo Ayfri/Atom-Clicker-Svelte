@@ -38,7 +38,8 @@
 		<line x1="5.5" y1="17" x2="18.5" y2="17" />
 	</g>
 
-	<circle cx="12" cy="5" r="3.2" fill={mono ? fillColor : QUARK_CHARGE_COLORS.blue} />
-	<circle cx="5.5" cy="17" r="3.2" fill={mono ? fillColor : QUARK_CHARGE_COLORS.green} />
-	<circle cx="18.5" cy="17" r="3.2" fill={mono ? fillColor : QUARK_CHARGE_COLORS.red} />
+	<!-- Vertex circles are outlined (Lucide's "Circle" style: stroke only, no fill) rather than flat dots, to match the app's icon language. -->
+	<circle cx="12" cy="5" r="3.2" stroke={mono ? fillColor : QUARK_CHARGE_COLORS.blue} stroke-width="2" />
+	<circle cx="5.5" cy="17" r="3.2" stroke={mono ? fillColor : QUARK_CHARGE_COLORS.green} stroke-width="2" />
+	<circle cx="18.5" cy="17" r="3.2" stroke={mono ? fillColor : QUARK_CHARGE_COLORS.red} stroke-width="2" />
 </svg>

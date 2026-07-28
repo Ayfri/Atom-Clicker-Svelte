@@ -4,13 +4,12 @@
 	import Modal from '@components/ui/Modal.svelte';
 	import QuarkLabel from '@components/ui/QuarkLabel.svelte';
 	import { getQuestTarget } from '$data/dailyQuests';
-	import { QUARK_COLOR } from '$data/quarks';
 	import { QUARK_SHOP } from '$data/quarkShop';
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { quarksManager } from '$helpers/QuarksManager.svelte';
 	import { formatNumber } from '$lib/utils';
 	import { supabaseAuth } from '$stores/supabaseAuth.svelte';
-	import { Check, Circle, Lock, RotateCcw, ShoppingBag, Sparkles, Target } from '@lucide/svelte';
+	import { Check, Lock, RotateCcw, ShoppingBag, Sparkles, Target } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 
 	interface Props {
@@ -46,7 +45,7 @@
 
 {#snippet quarkAmount(amount: number)}
 	<span class="inline-flex items-center gap-1 font-mono">
-		<Circle size={10} class="shrink-0" fill={QUARK_COLOR} stroke="none" />
+		<Quark size={14} class="shrink-0" />
 		{formatNumber(amount)}
 	</span>
 {/snippet}
