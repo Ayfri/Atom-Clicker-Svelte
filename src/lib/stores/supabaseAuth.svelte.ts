@@ -166,6 +166,17 @@ export class SupabaseAuth {
 		}
 	}
 
+	/**
+	 * Returns a fresh access token for authenticating requests to our own API routes.
+	 * Reads from Supabase (which auto-refreshes) rather than the cached session, so it stays valid.
+	 */
+	async getAccessToken(): Promise<string | null> {
+		if (!this.supabase) return null;
+		const { data: { session } } = await this.supabase.auth.getSession();
+		this.currentSession = session;
+		return session?.access_token ?? null;
+	}
+
 	async signInWithProvider(provider: Provider) {
 		if (!browser || !this.supabase) {
 			await this.init();

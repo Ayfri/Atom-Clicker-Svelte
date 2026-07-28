@@ -26,7 +26,6 @@ declare global {
 
 	namespace NodeJS {
 		interface ProcessEnv {
-			OBFUSCATION_KEY: string;
 			PUBLIC_SUPABASE_PUBLISHABLE_KEY: string;
 			PUBLIC_SUPABASE_URL: string;
 			SUPABASE_SECRET_KEY: string;
