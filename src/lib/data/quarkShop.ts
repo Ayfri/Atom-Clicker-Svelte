@@ -280,7 +280,7 @@ export const QUARK_SHOP: Record<string, QuarkShopItem> = {
 		type: 'theme',
 	},
 	banner_up: {
-		banner: { gradient: ['#38bdf8', '#0ea5e9'], pattern: 'rays' },
+		banner: { gradient: ['#0c4a6e', '#082f49', '#07111f'], pattern: 'rays' },
 		cost: 40,
 		description: 'A light, energetic banner for the Up quark.',
 		id: 'banner_up',
@@ -288,7 +288,7 @@ export const QUARK_SHOP: Record<string, QuarkShopItem> = {
 		type: 'banner',
 	},
 	banner_down: {
-		banner: { gradient: ['#b45309', '#78350f'], pattern: 'cells' },
+		banner: { gradient: ['#713f12', '#3f2d16', '#17120c'], pattern: 'cells' },
 		cost: 40,
 		description: 'An earthy banner for the Down quark.',
 		id: 'banner_down',
@@ -296,7 +296,7 @@ export const QUARK_SHOP: Record<string, QuarkShopItem> = {
 		type: 'banner',
 	},
 	banner_charm: {
-		banner: { gradient: ['#f472b6', '#db2777'], pattern: 'waves' },
+		banner: { gradient: ['#831843', '#4a1232', '#160b14'], pattern: 'waves' },
 		cost: 40,
 		description: 'A vivid banner for the Charm quark.',
 		id: 'banner_charm',
@@ -304,7 +304,7 @@ export const QUARK_SHOP: Record<string, QuarkShopItem> = {
 		type: 'banner',
 	},
 	banner_strange: {
-		banner: { gradient: ['#a78bfa', '#6d28d9'], pattern: 'constellation' },
+		banner: { gradient: ['#4c1d95', '#25134f', '#0d0a18'], pattern: 'constellation' },
 		cost: 40,
 		description: 'A mysterious banner for the Strange quark.',
 		id: 'banner_strange',
@@ -312,7 +312,7 @@ export const QUARK_SHOP: Record<string, QuarkShopItem> = {
 		type: 'banner',
 	},
 	banner_top: {
-		banner: { gradient: ['#facc15', '#ca8a04'], pattern: 'chevrons' },
+		banner: { gradient: ['#854d0e', '#422006', '#130f08'], pattern: 'chevrons' },
 		cost: 40,
 		description: 'A heavyweight golden banner for the Top quark.',
 		id: 'banner_top',
@@ -320,7 +320,7 @@ export const QUARK_SHOP: Record<string, QuarkShopItem> = {
 		type: 'banner',
 	},
 	banner_bottom: {
-		banner: { gradient: ['#7f1d1d', '#450a0a'], pattern: 'hazard' },
+		banner: { gradient: ['#5f1418', '#2a0b0d', '#0b0708'], pattern: 'hazard' },
 		cost: 40,
 		description: 'A deep maroon banner for the Bottom quark.',
 		id: 'banner_bottom',
@@ -328,7 +328,7 @@ export const QUARK_SHOP: Record<string, QuarkShopItem> = {
 		type: 'banner',
 	},
 	banner_gluon: {
-		banner: { gradient: ['#ef4444', '#22c55e', '#3b82f6'], pattern: 'lattice' },
+		banner: { gradient: ['#5b1822', '#123f2c', '#152b52'], pattern: 'lattice' },
 		cost: 40,
 		description: 'A color-charge banner carrying red, green and blue like a gluon.',
 		id: 'banner_gluon',
@@ -336,7 +336,7 @@ export const QUARK_SHOP: Record<string, QuarkShopItem> = {
 		type: 'banner',
 	},
 	banner_boson: {
-		banner: { gradient: ['#f8fafc', '#cbd5e1', '#fbbf24'], pattern: 'rings' },
+		banner: { gradient: ['#4b5563', '#292524', '#6b4f18'], pattern: 'rings' },
 		cost: 40,
 		description: 'A prestigious white-and-gold banner for the Higgs Boson.',
 		id: 'banner_boson',
@@ -344,7 +344,7 @@ export const QUARK_SHOP: Record<string, QuarkShopItem> = {
 		type: 'banner',
 	},
 	banner_neutrino: {
-		banner: { gradient: ['#e0f2fe', '#7dd3fc'], pattern: 'aurora' },
+		banner: { gradient: ['#164e63', '#19364d', '#09131a'], pattern: 'aurora' },
 		cost: 40,
 		description: 'A pale, ghostly banner for the elusive Neutrino.',
 		id: 'banner_neutrino',
@@ -352,7 +352,7 @@ export const QUARK_SHOP: Record<string, QuarkShopItem> = {
 		type: 'banner',
 	},
 	banner_hadron: {
-		banner: { gradient: ['#57534e', '#fb923c'], pattern: 'stripes' },
+		banner: { gradient: ['#292524', '#7c2d12', '#11100f'], pattern: 'stripes' },
 		cost: 40,
 		description: 'A dark, composite banner for a Hadron jet.',
 		id: 'banner_hadron',
