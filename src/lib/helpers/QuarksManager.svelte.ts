@@ -167,6 +167,11 @@ export class QuarksManager {
 	}
 
 	async claimAchievement(achievementId: string) {
+		// Opportunistic, fired automatically on every unlock: fail silently while signed out
+		// rather than surfacing a "sign in" toast for something the player didn't initiate.
+		// It is retried by the retroactive backfill on the next sync() after signing in.
+		if (!supabaseAuth.isAuthenticated) return;
+
 		const result = await this.postAction<{ balance: number; granted: number }>('/api/quarks/achievement', {
 			achievementIds: [achievementId],
 		});
@@ -176,6 +181,16 @@ export class QuarksManager {
 		if (result.granted > 0) {
 			toastStore.info({ message: 'Achievement reward claimed.', title: '+1 Quark' });
 		}
+	}
+
+	/** Retroactive backfill for already-unlocked achievements. Safe to call repeatedly, idempotent via the ledger ref. */
+	async claimAchievements(achievementIds: string[]) {
+		if (!supabaseAuth.isAuthenticated) return;
+
+		const result = await this.postAction<{ balance: number; granted: number }>('/api/quarks/achievement', { achievementIds });
+		if (!result) return;
+
+		this.balance = result.balance;
 	}
 
 	async purchase(itemId: string) {

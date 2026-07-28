@@ -880,6 +880,13 @@ export class GameManager {
 		}
 	}
 
+	/**
+	 * Set from outside (see +layout.svelte) rather than imported here, so GameManager never
+	 * statically imports QuarksManager - simulation.worker.ts imports GameManager and has no
+	 * auth/DOM context, see QuarksManager.svelte.ts for the full one-way dependency rule.
+	 */
+	onAchievementUnlocked: ((achievementId: string) => void) | null = null;
+
 	unlockAchievement(achievementId: string) {
 		if (!this.achievements.includes(achievementId)) {
 			this.achievements = [...this.achievements, achievementId];
@@ -892,6 +899,7 @@ export class GameManager {
 					icon: achievement.icon || 'Trophy',
 				});
 			}
+			this.onAchievementUnlocked?.(achievementId);
 		}
 	}
 
