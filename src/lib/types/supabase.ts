@@ -71,10 +71,66 @@ export type Database = {
 				}
 				Relationships: []
 			}
+			player_entitlements: {
+				Row: {
+					acquired_at: string
+					item_id: string
+					user_id: string
+				}
+				Insert: {
+					acquired_at?: string
+					item_id: string
+					user_id: string
+				}
+				Update: {
+					acquired_at?: string
+					item_id?: string
+					user_id?: string
+				}
+				Relationships: [
+					{
+						foreignKeyName: "player_entitlements_user_id_fkey"
+						columns: ["user_id"]
+						isOneToOne: false
+						referencedRelation: "profiles"
+						referencedColumns: ["id"]
+					}
+				]
+			}
+			player_quarks: {
+				Row: {
+					balance: number
+					lifetime_earned: number
+					updated_at: string
+					user_id: string
+				}
+				Insert: {
+					balance?: number
+					lifetime_earned?: number
+					updated_at?: string
+					user_id: string
+				}
+				Update: {
+					balance?: number
+					lifetime_earned?: number
+					updated_at?: string
+					user_id?: string
+				}
+				Relationships: [
+					{
+						foreignKeyName: "player_quarks_user_id_fkey"
+						columns: ["user_id"]
+						isOneToOne: true
+						referencedRelation: "profiles"
+						referencedColumns: ["id"]
+					}
+				]
+			}
 			profiles: {
 				Row: {
 					atoms: string
 					created_at: string | null
+					equipped_skin: string | null
 					id: string
 					is_online: boolean | null
 					last_updated: string | null
@@ -87,6 +143,7 @@ export type Database = {
 				Insert: {
 					atoms?: string
 					created_at?: string | null
+					equipped_skin?: string | null
 					id: string
 					is_online?: boolean | null
 					last_updated?: string | null
@@ -99,6 +156,7 @@ export type Database = {
 				Update: {
 					atoms?: string
 					created_at?: string | null
+					equipped_skin?: string | null
 					id?: string
 					is_online?: boolean | null
 					last_updated?: string | null
@@ -110,6 +168,44 @@ export type Database = {
 				}
 				Relationships: []
 			}
+			quark_ledger: {
+				Row: {
+					created_at: string
+					delta: number
+					id: number
+					item_id: string | null
+					reason: string
+					ref: string
+					user_id: string
+				}
+				Insert: {
+					created_at?: string
+					delta: number
+					id?: number
+					item_id?: string | null
+					reason: string
+					ref: string
+					user_id: string
+				}
+				Update: {
+					created_at?: string
+					delta?: number
+					id?: number
+					item_id?: string | null
+					reason?: string
+					ref?: string
+					user_id?: string
+				}
+				Relationships: [
+					{
+						foreignKeyName: "quark_ledger_user_id_fkey"
+						columns: ["user_id"]
+						isOneToOne: false
+						referencedRelation: "profiles"
+						referencedColumns: ["id"]
+					}
+				]
+			}
 		}
 		Views: {
 			[_ in never]: never
@@ -119,6 +215,7 @@ export type Database = {
 				Args: { p_limit?: number }
 				Returns: {
 					atoms: string
+					equipped_skin: string | null
 					id: string
 					is_online: boolean
 					last_updated: string
@@ -127,6 +224,31 @@ export type Database = {
 					updated_at: string
 					username: string
 				}[]
+			}
+			grant_quarks: {
+				Args: {
+					p_daily_cap?: number
+					p_delta: number
+					p_reason: string
+					p_ref: string
+					p_user_id: string
+				}
+				Returns: Json
+			}
+			purchase_quark_item: {
+				Args: {
+					p_cost: number
+					p_item_id: string
+					p_user_id: string
+				}
+				Returns: Json
+			}
+			refund_quark_item: {
+				Args: {
+					p_item_id: string
+					p_user_id: string
+				}
+				Returns: Json
 			}
 			update_profile_stats: {
 				Args: {
