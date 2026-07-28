@@ -5,6 +5,7 @@
 	import Analytics from '@components/system/Analytics.svelte';
 	import DevTools from '@components/system/devtools/DevTools.svelte';
 	import SEO from '@components/system/SEO.svelte';
+	import TutorialOverlay from '@components/tutorial/TutorialOverlay.svelte';
 	import TooltipPortal from '@components/ui/TooltipPortal.svelte';
 	import { prestigeStore } from '$stores/prestige.svelte';
 	import { LoaderCircle } from '@lucide/svelte';
@@ -36,6 +37,7 @@
 	{@render children?.()}
 	<DevTools />
 	<TooltipPortal />
+	<TutorialOverlay />
 {/if}
 
 <style>

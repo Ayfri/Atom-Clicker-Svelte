@@ -7,7 +7,7 @@ import { statsConfig } from '$helpers/statConstants';
 import { saveRecovery, type SaveErrorType } from '$stores/saveRecovery';
 
 export const SAVE_KEY = 'atomic-clicker-save';
-export const SAVE_VERSION = 21;
+export const SAVE_VERSION = 23;
 
 export interface LoadSaveResult {
 	errorDetails?: string;
@@ -519,6 +519,11 @@ export function migrateSavedState(savedState: unknown): GameState | undefined {
 			state.skillUpgrades = Array.from(skillUpgrades);
 			state.currencyBoosts = {};
 			state.features = deriveFeatureState({ skillUpgrades: state.skillUpgrades });
+		}
+
+		if (state.version === 22) {
+			// Existing saves shouldn't see the first-time tutorial
+			state.tutorial = { active: false, completed: true, step: 0 };
 		}
 
 		state.version = nextVersion;

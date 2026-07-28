@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { PHOTON_UPGRADES, EXCITED_PHOTON_UPGRADES } from '$data/photonUpgrades';
 	import { gameManager } from '$helpers/GameManager.svelte';
-	import { CURRENCIES, CurrenciesTypes, type CurrencyName } from '$data/currencies';
+	import { CURRENCIES, CurrenciesTypes } from '$data/currencies';
+	import { photonUpgradesTab } from '$stores/photonUpgradesTab.svelte';
 	import Currency from '@components/ui/Currency.svelte';
 	import PhotonUpgradeItem from './PhotonUpgradeItem.svelte';
 	import { Eye, EyeOff } from '@lucide/svelte';
 
-	let selectedCurrency = $state<CurrencyName>(CurrenciesTypes.PHOTONS);
+	const selectedCurrency = $derived(photonUpgradesTab.selected);
 
 	const availableUpgrades = $derived.by(() => {
 		const upgrades = selectedCurrency === CurrenciesTypes.EXCITED_PHOTONS ? EXCITED_PHOTON_UPGRADES : PHOTON_UPGRADES;
@@ -46,7 +47,7 @@
 		<button
 			class="currency-tab flex items-center bg-white/5 border-none rounded-lg cursor-pointer p-2 transition-all duration-200 hover:bg-white/10 active:bg-white/15 active:shadow-[0_0_10px_rgba(255,255,255,0.1)]"
 			class:active={selectedCurrency === CurrenciesTypes.PHOTONS}
-			onclick={() => selectedCurrency = CurrenciesTypes.PHOTONS}
+			onclick={() => photonUpgradesTab.selected = CurrenciesTypes.PHOTONS}
 			title={CURRENCIES[CurrenciesTypes.PHOTONS].name}
 		>
 			<Currency name={CurrenciesTypes.PHOTONS} />
@@ -55,7 +56,7 @@
 			<button
 				class="currency-tab flex items-center bg-white/5 border-none rounded-lg cursor-pointer p-2 transition-all duration-200 hover:bg-white/10 active:bg-white/15 active:shadow-[0_0_10px_rgba(255,255,255,0.1)]"
 				class:active={selectedCurrency === CurrenciesTypes.EXCITED_PHOTONS}
-				onclick={() => selectedCurrency = CurrenciesTypes.EXCITED_PHOTONS}
+				onclick={() => photonUpgradesTab.selected = CurrenciesTypes.EXCITED_PHOTONS}
 				title={CURRENCIES[CurrenciesTypes.EXCITED_PHOTONS].name}
 			>
 				<Currency name={CurrenciesTypes.EXCITED_PHOTONS} />

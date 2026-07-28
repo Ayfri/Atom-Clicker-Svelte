@@ -29,6 +29,7 @@ import { radiationManager } from '$helpers/RadiationManager.svelte';
 import { realmManager } from '$helpers/RealmManager.svelte';
 import { SAVE_KEY, SAVE_VERSION, loadSavedState } from '$helpers/saves';
 import { LAYERS, type LayerType, statsConfig } from '$helpers/statConstants';
+import { TutorialManager } from '$helpers/TutorialManager.svelte';
 import { leaderboard } from '$stores/leaderboard.svelte';
 import { saveRecovery } from '$stores/saveRecovery';
 import { toastStore } from '$stores/toasts.svelte';
@@ -81,6 +82,7 @@ export class GameManager {
 	totalUpgradesPurchasedAllTime = $state(0);
 	totalUsers = $derived(leaderboard.stats.totalUsers);
 	totalXP = $state(0);
+	tutorialManager = new TutorialManager();
 	upgrades = $state<string[]>([]);
 
 	// Configuration
@@ -406,6 +408,7 @@ export class GameManager {
 			totalUpgradesPurchasedAllTime: this.totalUpgradesPurchasedAllTime,
 			totalUsers: this.totalUsers,
 			totalXP: this.totalXP,
+			tutorial: this.tutorialManager.state,
 			upgrades: this.upgrades,
 			version: SAVE_VERSION,
 		};
@@ -505,6 +508,8 @@ export class GameManager {
 					if (data.selectedRealmId) {
 						realmManager.selectRealm(data.selectedRealmId);
 					}
+				} else if (key === 'tutorial') {
+					this.tutorialManager.state = { ...(this.statsConfig.tutorial.defaultValue as GameState['tutorial']), ...data.tutorial };
 				} else {
 					this[key as keyof this] = data[key as keyof GameState] as any;
 				}
@@ -551,6 +556,8 @@ export class GameManager {
 				this.featuresManager.reset();
 			} else if (key === 'currencyBoosts') {
 				this.skillPointBoosts = {};
+			} else if (key === 'tutorial') {
+				this.tutorialManager.reset();
 			} else {
 				this[key as keyof this] = config.defaultValue;
 			}
@@ -564,6 +571,8 @@ export class GameManager {
 					this.featuresManager.reset();
 				} else if (key === 'currencyBoosts') {
 					this.skillPointBoosts = {};
+				} else if (key === 'tutorial') {
+					this.tutorialManager.reset();
 				} else {
 					this[key as keyof this] = config.defaultValue;
 				}

@@ -86,6 +86,11 @@
 			ui.openModal(OfflineProgress);
 		}
 
+		const tutorial = gameManager.tutorialManager.state;
+		if (!tutorial.completed && !tutorial.active) {
+			gameManager.tutorialManager.start();
+		}
+
 		while (!$app) {
 			await new Promise(resolve => setTimeout(resolve, 100));
 		}

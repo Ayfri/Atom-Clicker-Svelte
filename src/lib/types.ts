@@ -107,6 +107,14 @@ export interface RadiationState {
 	unlocked: boolean;
 }
 
+export interface TutorialState {
+	active: boolean;
+	completed: boolean;
+	/** Composite `${realmId}:${stepId}` keys of realm-tutorial steps already dismissed. */
+	seenRealmSteps: string[];
+	step: number;
+}
+
 export interface GameState {
 	achievements: string[];
 	activePowerUps: PowerUp[];
@@ -137,6 +145,7 @@ export interface GameState {
 	totalUpgradesPurchasedAllTime: number;
 	totalUsers: number;
 	totalXP: number;
+	tutorial: TutorialState;
 	upgrades: string[];
 	version: number;
 }

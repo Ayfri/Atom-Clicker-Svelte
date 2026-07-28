@@ -69,6 +69,7 @@ export const statsConfig: Record<string, StatConfig> = {
 	totalUpgradesPurchasedAllTime: { defaultValue: 0, layer: LAYERS.NEVER, minVersion: 16 },
 	totalUsers: { defaultValue: 0, layer: LAYERS.NEVER, minVersion: 15, saveable: false },
 	totalXP: { defaultValue: 0, layer: LAYERS.PROTONIZER, minVersion: 3 },
+	tutorial: { defaultValue: { active: false, completed: false, seenRealmSteps: [], step: 0 }, layer: LAYERS.NEVER, minVersion: 23 },
 	upgrades: { defaultValue: [], layer: LAYERS.PROTONIZER, minVersion: 1 },
 };
 
@@ -99,6 +100,7 @@ export const STATS = {
 	TOTAL_UPGRADES_PURCHASED_ALL_TIME: 'totalUpgradesPurchasedAllTime',
 	TOTAL_USERS: 'totalUsers',
 	TOTAL_XP: 'totalXP',
+	TUTORIAL: 'tutorial',
 	UPGRADES: 'upgrades',
 } as const;
 

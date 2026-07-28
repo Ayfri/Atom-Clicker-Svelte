@@ -4,6 +4,7 @@
 	import { CurrenciesTypes, type CurrencyName } from '$data/currencies';
 	import { FEATURES, type FeatureType } from '$data/features';
 	import { ALL_PHOTON_UPGRADES } from '$data/photonUpgrades';
+	import { REALM_TUTORIALS } from '$data/realmTutorials';
 	import { RealmTypes, type RealmType } from '$data/realms';
 	import { SKILL_UPGRADES } from '$data/skillTree';
 	import { UPGRADES } from '$data/upgrades';
@@ -21,6 +22,7 @@
 		Coins,
 		Download,
 		Factory,
+		GraduationCap,
 		MessageSquare,
 		Save,
 		Sparkles,
@@ -72,6 +74,32 @@
 						type="checkbox"
 					/>
 				</label>
+			{/each}
+		</div>
+	</div>
+
+	<!-- Tutorial Management -->
+	<div class="rounded-xl border border-white/5 bg-white/5 p-3">
+		<h3 class="mb-3 flex items-center gap-2 text-base font-bold text-accent-300">
+			<GraduationCap size={18} />
+			<span>Tutorial</span>
+		</h3>
+		<div class="grid grid-cols-1 gap-2 md:grid-cols-2">
+			<button
+				class="flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold transition-all hover:bg-white/20"
+				onclick={() => gameManager.tutorialManager.start()}
+			>
+				<GraduationCap size={16} />
+				<span>Replay Main Tutorial</span>
+			</button>
+			{#each Object.entries(REALM_TUTORIALS) as [id, steps] (id)}
+				<button
+					class="flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold transition-all hover:bg-white/20"
+					onclick={() => gameManager.tutorialManager.forgetRealmSteps(id as RealmType)}
+				>
+					<GraduationCap size={16} />
+					<span>Replay {steps[0]?.title ?? id} Tutorial ({steps.length} steps)</span>
+				</button>
 			{/each}
 		</div>
 	</div>

@@ -39,6 +39,7 @@
 					) ?
 						'bg-accent-400 text-white'
 					:	'bg-white/5 hover:bg-white/10'}"
+					data-tutorial-target="upgrades-tab"
 					onclick={() => (activeTab = 'upgrades')}>Upgrades</button
 				>
 				{#if mobile.current}
@@ -48,6 +49,7 @@
 						) ?
 							'bg-accent-400 text-white'
 						:	'bg-white/5 hover:bg-white/10'}"
+						data-tutorial-target="buildings-tab"
 						onclick={() => (activeTab = 'buildings')}>Buildings</button
 					>
 				{/if}
@@ -78,7 +80,7 @@
 			<ActivePowerUps />
 		</div>
 		{#if !mobile.current}
-			<div class="grid-area-[buildings] pt-12">
+			<div class="grid-area-[buildings] pt-12" data-tutorial-target="buildings-tab">
 				<Buildings />
 			</div>
 		{/if}
