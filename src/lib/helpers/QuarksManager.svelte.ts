@@ -1,5 +1,5 @@
-import { browser } from '$app/environment';
-import { type DailyQuest, getQuestTarget, QUEST_POOL } from '$data/dailyQuests';
+import { browser, dev } from '$app/environment';
+import { type DailyQuest, getQuestTarget, pickDailyQuests, QUEST_POOL } from '$data/dailyQuests';
 import { getQuarkShopItem, QUARK_SHOP } from '$data/quarkShop';
 import type { Effect } from '$lib/types';
 import { obfuscateClientData } from '$lib/utils/obfuscation';
@@ -27,6 +27,12 @@ export class QuarksManager {
 	balance = $state(0);
 	claimedQuestIds = $state<string[]>([]);
 	dayKey = $state('');
+	/**
+	 * DevTools-only local override mode: every method operates purely in-memory and skips the
+	 * network. Never persisted (not to the save blob, not to localStorage), and the setter is
+	 * guarded by `dev` as defence in depth so it cannot survive into a production build.
+	 */
+	devOverride = $state(false);
 	entitlements = $state<string[]>([]);
 	equippedSkin = $state<string | null>(null);
 	lastSyncError = $state<string | null>(null);
@@ -43,6 +49,11 @@ export class QuarksManager {
 	hasClaimableQuest = $derived.by(() => {
 		return this.quests.some(quest => !this.claimedQuestIds.includes(quest.id) && this.isQuestComplete(quest));
 	});
+
+	setDevOverride(value: boolean) {
+		if (!dev) return;
+		this.devOverride = value;
+	}
 
 	/** Pushes owned boost/convenience effects into GameManager. Called whenever `entitlements` changes. */
 	private applyBoostEffects() {
@@ -101,6 +112,14 @@ export class QuarksManager {
 	async sync() {
 		if (!browser) return;
 
+		if (this.devOverride) {
+			const dayKey = new Date().toISOString().slice(0, 10);
+			this.dayKey = dayKey;
+			this.quests = pickDailyQuests(dayKey);
+			this.rolloverDailyStatsIfNeeded(dayKey);
+			return;
+		}
+
 		this.loading = true;
 		try {
 			const headers = await this.authHeaders();
@@ -153,6 +172,15 @@ export class QuarksManager {
 	}
 
 	async claimQuest(questId: string) {
+		if (this.devOverride) {
+			if (this.claimedQuestIds.includes(questId)) return;
+			const quest = this.quests.find(q => q.id === questId);
+			if (!quest) return;
+			this.balance += quest.reward;
+			this.claimedQuestIds = [...this.claimedQuestIds, questId];
+			return;
+		}
+
 		const result = await this.postAction<{ balance: number; status: string }>('/api/quarks/claim', { questId });
 		if (!result) return;
 
@@ -194,6 +222,16 @@ export class QuarksManager {
 	}
 
 	async purchase(itemId: string) {
+		if (this.devOverride) {
+			if (this.entitlements.includes(itemId)) return;
+			const item = getQuarkShopItem(itemId);
+			if (!item) return;
+			this.balance -= item.cost;
+			this.entitlements = [...this.entitlements, itemId];
+			this.applyBoostEffects();
+			return;
+		}
+
 		const result = await this.postAction<{ balance: number; status: string }>('/api/quarks/purchase', { itemId });
 		if (!result) return;
 
@@ -210,6 +248,14 @@ export class QuarksManager {
 		const item = getQuarkShopItem(itemId);
 		if (item?.type === 'skin') return;
 
+		if (this.devOverride) {
+			if (!this.entitlements.includes(itemId) || !item) return;
+			this.balance += item.cost;
+			this.entitlements = this.entitlements.filter(id => id !== itemId);
+			this.applyBoostEffects();
+			return;
+		}
+
 		const result = await this.postAction<{ balance: number; refunded?: number; status: string }>('/api/quarks/refund', { itemId });
 		if (!result) return;
 
@@ -223,6 +269,12 @@ export class QuarksManager {
 	}
 
 	async equipSkin(itemId: string | null) {
+		if (this.devOverride) {
+			// Dev override may equip any skin regardless of ownership, to preview the leaderboard frame.
+			this.equippedSkin = itemId;
+			return;
+		}
+
 		const result = await this.postAction<{ equippedSkin: string | null }>('/api/quarks/equip', { itemId });
 		if (!result) return;
 

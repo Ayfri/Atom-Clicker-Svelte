@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { dev } from '$app/environment';
+	import QuarkIcon from '@components/icons/Quark.svelte';
 	import Modal from '@components/ui/Modal.svelte';
 	import AchievementsTab from './tabs/AchievementsTab.svelte';
 	import ActionsTab from './tabs/ActionsTab.svelte';
@@ -7,6 +8,7 @@
 	import BoostsTab from './tabs/BoostsTab.svelte';
 	import IconsTab from './tabs/IconsTab.svelte';
 	import JsonTab from './tabs/JsonTab.svelte';
+	import QuarksTab from './tabs/QuarksTab.svelte';
 	import RadiationTab from './tabs/RadiationTab.svelte';
 	import StatsTab from './tabs/StatsTab.svelte';
 	import UpgradesTab from './tabs/UpgradesTab.svelte';
@@ -25,11 +27,19 @@
 		Trophy,
 		Zap,
 	} from '@lucide/svelte';
+	import type { Component } from 'svelte';
 
 	let isOpen = $state(false);
 	let activeTab = $state<string>('stats');
 
-	const groups = [
+	interface Tab {
+		href?: string;
+		icon: Component<{ class?: string; size?: number }>;
+		id: string;
+		label: string;
+	}
+
+	const groups: { icon: Component<{ class?: string; size?: number }>; name: string; tabs: Tab[] }[] = [
 		{
 			name: 'General',
 			icon: LayoutDashboard,
@@ -47,6 +57,7 @@
 				{ icon: Trophy, id: 'achievements', label: 'Achievements' },
 				{ icon: Cpu, id: 'automation', label: 'Automation' },
 				{ icon: Zap, id: 'boosts', label: 'Boosts' },
+				{ icon: QuarkIcon, id: 'quarks', label: 'Quarks' },
 			],
 		},
 		{
@@ -146,6 +157,8 @@
 						<AutomationTab />
 					{:else if activeTab === 'boosts'}
 						<BoostsTab />
+					{:else if activeTab === 'quarks'}
+						<QuarksTab />
 					{:else if activeTab === 'radiation'}
 						<RadiationTab />
 					{:else if activeTab === 'icons'}
