@@ -1,6 +1,8 @@
 <script lang="ts">
+	import QuarkIcon from '@components/icons/Quark.svelte';
 	import CurrencyBoosts from '@components/modals/CurrencyBoosts.svelte';
 	import Leaderboard from '@components/modals/Leaderboard.svelte';
+	import Quarks from '@components/modals/Quarks.svelte';
 	import Settings from '@components/modals/Settings.svelte';
 	import SkillTree from '@components/modals/SkillTree.svelte';
 	import { SKILL_UPGRADES } from '$data/skillTree';
@@ -10,18 +12,20 @@
 	import { ELECTRONS_PROTONS_REQUIRED, PROTONS_ATOMS_REQUIRED } from '$lib/constants';
 	import { changelog } from '$stores/changelog';
 	import { gameManager } from '$helpers/GameManager.svelte';
+	import { quarksManager } from '$helpers/QuarksManager.svelte';
 	import { remoteMessage } from '$stores/remoteMessage.svelte';
 	import { ui } from '$stores/ui.svelte';
 	import { mobile } from '$stores/window.svelte';
-	import { Atom, Network, Orbit, Settings as SettingsIcon, Trophy, Zap, type Icon as IconType } from '@lucide/svelte';
+	import { Atom, Network, Orbit, Settings as SettingsIcon, Trophy, Zap } from '@lucide/svelte';
 	import { onDestroy, onMount, type Component } from 'svelte';
 
 	type NavBarComponent = Component<{ onClose: () => void }>;
+	type NavBarIcon = Component<{ class?: string; size?: number }>;
 
 	interface Link {
 		component: NavBarComponent;
 		condition?: () => boolean;
-		icon: typeof IconType;
+		icon: NavBarIcon;
 		label: string;
 		notification?: () => boolean;
 	}
@@ -49,6 +53,12 @@
 			component: CurrencyBoosts,
 			condition: () => gameManager.totalProtonisesAllTime > 0,
 			notification: () => gameManager.skillPointsAvailable > 0,
+		},
+		{
+			icon: QuarkIcon,
+			label: 'Quarks',
+			component: Quarks,
+			notification: () => quarksManager.hasClaimableQuest,
 		},
 		{
 			icon: Atom,

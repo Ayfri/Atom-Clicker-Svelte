@@ -7,15 +7,20 @@
 	import SEO from '@components/system/SEO.svelte';
 	import TutorialOverlay from '@components/tutorial/TutorialOverlay.svelte';
 	import TooltipPortal from '@components/ui/TooltipPortal.svelte';
+	import { quarksManager } from '$helpers/QuarksManager.svelte';
 	import { prestigeStore } from '$stores/prestige.svelte';
 	import { LoaderCircle } from '@lucide/svelte';
-	import type { Snippet } from 'svelte';
+	import { onMount, type Snippet } from 'svelte';
 
 	interface Props {
 		children?: Snippet;
 	}
 
 	let { children }: Props = $props();
+
+	onMount(() => {
+		quarksManager.sync();
+	});
 </script>
 
 <SEO />
