@@ -77,6 +77,25 @@ bun dev
 bun run build
 ```
 
+### 🗄️ Local Supabase
+
+The backend can run entirely on your machine (requires Docker). The local stack only
+starts Postgres, PostgREST, Auth and Studio, everything else is disabled in
+`supabase/config.toml`.
+
+```bash
+bun db:start    # start the local stack, prints the API URL and keys
+bun db:status   # show URLs and keys again
+bun db:reset    # recreate the database from supabase/migrations + seed.sql
+bun db:types    # regenerate src/lib/types/supabase.ts from the local schema
+bun db:stop     # stop the containers
+```
+
+Copy `.env.example` to `.env` and point `PUBLIC_SUPABASE_URL`,
+`PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY` at the values printed by
+`bun db:start`. OAuth providers are off locally, create a test user from Studio
+(`http://127.0.0.1:54323`) instead.
+
 ## 🛠️ Built With
 
 - **Framework:** [SvelteKit](https://kit.svelte.dev/)
