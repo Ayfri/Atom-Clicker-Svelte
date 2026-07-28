@@ -1,3 +1,10 @@
+# What's new 29-07-2026
+
+- **Quarks**: A new rare currency that persists across every prestige reset. Earn a few per day from daily quests and a one-time reward for every achievement you unlock.
+- **Daily Quests**: Three quests are picked for you each day, worth 1 Quark each. Targets scale with how strong your run is, so they stay fair whether you're just starting out or deep into a run.
+- **Quark Shop**: Spend Quarks on permanent boosts and convenience unlocks (fully refundable, so you can swap them around) or on cosmetic skins, including one shown next to your name on the leaderboard.
+- **Quarks Tab**: A new icon in the navigation bar opens the Quarks panel, showing your balance, today's quests, and the shop.
+
 # What's new 28-07-2026
 
 - **First-Time Tutorial**: New players now get a short guided tour covering clicking, buildings, upgrades, prestige, and the skill tree. Replay it anytime from Settings.
