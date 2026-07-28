@@ -8,7 +8,7 @@
 	})));
 </script>
 
-<div class="backdrop-blur-xs bg-black/10 p-3 rounded-lg h-[600px] lg:h-[calc(100vh-180px)] flex flex-col">
+<div class="backdrop-blur-xs bg-black/10 p-3 rounded-lg h-150 lg:h-[calc(100vh-180px)] flex flex-col">
 	<h2 class="font-semibold text-lg">
 		Achievements ({gameManager.achievements.length}/{Object.keys(ACHIEVEMENTS).length})
 	</h2>

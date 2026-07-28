@@ -1,3 +1,4 @@
+import { formatNumber } from '$lib/utils';
 import { simpleHash } from '$lib/utils/signing';
 
 export type DailyStatMetric = 'atomsEarned' | 'buildingsPurchased' | 'clicks' | 'powerUpsCollected' | 'protonises' | 'upgradesPurchased';
@@ -29,7 +30,7 @@ export interface DailyQuest {
 
 export const QUEST_POOL: DailyQuest[] = [
 	{
-		description: target => `Earn ${target.toLocaleString()} atoms today.`,
+		description: target => `Earn ${formatNumber(target)} atoms today.`,
 		floor: 1_000,
 		id: 'atoms_earned',
 		metric: 'atomsEarned',
