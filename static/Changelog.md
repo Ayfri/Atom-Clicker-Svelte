@@ -1,3 +1,8 @@
+# What's new 28-07-2026
+
+- **First-Time Tutorial**: New players now get a short guided tour covering clicking, buildings, upgrades, prestige, and the skill tree. Replay it anytime from Settings.
+- **Help Icons**: Added contextual (?) help icons in Buildings, Upgrades, Skill Tree, and the Radiation Realm explaining how each system works.
+
 # What's new 02-02-2026
 
 - **Bonus Display**: Added a display for active power ups in the atom realm.
