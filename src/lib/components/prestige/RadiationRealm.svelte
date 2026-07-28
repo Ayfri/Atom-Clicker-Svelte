@@ -7,11 +7,19 @@
 	import HelpIcon from '@components/ui/HelpIcon.svelte';
 	import Value from '@components/ui/Value.svelte';
 	import { CurrenciesTypes } from '$data/currencies';
+	import { getQuarkShopItem } from '$data/quarkShop';
+	import { RealmTypes } from '$data/realms';
 	import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
+	import { quarksManager } from '$helpers/QuarksManager.svelte';
 	import { radiationManager } from '$helpers/RadiationManager.svelte';
 	import { Lock, Zap } from '@lucide/svelte';
 
 	let bombardAmount = $state(10);
+
+	const themeAccent = $derived.by(() => {
+		const themeId = quarksManager.equippedThemes[RealmTypes.RADIATION];
+		return themeId ? getQuarkShopItem(themeId)?.theme?.accent : undefined;
+	});
 	const electronBalance = $derived(currenciesManager.getAmount(CurrenciesTypes.ELECTRONS));
 	const mass = $derived(radiationManager.mass);
 	const cpm = $derived(radiationManager.currentCpm);
@@ -102,8 +110,9 @@
 						disabled={electronBalance < bombardAmount}
 						class="w-full py-2.5 px-4 rounded-lg font-semibold text-sm transition-all
 							{electronBalance >= bombardAmount ?
-							'bg-green-600 hover:bg-green-500 text-white cursor-pointer'
+							'text-white cursor-pointer hover:brightness-110'
 						:	'bg-white/10 text-white/40 cursor-not-allowed'}"
+						style={electronBalance >= bombardAmount ? `background-color: ${themeAccent ?? '#16a34a'};` : ''}
 					>
 						Add Fuel
 					</button>

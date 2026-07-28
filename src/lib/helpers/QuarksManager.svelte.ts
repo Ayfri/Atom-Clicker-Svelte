@@ -1,6 +1,7 @@
 import { browser, dev } from '$app/environment';
 import { type DailyQuest, getQuestTarget, pickDailyQuests, QUEST_POOL } from '$data/dailyQuests';
 import { getQuarkShopItem, QUARK_SHOP } from '$data/quarkShop';
+import { type RealmType } from '$data/realms';
 import type { Effect } from '$lib/types';
 import { obfuscateClientData } from '$lib/utils/obfuscation';
 import { gameManager } from '$helpers/GameManager.svelte';
@@ -19,7 +20,8 @@ interface QuarksApiState {
 	dailyCap: number;
 	dayKey: string;
 	entitlements: string[];
-	equippedSkin: string | null;
+	equippedBanner: string | null;
+	equippedThemes: Partial<Record<RealmType, string>>;
 	quests: DailyQuest[];
 }
 
@@ -34,7 +36,8 @@ export class QuarksManager {
 	 */
 	devOverride = $state(false);
 	entitlements = $state<string[]>([]);
-	equippedSkin = $state<string | null>(null);
+	equippedBanner = $state<string | null>(null);
+	equippedThemes = $state<Partial<Record<RealmType, string>>>({});
 	lastSyncError = $state<string | null>(null);
 	loading = $state(false);
 	quests = $state<DailyQuest[]>(QUEST_POOL.slice(0, 3));
@@ -131,7 +134,8 @@ export class QuarksManager {
 			this.claimedQuestIds = data.claimedQuestIds;
 			this.dayKey = data.dayKey;
 			this.entitlements = data.entitlements;
-			this.equippedSkin = data.equippedSkin;
+			this.equippedBanner = data.equippedBanner;
+			this.equippedThemes = data.equippedThemes;
 			// Quests carry a `description` function, which JSON can't transport - recompute them
 			// client-side from the (deterministic, seeded) pool instead of trusting the wire payload.
 			this.quests = pickDailyQuests(data.dayKey);
@@ -248,7 +252,7 @@ export class QuarksManager {
 
 	async refund(itemId: string) {
 		const item = getQuarkShopItem(itemId);
-		if (item?.type === 'skin') return;
+		if (item?.type === 'theme' || item?.type === 'banner') return;
 
 		if (this.devOverride) {
 			if (!this.entitlements.includes(itemId) || !item) return;
@@ -270,27 +274,49 @@ export class QuarksManager {
 		}
 	}
 
-	/**
-	 * DevTools-only: previews any skin locally regardless of ownership or `devOverride`, without
-	 * ever touching the server. Unlike `equipSkin`, this never persists past a reload and is not
-	 * gated behind `devOverride` because previewing shouldn't require dropping real sync first.
-	 */
-	previewSkin(itemId: string | null) {
+	/** DevTools-only: previews a theme locally without touching the server. */
+	previewTheme(realmId: RealmType, itemId: string | null) {
 		if (!dev) return;
-		this.equippedSkin = itemId;
+		const next = { ...this.equippedThemes };
+		if (itemId) next[realmId] = itemId;
+		else delete next[realmId];
+		this.equippedThemes = next;
 	}
 
-	async equipSkin(itemId: string | null) {
+	async equipTheme(realmId: RealmType, itemId: string | null) {
 		if (this.devOverride) {
-			// Dev override may equip any skin regardless of ownership, to preview the leaderboard frame.
-			this.equippedSkin = itemId;
+			const next = { ...this.equippedThemes };
+			if (itemId) next[realmId] = itemId;
+			else delete next[realmId];
+			this.equippedThemes = next;
 			return;
 		}
 
-		const result = await this.postAction<{ equippedSkin: string | null }>('/api/quarks/equip', { itemId });
+		const result = await this.postAction<{ equippedThemes: Partial<Record<RealmType, string>> }>('/api/quarks/equip-theme', {
+			itemId,
+			realmId,
+		});
 		if (!result) return;
 
-		this.equippedSkin = result.equippedSkin;
+		this.equippedThemes = result.equippedThemes;
+	}
+
+	/** DevTools-only: previews a banner locally without touching the server. */
+	previewBanner(itemId: string | null) {
+		if (!dev) return;
+		this.equippedBanner = itemId;
+	}
+
+	async equipBanner(itemId: string | null) {
+		if (this.devOverride) {
+			this.equippedBanner = itemId;
+			return;
+		}
+
+		const result = await this.postAction<{ equippedBanner: string | null }>('/api/quarks/equip-banner', { itemId });
+		if (!result) return;
+
+		this.equippedBanner = result.equippedBanner;
 	}
 }
 

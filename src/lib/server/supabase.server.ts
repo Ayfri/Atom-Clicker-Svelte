@@ -190,15 +190,51 @@ export const quarksService = {
 		return (data ?? []).map(row => row.ref.split(':').slice(2).join(':'));
 	},
 
-	async equipSkin(userId: string, itemId: string | null) {
+	async equipBanner(userId: string, itemId: string | null) {
 		const { error } = await supabaseAdmin
 			.from('profiles')
-			.update({ equipped_skin: itemId })
+			.update({ equipped_banner: itemId })
 			.eq('id', userId);
 
 		if (error) {
-			console.error('Error equipping skin:', error);
+			console.error('Error equipping banner:', error);
 			throw error;
 		}
+	},
+
+	async getEquippedThemes(userId: string): Promise<Record<string, string>> {
+		const { data, error } = await supabaseAdmin
+			.from('profiles')
+			.select('equipped_themes')
+			.eq('id', userId)
+			.maybeSingle();
+
+		if (error) {
+			console.error('Error fetching equipped themes:', error);
+			throw error;
+		}
+
+		return (data as { equipped_themes?: Record<string, string> } | null)?.equipped_themes ?? {};
+	},
+
+	// Read-modify-write on a small per-user jsonb map -
+	// cosmetic preferences don't need the row-lock/RPC treatment the balance-affecting Quark ops get.
+	async equipTheme(userId: string, realmId: string, itemId: string | null): Promise<Record<string, string>> {
+		const current = await this.getEquippedThemes(userId);
+		const next = { ...current };
+		if (itemId) next[realmId] = itemId;
+		else delete next[realmId];
+
+		const { error } = await supabaseAdmin
+			.from('profiles')
+			.update({ equipped_themes: next })
+			.eq('id', userId);
+
+		if (error) {
+			console.error('Error equipping theme:', error);
+			throw error;
+		}
+
+		return next;
 	},
 }

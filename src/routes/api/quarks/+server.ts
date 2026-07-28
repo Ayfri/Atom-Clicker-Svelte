@@ -20,7 +20,8 @@ export const GET: RequestHandler = async ({ request }) => {
 				dailyCap: getDailyCap(quests),
 				dayKey,
 				entitlements: [],
-				equippedSkin: null,
+				equippedBanner: null,
+				equippedThemes: {},
 				quests,
 			});
 		}
@@ -31,6 +32,7 @@ export const GET: RequestHandler = async ({ request }) => {
 			quarksService.getEntitlements(userId),
 		]);
 		const profile = await leaderboardService.getProfile(userId);
+		const typedProfile = profile as { equipped_banner?: string | null; equipped_themes?: Record<string, string> } | null;
 
 		return json({
 			balance: balanceRow?.balance ?? 0,
@@ -38,7 +40,8 @@ export const GET: RequestHandler = async ({ request }) => {
 			dailyCap: getDailyCap(quests),
 			dayKey,
 			entitlements,
-			equippedSkin: (profile as { equipped_skin?: string | null } | null)?.equipped_skin ?? null,
+			equippedBanner: typedProfile?.equipped_banner ?? null,
+			equippedThemes: typedProfile?.equipped_themes ?? {},
 			quests,
 		});
 	} catch (error) {

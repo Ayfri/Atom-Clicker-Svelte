@@ -1,22 +1,28 @@
 <script lang="ts">
 	import Quark from '@components/icons/Quark.svelte';
 	import HelpIcon from '@components/ui/HelpIcon.svelte';
+	import LeaderboardRow from '@components/ui/LeaderboardRow.svelte';
 	import Modal from '@components/ui/Modal.svelte';
 	import QuarkLabel from '@components/ui/QuarkLabel.svelte';
 	import { getQuestTarget } from '$data/dailyQuests';
 	import { QUARK_SHOP } from '$data/quarkShop';
+	import { RealmTypes, type RealmType } from '$data/realms';
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { quarksManager } from '$helpers/QuarksManager.svelte';
+	import { realmManager } from '$helpers/RealmManager.svelte';
 	import { formatNumber } from '$lib/utils';
+	import type { LeaderboardEntry } from '$lib/types/leaderboard';
 	import { supabaseAuth } from '$stores/supabaseAuth.svelte';
 	import {
 		ArrowUpCircle,
 		Building2,
 		Check,
 		Clock,
+		Flag,
 		Lock,
 		MousePointerClick,
 		Orbit,
+		Palette,
 		RotateCcw,
 		ShoppingBag,
 		Sparkles,
@@ -31,12 +37,38 @@
 
 	let { onClose }: Props = $props();
 
-	let activeTab = $state<'quests' | 'shop' | 'skins'>('quests');
+	let activeTab = $state<'banners' | 'quests' | 'shop' | 'themes'>('quests');
 	let now = $state(Date.now());
 
 	const shopItems = Object.values(QUARK_SHOP);
 	const boostItems = shopItems.filter(item => item.type === 'boost' || item.type === 'convenience');
-	const skinItems = shopItems.filter(item => item.type === 'skin');
+	const themeItems = shopItems.filter(item => item.type === 'theme');
+	const bannerItems = shopItems.filter(item => item.type === 'banner');
+
+	const REALM_ORDER: RealmType[] = [RealmTypes.ATOMS, RealmTypes.PHOTONS, RealmTypes.RADIATION];
+
+	function themesForRealm(realmId: RealmType) {
+		return themeItems.filter(item => item.theme?.realmId === realmId);
+	}
+
+	function realmTitle(realmId: RealmType) {
+		return realmManager.realms.find(r => r.id === realmId)?.title ?? realmId;
+	}
+
+	function isRealmUnlocked(realmId: RealmType) {
+		return gameManager.realms[realmId]?.unlocked ?? false;
+	}
+
+	function getBannerPreview(itemId: string): LeaderboardEntry {
+		return {
+			atoms: 1_250_000,
+			equippedBanner: itemId,
+			lastUpdated: Date.now(),
+			level: 42,
+			rank: 1,
+			username: 'Preview Player',
+		};
+	}
 
 	const QUEST_ICONS: Record<string, typeof Target> = {
 		atoms_earned: Zap,
@@ -120,10 +152,16 @@
 				<ShoppingBag size={16} /> Shop
 			</button>
 			<button
-				class="cursor-pointer flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors {activeTab === 'skins' ? 'bg-accent-700 text-white' : 'text-white/60 hover:text-white'}"
-				onclick={() => (activeTab = 'skins')}
+				class="cursor-pointer flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors {activeTab === 'themes' ? 'bg-accent-700 text-white' : 'text-white/60 hover:text-white'}"
+				onclick={() => (activeTab = 'themes')}
 			>
-				<Sparkles size={16} /> Skins
+				<Palette size={16} /> Realms Themes
+			</button>
+			<button
+				class="cursor-pointer flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors {activeTab === 'banners' ? 'bg-accent-700 text-white' : 'text-white/60 hover:text-white'}"
+				onclick={() => (activeTab = 'banners')}
+			>
+				<Flag size={16} /> Banners
 			</button>
 		</div>
 
@@ -236,25 +274,81 @@
 					{/each}
 				</div>
 			</section>
-		{:else if activeTab === 'skins'}
-			<section class="flex flex-col gap-3">
+		{:else if activeTab === 'themes'}
+			<section class="flex flex-col gap-5">
 				<h3 class="flex items-center gap-1 text-lg font-bold text-white/80">
-					Skins
+					Realms Themes
 					<HelpIcon>
 						{#snippet content()}
-							Cosmetic only, no gameplay effect. Skins are permanent once bought and show on the leaderboard.
+							Cosmetic only, no gameplay effect. Each theme recolors its Realm's background and a couple of accents.
+							Themes are permanent once bought and cannot be refunded.
 						{/snippet}
 					</HelpIcon>
 				</h3>
-				<div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
-					{#each skinItems as item (item.id)}
+				{#each REALM_ORDER as realmId (realmId)}
+					{@const realmThemes = themesForRealm(realmId)}
+					{#if realmThemes.length > 0}
+						<div class="flex flex-col gap-2">
+							<h4 class="text-sm font-semibold text-white/60">
+								{realmTitle(realmId)}
+								{#if !isRealmUnlocked(realmId)}<Lock size={12} class="inline" />{/if}
+							</h4>
+							<div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+								{#each realmThemes as item (item.id)}
+									{@const owned = quarksManager.entitlements.includes(item.id)}
+									{@const equipped = quarksManager.equippedThemes[realmId] === item.id}
+									<div class="flex flex-col gap-2 rounded-lg bg-accent-800/50 p-3">
+										<div
+											class="h-12 rounded-lg"
+											style="background: linear-gradient(135deg, {item.theme?.accent}, {item.theme?.accentSecondary ?? item.theme?.accent})"
+										></div>
+										<span class="font-medium text-white">{item.name}</span>
+										<p class="text-sm text-white/60">{item.description}</p>
+										<div class="flex items-center justify-between">
+											<span class="flex items-center gap-1 text-sm text-white/60">{@render quarkAmount(item.cost)}</span>
+											{#if owned}
+												<button
+													class="cursor-pointer rounded-lg px-3 py-1 text-sm font-medium transition-colors {equipped ? 'bg-white/10 text-white/50' : 'bg-accent-600 text-white hover:bg-accent-500'}"
+													onclick={() => quarksManager.equipTheme(realmId, equipped ? null : item.id)}
+												>
+													{equipped ? 'Equipped' : 'Equip'}
+												</button>
+											{:else}
+												<button
+													class="cursor-pointer flex items-center gap-1 rounded-lg bg-accent-600 px-3 py-1 text-sm font-medium text-white transition-colors hover:bg-accent-500 disabled:cursor-not-allowed disabled:opacity-30"
+													disabled={quarksManager.balance < item.cost || !supabaseAuth.isAuthenticated}
+													onclick={() => quarksManager.purchase(item.id)}
+												>
+													{supabaseAuth.isAuthenticated ? 'Buy' : ''}
+													{#if !supabaseAuth.isAuthenticated}<Lock size={14} />{/if}
+												</button>
+											{/if}
+										</div>
+									</div>
+								{/each}
+							</div>
+						</div>
+					{/if}
+				{/each}
+				<p class="text-xs text-white/40">Themes are permanent and cannot be refunded.</p>
+			</section>
+		{:else if activeTab === 'banners'}
+			<section class="flex flex-col gap-3">
+				<h3 class="flex items-center gap-1 text-lg font-bold text-white/80">
+					Banners
+					<HelpIcon>
+						{#snippet content()}
+							Cosmetic only, no gameplay effect. Banners are permanent once bought and show behind your row on the
+							leaderboard.
+						{/snippet}
+					</HelpIcon>
+				</h3>
+				<div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+					{#each bannerItems as item (item.id)}
 						{@const owned = quarksManager.entitlements.includes(item.id)}
-						{@const equipped = quarksManager.equippedSkin === item.id}
+						{@const equipped = quarksManager.equippedBanner === item.id}
 						<div class="flex flex-col gap-2 rounded-lg bg-accent-800/50 p-3">
-							<div
-								class="h-12 rounded-lg"
-								style="background: linear-gradient(135deg, {item.skin?.palette?.[0]}, {item.skin?.palette?.[1] ?? item.skin?.palette?.[0]})"
-							></div>
+							<LeaderboardRow entry={getBannerPreview(item.id)} />
 							<span class="font-medium text-white">{item.name}</span>
 							<p class="text-sm text-white/60">{item.description}</p>
 							<div class="flex items-center justify-between">
@@ -262,7 +356,7 @@
 								{#if owned}
 									<button
 										class="cursor-pointer rounded-lg px-3 py-1 text-sm font-medium transition-colors {equipped ? 'bg-white/10 text-white/50' : 'bg-accent-600 text-white hover:bg-accent-500'}"
-										onclick={() => quarksManager.equipSkin(equipped ? null : item.id)}
+										onclick={() => quarksManager.equipBanner(equipped ? null : item.id)}
 									>
 										{equipped ? 'Equipped' : 'Equip'}
 									</button>
@@ -280,7 +374,7 @@
 						</div>
 					{/each}
 				</div>
-				<p class="text-xs text-white/40">Skins are permanent and cannot be refunded.</p>
+				<p class="text-xs text-white/40">Banners are permanent and cannot be refunded.</p>
 			</section>
 		{/if}
 	</div>

@@ -135,7 +135,8 @@ export type Database = {
 				Row: {
 					atoms: string
 					created_at: string | null
-					equipped_skin: string | null
+					equipped_banner: string | null
+					equipped_themes: Json
 					id: string
 					is_online: boolean | null
 					last_updated: string | null
@@ -148,7 +149,8 @@ export type Database = {
 				Insert: {
 					atoms?: string
 					created_at?: string | null
-					equipped_skin?: string | null
+					equipped_banner?: string | null
+					equipped_themes?: Json
 					id: string
 					is_online?: boolean | null
 					last_updated?: string | null
@@ -161,7 +163,8 @@ export type Database = {
 				Update: {
 					atoms?: string
 					created_at?: string | null
-					equipped_skin?: string | null
+					equipped_banner?: string | null
+					equipped_themes?: Json
 					id?: string
 					is_online?: boolean | null
 					last_updated?: string | null
@@ -220,7 +223,7 @@ export type Database = {
 				Args: { p_limit?: number }
 				Returns: {
 					atoms: string
-					equipped_skin: string | null
+					equipped_banner: string | null
 					id: string
 					is_online: boolean
 					last_updated: string

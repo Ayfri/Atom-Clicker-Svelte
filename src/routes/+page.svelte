@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { FeatureTypes } from '$data/features';
+	import { getQuarkShopItem } from '$data/quarkShop';
+	import type { RealmConfig } from '$helpers/RealmManager.svelte';
 	import { gameManager } from '$helpers/GameManager.svelte';
+	import { quarksManager } from '$helpers/QuarksManager.svelte';
 	import { realmManager } from '$helpers/RealmManager.svelte';
 	import { setGlobals } from '$lib/globals';
 	import { formatNumber } from '$lib/utils';
@@ -33,6 +36,13 @@
 		PhotonRealm: PhotonRealm,
 		RadiationRealm: RadiationRealm,
 	};
+
+	// Equipped Quark themes only swap the background gradient; falls back to the realm's default.
+	function getRealmBackground(realm: RealmConfig): string | undefined {
+		const themeId = quarksManager.equippedThemes[realm.id];
+		const theme = themeId ? getQuarkShopItem(themeId)?.theme : undefined;
+		return theme?.background ?? realm.background;
+	}
 
 	autoBuyManager.init();
 	autoUpgradeManager.init();
@@ -165,6 +175,7 @@
 		<!-- Use transform and opacity for virtual desktop swipe effect -->
 		{#each realmManager.availableRealms as realm, i (realm.id)}
 			{@const RealmComponent = realmComponents[realm.componentId]}
+			{@const background = getRealmBackground(realm)}
 
 			<div
 				class="absolute inset-0 transition-all duration-300 ease-in-out overflow-hidden"
@@ -174,7 +185,7 @@
 				class:pointer-events-none={realmManager.selectedRealm.id !== realm.id}
 				style="transform: translateX({realmManager.selectedRealm.id === realm.id ? '0'
 				: i > realmManager.availableRealms.findIndex(r => r.id === realmManager.selectedRealm.id) ? '100%'
-				: '-100%'}); {realm.background ? `background-image: ${realm.background};` : ''}"
+				: '-100%'}); {background ? `background-image: ${background};` : ''}"
 			>
 				<div class="absolute inset-0 overflow-y-auto custom-scrollbar">
 					<div class="flex flex-col min-h-full">

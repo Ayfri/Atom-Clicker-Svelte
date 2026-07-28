@@ -1,6 +1,6 @@
 export interface LeaderboardEntry {
     atoms: number;
-    equippedSkin?: string | null;
+    equippedBanner?: string | null;
     lastUpdated: number;
     level: number;
     is_online?: boolean;
