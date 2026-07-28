@@ -64,17 +64,17 @@ Welcome to Atom Clicker, an engaging incremental game where you'll build your ow
 
 1. Install dependencies:
 ```bash
-pnpm install
+bun install
 ```
 
 2. Start the development server:
 ```bash
-pnpm dev
+bun dev
 ```
 
 3. Build for production:
 ```bash
-pnpm build
+bun run build
 ```
 
 ## 🛠️ Built With
@@ -93,7 +93,7 @@ This project is optimized for [Cloudflare Workers](https://workers.cloudflare.co
 
 ```bash
 # Build for production
-pnpm build
+bun run build
 ```
 
 The build output will be in the `.svelte-kit/cloudflare` directory, ready to be deployed.
