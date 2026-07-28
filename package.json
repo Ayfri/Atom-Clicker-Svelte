@@ -8,13 +8,21 @@
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"benchmark": "vite dev --open /benchmark"
+		"benchmark": "vite dev --open /benchmark",
+		"db:start": "supabase start",
+		"db:stop": "supabase stop",
+		"db:status": "supabase status",
+		"db:reset": "supabase db reset",
+		"db:diff": "supabase db diff",
+		"db:push": "supabase db push",
+		"db:types": "supabase gen types typescript --local > src/lib/types/supabase.ts"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-cloudflare": "7.2.9",
 		"@sveltejs/kit": "2.70.1",
 		"@sveltejs/vite-plugin-svelte": "^7.2.0",
 		"@tailwindcss/vite": "4.3.3",
+		"supabase": "^2.110.0",
 		"svelte": "^5.56.8",
 		"svelte-check": "4.7.4",
 		"tailwindcss": "4.3.3",
