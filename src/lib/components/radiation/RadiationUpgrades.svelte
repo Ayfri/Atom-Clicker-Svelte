@@ -4,6 +4,8 @@
 	import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { radiationManager } from '$helpers/RadiationManager.svelte';
+	import CurrencyLabel from '@components/ui/CurrencyLabel.svelte';
+	import HelpIcon from '@components/ui/HelpIcon.svelte';
 	import Value from '@components/ui/Value.svelte';
 
 	const electronBalance = $derived(currenciesManager.getAmount(CurrenciesTypes.ELECTRONS));
@@ -44,6 +46,14 @@
 			></line>
 		</svg>
 		Reactor Upgrades
+		<HelpIcon position="bottom">
+			{#snippet content()}
+				<p class="text-xs text-white/80">
+					Reactor upgrades are bought with <CurrencyLabel name={CurrenciesTypes.ELECTRONS} /> and permanently improve the radiation
+					reactor: control rod efficiency, core fuel capacity, decay/regen rates, and more.
+				</p>
+			{/snippet}
+		</HelpIcon>
 		<Value
 			class="ml-auto text-xs text-white/40 font-normal"
 			value={electronBalance}

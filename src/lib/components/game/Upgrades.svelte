@@ -7,6 +7,8 @@
 	import Value from '@components/ui/Value.svelte';
 	import { getUpgradesWithEffects } from '$helpers/effects';
 	import { autoUpgradeManager } from '$stores/autoUpgrade.svelte';
+	import CurrencyLabel from '@components/ui/CurrencyLabel.svelte';
+	import HelpIcon from '@components/ui/HelpIcon.svelte';
 	import { fly, scale } from 'svelte/transition';
 	import { Eye, EyeOff } from '@lucide/svelte';
 
@@ -45,7 +47,18 @@
 <div id="upgrades" class="bg-black/10 backdrop-blur-xs rounded-lg p-3 flex flex-col gap-2 h-150 lg:h-[calc(100vh-180px)]">
 	<div class="header flex justify-between items-center gap-2">
 		<div class="flex items-center gap-2 justify-between w-full">
-			<h2 class="text-lg">Upgrades</h2>
+			<div class="flex items-center gap-1.5">
+				<h2 class="text-lg">Upgrades</h2>
+				<HelpIcon position="bottom">
+					{#snippet content()}
+						<p class="text-xs text-white/80">
+							Upgrades permanently boost your production, click power, or unlock new mechanics. Switch between currencies using the
+							tabs below to see upgrades bought with <CurrencyLabel name={CurrenciesTypes.PROTONS} /> or
+							<CurrencyLabel name={CurrenciesTypes.ELECTRONS} />.
+						</p>
+					{/snippet}
+				</HelpIcon>
+			</div>
 			<div class="flex items-center gap-1">
 				<button
 					class="flex items-center justify-center p-1 rounded-md transition-all duration-200 border {gameManager.settings.upgrades.displayAlreadyBought ? 'bg-blue-500/15 text-blue-400 border-blue-500/30 hover:bg-blue-500/25' : 'bg-transparent text-gray-400 border-white/10 hover:bg-white/5'}"

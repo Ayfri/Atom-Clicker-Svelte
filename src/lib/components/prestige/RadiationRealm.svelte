@@ -3,12 +3,13 @@
 	import MassSpectrometer from '@components/radiation/MassSpectrometer.svelte';
 	import RadiationUpgrades from '@components/radiation/RadiationUpgrades.svelte';
 	import UnstableNucleus from '@components/radiation/UnstableNucleus.svelte';
-	import Tooltip from '@components/ui/Tooltip.svelte';
+	import CurrencyLabel from '@components/ui/CurrencyLabel.svelte';
+	import HelpIcon from '@components/ui/HelpIcon.svelte';
 	import Value from '@components/ui/Value.svelte';
 	import { CurrenciesTypes } from '$data/currencies';
 	import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
 	import { radiationManager } from '$helpers/RadiationManager.svelte';
-	import { CircleHelp, Lock, Zap } from '@lucide/svelte';
+	import { Lock, Zap } from '@lucide/svelte';
 
 	let bombardAmount = $state(10);
 	const electronBalance = $derived(currenciesManager.getAmount(CurrenciesTypes.ELECTRONS));
@@ -59,23 +60,19 @@
 				<h3 class="text-sm font-semibold text-green-400 mb-3 flex items-center gap-2">
 					<Zap class="w-4 h-4" />
 					Add Fuel
-					<Tooltip
-						position="top"
-						size="md"
-					>
-						{#snippet children()}
-							<CircleHelp class="w-4 h-4 text-white/40 hover:text-green-400 transition-colors" />
-						{/snippet}
+					<HelpIcon position="top">
 						{#snippet content()}
 							<div class="text-left text-xs">
 								<p class="font-semibold text-green-400 mb-1">How it works:</p>
-								<p class="text-white/70">1. Add fuel (electrons = mass)</p>
+								<p class="text-white/70">
+									1. Add fuel (<CurrencyLabel name={CurrenciesTypes.ELECTRONS} size={12} /> = mass)
+								</p>
 								<p class="text-white/70">2. Raise power level</p>
 								<p class="text-white/70">3. Get production multiplier!</p>
 								<p class="text-white/50 mt-2">Higher power = more bonus but burns fuel faster</p>
 							</div>
 						{/snippet}
-					</Tooltip>
+					</HelpIcon>
 				</h3>
 
 				<div class="flex flex-col gap-2">

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { radiationManager } from '$helpers/RadiationManager.svelte';
 	import { formatNumber } from '$lib/utils';
+	import HelpIcon from '@components/ui/HelpIcon.svelte';
 	import { Check, TrendingDown, TrendingUp } from '@lucide/svelte';
 
 	interface Props {
@@ -51,6 +52,13 @@
 				></path>
 			</svg>
 			Core Fuel
+			<HelpIcon position="top">
+				{#snippet content()}
+					<p class="text-white/70"><strong>Core Fuel (mass)</strong> powers the reactor.</p>
+					<p class="text-white/60 mt-1 text-xs">It burns over time (Burn) and is replenished by atom production (Regen).</p>
+					<p class="text-white/60 mt-1 text-xs">If Burn outpaces Regen the core will empty and stop producing radiation output.</p>
+				{/snippet}
+			</HelpIcon>
 		</h3>
 		<!-- Stability indicator -->
 		{#if mass > 0}

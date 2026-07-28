@@ -1,7 +1,6 @@
 <script lang="ts">
-	import Tooltip from '@components/ui/Tooltip.svelte';
+	import HelpIcon from '@components/ui/HelpIcon.svelte';
 	import { radiationManager } from '$helpers/RadiationManager.svelte';
-	import { CircleHelp } from '@lucide/svelte';
 
 	const controlLevel = $derived(radiationManager.controlRodLevel);
 	const cpm = $derived(radiationManager.currentCpm);
@@ -47,14 +46,7 @@
 			</svg>
 			Power Level
 		</h3>
-		<Tooltip
-			class="ml-auto"
-			position="top"
-			size="md"
-		>
-			{#snippet children()}
-				<CircleHelp class="w-3.5 h-3.5 text-white/30 hover:text-green-400 transition-colors" />
-			{/snippet}
+		<HelpIcon class="ml-auto" position="top">
 			{#snippet content()}
 				<div class="text-left">
 					<p class="text-white/70"><strong>CPM = Cycles Per Minute</strong></p>
@@ -63,7 +55,7 @@
 					<p class="text-green-400/80 mt-1 text-xs font-mono">100 CPM adds +200% bonus!</p>
 				</div>
 			{/snippet}
-		</Tooltip>
+		</HelpIcon>
 	</div>
 
 	<!-- Slider -->

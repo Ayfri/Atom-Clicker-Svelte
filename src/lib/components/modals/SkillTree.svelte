@@ -3,6 +3,7 @@
 	import { Background, Controls, type Edge, type Node, Position, SvelteFlow } from '@xyflow/svelte';
 	import { dev } from '$app/environment';
 	import SkillNode from '@components/game/SkillNode.svelte';
+	import HelpIcon from '@components/ui/HelpIcon.svelte';
 	import Modal from '@components/ui/Modal.svelte';
 	import { CurrenciesTypes } from '$data/currencies';
 	import { RealmTypes } from '$data/realms';
@@ -149,7 +150,18 @@
 <Modal {onClose} containerClass="m-2 !p-0 rounded-xl" width="lg">
 	{#snippet header()}
 		<div class="flex w-full items-center justify-between gap-4 pr-10">
-			<h2 class="text-2xl font-bold text-white">Skill Tree</h2>
+			<div class="flex items-center gap-2">
+				<h2 class="text-2xl font-bold text-white">Skill Tree</h2>
+				<HelpIcon position="bottom">
+					{#snippet content()}
+						<p class="text-xs text-white/80">
+							Skill points are earned by leveling up buildings. Spend them here to unlock nodes that grant permanent passive
+							bonuses or new features. Nodes require their prerequisites to be unlocked first, and the currency shown on each node
+							is the cost to unlock it.
+						</p>
+					{/snippet}
+				</HelpIcon>
+			</div>
 			{#if dev}
 				<button
 					class="rounded-lg bg-accent-800 px-3 py-1 text-sm font-medium text-white transition-colors hover:bg-accent-700 active:bg-accent-600"
