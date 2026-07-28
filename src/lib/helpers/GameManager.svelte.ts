@@ -12,6 +12,7 @@ import { BUILDING_COST_MULTIPLIER, ELECTRONS_PROTONS_REQUIRED, PROTONS_ATOMS_REQ
 import {
 	type Building,
 	type CurrencyBoosts,
+	type Effect,
 	type FeatureState,
 	type GameState,
 	type OfflineProgressSummary,
@@ -60,6 +61,12 @@ export class GameManager {
 	offlineProgressSummary = $state<OfflineProgressSummary | null>(null);
 	photonUpgrades = $state<Record<string, number>>({});
 	powerUpsCollected = $state(0);
+	/**
+	 * Effects of owned Quark shop boosts, pushed in by QuarksManager after sync/purchase/refund.
+	 * GameManager never imports QuarksManager directly, since simulation.worker.ts imports GameManager
+	 * and has no auth/DOM context - see QuarksManager.svelte.ts for the one-way dependency rule.
+	 */
+	quarkBoostEffects = $state<Effect[]>([]);
 	radiationUpgrades = $state<Record<string, number>>({});
 	realms = $state<Record<string, RealmState>>({
 		[RealmTypes.ATOMS]: { unlocked: true },
@@ -122,7 +129,9 @@ export class GameManager {
 				id,
 			}));
 
-		return [...baseUpgrades, ...photonUpgrades] as (Upgrade | SkillUpgrade)[];
+		const quarkBoosts = this.quarkBoostEffects.length > 0 ? [{ effects: this.quarkBoostEffects, id: 'quark_boosts' }] : [];
+
+		return [...baseUpgrades, ...photonUpgrades, ...quarkBoosts] as (Upgrade | SkillUpgrade)[];
 	});
 
 	atomsPerSecond = $derived.by(() => {
