@@ -1,6 +1,5 @@
 <script lang="ts">
 	import Quark from '@components/icons/Quark.svelte';
-	import { QUARK_WORDMARK } from '$data/quarks';
 
 	interface Props {
 		class?: string;
@@ -15,5 +14,15 @@
 	{#if icon}
 		<Quark {size} />
 	{/if}
-	<span aria-label="Quarks" class="inline-flex">{#each QUARK_WORDMARK as segment}<span aria-hidden="true" style="color: {segment.color}">{segment.text}</span>{/each}</span>
+	<span aria-hidden="true" class="quark-wordmark">Quarks</span><span class="sr-only">Quarks</span>
 </span>
+
+<style>
+	.quark-wordmark {
+		background: linear-gradient(90deg, #4a9eff, #3ddc84, #ff4d4d);
+		background-clip: text;
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		filter: drop-shadow(0 0 4px rgba(61, 220, 132, 0.35)) drop-shadow(0 0 8px rgba(74, 158, 255, 0.2));
+	}
+</style>

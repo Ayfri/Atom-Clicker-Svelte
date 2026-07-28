@@ -4,11 +4,13 @@
 	import Modal from '@components/ui/Modal.svelte';
 	import QuarkLabel from '@components/ui/QuarkLabel.svelte';
 	import { getQuestTarget } from '$data/dailyQuests';
+	import { QUARK_COLOR } from '$data/quarks';
 	import { QUARK_SHOP } from '$data/quarkShop';
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { quarksManager } from '$helpers/QuarksManager.svelte';
+	import { formatNumber } from '$lib/utils';
 	import { supabaseAuth } from '$stores/supabaseAuth.svelte';
-	import { Check, Lock, RotateCcw, ShoppingBag, Sparkles, Target } from '@lucide/svelte';
+	import { Check, Circle, Lock, RotateCcw, ShoppingBag, Sparkles, Target } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 
 	interface Props {
@@ -42,13 +44,20 @@
 	}
 </script>
 
+{#snippet quarkAmount(amount: number)}
+	<span class="inline-flex items-center gap-1 font-mono">
+		<Circle size={10} class="shrink-0" fill={QUARK_COLOR} stroke="none" />
+		{formatNumber(amount)}
+	</span>
+{/snippet}
+
 <Modal {onClose} width="lg">
 	{#snippet header()}
 		<div class="flex flex-1 items-center gap-3">
-			<Quark size={28} />
+			<Quark size={28} color="white" mono />
 			<div class="flex flex-col">
 				<h2 class="text-2xl font-bold text-white"><QuarkLabel icon={false} size={20} /></h2>
-				<span class="font-mono text-sm text-white/60">Balance: {quarksManager.balance}</span>
+				<span class="text-sm text-white/60">Balance: {@render quarkAmount(quarksManager.balance)}</span>
 			</div>
 		</div>
 	{/snippet}
@@ -101,8 +110,8 @@
 					<div class="flex flex-col gap-2 rounded-lg bg-accent-800/50 p-3">
 						<div class="flex items-center justify-between gap-3">
 							<span class="text-white">{quest.description(target)}</span>
-							<span class="flex items-center gap-1 font-mono text-sm text-white/60">
-								+{quest.reward} <Quark size={14} />
+							<span class="flex items-center gap-1 text-sm text-white/60">
+								+{@render quarkAmount(quest.reward)}
 							</span>
 						</div>
 						<div class="h-2 overflow-hidden rounded-full bg-black/30">
@@ -112,7 +121,7 @@
 							></div>
 						</div>
 						<div class="flex items-center justify-between">
-							<span class="font-mono text-xs text-white/50">{Math.min(progress, target).toLocaleString()} / {target.toLocaleString()}</span>
+							<span class="text-xs text-white/50">{formatNumber(Math.min(progress, target))} / {formatNumber(target)}</span>
 							{#if claimed}
 								<span class="flex cursor-default items-center gap-1 rounded-lg bg-white/10 px-3 py-1 text-sm text-white/50">
 									<Check size={14} /> Claimed
@@ -147,7 +156,7 @@
 						<div class="flex flex-col gap-2 rounded-lg bg-accent-800/50 p-3">
 							<div class="flex items-center justify-between">
 								<span class="font-medium text-white">{item.name}</span>
-								<span class="flex items-center gap-1 font-mono text-sm text-white/60">{item.cost} <Quark size={14} /></span>
+								<span class="flex items-center gap-1 text-sm text-white/60">{@render quarkAmount(item.cost)}</span>
 							</div>
 							<p class="text-sm text-white/60">{item.description}</p>
 							{#if owned}
@@ -192,7 +201,7 @@
 							<span class="font-medium text-white">{item.name}</span>
 							<p class="text-sm text-white/60">{item.description}</p>
 							<div class="flex items-center justify-between">
-								<span class="flex items-center gap-1 font-mono text-sm text-white/60">{item.cost} <Quark size={14} /></span>
+								<span class="flex items-center gap-1 text-sm text-white/60">{@render quarkAmount(item.cost)}</span>
 								{#if owned}
 									<button
 										class="cursor-pointer rounded-lg px-3 py-1 text-sm font-medium transition-colors {equipped ? 'bg-white/10 text-white/50' : 'bg-accent-600 text-white hover:bg-accent-500'}"

@@ -26,6 +26,7 @@
 		component: NavBarComponent;
 		condition?: () => boolean;
 		icon: NavBarIcon;
+		iconProps?: Record<string, unknown>;
 		label: string;
 		notification?: () => boolean;
 	}
@@ -56,6 +57,7 @@
 		},
 		{
 			icon: QuarkIcon,
+			iconProps: { color: 'white', mono: true },
 			label: 'Quarks',
 			component: Quarks,
 			notification: () => quarksManager.hasClaimableQuest,
@@ -121,7 +123,7 @@
 					class="flex items-center justify-center rounded-lg bg-accent/90 p-2 text-white transition-all hover:bg-accent pointer-events-auto"
 					onclick={() => ui.openModal(link.component)}
 				>
-					<link.icon size={30} />
+					<link.icon size={30} {...link.iconProps} />
 				</button>
 			</NotificationDot>
 		{/each}
@@ -148,7 +150,7 @@
 					class="group relative flex h-12 w-12 items-center justify-center rounded-lg bg-accent/90 text-white transition-all hover:bg-accent"
 					onclick={() => ui.openModal(link.component)}
 				>
-					<link.icon size={32} />
+					<link.icon size={32} {...link.iconProps} />
 					<span
 						class="label invisible absolute left-[calc(100%+1.25rem)] whitespace-nowrap rounded-lg bg-accent/90 px-3 py-2 text-sm opacity-0 transition-all group-hover:visible group-hover:opacity-100 bg-accent-900 border border-white/10 shadow-xl z-50"
 					>

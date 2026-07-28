@@ -132,7 +132,9 @@ export class QuarksManager {
 			this.dayKey = data.dayKey;
 			this.entitlements = data.entitlements;
 			this.equippedSkin = data.equippedSkin;
-			this.quests = data.quests;
+			// Quests carry a `description` function, which JSON can't transport - recompute them
+			// client-side from the (deterministic, seeded) pool instead of trusting the wire payload.
+			this.quests = pickDailyQuests(data.dayKey);
 			this.lastSyncError = null;
 			this.applyBoostEffects();
 
