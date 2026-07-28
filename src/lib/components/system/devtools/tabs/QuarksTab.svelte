@@ -3,6 +3,7 @@
 	import { QUARK_SHOP } from '$data/quarkShop';
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { quarksManager } from '$helpers/QuarksManager.svelte';
+	import { formatNumber } from '$lib/utils';
 	import { supabaseAuth } from '$stores/supabaseAuth.svelte';
 	import { Calendar, Gem, ShoppingBag, Sparkles, Target, Wifi, WifiOff } from '@lucide/svelte';
 
@@ -44,7 +45,7 @@
 <div class="space-y-6">
 	<!-- Summary Cards -->
 	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-		<div class="bg-white/5 p-4 rounded-xl border border-white/5 space-y-1">
+		<div class="bg-white/5 p-4 rounded-xl border border-white/5 space-y-1.5">
 			<div class="text-[10px] font-black uppercase tracking-widest text-white/30 flex items-center gap-1.5">
 				{#if supabaseAuth.isAuthenticated}<Wifi size={12} />{:else}<WifiOff size={12} />{/if}
 				Status
@@ -64,23 +65,43 @@
 			</button>
 		</div>
 
-		<div class="bg-white/5 p-4 rounded-xl border border-white/5 space-y-1">
+		<div class="bg-white/5 p-4 rounded-xl border border-white/5 space-y-1.5">
 			<div class="text-[10px] font-black uppercase tracking-widest text-white/30 flex items-center gap-1.5">
 				<Gem size={12} />
 				Balance
 			</div>
-			<div class="text-xl font-bold text-white font-mono">{quarksManager.balance}</div>
+			<div class="text-xl font-bold text-white font-mono">{formatNumber(quarksManager.balance)}</div>
 			{#if quarksManager.devOverride}
-				<div class="flex gap-1">
-					<button class="text-[10px] bg-white/5 px-2 py-0.5 rounded hover:bg-white/10" onclick={() => (quarksManager.balance += 1)}>+1</button>
-					<button class="text-[10px] bg-white/5 px-2 py-0.5 rounded hover:bg-white/10" onclick={() => (quarksManager.balance += 5)}>+5</button>
-					<button class="text-[10px] bg-white/5 px-2 py-0.5 rounded hover:bg-white/10" onclick={() => (quarksManager.balance += 25)}>+25</button>
-					<button class="text-[10px] bg-white/5 px-2 py-0.5 rounded hover:bg-white/10" onclick={() => (quarksManager.balance = 0)}>Reset</button>
+				<div class="flex flex-wrap gap-1">
+					<button
+						class="text-[10px] bg-white/5 px-2 py-0.5 rounded hover:bg-white/10 cursor-pointer"
+						onclick={() => (quarksManager.balance += 1)}
+					>
+						+1
+					</button>
+					<button
+						class="text-[10px] bg-white/5 px-2 py-0.5 rounded hover:bg-white/10 cursor-pointer"
+						onclick={() => (quarksManager.balance += 5)}
+					>
+						+5
+					</button>
+					<button
+						class="text-[10px] bg-white/5 px-2 py-0.5 rounded hover:bg-white/10 cursor-pointer"
+						onclick={() => (quarksManager.balance += 25)}
+					>
+						+25
+					</button>
+					<button
+						class="text-[10px] bg-white/5 px-2 py-0.5 rounded hover:bg-white/10 cursor-pointer"
+						onclick={() => (quarksManager.balance = 0)}
+					>
+						Reset
+					</button>
 				</div>
 			{/if}
 		</div>
 
-		<div class="bg-white/5 p-4 rounded-xl border border-white/5 space-y-1">
+		<div class="bg-white/5 p-4 rounded-xl border border-white/5 space-y-1.5">
 			<div class="text-[10px] font-black uppercase tracking-widest text-white/30 flex items-center gap-1.5">
 				<Calendar size={12} />
 				Day Key
@@ -91,7 +112,7 @@
 			</button>
 		</div>
 
-		<div class="bg-white/5 p-4 rounded-xl border border-white/5 space-y-1">
+		<div class="bg-white/5 p-4 rounded-xl border border-white/5 space-y-1.5">
 			<div class="text-[10px] font-black uppercase tracking-widest text-white/30 flex items-center gap-1.5">
 				<Sparkles size={12} />
 				Entitlements
@@ -108,19 +129,35 @@
 		<h3 class="text-sm font-black uppercase tracking-widest text-white/40 flex items-center gap-1.5">
 			<Target size={14} /> Today's Quests
 		</h3>
-		<div class="space-y-1">
+		<div class="space-y-1.5">
 			{#each quarksManager.quests as quest (quest.id)}
 				{@const target = quarksManager.getTarget(quest)}
 				{@const progress = gameManager.dailyStats[quest.metric] ?? 0}
-				<div class="flex items-center justify-between gap-2 bg-white/5 rounded-lg px-3 py-2 text-xs">
-					<span class="text-white/70">{quest.description(target)}</span>
-					<span class="font-mono text-white/40">{progress} / {target}</span>
-					<button
-						class="text-[10px] bg-white/5 px-2 py-0.5 rounded hover:bg-white/10 shrink-0"
-						onclick={() => completeQuest(quest.id)}
-					>
-						Complete
-					</button>
+				{@const pct = Math.min(100, (progress / target) * 100)}
+				{@const claimed = quarksManager.claimedQuestIds.includes(quest.id)}
+				<div class="flex flex-col gap-1.5 bg-white/5 rounded-lg px-3 py-2 text-xs">
+					<div class="flex items-center justify-between gap-2">
+						<span class="text-white/70">{quest.description(target)}</span>
+						<div class="flex shrink-0 items-center gap-2">
+							<span class="font-mono text-white/40">{formatNumber(Math.min(progress, target))} / {formatNumber(target)}</span>
+							{#if claimed}
+								<span class="text-[10px] text-green-400">Claimed</span>
+							{:else}
+								<button
+									class="text-[10px] bg-white/5 px-2 py-0.5 rounded hover:bg-white/10 cursor-pointer"
+									onclick={() => completeQuest(quest.id)}
+								>
+									Complete
+								</button>
+							{/if}
+						</div>
+					</div>
+					<div class="h-1.5 overflow-hidden rounded-full bg-black/30">
+						<div
+							class="h-full rounded-full bg-linear-to-r from-[#4a9eff] via-[#3ddc84] to-[#ff4d4d]"
+							style:clip-path="inset(0 {100 - pct}% 0 0)"
+						></div>
+					</div>
 				</div>
 			{/each}
 		</div>
@@ -131,7 +168,7 @@
 		<h3 class="text-sm font-black uppercase tracking-widest text-white/40 flex items-center gap-1.5">
 			<ShoppingBag size={14} /> Shop
 		</h3>
-		<div class="grid grid-cols-1 sm:grid-cols-2 gap-1">
+		<div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
 			{#each shopItems as item (item.id)}
 				{@const owned = quarksManager.entitlements.includes(item.id)}
 				<div class="flex items-center justify-between gap-2 bg-white/5 rounded-lg px-3 py-2 text-xs">
@@ -139,22 +176,22 @@
 					<div class="flex gap-1 shrink-0">
 						{#if item.type === 'skin'}
 							<button
-								class="text-[10px] bg-white/5 px-2 py-0.5 rounded hover:bg-white/10"
+								class="text-[10px] bg-white/5 px-2 py-0.5 rounded hover:bg-white/10 cursor-pointer"
 								onclick={() => quarksManager.equipSkin(quarksManager.equippedSkin === item.id ? null : item.id)}
 							>
-								{quarksManager.equippedSkin === item.id ? 'Unequip' : 'Equip'}
+								{quarksManager.equippedSkin === item.id ? 'Stop preview' : 'Preview'}
 							</button>
 						{/if}
 						{#if owned}
 							<button
-								class="text-[10px] bg-white/5 px-2 py-0.5 rounded hover:bg-white/10"
+								class="text-[10px] bg-white/5 px-2 py-0.5 rounded hover:bg-white/10 cursor-pointer"
 								onclick={() => (quarksManager.entitlements = quarksManager.entitlements.filter(id => id !== item.id))}
 							>
 								Revoke
 							</button>
 						{:else}
 							<button
-								class="text-[10px] bg-white/5 px-2 py-0.5 rounded hover:bg-white/10"
+								class="text-[10px] bg-white/5 px-2 py-0.5 rounded hover:bg-white/10 cursor-pointer"
 								onclick={() => (quarksManager.entitlements = [...quarksManager.entitlements, item.id])}
 							>
 								Grant
@@ -174,7 +211,7 @@
 			{#each inspectorQuests as quest (quest.id)}
 				{@const anchors = { atomsEarned: gameManager.highestAPS, buildingsPurchased: 0, clicks: 0, powerUpsCollected: 0, protonises: 0, upgradesPurchased: 0 }}
 				<div class="bg-white/5 rounded-lg px-3 py-2 text-xs text-white/70">
-					{quest.id} - target {getQuestTarget(quest, anchors)}
+					{quest.id} - target {formatNumber(getQuestTarget(quest, anchors))}
 				</div>
 			{/each}
 		</div>

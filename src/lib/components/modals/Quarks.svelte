@@ -9,7 +9,20 @@
 	import { quarksManager } from '$helpers/QuarksManager.svelte';
 	import { formatNumber } from '$lib/utils';
 	import { supabaseAuth } from '$stores/supabaseAuth.svelte';
-	import { Check, Lock, RotateCcw, ShoppingBag, Sparkles, Target } from '@lucide/svelte';
+	import {
+		ArrowUpCircle,
+		Building2,
+		Check,
+		Clock,
+		Lock,
+		MousePointerClick,
+		Orbit,
+		RotateCcw,
+		ShoppingBag,
+		Sparkles,
+		Target,
+		Zap,
+	} from '@lucide/svelte';
 	import { onMount } from 'svelte';
 
 	interface Props {
@@ -19,13 +32,38 @@
 	let { onClose }: Props = $props();
 
 	let activeTab = $state<'quests' | 'shop' | 'skins'>('quests');
+	let now = $state(Date.now());
 
 	const shopItems = Object.values(QUARK_SHOP);
 	const boostItems = shopItems.filter(item => item.type === 'boost' || item.type === 'convenience');
 	const skinItems = shopItems.filter(item => item.type === 'skin');
 
+	const QUEST_ICONS: Record<string, typeof Target> = {
+		atoms_earned: Zap,
+		buildings_purchased: Building2,
+		clicks_100: MousePointerClick,
+		clicks_250: MousePointerClick,
+		power_ups_collected: Sparkles,
+		protonise_once: Orbit,
+		upgrades_purchased: ArrowUpCircle,
+	};
+
+	const resetIn = $derived.by(() => {
+		const nextUtcMidnight = Date.UTC(
+			new Date(now).getUTCFullYear(),
+			new Date(now).getUTCMonth(),
+			new Date(now).getUTCDate() + 1,
+		);
+		const remainingMs = Math.max(0, nextUtcMidnight - now);
+		const hours = Math.floor(remainingMs / 3_600_000);
+		const minutes = Math.floor((remainingMs % 3_600_000) / 60_000);
+		return `${hours}h ${minutes}m`;
+	});
+
 	onMount(() => {
 		quarksManager.sync();
+		const interval = setInterval(() => (now = Date.now()), 30_000);
+		return () => clearInterval(interval);
 	});
 
 	function questTarget(quest: (typeof quarksManager.quests)[number]) {
@@ -91,34 +129,54 @@
 
 		{#if activeTab === 'quests'}
 			<section class="flex flex-col gap-3">
-				<h3 class="flex items-center gap-1 text-lg font-bold text-white/80">
-					Daily Quests
-					<HelpIcon>
-						{#snippet content()}
-							Three quests are picked for you every UTC day, worth 1 <QuarkLabel /> each. Targets scale with your best-ever
-							production so they stay reasonable at any stage.
-						{/snippet}
-					</HelpIcon>
-				</h3>
+				<div class="flex items-center justify-between gap-3">
+					<h3 class="flex items-center gap-1 text-lg font-bold text-white/80">
+						Daily Quests
+						<HelpIcon>
+							{#snippet content()}
+								Three quests are picked for you every UTC day, worth 1 <QuarkLabel /> each. Targets scale with your best-ever
+								production so they stay reasonable at any stage.
+							{/snippet}
+						</HelpIcon>
+					</h3>
+					<span class="flex items-center gap-1 text-xs text-white/40">
+						<Clock size={12} /> Resets in {resetIn}
+					</span>
+				</div>
 
 				{#each quarksManager.quests as quest (quest.id)}
 					{@const target = questTarget(quest)}
 					{@const progress = gameManager.dailyStats[quest.metric] ?? 0}
 					{@const claimed = quarksManager.claimedQuestIds.includes(quest.id)}
 					{@const complete = progress >= target}
-					<div class="flex flex-col gap-2 rounded-lg bg-accent-800/50 p-3">
-						<div class="flex items-center justify-between gap-3">
-							<span class="text-white">{quest.description(target)}</span>
-							<span class="flex items-center gap-1 text-sm text-white/60">
+					{@const pct = Math.min(100, (progress / target) * 100)}
+					{@const QuestIcon = QUEST_ICONS[quest.id] ?? Target}
+					<div
+						class="flex flex-col gap-3 rounded-xl border p-4 transition-colors {claimed
+							? 'border-white/5 bg-accent-800/30'
+							: complete
+								? 'border-accent-400/40 bg-accent-800/60'
+								: 'border-white/5 bg-accent-800/50'}"
+					>
+						<div class="flex items-start justify-between gap-3">
+							<div class="flex items-start gap-3">
+								<div class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/5 text-white/70">
+									<QuestIcon size={16} />
+								</div>
+								<span class="text-white">{quest.description(target)}</span>
+							</div>
+							<span class="flex shrink-0 items-center gap-1 text-sm text-white/60">
 								+{@render quarkAmount(quest.reward)}
 							</span>
 						</div>
+
 						<div class="h-2 overflow-hidden rounded-full bg-black/30">
 							<div
-								class="h-full bg-linear-to-r from-[#4a9eff] via-[#3ddc84] to-[#ff4d4d] transition-all"
-								style:width="{Math.min(100, (progress / target) * 100)}%"
+								class="h-full rounded-full bg-linear-to-r from-[#4a9eff] via-[#3ddc84] to-[#ff4d4d] transition-[clip-path]"
+								style:clip-path="inset(0 {100 - pct}% 0 0)"
 							></div>
 						</div>
+
 						<div class="flex items-center justify-between">
 							<span class="text-xs text-white/50">{formatNumber(Math.min(progress, target))} / {formatNumber(target)}</span>
 							{#if claimed}

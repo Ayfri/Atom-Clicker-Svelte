@@ -4,14 +4,19 @@
 	import Avatar from '@components/ui/Avatar.svelte';
 	import Modal from '@components/ui/Modal.svelte';
 	import { getQuarkShopItem } from '$data/quarkShop';
+	import { quarksManager } from '$helpers/QuarksManager.svelte';
 	import type { LeaderboardEntry } from '$lib/types/leaderboard';
 	import {formatNumber} from '$lib/utils';
 
 	// Skin ids coming back from the server are untrusted strings, so look them up in the shop
 	// map rather than interpolating them into styles - an unknown id renders no frame at all.
+	// For the current user's own row, prefer QuarksManager's live `equippedSkin` over the value
+	// from the last leaderboard fetch, so equipping a skin (or previewing one via the DevTools
+	// local override) shows up immediately instead of waiting on the next 60s refetch.
 	function getSkinPalette(entry: LeaderboardEntry): string[] | null {
-		if (!entry.equippedSkin) return null;
-		const item = getQuarkShopItem(entry.equippedSkin);
+		const skinId = entry.self ? quarksManager.equippedSkin : entry.equippedSkin;
+		if (!skinId) return null;
+		const item = getQuarkShopItem(skinId);
 		if (item?.type !== 'skin' || !item.skin) return null;
 		return item.skin.palette;
 	}

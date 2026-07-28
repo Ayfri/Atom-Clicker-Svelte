@@ -32,10 +32,12 @@
 	stroke-linejoin="round"
 	{...props}
 >
+	<!-- Bonds stop short of the vertices (a gap of radius + 0.4 from each circle's centre) so they only
+	     bridge the space between circles instead of drawing a complete triangle underneath them. -->
 	<g stroke={bondColor} stroke-width="1.5">
-		<line x1="12" y1="5" x2="5.5" y2="17" />
-		<line x1="12" y1="5" x2="18.5" y2="17" />
-		<line x1="5.5" y1="17" x2="18.5" y2="17" />
+		<line x1="10.29" y1="8.17" x2="7.21" y2="13.83" />
+		<line x1="13.71" y1="8.17" x2="16.79" y2="13.83" />
+		<line x1="9.1" y1="17" x2="14.9" y2="17" />
 	</g>
 
 	<!-- Vertex circles are outlined (Lucide's "Circle" style: stroke only, no fill) rather than flat dots, to match the app's icon language. -->
