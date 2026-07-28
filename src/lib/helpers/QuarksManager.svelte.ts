@@ -270,6 +270,16 @@ export class QuarksManager {
 		}
 	}
 
+	/**
+	 * DevTools-only: previews any skin locally regardless of ownership or `devOverride`, without
+	 * ever touching the server. Unlike `equipSkin`, this never persists past a reload and is not
+	 * gated behind `devOverride` because previewing shouldn't require dropping real sync first.
+	 */
+	previewSkin(itemId: string | null) {
+		if (!dev) return;
+		this.equippedSkin = itemId;
+	}
+
 	async equipSkin(itemId: string | null) {
 		if (this.devOverride) {
 			// Dev override may equip any skin regardless of ownership, to preview the leaderboard frame.

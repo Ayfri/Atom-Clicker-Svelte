@@ -177,7 +177,7 @@
 						{#if item.type === 'skin'}
 							<button
 								class="text-[10px] bg-white/5 px-2 py-0.5 rounded hover:bg-white/10 cursor-pointer"
-								onclick={() => quarksManager.equipSkin(quarksManager.equippedSkin === item.id ? null : item.id)}
+								onclick={() => quarksManager.previewSkin(quarksManager.equippedSkin === item.id ? null : item.id)}
 							>
 								{quarksManager.equippedSkin === item.id ? 'Stop preview' : 'Preview'}
 							</button>
