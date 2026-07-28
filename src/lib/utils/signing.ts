@@ -3,7 +3,7 @@
 // security boundary - request identity is enforced via Supabase auth tokens
 // server-side, see src/lib/server/obfuscation.server.ts.
 
-function simpleHash(str: string): number {
+export function simpleHash(str: string): number {
 	let hash = 0;
 	for (let i = 0; i < str.length; i++) {
 		const char = str.charCodeAt(i);
