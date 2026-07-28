@@ -9,6 +9,7 @@
 		type MilestoneHit,
 		type PlaystylePresetId,
 		type PrestigePresetId,
+		type QuestBehavior,
 		type SimulationResult,
 		type SpikeEvent,
 	} from '$lib/simulation/types';
@@ -35,6 +36,7 @@
 	let activityId = $state<ActivityPresetId>('always');
 	let playstyleId = $state<PlaystylePresetId>('balanced');
 	let prestigeId = $state<PrestigePresetId>('balanced');
+	let questBehavior = $state<QuestBehavior>(PLAYSTYLE_PRESETS.balanced.questBehavior);
 	let targetHours = $state(10);
 	let snapshotInterval = $state<number>(PLAYSTYLE_PRESETS.balanced.snapshotInterval);
 
@@ -116,7 +118,7 @@
 	}
 
 	const currentConfig = $derived<BenchmarkConfig>(
-		buildBenchmarkConfig(activityId, playstyleId, prestigeId, targetHours, snapshotInterval),
+		buildBenchmarkConfig(activityId, playstyleId, prestigeId, targetHours, snapshotInterval, questBehavior),
 	);
 
 	const currentSnapshots = $derived(
@@ -288,6 +290,7 @@
 				bind:activityId
 				bind:playstyleId
 				bind:prestigeId
+				bind:questBehavior
 				bind:snapshotInterval
 				bind:targetHours
 				{isRunning}
@@ -346,10 +349,11 @@
 					comparisonId={comparisonReportId}
 					loadedId={loadedReport?.id ?? null}
 					onApplyConfig={config => {
-						const { activityId: a, playstyleId: p, prestigeId: pr, targetHours: t } = configToPresets(config);
+						const { activityId: a, playstyleId: p, prestigeId: pr, questBehavior: q, targetHours: t } = configToPresets(config);
 						activityId = a;
 						playstyleId = p;
 						prestigeId = pr;
+						questBehavior = q;
 						targetHours = t;
 						snapshotInterval = config.snapshotInterval;
 					}}

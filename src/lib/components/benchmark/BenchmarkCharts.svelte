@@ -186,6 +186,29 @@
 			],
 			title: 'Protonises & Electronizes',
 		},
+		{
+			description: 'Quark income from daily quests (charge triplet colours) vs. the flat 1-per-achievement drip.',
+			series: [
+				{ color: '#4a9eff', fillOpacity: 0.1, getValue: s => s.quarks ?? 0, label: 'Quarks' },
+				{ color: '#3ddc84', fillOpacity: 0.05, getValue: s => s.quarksFromQuests ?? 0, label: 'From Quests' },
+				{ color: '#ff4d4d', fillOpacity: 0.05, getValue: s => s.quarksFromAchievements ?? 0, label: 'From Achievements' },
+			],
+			title: 'Quarks',
+		},
+		{
+			description: 'Completion rate is independent of quest engagement (measures whether the day\'s targets were reachable at all); claiming depends on the questBehavior setting.',
+			series: [
+				{ color: '#a78bfa', fillOpacity: 0.15, getValue: s => s.questsCompletedToday ?? 0, label: 'Completed (last day)' },
+				{
+					color: '#facc15',
+					fillOpacity: 0,
+					getValue: s => ((s.questsOfferedTotal ?? 0) > 0 ? ((s.questsCompletedTotal ?? 0) / (s.questsOfferedTotal ?? 1)) * 100 : 0),
+					label: 'Completion rate %',
+				},
+			],
+			title: 'Daily Quest Completion',
+			yAxisSuffix: '%',
+		},
 	];
 
 	interface Props {

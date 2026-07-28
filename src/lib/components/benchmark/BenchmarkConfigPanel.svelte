@@ -11,12 +11,20 @@
 		type BenchmarkConfig,
 		type PlaystylePresetId,
 		type PrestigePresetId,
+		type QuestBehavior,
 	} from '$lib/simulation/types';
+
+	const QUEST_BEHAVIOR_OPTIONS: { id: QuestBehavior; label: string }[] = [
+		{ id: 'ignore', label: 'Ignore (never claims)' },
+		{ id: 'passive', label: 'Passive (claims what completes)' },
+		{ id: 'dedicated', label: 'Dedicated (steers toward targets)' },
+	];
 
 	let {
 		activityId = $bindable(),
 		playstyleId = $bindable(),
 		prestigeId = $bindable(),
+		questBehavior = $bindable(),
 		snapshotInterval = $bindable(),
 		targetHours = $bindable(),
 		isRunning,
@@ -26,6 +34,7 @@
 		activityId: ActivityPresetId;
 		playstyleId: PlaystylePresetId;
 		prestigeId: PrestigePresetId;
+		questBehavior: QuestBehavior;
 		snapshotInterval: number;
 		targetHours: number;
 		isRunning: boolean;
@@ -45,7 +54,7 @@
 	] as const;
 
 	const currentConfig = $derived<BenchmarkConfig>(
-		buildBenchmarkConfig(activityId, playstyleId, prestigeId, targetHours, snapshotInterval),
+		buildBenchmarkConfig(activityId, playstyleId, prestigeId, targetHours, snapshotInterval, questBehavior),
 	);
 
 	function applyQuickProfile(profileKey: keyof typeof BOT_PROFILES) {
@@ -53,6 +62,7 @@
 		activityId = p.activityId;
 		playstyleId = p.playstyleId;
 		prestigeId = p.prestigeId;
+		questBehavior = PLAYSTYLE_PRESETS[p.playstyleId].questBehavior;
 	}
 </script>
 
@@ -129,6 +139,19 @@
 						>
 							{#each Object.entries(PRESTIGE_PRESETS) as [id, p] (id)}
 								<option value={id} class="text-gray-200 bg-slate-900">{p.name}</option>
+							{/each}
+						</select>
+					</div>
+					<div class="flex flex-col gap-1.5 min-w-50">
+						<label class="text-gray-500 text-sm" for="quest-behavior">Quest Behavior</label>
+						<select
+							bind:value={questBehavior}
+							class="simulation-config-select bg-slate-800 border border-white/10 disabled:cursor-not-allowed disabled:opacity-50 focus:border-green-400 focus:outline-none px-3 py-2 rounded-lg text-gray-200 text-sm w-full"
+							disabled={isRunning}
+							id="quest-behavior"
+						>
+							{#each QUEST_BEHAVIOR_OPTIONS as option (option.id)}
+								<option value={option.id} class="text-gray-200 bg-slate-900">{option.label}</option>
 							{/each}
 						</select>
 					</div>

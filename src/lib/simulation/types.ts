@@ -30,7 +30,12 @@ export interface BotBehavior {
 	maxActionsPerTick?: number;
 	/** Max protonises+electronizes per active window. undefined = no limit. */
 	maxPrestigesPerActiveWindow?: number;
+	/** Whether the bot engages with daily quests. */
+	questBehavior: QuestBehavior;
 }
+
+/** How a bot engages with daily quests: never claims, claims whatever completes naturally, or steers toward targets. */
+export type QuestBehavior = 'dedicated' | 'ignore' | 'passive';
 
 export interface PrestigeStrategy {
 	autoElectronize: boolean;
@@ -79,6 +84,12 @@ export interface SimulationSnapshot {
 	playerLevel: number;
 	protons: number;
 	protonises: number;
+	quarks: number;
+	quarksFromAchievements: number;
+	quarksFromQuests: number;
+	questsCompletedToday: number;
+	questsCompletedTotal: number;
+	questsOfferedTotal: number;
 	radiationMultiplier: number;
 	skillPointsUsed: number;
 	skills: number;
@@ -194,6 +205,11 @@ export const MILESTONES: MilestoneDefinition[] = [
 	{ description: 'Purchased first Star', id: 'first_building_star', name: 'First Star' },
 	{ description: 'Purchased first Neutron Star', id: 'first_building_neutronStar', name: 'First Neutron Star' },
 	{ description: 'Purchased first Black Hole', id: 'first_building_blackHole', name: 'First Black Hole' },
+
+	{ description: 'Earned 1 Quark', id: 'quarks_1', name: '1 Quark' },
+	{ description: 'Earned 10 Quarks', id: 'quarks_10', name: '10 Quarks' },
+	{ description: 'Earned 50 Quarks', id: 'quarks_50', name: '50 Quarks' },
+	{ description: 'Earned 100 Quarks', id: 'quarks_100', name: '100 Quarks' },
 ];
 
 export const MILESTONE_CHECKS: Record<string, (s: SimulationSnapshot) => boolean> = {
@@ -253,6 +269,11 @@ export const MILESTONE_CHECKS: Record<string, (s: SimulationSnapshot) => boolean
 	first_building_star: s => s.buildingsEverPurchased.includes('star'),
 	first_building_neutronStar: s => s.buildingsEverPurchased.includes('neutronStar'),
 	first_building_blackHole: s => s.buildingsEverPurchased.includes('blackHole'),
+
+	quarks_1: s => s.quarks >= 1,
+	quarks_10: s => s.quarks >= 10,
+	quarks_50: s => s.quarks >= 50,
+	quarks_100: s => s.quarks >= 100,
 };
 
 /** Activity schedule: when the bot is "active" (clicking and buying) vs idle. */
@@ -290,6 +311,7 @@ export const PLAYSTYLE_PRESETS = {
 		maxActionsPerTick: 2,
 		maxPrestigesPerActiveWindow: 1,
 		name: 'AFK-style',
+		questBehavior: 'passive' as const,
 		snapshotInterval: 300,
 		tickRate: 1000,
 	},
@@ -306,6 +328,7 @@ export const PLAYSTYLE_PRESETS = {
 		maxActionsPerTick: undefined,
 		maxPrestigesPerActiveWindow: undefined,
 		name: 'Automated (no limits)',
+		questBehavior: 'dedicated' as const,
 		snapshotInterval: 60,
 		tickRate: 100,
 	},
@@ -322,6 +345,7 @@ export const PLAYSTYLE_PRESETS = {
 		maxActionsPerTick: 5,
 		maxPrestigesPerActiveWindow: 2,
 		name: 'Balanced',
+		questBehavior: 'passive' as const,
 		snapshotInterval: 120,
 		tickRate: 500,
 	},
@@ -338,6 +362,7 @@ export const PLAYSTYLE_PRESETS = {
 		maxActionsPerTick: 10,
 		maxPrestigesPerActiveWindow: 3,
 		name: 'Tryhard',
+		questBehavior: 'dedicated' as const,
 		snapshotInterval: 60,
 		tickRate: 250,
 	},
@@ -396,6 +421,7 @@ export function configToPresets(config: BenchmarkConfig): {
 	activityId: ActivityPresetId;
 	playstyleId: PlaystylePresetId;
 	prestigeId: PrestigePresetId;
+	questBehavior: QuestBehavior;
 	targetHours: number;
 } {
 	const { botBehavior, prestigeStrategy, snapshotInterval, targetHours, tickRate } = config;
@@ -432,7 +458,11 @@ export function configToPresets(config: BenchmarkConfig): {
 		return (key as PlaystylePresetId) ?? 'balanced';
 	})();
 
-	return { activityId, playstyleId, prestigeId, targetHours };
+	// questBehavior is a direct field on the config (a separate selector from playstyle), not
+	// inferred by matching - read it straight off, with a fallback for reports saved before this field existed.
+	const questBehavior: QuestBehavior = botBehavior.questBehavior ?? 'passive';
+
+	return { activityId, playstyleId, prestigeId, questBehavior, targetHours };
 }
 
 export function buildBenchmarkConfig(
@@ -441,6 +471,7 @@ export function buildBenchmarkConfig(
 	prestigeId: PrestigePresetId,
 	targetHours: number,
 	snapshotIntervalOverride?: number,
+	questBehaviorOverride?: QuestBehavior,
 ): BenchmarkConfig {
 	const activity = ACTIVITY_PRESETS[activityId];
 	const playstyle = PLAYSTYLE_PRESETS[playstyleId];
@@ -461,6 +492,7 @@ export function buildBenchmarkConfig(
 			...(playstyle.maxPrestigesPerActiveWindow !== undefined && {
 				maxPrestigesPerActiveWindow: playstyle.maxPrestigesPerActiveWindow,
 			}),
+			questBehavior: questBehaviorOverride ?? playstyle.questBehavior,
 		},
 		name: `${activity.name} · ${playstyle.name} · ${prestige.name}`,
 		prestigeStrategy: {

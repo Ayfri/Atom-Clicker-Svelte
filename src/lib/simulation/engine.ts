@@ -2,8 +2,10 @@
 import { ACHIEVEMENTS } from '$data/achievements';
 import { BUILDINGS, BUILDING_TYPES, type BuildingType } from '$data/buildings';
 import { CurrenciesTypes, type CurrencyName } from '$data/currencies';
+import { type DailyQuest, type DailyQuestAnchors, getDailyCap, getQuestTarget, pickDailyQuests } from '$data/dailyQuests';
 import { ALL_PHOTON_UPGRADES, getPhotonUpgradeCost } from '$data/photonUpgrades';
 import { POWER_UPS } from '$data/powerUp';
+import { QUARK_ACHIEVEMENT_REWARD } from '$data/quarkAchievements';
 import { RADIATION_UPGRADES, getRadiationUpgradePrice } from '$data/radiationUpgrades';
 import { RealmTypes } from '$data/realms';
 import { SKILL_UPGRADES } from '$data/skillTree';
@@ -70,9 +72,18 @@ export class SimulationEngine {
 	private nextPowerUpTime = 0;
 	private powerUpCounter = 0;
 	private prestigesThisActiveWindow = 0;
+	private quarks = 0;
+	private quarksFromAchievements = 0;
+	private quarksFromQuests = 0;
+	private questsCompletedToday = 0;
+	private questsCompletedTotal = 0;
+	private questsOfferedTotal = 0;
 	private recentMilestones: MilestoneHit[] = [];
 	private recentSpikes: SpikeEvent[] = [];
 	private savedState: string | null = null;
+	private simDayIndex = -1;
+	private simQuestTargets: Record<string, number> = {};
+	private simQuests: DailyQuest[] = [];
 	private snapshots: SimulationSnapshot[] = [];
 	private spikeRateHistory: number[] = [];
 	private spikes: SpikeEvent[] = [];
@@ -109,8 +120,17 @@ export class SimulationEngine {
 		this.nextPowerUpTime = this.rollPowerUpInterval();
 		this.powerUpCounter = 0;
 		this.prestigesThisActiveWindow = 0;
+		this.quarks = 0;
+		this.quarksFromAchievements = 0;
+		this.quarksFromQuests = 0;
+		this.questsCompletedToday = 0;
+		this.questsCompletedTotal = 0;
+		this.questsOfferedTotal = 0;
 		this.recentMilestones = [];
 		this.recentSpikes = [];
+		this.simDayIndex = -1;
+		this.simQuestTargets = {};
+		this.simQuests = [];
 		this.snapshots = [];
 		this.spikeRateHistory = [];
 		this.spikes = [];
@@ -145,6 +165,7 @@ export class SimulationEngine {
 				this.simulateClicks();
 				this.simulatePhotonRealmClicks();
 				this.tickPowerUps();
+				this.checkQuestDayRollover();
 				const activeNow = this.isInActiveWindow();
 				if (activeNow && !this.lastWasActive) {
 					this.prestigesThisActiveWindow = 0;
@@ -152,6 +173,7 @@ export class SimulationEngine {
 				this.lastWasActive = activeNow;
 				if (activeNow) {
 					this.executeBotBehavior();
+					this.steerDedicatedQuests();
 				}
 				this.flushSpikeWindowIfNeeded();
 				if (tick % achievementCheckInterval === 0) {
@@ -196,6 +218,9 @@ export class SimulationEngine {
 				}
 			}
 
+			if (this.simDayIndex !== -1) {
+				this.settleQuestDay();
+			}
 			if (!cancelled) {
 				this.takeSnapshot();
 			}
@@ -277,6 +302,93 @@ export class SimulationEngine {
 
 		if (newlyEarned.length > 0) {
 			gameManager.achievements = [...gameManager.achievements, ...newlyEarned];
+			// Every achievement grants a flat reward, see quarkAchievements.ts.
+			const reward = newlyEarned.length * QUARK_ACHIEVEMENT_REWARD;
+			this.quarksFromAchievements += reward;
+			this.quarks += reward;
+		}
+	}
+
+	private questAnchors(): DailyQuestAnchors {
+		return {
+			atomsEarned: gameManager.highestAPS,
+			buildingsPurchased: 0,
+			clicks: 0,
+			powerUpsCollected: 0,
+			protonises: 0,
+			upgradesPurchased: 0,
+		};
+	}
+
+	/** Synthetic, deterministic day keys keep two runs of the same config reproducible. */
+	private checkQuestDayRollover() {
+		const dayIndex = Math.floor(gameManager.inGameTime / (24 * 3600 * 1000));
+		if (dayIndex === this.simDayIndex) return;
+
+		if (this.simDayIndex !== -1) {
+			this.settleQuestDay();
+		}
+
+		this.simDayIndex = dayIndex;
+		this.simQuests = pickDailyQuests(`sim-${dayIndex}`);
+		this.simQuestTargets = {};
+		const anchors = this.questAnchors();
+		for (const quest of this.simQuests) {
+			this.simQuestTargets[quest.id] = getQuestTarget(quest, anchors);
+		}
+		this.questsOfferedTotal += this.simQuests.length;
+
+		gameManager.dailyStats = {
+			atomsEarned: 0,
+			buildingsPurchased: 0,
+			clicks: 0,
+			dayKey: `sim-${dayIndex}`,
+			powerUpsCollected: 0,
+			protonises: 0,
+			questTargets: this.simQuestTargets,
+			upgradesPurchased: 0,
+		};
+	}
+
+	/** Evaluates the day that just ended: completion is measured for every archetype, claiming is gated by questBehavior. */
+	private settleQuestDay() {
+		const cap = getDailyCap(this.simQuests);
+		let grantedToday = 0;
+		let completedToday = 0;
+
+		for (const quest of this.simQuests) {
+			const target = this.simQuestTargets[quest.id] ?? quest.floor;
+			const progress = gameManager.dailyStats[quest.metric] ?? 0;
+			const metTarget = progress >= target;
+			if (!metTarget) continue;
+
+			completedToday += 1;
+			this.questsCompletedTotal += 1;
+
+			if (this.config.botBehavior.questBehavior === 'ignore') continue;
+			if (grantedToday + quest.reward > cap) continue;
+			grantedToday += quest.reward;
+			this.quarksFromQuests += quest.reward;
+			this.quarks += quest.reward;
+		}
+
+		this.questsCompletedToday = completedToday;
+	}
+
+	/** 'dedicated' bots grind out the last stretch of a close-but-incomplete click quest instead of leaving it on the table. */
+	private steerDedicatedQuests() {
+		if (this.config.botBehavior.questBehavior !== 'dedicated') return;
+		if (this.simDayIndex === -1) return;
+
+		const dayLengthMs = 24 * 3600 * 1000;
+		const dayProgress = (gameManager.inGameTime % dayLengthMs) / dayLengthMs;
+		if (dayProgress < 0.7) return;
+
+		for (const quest of this.simQuests) {
+			if (quest.metric !== 'clicks') continue;
+			const target = this.simQuestTargets[quest.id] ?? quest.floor;
+			if (gameManager.dailyStats.clicks >= target) continue;
+			gameManager.dailyStats = { ...gameManager.dailyStats, clicks: gameManager.dailyStats.clicks + 5 };
 		}
 	}
 
@@ -405,6 +517,12 @@ export class SimulationEngine {
 			playerLevel,
 			protons: currenciesManager.getAmount(CurrenciesTypes.PROTONS),
 			protonises: gameManager.totalProtonisesAllTime,
+			quarks: this.quarks,
+			quarksFromAchievements: this.quarksFromAchievements,
+			quarksFromQuests: this.quarksFromQuests,
+			questsCompletedToday: this.questsCompletedToday,
+			questsCompletedTotal: this.questsCompletedTotal,
+			questsOfferedTotal: this.questsOfferedTotal,
 			radiationMultiplier,
 			skillPointsUsed,
 			skills: gameManager.skillUpgrades.length,
@@ -699,6 +817,8 @@ export class SimulationEngine {
 		gameManager.addAtoms(clickPower * clicksThisTick);
 		gameManager.totalClicksAllTime += Math.floor(clicksThisTick);
 		gameManager.totalClicksRun += Math.floor(clicksThisTick);
+		// Bypasses gameManager.incrementClicks() for performance, so dailyStats needs its own bump here.
+		gameManager.dailyStats = { ...gameManager.dailyStats, clicks: gameManager.dailyStats.clicks + Math.floor(clicksThisTick) };
 	}
 
 	/** Headless equivalent of clicking realm circles. Mirrors offlineProgress.ts photon math + adds auto-click. */
