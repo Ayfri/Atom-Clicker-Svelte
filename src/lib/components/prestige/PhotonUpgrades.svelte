@@ -4,6 +4,8 @@
 	import { CURRENCIES, CurrenciesTypes } from '$data/currencies';
 	import { photonUpgradesTab } from '$stores/photonUpgradesTab.svelte';
 	import Currency from '@components/ui/Currency.svelte';
+	import CurrencyLabel from '@components/ui/CurrencyLabel.svelte';
+	import HelpIcon from '@components/ui/HelpIcon.svelte';
 	import PhotonUpgradeItem from './PhotonUpgradeItem.svelte';
 	import { Eye, EyeOff } from '@lucide/svelte';
 
@@ -29,7 +31,19 @@
 
 <div id="photon-upgrades" class="bg-black/10 backdrop-blur-xs rounded-lg p-3 flex flex-col gap-2 h-150 lg:h-[calc(100vh-180px)]">
 	<div class="header flex justify-between items-center gap-2">
-		<h2 class="text-sm lg:text-base text-realm-400">Photon Upgrades</h2>
+		<div class="flex items-center gap-1.5">
+			<h2 class="text-sm lg:text-base text-realm-400">Photon Upgrades</h2>
+			<HelpIcon position="bottom">
+				{#snippet content()}
+					<p class="text-xs text-white/80">
+						Spend <CurrencyLabel name={CurrenciesTypes.PHOTONS} /> on repeatable upgrades.
+						{#if showExcitedTab}
+							Rare <CurrencyLabel name={CurrenciesTypes.EXCITED_PHOTONS} /> unlock a separate tab with stronger effects.
+						{/if}
+					</p>
+				{/snippet}
+			</HelpIcon>
+		</div>
 		<button
 			class="flex items-center justify-center p-1 rounded-md transition-all duration-200 border {gameManager.settings.upgrades.displayAlreadyBought ? 'bg-realm-500/15 text-realm-400 border-realm-500/30 hover:bg-realm-500/25' : 'bg-transparent text-gray-400 border-white/10 hover:bg-white/5'}"
 			onclick={() => gameManager.settings.upgrades.displayAlreadyBought = !gameManager.settings.upgrades.displayAlreadyBought}

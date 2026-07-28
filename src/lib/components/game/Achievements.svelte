@@ -1,6 +1,8 @@
 <script lang="ts">
 	import {gameManager} from '$helpers/GameManager.svelte';
 	import {ACHIEVEMENTS} from '$data/achievements';
+	import HelpIcon from '@components/ui/HelpIcon.svelte';
+	import QuarkLabel from '@components/ui/QuarkLabel.svelte';
 
 	const unlockedAchievements = $derived(Object.entries(ACHIEVEMENTS).map(([name, achievement]) => ({
 		...achievement,
@@ -9,9 +11,18 @@
 </script>
 
 <div class="backdrop-blur-xs bg-black/10 p-3 rounded-lg h-150 lg:h-[calc(100vh-180px)] flex flex-col">
-	<h2 class="font-semibold text-lg">
+	<div class="flex items-center gap-1.5">
+		<h2 class="font-semibold text-lg">
 		Achievements ({gameManager.achievements.length}/{Object.keys(ACHIEVEMENTS).length})
-	</h2>
+		</h2>
+		<HelpIcon position="bottom">
+			{#snippet content()}
+				<p class="text-xs text-white/80">
+					Each achievement awards 1 <QuarkLabel /> the first time you unlock it. Hidden achievements stay secret until you find them.
+				</p>
+			{/snippet}
+		</HelpIcon>
+	</div>
 	<div class="achievement-grid mt-2 grid gap-1.5 overflow-y-auto flex-1 custom-scrollbar px-1">
 		{#each unlockedAchievements as achievement}
 			{@const hidden = achievement.hiddenCondition?.(gameManager) === true}
