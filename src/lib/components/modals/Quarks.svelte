@@ -11,7 +11,7 @@
 	import { quarksManager } from '$helpers/QuarksManager.svelte';
 	import { realmManager } from '$helpers/RealmManager.svelte';
 	import { formatNumber } from '$lib/utils';
-	import type { LeaderboardEntry } from '$lib/types/leaderboard';
+	import { createCurrentPlayerPreview } from '$lib/utils/leaderboard-preview';
 	import { supabaseAuth } from '$stores/supabaseAuth.svelte';
 	import {
 		ArrowUpCircle,
@@ -57,17 +57,6 @@
 
 	function isRealmUnlocked(realmId: RealmType) {
 		return gameManager.realms[realmId]?.unlocked ?? false;
-	}
-
-	function getBannerPreview(itemId: string): LeaderboardEntry {
-		return {
-			atoms: 1_250_000,
-			equippedBanner: itemId,
-			lastUpdated: Date.now(),
-			level: 42,
-			rank: 1,
-			username: 'Preview Player',
-		};
 	}
 
 	const QUEST_ICONS: Record<string, typeof Target> = {
@@ -348,7 +337,7 @@
 						{@const owned = quarksManager.entitlements.includes(item.id)}
 						{@const equipped = quarksManager.equippedBanner === item.id}
 						<div class="flex flex-col gap-2 rounded-lg bg-accent-800/50 p-3">
-							<LeaderboardRow entry={getBannerPreview(item.id)} />
+							<LeaderboardRow entry={createCurrentPlayerPreview(item.id)} />
 							<span class="font-medium text-white">{item.name}</span>
 							<p class="text-sm text-white/60">{item.description}</p>
 							<div class="flex items-center justify-between">

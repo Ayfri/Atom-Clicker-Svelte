@@ -4,8 +4,8 @@
 	import { QUARK_SHOP, type QuarkShopItem } from '$data/quarkShop';
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { quarksManager } from '$helpers/QuarksManager.svelte';
-	import type { LeaderboardEntry } from '$lib/types/leaderboard';
 	import { formatNumber } from '$lib/utils';
+	import { createCurrentPlayerPreview } from '$lib/utils/leaderboard-preview';
 	import { supabaseAuth } from '$stores/supabaseAuth.svelte';
 	import { Calendar, Gem, ShoppingBag, Sparkles, Target, Wifi, WifiOff, Zap } from '@lucide/svelte';
 
@@ -29,17 +29,6 @@
 
 	function getThemeRealmLabel(item: QuarkShopItem): string {
 		return item.theme?.realmId === 'photons' ? 'Photon Realm' : item.theme?.realmId === 'radiation' ? 'Radiation Realm' : 'Atom Realm';
-	}
-
-	function getBannerPreview(itemId: string): LeaderboardEntry {
-		return {
-			atoms: 1_250_000,
-			equippedBanner: itemId,
-			lastUpdated: Date.now(),
-			level: 42,
-			rank: 1,
-			username: 'Preview Player',
-		};
 	}
 
 	function completeQuest(questId: string) {
@@ -202,10 +191,10 @@
 			{#each shopItems as item (item.id)}
 				{@const owned = quarksManager.entitlements.includes(item.id)}
 				<div class="flex items-center gap-3 bg-white/5 rounded-lg px-3 py-2 text-xs">
-					<div class="w-36 shrink-0 overflow-hidden rounded-md border border-white/10">
+					<div class="h-10 w-40 shrink-0 overflow-hidden rounded-md border border-white/10">
 						{#if item.type === 'banner' && item.banner}
-							<div class="h-12 w-[200%] origin-top-left scale-50">
-								<LeaderboardRow entry={getBannerPreview(item.id)} />
+							<div class="w-[250%] origin-top-left scale-[0.4]">
+								<LeaderboardRow entry={createCurrentPlayerPreview(item.id)} />
 							</div>
 						{:else if item.type === 'theme' && item.theme}
 							<div class="relative h-12 overflow-hidden p-2" style="background-image: {item.theme.background}">
