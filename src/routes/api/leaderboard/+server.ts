@@ -43,6 +43,7 @@ export const GET: RequestHandler = async ({ url }) => {
 
 			return {
 				atoms: parseFloat(entry.atoms), // Use parseFloat instead of parseInt
+				equippedSkin: entry.equipped_skin ?? null,
 				level: entry.level,
 				is_online: isTrulyOnline,
 				picture: entry.picture || '',

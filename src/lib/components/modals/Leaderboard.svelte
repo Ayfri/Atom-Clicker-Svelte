@@ -3,8 +3,18 @@
 	import Profile from '@components/settings/Profile.svelte';
 	import Avatar from '@components/ui/Avatar.svelte';
 	import Modal from '@components/ui/Modal.svelte';
+	import { getQuarkShopItem } from '$data/quarkShop';
 	import type { LeaderboardEntry } from '$lib/types/leaderboard';
 	import {formatNumber} from '$lib/utils';
+
+	// Skin ids coming back from the server are untrusted strings, so look them up in the shop
+	// map rather than interpolating them into styles - an unknown id renders no frame at all.
+	function getSkinPalette(entry: LeaderboardEntry): string[] | null {
+		if (!entry.equippedSkin) return null;
+		const item = getQuarkShopItem(entry.equippedSkin);
+		if (item?.type !== 'skin' || !item.skin) return null;
+		return item.skin.palette;
+	}
 	import {leaderboard} from '$stores/leaderboard.svelte';
 	import {supabaseAuth} from '$stores/supabaseAuth.svelte';
 	import {Search, Users, Trophy, Medal, Crown} from '@lucide/svelte';
@@ -182,6 +192,7 @@
 							: ''}
 
 				{@const isHundredth = (index + 1) % 100 === 0 && (filteredLeaderboard.length !== index + 1)}
+				{@const skinPalette = getSkinPalette(entry)}
 				<div class="px-3 py-1" class:pb-8={isHundredth}>
 					<div class="{userClass} {borderClass}">
 						<div class="flex items-center gap-2">
@@ -195,11 +206,16 @@
 							{/if}
 						</div>
 						<div class="flex items-center gap-3 flex-1">
-							<Avatar
-								alt={getDisplayUsername(entry)}
-								class="size-10 text-sm"
-								src={entry.picture}
-							/>
+							<div
+								class="rounded-full {skinPalette ? 'p-0.5' : ''}"
+								style={skinPalette ? `background: linear-gradient(135deg, ${skinPalette[0]}, ${skinPalette[1] ?? skinPalette[0]})` : undefined}
+							>
+								<Avatar
+									alt={getDisplayUsername(entry)}
+									class="size-10 text-sm"
+									src={entry.picture}
+								/>
+							</div>
 							<div>
 								<div class="font-bold capitalize text-white flex items-center gap-2">
 									{getDisplayUsername(entry)}
