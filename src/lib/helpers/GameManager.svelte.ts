@@ -1,6 +1,7 @@
 import { ACHIEVEMENTS } from '$data/achievements';
 import { type BuildingType, BUILDINGS, BUILDING_LEVEL_UP_COST } from '$data/buildings';
 import { CurrenciesTypes, type CurrencyName } from '$data/currencies';
+import type { DailyStats } from '$data/dailyQuests';
 import { FeatureTypes } from '$data/features';
 import { ALL_PHOTON_UPGRADES, getPhotonUpgradeCost } from '$data/photonUpgrades';
 import { POWER_UP_DEFAULT_INTERVAL } from '$data/powerUp';
@@ -39,6 +40,16 @@ export class GameManager {
 	achievements = $state<string[]>([]);
 	activePowerUps = $state<PowerUp[]>([]);
 	buildings = $state<Partial<Record<BuildingType, Building>>>({});
+	dailyStats = $state<DailyStats>({
+		atomsEarned: 0,
+		buildingsPurchased: 0,
+		clicks: 0,
+		dayKey: '',
+		powerUpsCollected: 0,
+		protonises: 0,
+		questTargets: {},
+		upgradesPurchased: 0,
+	});
 	featuresManager = new FeaturesManager();
 	highestAPS = $state(0);
 	inGameTime = $state(0);
@@ -88,6 +99,8 @@ export class GameManager {
 	// Configuration
 	private statsConfig = statsConfig;
 	private gameInterval: ReturnType<typeof setInterval> | null = null;
+	/** Guards dailyStats increments during applyOfflineProgress, which reuses purchaseBuilding/purchaseUpgrade directly. */
+	applyingOfflineProgress = false;
 
 	initialize() {
 		this.loadGame();
@@ -384,6 +397,7 @@ export class GameManager {
 			buildings: this.buildings,
 			currencies: this.currencies,
 			currencyBoosts: this.skillPointBoosts,
+			dailyStats: this.dailyStats,
 			features: this.features,
 			highestAPS: this.highestAPS,
 			inGameTime: this.inGameTime,
@@ -451,7 +465,9 @@ export class GameManager {
 			this.syncFeatures();
 			this.checkRealmUnlocks();
 			this.lastLoadedSave = typeof result.state.lastSave === 'number' ? result.state.lastSave : 0;
+			this.applyingOfflineProgress = true;
 			const offlineSummary = applyOfflineProgress(this);
+			this.applyingOfflineProgress = false;
 			if (offlineSummary) {
 				this.offlineProgressSummary = offlineSummary;
 			}
@@ -660,6 +676,9 @@ export class GameManager {
 		};
 
 		this.totalBuildingsPurchasedAllTime += amount;
+		if (!this.applyingOfflineProgress) {
+			this.dailyStats = { ...this.dailyStats, buildingsPurchased: this.dailyStats.buildingsPurchased + amount };
+		}
 		return true;
 	}
 
@@ -716,6 +735,9 @@ export class GameManager {
 			this.checkRealmUnlocks();
 
 			this.totalUpgradesPurchasedAllTime += 1;
+			if (!this.applyingOfflineProgress) {
+				this.dailyStats = { ...this.dailyStats, upgradesPurchased: this.dailyStats.upgradesPurchased + 1 };
+			}
 			return true;
 		}
 		return false;
@@ -799,6 +821,7 @@ export class GameManager {
 
 			this.totalProtonisesRun += 1;
 			this.totalProtonisesAllTime += 1;
+			this.dailyStats = { ...this.dailyStats, protonises: this.dailyStats.protonises + 1 };
 
 			this.resetLayer(LAYERS.PROTONIZER);
 
@@ -822,6 +845,7 @@ export class GameManager {
 			if (this.features[FeatureTypes.LEVELS]) {
 				this.totalXP += amount * XP_PER_ATOM * this.xpGainMultiplier;
 			}
+			this.dailyStats = { ...this.dailyStats, atomsEarned: this.dailyStats.atomsEarned + amount };
 		}
 	}
 
@@ -835,6 +859,7 @@ export class GameManager {
 	incrementClicks(isAuto = false) {
 		this.totalClicksRun += 1;
 		this.totalClicksAllTime += 1;
+		this.dailyStats = { ...this.dailyStats, clicks: this.dailyStats.clicks + 1 };
 
 		const shouldUpdate =
 			isAuto ?
@@ -867,6 +892,7 @@ export class GameManager {
 		if (!newPowerUp.startTime) newPowerUp.startTime = Date.now();
 		this.activePowerUps = [...this.activePowerUps, newPowerUp];
 		this.powerUpsCollected += 1;
+		this.dailyStats = { ...this.dailyStats, powerUpsCollected: this.dailyStats.powerUpsCollected + 1 };
 		if (!this.upgrades.includes('electron_bypass_bonus_click_stability')) {
 			this.lastInteractionTime = Date.now();
 		}

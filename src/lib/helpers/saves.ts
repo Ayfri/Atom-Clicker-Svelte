@@ -7,7 +7,7 @@ import { statsConfig } from '$helpers/statConstants';
 import { saveRecovery, type SaveErrorType } from '$stores/saveRecovery';
 
 export const SAVE_KEY = 'atomic-clicker-save';
-export const SAVE_VERSION = 23;
+export const SAVE_VERSION = 24;
 
 export interface LoadSaveResult {
 	errorDetails?: string;

@@ -30,6 +30,20 @@ export const statsConfig: Record<string, StatConfig> = {
 	buildings: { defaultValue: {}, layer: LAYERS.PROTONIZER, minVersion: 1 },
 	currencies: { defaultValue: {}, layer: LAYERS.NEVER, minVersion: 17 }, // Handled by CurrenciesManager
 	currencyBoosts: { defaultValue: {}, layer: LAYERS.PROTONIZER, minVersion: 21 },
+	dailyStats: {
+		defaultValue: {
+			atomsEarned: 0,
+			buildingsPurchased: 0,
+			clicks: 0,
+			dayKey: '',
+			powerUpsCollected: 0,
+			protonises: 0,
+			questTargets: {},
+			upgradesPurchased: 0,
+		},
+		layer: LAYERS.NEVER,
+		minVersion: 24,
+	},
 	features: { defaultValue: {}, layer: LAYERS.NEVER, minVersion: 21 },
 	highestAPS: { defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
 	inGameTime: { defaultValue: 0, layer: LAYERS.NEVER, minVersion: 14 },
@@ -79,6 +93,7 @@ export const STATS = {
 	BUILDINGS: 'buildings',
 	CURRENCIES: 'currencies',
 	CURRENCY_BOOSTS: 'currencyBoosts',
+	DAILY_STATS: 'dailyStats',
 	FEATURES: 'features',
 	HIGHEST_APS: 'highestAPS',
 	IN_GAME_TIME: 'inGameTime',

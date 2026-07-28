@@ -1,5 +1,6 @@
 import type { BuildingType } from '$data/buildings';
 import type { CurrencyName } from '$data/currencies';
+import type { DailyStats } from '$data/dailyQuests';
 import type { RealmType } from '$data/realms';
 import type { GameManager } from '$helpers/GameManager.svelte';
 import type { LayerType } from '$helpers/statConstants';
@@ -121,6 +122,7 @@ export interface GameState {
 	buildings: Partial<Record<BuildingType, Building>>;
 	currencies: CurrencyStateMap;
 	currencyBoosts: CurrencyBoosts;
+	dailyStats: DailyStats;
 	features: FeatureState;
 	highestAPS: number;
 	inGameTime: number;
