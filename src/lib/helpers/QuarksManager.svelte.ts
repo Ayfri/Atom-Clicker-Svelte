@@ -77,7 +77,7 @@ export class QuarksManager {
 	});
 
 	hasClaimableAchievement = $derived.by(() => {
-		return gameManager.achievements.some(id => !this.claimedAchievementIds.includes(id));
+		return gameManager.achievements.some(id => id in ACHIEVEMENTS && !this.claimedAchievementIds.includes(id));
 	});
 
 	setDevOverride(value: boolean) {
@@ -87,6 +87,20 @@ export class QuarksManager {
 
 	isActionPending(actionId: string): boolean {
 		return this.pendingActions.includes(actionId);
+	}
+
+	clear() {
+		this.balance = 0;
+		this.claimedAchievementIds = [];
+		this.claimedQuestIds = [];
+		this.dayKey = '';
+		this.entitlements = [];
+		this.equippedBanner = null;
+		this.equippedThemes = {};
+		this.hasSynced = false;
+		this.lastSyncError = null;
+		this.quests = QUEST_POOL.slice(0, DAILY_QUEST_COUNT);
+		this.applyBoostEffects();
 	}
 
 	/** Pushes owned boost/convenience effects into GameManager. Called whenever `entitlements` changes. */
@@ -194,11 +208,19 @@ export class QuarksManager {
 			this.persistDailyQuestSelection(dayKey);
 			return;
 		}
+		if (!supabaseAuth.isAuthenticated) {
+			this.clear();
+			return;
+		}
 
 		this.loading = true;
 		this.hasSynced = false;
 		try {
 			const headers = await this.authHeaders();
+			if (!headers) {
+				this.clear();
+				return;
+			}
 			const response = await fetch('/api/quarks', { headers: headers ?? undefined });
 			if (!response.ok) throw new Error(`Sync failed with status ${response.status}`);
 

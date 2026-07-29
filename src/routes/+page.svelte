@@ -53,6 +53,7 @@
 	let gameUpdateInterval: ReturnType<typeof setInterval> | null = null;
 	let hasCheckedCloudSaveOnLoad = false;
 	let authUnsubscribe: (() => void) | null = null;
+	let quarkUserId: string | null = null;
 
 	function update(ticker: any) {
 		gameManager.addAtoms((gameManager.atomsPerSecond * ticker.deltaMS) / 1000);
@@ -84,12 +85,19 @@
 	onMount(async () => {
 		gameManager.initialize();
 		await supabaseAuth.init();
-		await quarksManager.sync();
+		quarkUserId = supabaseAuth.user?.id ?? null;
+		if (quarkUserId) await quarksManager.sync();
 		await checkCloudSaveOnLoad();
 
 		authUnsubscribe = supabaseAuth.subscribe(() => {
+			const userId = supabaseAuth.user?.id ?? null;
+			if (userId !== quarkUserId) {
+				quarkUserId = userId;
+				if (userId) quarksManager.sync();
+				else quarksManager.clear();
+			}
+
 			if (supabaseAuth.isAuthenticated) {
-				quarksManager.sync();
 				checkCloudSaveOnLoad();
 			}
 		});
