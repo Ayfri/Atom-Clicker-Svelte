@@ -1,11 +1,8 @@
 # What's new 29-07-2026
 
-- **Quarks**: A new rare currency that persists across every prestige reset. Earn a few per day from daily quests and a one-time reward for every achievement you unlock.
-- **Daily Quests**: Three quests are picked for you each day, worth 1 Quark each. Targets scale with how strong your run is, so they stay fair whether you're just starting out or deep into a run.
-- **Quark Shop**: Spend Quarks on permanent boosts and convenience unlocks (fully refundable, so you can swap them around) or on cosmetic skins, including one shown next to your name on the leaderboard.
-- **Quarks Tab**: A new icon in the navigation bar opens the Quarks panel, showing your balance, today's quests, and the shop.
-- **Realm Themes**: 4 cosmetic themes per Realm (12 total) are now in the Quark shop, recoloring the background and a few accents of your Atoms, Photon, and Radiation realms.
-- **Leaderboard Banners**: 10 collectible banners, named after quarks and other particles, can now be equipped from the Quark shop and are shown behind your row on the leaderboard, with deep colors and detailed particle-inspired patterns.
+- **Quarks & Daily Quests**: Earn this rare currency from daily goals and achievements. Quarks persist through prestige resets.
+- **Quark Shop**: Spend Quarks on refundable boosts, convenience upgrades, Realm themes, and collectible leaderboard banners.
+- **Quarks Tab**: Open the new navigation icon to view your balance, quests, shop items, and cosmetics.
 
 # What's new 28-07-2026
 

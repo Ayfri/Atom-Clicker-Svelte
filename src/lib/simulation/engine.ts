@@ -311,9 +311,13 @@ export class SimulationEngine {
 
 	private questAnchors(): DailyQuestAnchors {
 		return {
+			achievementsUnlocked: 0,
 			atomsEarned: gameManager.highestAPS,
 			buildingsPurchased: 0,
 			clicks: 0,
+			electronizes: 0,
+			higgsBosonsCollected: 0,
+			otherDailyQuestsCompleted: 0,
 			powerUpsCollected: 0,
 			protonises: 0,
 			upgradesPurchased: 0,
@@ -339,12 +343,17 @@ export class SimulationEngine {
 		this.questsOfferedTotal += this.simQuests.length;
 
 		gameManager.dailyStats = {
+			achievementsUnlocked: 0,
 			atomsEarned: 0,
 			buildingsPurchased: 0,
 			clicks: 0,
 			dayKey: `sim-${dayIndex}`,
+			electronizes: 0,
+			higgsBosonsCollected: 0,
+			otherDailyQuestsCompleted: 0,
 			powerUpsCollected: 0,
 			protonises: 0,
+			questIds: this.simQuests.map(quest => quest.id),
 			questTargets: this.simQuestTargets,
 			upgradesPurchased: 0,
 		};

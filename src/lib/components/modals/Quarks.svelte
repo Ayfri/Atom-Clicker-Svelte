@@ -64,6 +64,8 @@
 		buildings_purchased: Building2,
 		clicks_100: MousePointerClick,
 		clicks_250: MousePointerClick,
+		electronize_three_times: Orbit,
+		higgs_bosons_collected: Sparkles,
 		power_ups_collected: Sparkles,
 		protonise_once: Orbit,
 		upgrades_purchased: ArrowUpCircle,
@@ -92,9 +94,13 @@
 		return typeof frozen === 'number' ?
 			frozen
 		:	getQuestTarget(quest, {
+				achievementsUnlocked: 0,
 				atomsEarned: gameManager.highestAPS,
 				buildingsPurchased: 0,
 				clicks: 0,
+				electronizes: 0,
+				higgsBosonsCollected: 0,
+				otherDailyQuestsCompleted: 0,
 				powerUpsCollected: 0,
 				protonises: 0,
 				upgradesPurchased: 0,
@@ -161,8 +167,8 @@
 						Daily Quests
 						<HelpIcon>
 							{#snippet content()}
-								Three quests are picked for you every UTC day, worth 1 <QuarkLabel /> each. Targets scale with your best-ever
-								production so they stay reasonable at any stage.
+								Two quests are picked for you every UTC day, worth 1 <QuarkLabel /> each. The Third Daily Quest shop upgrade
+								adds another. Targets scale with your best-ever production so they stay reasonable at any stage.
 							{/snippet}
 						</HelpIcon>
 					</h3>
@@ -173,7 +179,7 @@
 
 				{#each quarksManager.quests as quest (quest.id)}
 					{@const target = questTarget(quest)}
-					{@const progress = gameManager.dailyStats[quest.metric] ?? 0}
+					{@const progress = quarksManager.getProgress(quest)}
 					{@const claimed = quarksManager.claimedQuestIds.includes(quest.id)}
 					{@const complete = progress >= target}
 					{@const pct = Math.min(100, (progress / target) * 100)}

@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getDailyCap, pickDailyQuests } from '$data/dailyQuests';
+import { getDailyCap, getDailyQuestCount, pickDailyQuests, QUEST_POOL } from '$data/dailyQuests';
 import { verifyAndDecryptClientData } from '$lib/server/obfuscation.server';
 import { quarksService, resolveUserFromRequest } from '$lib/server/supabase.server';
 
@@ -26,13 +26,17 @@ export const POST: RequestHandler = async ({ request }) => {
 			return json({ error: 'Invalid questId' }, { status: 400 });
 		}
 
-		// Recompute today's quests server-side. A questId not in today's set is rejected outright,
-		// which is the actual anti-cheat: the reward always comes from the server's own pool, never the request.
+		// Quest eligibility relies on the player's local save, so the server verifies the pool and derives
+		// the reward from its own definition rather than accepting a client-supplied amount.
 		const dayKey = todayUtcDayKey();
-		const todaysQuests = pickDailyQuests(dayKey);
-		const quest = todaysQuests.find(q => q.id === questId);
+		const entitlements = await quarksService.getEntitlements(userId);
+		const todaysQuests = pickDailyQuests(dayKey, getDailyQuestCount(entitlements));
+		const quest = QUEST_POOL.find(candidate => candidate.id === questId);
 		if (!quest) {
-			return json({ error: 'Quest is not part of today\'s set' }, { status: 400 });
+			return json({ error: 'Unknown quest' }, { status: 400 });
+		}
+		if (quest.id === 'complete_other_daily_quests' && todaysQuests.length < 3) {
+			return json({ error: 'The Third Daily Quest upgrade is required' }, { status: 400 });
 		}
 
 		const result = await quarksService.grantQuarks(userId, quest.reward, 'quest', `quest:${dayKey}:${questId}`, getDailyCap(todaysQuests));

@@ -42,12 +42,17 @@ export class GameManager {
 	activePowerUps = $state<PowerUp[]>([]);
 	buildings = $state<Partial<Record<BuildingType, Building>>>({});
 	dailyStats = $state<DailyStats>({
+		achievementsUnlocked: 0,
 		atomsEarned: 0,
 		buildingsPurchased: 0,
 		clicks: 0,
 		dayKey: '',
+		electronizes: 0,
+		higgsBosonsCollected: 0,
+		otherDailyQuestsCompleted: 0,
 		powerUpsCollected: 0,
 		protonises: 0,
+		questIds: [],
 		questTargets: {},
 		upgradesPurchased: 0,
 	});
@@ -798,6 +803,7 @@ export class GameManager {
 			this.totalElectronizesRun += 1;
 			this.totalElectronizesAllTime += 1;
 			this.totalProtonisesRun = 0;
+			this.dailyStats = { ...this.dailyStats, electronizes: (this.dailyStats.electronizes ?? 0) + 1 };
 
 			this.resetLayer(LAYERS.ELECTRONIZE);
 
@@ -860,6 +866,7 @@ export class GameManager {
 
 	incrementBonusHiggsBosonClicks() {
 		currenciesManager.add(CurrenciesTypes.HIGGS_BOSON, 1);
+		this.dailyStats = { ...this.dailyStats, higgsBosonsCollected: (this.dailyStats.higgsBosonsCollected ?? 0) + 1 };
 		if (!this.upgrades.includes('electron_bypass_bonus_click_stability')) {
 			this.lastInteractionTime = Date.now();
 		}
@@ -890,6 +897,7 @@ export class GameManager {
 	unlockAchievement(achievementId: string) {
 		if (!this.achievements.includes(achievementId)) {
 			this.achievements = [...this.achievements, achievementId];
+			this.dailyStats = { ...this.dailyStats, achievementsUnlocked: (this.dailyStats.achievementsUnlocked ?? 0) + 1 };
 			const achievement = ACHIEVEMENTS[achievementId];
 			if (achievement) {
 				toastStore.info({

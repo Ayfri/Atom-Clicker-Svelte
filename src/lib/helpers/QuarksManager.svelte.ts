@@ -1,7 +1,16 @@
 import { browser, dev } from '$app/environment';
-import { type DailyQuest, getQuestTarget, pickDailyQuests, QUEST_POOL } from '$data/dailyQuests';
+import { ACHIEVEMENTS } from '$data/achievements';
+import {
+	DAILY_QUEST_COUNT,
+	type DailyQuest,
+	type DailyQuestContext,
+	getDailyQuestCount,
+	getQuestTarget,
+	pickDailyQuests,
+	QUEST_POOL,
+} from '$data/dailyQuests';
 import { getQuarkShopItem, QUARK_SHOP } from '$data/quarkShop';
-import { type RealmType } from '$data/realms';
+import { RealmTypes, type RealmType } from '$data/realms';
 import type { Effect } from '$lib/types';
 import { obfuscateClientData } from '$lib/utils/obfuscation';
 import { gameManager } from '$helpers/GameManager.svelte';
@@ -40,7 +49,16 @@ export class QuarksManager {
 	equippedThemes = $state<Partial<Record<RealmType, string>>>({});
 	lastSyncError = $state<string | null>(null);
 	loading = $state(false);
-	quests = $state<DailyQuest[]>(QUEST_POOL.slice(0, 3));
+	quests = $state<DailyQuest[]>(QUEST_POOL.slice(0, DAILY_QUEST_COUNT));
+
+	dailyQuestCount = $derived(getDailyQuestCount(this.entitlements));
+
+	dailyQuestContext = $derived<DailyQuestContext>({
+		hasElectronized: gameManager.totalElectronizesAllTime > 0,
+		hasPhotonRealm: gameManager.realms[RealmTypes.PHOTONS]?.unlocked ?? false,
+		hasThirdQuestSlot: this.dailyQuestCount > DAILY_QUEST_COUNT,
+		remainingAchievements: Object.keys(ACHIEVEMENTS).filter(id => !gameManager.achievements.includes(id)).length,
+	});
 
 	ownedBoostEffects = $derived.by<Effect[]>(() => {
 		return this.entitlements
@@ -72,9 +90,13 @@ export class QuarksManager {
 		if (typeof frozen === 'number') return frozen;
 		// Not frozen yet (e.g. before the first sync), fall back to a live estimate.
 		return getQuestTarget(quest, {
+			achievementsUnlocked: 0,
 			atomsEarned: gameManager.highestAPS,
 			buildingsPurchased: 0,
 			clicks: 0,
+			electronizes: 0,
+			higgsBosonsCollected: 0,
+			otherDailyQuestsCompleted: 0,
 			powerUpsCollected: 0,
 			protonises: 0,
 			upgradesPurchased: 0,
@@ -82,7 +104,28 @@ export class QuarksManager {
 	}
 
 	getProgress(quest: DailyQuest): number {
+		if (quest.metric === 'otherDailyQuestsCompleted') {
+			return this.quests.filter(otherQuest => otherQuest.id !== quest.id && this.isQuestComplete(otherQuest)).length;
+		}
 		return gameManager.dailyStats[quest.metric] ?? 0;
+	}
+
+	private selectDailyQuests(dayKey: string): DailyQuest[] {
+		const storedQuestIds = gameManager.dailyStats.dayKey === dayKey ? gameManager.dailyStats.questIds ?? [] : [];
+		if (storedQuestIds.length === this.dailyQuestCount) {
+			return storedQuestIds.map(id => QUEST_POOL.find(quest => quest.id === id)).filter((quest): quest is DailyQuest => !!quest);
+		}
+		return pickDailyQuests(dayKey, this.dailyQuestCount, this.dailyQuestContext);
+	}
+
+	private persistDailyQuestSelection(dayKey: string) {
+		if (gameManager.dailyStats.dayKey !== dayKey || gameManager.dailyStats.questIds?.length === this.quests.length) return;
+
+		const questTargets = { ...gameManager.dailyStats.questTargets };
+		for (const quest of this.quests) {
+			questTargets[quest.id] ??= this.getTarget(quest);
+		}
+		gameManager.dailyStats = { ...gameManager.dailyStats, questIds: this.quests.map(quest => quest.id), questTargets };
 	}
 
 	private async authHeaders(): Promise<Record<string, string> | null> {
@@ -101,12 +144,17 @@ export class QuarksManager {
 		}
 
 		gameManager.dailyStats = {
+			achievementsUnlocked: 0,
 			atomsEarned: 0,
 			buildingsPurchased: 0,
 			clicks: 0,
 			dayKey: serverDayKey,
+			electronizes: 0,
+			higgsBosonsCollected: 0,
+			otherDailyQuestsCompleted: 0,
 			powerUpsCollected: 0,
 			protonises: 0,
+			questIds: this.quests.map(quest => quest.id),
 			questTargets,
 			upgradesPurchased: 0,
 		};
@@ -118,8 +166,9 @@ export class QuarksManager {
 		if (this.devOverride) {
 			const dayKey = new Date().toISOString().slice(0, 10);
 			this.dayKey = dayKey;
-			this.quests = pickDailyQuests(dayKey);
+			this.quests = this.selectDailyQuests(dayKey);
 			this.rolloverDailyStatsIfNeeded(dayKey);
+			this.persistDailyQuestSelection(dayKey);
 			return;
 		}
 
@@ -138,7 +187,8 @@ export class QuarksManager {
 			this.equippedThemes = data.equippedThemes;
 			// Quests carry a `description` function, which JSON can't transport - recompute them
 			// client-side from the (deterministic, seeded) pool instead of trusting the wire payload.
-			this.quests = pickDailyQuests(data.dayKey);
+			this.quests = this.selectDailyQuests(data.dayKey);
+			this.persistDailyQuestSelection(data.dayKey);
 			this.lastSyncError = null;
 			this.applyBoostEffects();
 
@@ -234,6 +284,7 @@ export class QuarksManager {
 			if (!item) return;
 			this.balance -= item.cost;
 			this.entitlements = [...this.entitlements, itemId];
+			this.quests = this.selectDailyQuests(this.dayKey);
 			this.applyBoostEffects();
 			return;
 		}
@@ -244,6 +295,7 @@ export class QuarksManager {
 		if (result.status === 'ok') {
 			this.balance = result.balance;
 			this.entitlements = [...this.entitlements, itemId];
+			this.quests = this.selectDailyQuests(this.dayKey);
 			this.applyBoostEffects();
 		} else {
 			toastStore.error({ message: result.status.replaceAll('_', ' '), title: 'Purchase failed' });
@@ -258,6 +310,7 @@ export class QuarksManager {
 			if (!this.entitlements.includes(itemId) || !item) return;
 			this.balance += item.cost;
 			this.entitlements = this.entitlements.filter(id => id !== itemId);
+			this.quests = this.selectDailyQuests(this.dayKey);
 			this.applyBoostEffects();
 			return;
 		}
@@ -268,6 +321,7 @@ export class QuarksManager {
 		if (result.status === 'ok') {
 			this.balance = result.balance;
 			this.entitlements = this.entitlements.filter(id => id !== itemId);
+			this.quests = this.selectDailyQuests(this.dayKey);
 			this.applyBoostEffects();
 		} else {
 			toastStore.error({ message: result.status.replaceAll('_', ' '), title: 'Refund failed' });

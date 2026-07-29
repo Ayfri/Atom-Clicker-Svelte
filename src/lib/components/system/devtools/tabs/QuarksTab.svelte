@@ -12,7 +12,7 @@
 	const shopItems = Object.values(QUARK_SHOP);
 
 	let inspectorDate = $state(new Date().toISOString().slice(0, 10));
-	const inspectorQuests = $derived(pickDailyQuests(inspectorDate));
+	const inspectorQuests = $derived(pickDailyQuests(inspectorDate, quarksManager.dailyQuestCount, quarksManager.dailyQuestContext));
 
 	function getItemTypeLabel(item: QuarkShopItem): string {
 		switch (item.type) {
@@ -40,12 +40,17 @@
 
 	function resetDailyStats() {
 		gameManager.dailyStats = {
+			achievementsUnlocked: 0,
 			atomsEarned: 0,
 			buildingsPurchased: 0,
 			clicks: 0,
 			dayKey: gameManager.dailyStats.dayKey,
+			electronizes: 0,
+			higgsBosonsCollected: 0,
+			otherDailyQuestsCompleted: 0,
 			powerUpsCollected: 0,
 			protonises: 0,
+			questIds: gameManager.dailyStats.questIds,
 			questTargets: gameManager.dailyStats.questTargets,
 			upgradesPurchased: 0,
 		};
@@ -55,7 +60,7 @@
 		const [year, month, day] = quarksManager.dayKey.split('-').map(Number);
 		const nextDate = new Date(Date.UTC(year || new Date().getUTCFullYear(), (month || 1) - 1, (day || 1) + 1));
 		quarksManager.dayKey = nextDate.toISOString().slice(0, 10);
-		quarksManager.quests = pickDailyQuests(quarksManager.dayKey);
+		quarksManager.quests = pickDailyQuests(quarksManager.dayKey, quarksManager.dailyQuestCount, quarksManager.dailyQuestContext);
 		quarksManager.claimedQuestIds = [];
 		resetDailyStats();
 	}
@@ -151,7 +156,7 @@
 		<div class="space-y-1.5">
 			{#each quarksManager.quests as quest (quest.id)}
 				{@const target = quarksManager.getTarget(quest)}
-				{@const progress = gameManager.dailyStats[quest.metric] ?? 0}
+					{@const progress = quarksManager.getProgress(quest)}
 				{@const pct = Math.min(100, (progress / target) * 100)}
 				{@const claimed = quarksManager.claimedQuestIds.includes(quest.id)}
 				<div class="flex flex-col gap-1.5 bg-white/5 rounded-lg px-3 py-2 text-xs">
@@ -264,7 +269,7 @@
 		<input type="date" bind:value={inspectorDate} class="bg-white/5 rounded-lg px-3 py-1 text-xs text-white" />
 		<div class="space-y-1">
 			{#each inspectorQuests as quest (quest.id)}
-				{@const anchors = { atomsEarned: gameManager.highestAPS, buildingsPurchased: 0, clicks: 0, powerUpsCollected: 0, protonises: 0, upgradesPurchased: 0 }}
+				{@const anchors = { achievementsUnlocked: 0, atomsEarned: gameManager.highestAPS, buildingsPurchased: 0, clicks: 0, electronizes: 0, higgsBosonsCollected: 0, otherDailyQuestsCompleted: 0, powerUpsCollected: 0, protonises: 0, upgradesPurchased: 0 }}
 				<div class="bg-white/5 rounded-lg px-3 py-2 text-xs text-white/70">
 					{quest.id} - target {formatNumber(getQuestTarget(quest, anchors))}
 				</div>

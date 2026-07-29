@@ -32,12 +32,17 @@ export const statsConfig: Record<string, StatConfig> = {
 	currencyBoosts: { defaultValue: {}, layer: LAYERS.PROTONIZER, minVersion: 21 },
 	dailyStats: {
 		defaultValue: {
+			achievementsUnlocked: 0,
 			atomsEarned: 0,
 			buildingsPurchased: 0,
 			clicks: 0,
 			dayKey: '',
+			electronizes: 0,
+			higgsBosonsCollected: 0,
+			otherDailyQuestsCompleted: 0,
 			powerUpsCollected: 0,
 			protonises: 0,
+			questIds: [],
 			questTargets: {},
 			upgradesPurchased: 0,
 		},

@@ -41,6 +41,13 @@ export interface QuarkShopItem {
 }
 
 export const QUARK_SHOP: Record<string, QuarkShopItem> = {
+	convenience_third_daily_quest: {
+		cost: 100,
+		description: 'Adds a third daily quest while owned.',
+		id: 'convenience_third_daily_quest',
+		name: 'Third Daily Quest',
+		type: 'convenience',
+	},
 	boost_click_power: {
 		cost: 60,
 		description: 'Permanently doubles click power.',

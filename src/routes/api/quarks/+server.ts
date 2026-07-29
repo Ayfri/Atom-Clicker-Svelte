@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getDailyCap, pickDailyQuests } from '$data/dailyQuests';
+import { getDailyCap, getDailyQuestCount, pickDailyQuests } from '$data/dailyQuests';
 import { leaderboardService, quarksService, resolveUserFromRequest } from '$lib/server/supabase.server';
 
 function todayUtcDayKey(): string {
@@ -11,9 +11,9 @@ export const GET: RequestHandler = async ({ request }) => {
 	try {
 		const userId = await resolveUserFromRequest(request);
 		const dayKey = todayUtcDayKey();
-		const quests = pickDailyQuests(dayKey);
 
 		if (!userId) {
+			const quests = pickDailyQuests(dayKey);
 			return json({
 				balance: 0,
 				claimedQuestIds: [],
@@ -31,6 +31,7 @@ export const GET: RequestHandler = async ({ request }) => {
 			quarksService.getClaimedQuestIds(userId, dayKey),
 			quarksService.getEntitlements(userId),
 		]);
+		const quests = pickDailyQuests(dayKey, getDailyQuestCount(entitlements));
 		const profile = await leaderboardService.getProfile(userId);
 		const typedProfile = profile as { equipped_banner?: string | null; equipped_themes?: Record<string, string> } | null;
 
