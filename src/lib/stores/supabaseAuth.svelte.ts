@@ -88,6 +88,11 @@ export class SupabaseAuth {
 			if (user) {
 				this.isAuthenticated = true;
 				this.user = user;
+				if (this.profile?.id === user.id) {
+					this.loading = false;
+					this.error = null;
+					return;
+				}
 				this.loading = true;
 
 				console.log('Auth state change for user:', user.id);
