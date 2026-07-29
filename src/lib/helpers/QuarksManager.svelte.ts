@@ -50,6 +50,7 @@ export class QuarksManager {
 	entitlements = $state<string[]>([]);
 	equippedBanner = $state<string | null>(null);
 	equippedThemes = $state<Partial<Record<RealmType, string>>>({});
+	hasSynced = $state(false);
 	lastSyncError = $state<string | null>(null);
 	loading = $state(false);
 	quests = $state<DailyQuest[]>(QUEST_POOL.slice(0, DAILY_QUEST_COUNT));
@@ -195,6 +196,7 @@ export class QuarksManager {
 		}
 
 		this.loading = true;
+		this.hasSynced = false;
 		try {
 			const headers = await this.authHeaders();
 			const response = await fetch('/api/quarks', { headers: headers ?? undefined });
@@ -213,6 +215,7 @@ export class QuarksManager {
 			this.quests = this.selectDailyQuests(data.dayKey);
 			this.persistDailyQuestSelection(data.dayKey);
 			this.lastSyncError = null;
+			this.hasSynced = true;
 			this.applyBoostEffects();
 
 			this.rolloverDailyStatsIfNeeded(data.dayKey);
