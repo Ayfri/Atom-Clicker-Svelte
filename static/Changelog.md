@@ -11,6 +11,9 @@
 
 # What's new 02-02-2026
 
+- **Radiation Realm**: Unlock a volatile new realm and harness radiation to amplify your progress.
+- **Reactor Control**: Fuel an unstable nucleus and find your own balance between output and stability.
+- **Radiation Upgrades**: Discover new electron-powered upgrades to improve your reactor.
 - **Bonus Display**: Added a display for active power ups in the atom realm.
 - **Building icons**: Added icons for buildings.
 - **Prestige Animations**: Added new animations for protonise and electronise.
