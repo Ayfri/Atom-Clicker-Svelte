@@ -36,6 +36,7 @@ interface QuarksApiState {
 }
 
 export class QuarksManager {
+	pendingActions = $state<string[]>([]);
 	balance = $state(0);
 	claimedAchievementIds = $state<string[]>([]);
 	claimedQuestIds = $state<string[]>([]);
@@ -52,6 +53,7 @@ export class QuarksManager {
 	lastSyncError = $state<string | null>(null);
 	loading = $state(false);
 	quests = $state<DailyQuest[]>(QUEST_POOL.slice(0, DAILY_QUEST_COUNT));
+	private syncPromise: Promise<void> | null = null;
 
 	dailyQuestCount = $derived(getDailyQuestCount(this.entitlements));
 
@@ -80,6 +82,10 @@ export class QuarksManager {
 	setDevOverride(value: boolean) {
 		if (!dev) return;
 		this.devOverride = value;
+	}
+
+	isActionPending(actionId: string): boolean {
+		return this.pendingActions.includes(actionId);
 	}
 
 	/** Pushes owned boost/convenience effects into GameManager. Called whenever `entitlements` changes. */
@@ -167,6 +173,16 @@ export class QuarksManager {
 	}
 
 	async sync() {
+		if (this.syncPromise) return this.syncPromise;
+		this.syncPromise = this.syncInternal();
+		try {
+			await this.syncPromise;
+		} finally {
+			this.syncPromise = null;
+		}
+	}
+
+	private async syncInternal() {
 		if (!browser) return;
 
 		if (this.devOverride) {
@@ -209,14 +225,16 @@ export class QuarksManager {
 		}
 	}
 
-	private async postAction<T>(path: string, body: Record<string, unknown>): Promise<T | null> {
-		const headers = await this.authHeaders();
-		if (!headers) {
-			toastStore.error({ message: 'Sign in to use Quarks.', title: 'Not signed in' });
-			return null;
-		}
-
+	private async postAction<T>(path: string, body: Record<string, unknown>, actionId: string): Promise<T | null> {
+		if (this.isActionPending(actionId)) return null;
+		this.pendingActions = [...this.pendingActions, actionId];
 		try {
+			const headers = await this.authHeaders();
+			if (!headers) {
+				toastStore.error({ message: 'Sign in to use Quarks.', title: 'Not signed in' });
+				return null;
+			}
+
 			const response = await fetch(path, {
 				body: JSON.stringify(obfuscateClientData(body)),
 				headers,
@@ -231,6 +249,8 @@ export class QuarksManager {
 		} catch (error) {
 			toastStore.error({ message: 'Network error while talking to Quarks.', title: 'Quarks' });
 			return null;
+		} finally {
+			this.pendingActions = this.pendingActions.filter(id => id !== actionId);
 		}
 	}
 
@@ -244,7 +264,7 @@ export class QuarksManager {
 			return;
 		}
 
-		const result = await this.postAction<{ balance: number; status: string }>('/api/quarks/claim', { questId });
+		const result = await this.postAction<{ balance: number; status: string }>('/api/quarks/claim', { questId }, `claim-quest:${questId}`);
 		if (!result) return;
 
 		if (result.status === 'ok') {
@@ -261,7 +281,7 @@ export class QuarksManager {
 		if (this.claimedAchievementIds.includes(achievementId)) return;
 		const result = await this.postAction<{ balance: number; granted: number }>('/api/quarks/achievement', {
 			achievementIds: [achievementId],
-		});
+		}, `claim-achievement:${achievementId}`);
 		if (!result) return;
 
 		this.balance = result.balance;
@@ -275,7 +295,7 @@ export class QuarksManager {
 		const idsToClaim = achievementIds.filter(id => !this.claimedAchievementIds.includes(id));
 		if (idsToClaim.length === 0) return;
 
-		const result = await this.postAction<{ balance: number; granted: number }>('/api/quarks/achievement', { achievementIds: idsToClaim });
+		const result = await this.postAction<{ balance: number; granted: number }>('/api/quarks/achievement', { achievementIds: idsToClaim }, 'claim-achievements');
 		if (!result) return;
 
 		this.balance = result.balance;
@@ -292,7 +312,7 @@ export class QuarksManager {
 		}
 		if (!supabaseAuth.isAuthenticated) return;
 
-		const result = await this.postAction<{ balance?: number; granted: number }>('/api/quarks/higgs', {});
+		const result = await this.postAction<{ balance?: number; granted: number }>('/api/quarks/higgs', {}, 'collect-higgs');
 		if (!result) return;
 
 		if (typeof result.balance === 'number') this.balance = result.balance;
@@ -313,7 +333,7 @@ export class QuarksManager {
 			return;
 		}
 
-		const result = await this.postAction<{ balance: number; status: string }>('/api/quarks/purchase', { itemId });
+		const result = await this.postAction<{ balance: number; status: string }>('/api/quarks/purchase', { itemId }, `purchase:${itemId}`);
 		if (!result) return;
 
 		if (result.status === 'ok') {
@@ -339,7 +359,7 @@ export class QuarksManager {
 			return;
 		}
 
-		const result = await this.postAction<{ balance: number; refunded?: number; status: string }>('/api/quarks/refund', { itemId });
+		const result = await this.postAction<{ balance: number; refunded?: number; status: string }>('/api/quarks/refund', { itemId }, `refund:${itemId}`);
 		if (!result) return;
 
 		if (result.status === 'ok') {
@@ -373,7 +393,7 @@ export class QuarksManager {
 		const result = await this.postAction<{ equippedThemes: Partial<Record<RealmType, string>> }>('/api/quarks/equip-theme', {
 			itemId,
 			realmId,
-		});
+		}, `equip-theme:${realmId}`);
 		if (!result) return;
 
 		this.equippedThemes = result.equippedThemes;
@@ -391,7 +411,7 @@ export class QuarksManager {
 			return;
 		}
 
-		const result = await this.postAction<{ equippedBanner: string | null }>('/api/quarks/equip-banner', { itemId });
+		const result = await this.postAction<{ equippedBanner: string | null }>('/api/quarks/equip-banner', { itemId }, 'equip-banner');
 		if (!result) return;
 
 		this.equippedBanner = result.equippedBanner;
