@@ -4,15 +4,23 @@
 	import Value from '@components/ui/Value.svelte';
 	import type { CurrencyName } from '$data/currencies';
 	import { FEATURES, type FeatureType } from '$data/features';
-	import { gameManager } from '$helpers/GameManager.svelte';
 	import type { SkillUpgrade } from '$lib/types';
 	import { formatNumber } from '$lib/utils';
-	import { Info, Sparkles } from 'lucide-svelte';
+	import { Info, Sparkles } from '@lucide/svelte';
+
+	interface EffectBreakdownItem {
+		description: string;
+		percentChange: number;
+		type: string;
+	}
 
 	interface SkillNodeData extends SkillUpgrade {
 		available: boolean;
 		currencyUnlocked: boolean;
+		effectBreakdown: EffectBreakdownItem[] | null;
 		onClick?: () => void;
+		sourceHandles: Position[];
+		targetHandles: Position[];
 		unlocked: boolean;
 	}
 
@@ -21,83 +29,15 @@
 	const skillData = $derived(data as unknown as SkillNodeData);
 	const isFeature = $derived(!!skillData.feature);
 	const featureInfo = $derived(skillData.feature ? FEATURES[skillData.feature as FeatureType] : null);
-
 	const isContentVisible = $derived(skillData.currencyUnlocked || skillData.unlocked);
-
-	// Calculate current effect values for tooltip
-	const effectBreakdown = $derived.by(() => {
-		if (!skillData.unlocked || skillData.effects.length === 0 || !isContentVisible) return null;
-
-		return skillData.effects.map(effect => {
-			const baseValue = 1;
-			const result = effect.apply(baseValue, gameManager);
-			// Percentage change: if result is 1.045, that's +4.5%
-			const percentChange = (result - baseValue) * 100;
-			return {
-				description: effect.description,
-				percentChange,
-				type: effect.type,
-			};
-		});
-	});
 </script>
 
-<Handle
-	id="{id}-{Position.Bottom}"
-	type="source"
-	position={Position.Bottom}
-	class="opacity-0"
-	style="inset: 50%; transform: none;"
-/>
-<Handle
-	id="{id}-{Position.Bottom}"
-	type="target"
-	position={Position.Bottom}
-	class="opacity-0"
-	style="inset: 50%; transform: none;"
-/>
-<Handle
-	id="{id}-{Position.Top}"
-	type="source"
-	position={Position.Top}
-	class="opacity-0"
-	style="inset: 50%; transform: none;"
-/>
-<Handle
-	id="{id}-{Position.Top}"
-	type="target"
-	position={Position.Top}
-	class="opacity-0"
-	style="inset: 50%; transform: none;"
-/>
-<Handle
-	id="{id}-{Position.Left}"
-	type="source"
-	position={Position.Left}
-	class="opacity-0"
-	style="inset: 50%; transform: none;"
-/>
-<Handle
-	id="{id}-{Position.Left}"
-	type="target"
-	position={Position.Left}
-	class="opacity-0"
-	style="inset: 50%; transform: none;"
-/>
-<Handle
-	id="{id}-{Position.Right}"
-	type="source"
-	position={Position.Right}
-	class="opacity-0"
-	style="inset: 50%; transform: none;"
-/>
-<Handle
-	id="{id}-{Position.Right}"
-	type="target"
-	position={Position.Right}
-	class="opacity-0"
-	style="inset: 50%; transform: none;"
-/>
+{#each skillData.sourceHandles as pos}
+	<Handle id="{id}-src-{pos}" type="source" position={pos} class="opacity-0" style="inset: 50%; transform: none;" />
+{/each}
+{#each skillData.targetHandles as pos}
+	<Handle id="{id}-tgt-{pos}" type="target" position={pos} class="opacity-0" style="inset: 50%; transform: none;" />
+{/each}
 
 <div
 	aria-label="Unlock {isContentVisible ? skillData.name : '?????'}"
@@ -132,7 +72,7 @@
 	{/if}
 
 	<!-- Effect tooltip -->
-	{#if skillData.unlocked && effectBreakdown && effectBreakdown.length > 0 && isContentVisible}
+	{#if skillData.unlocked && skillData.effectBreakdown && skillData.effectBreakdown.length > 0 && isContentVisible}
 		<div
 			class="absolute right-2 top-2 z-10 pointer-events-auto"
 			onclick={e => e.stopPropagation()}
@@ -154,7 +94,7 @@
 				{#snippet content()}
 					<div class="flex flex-col gap-1.5">
 						<span class="text-sm font-bold uppercase tracking-wider text-accent-300">Active Effects</span>
-						{#each effectBreakdown as effect}
+						{#each skillData.effectBreakdown as effect}
 							<div class="flex flex-col">
 								<span class="text-xs text-white/80">{effect.description}</span>
 								<span class="font-mono text-[11px] text-white/50">

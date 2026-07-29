@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { BarChart3, Check, Clock, Cog, FileBox, Sparkles, X, Activity, type Icon as IconType } from 'lucide-svelte';
+	import { BarChart3, Check, Clock, Cog, FileBox, Sparkles, X, Activity, type Icon as IconType } from '@lucide/svelte';
 	import Currency from '@components/ui/Currency.svelte';
 	import Tooltip from '@components/ui/Tooltip.svelte';
 	import { CURRENCIES, type CurrencyName } from '$data/currencies';
@@ -7,10 +7,20 @@
 	import { statsConfig, NUMBER_STATS, ARRAY_STATS, type StatConfig } from '$helpers/statConstants';
 	import { formatNumberFull, formatDuration } from '$lib/utils';
 	import { parseAtomsValue } from '$lib/utils/number-parser';
+	import { untrack } from 'svelte';
 
-	// Group stats by type
+	interface StatEntry {
+		config: StatConfig;
+		currency?: CurrencyName;
+		icon: typeof FileBox | undefined;
+		key: string;
+		value: unknown;
+	}
+
+	// Group stats by type - values read with untrack to avoid re-deriving on every game tick.
+	// Display uses liveValue inside each statItem snippet for per-item reactivity.
 	const statGroups = $derived.by(() => {
-		const groups: Record<string, Array<{ key: string; config: StatConfig; value: unknown; icon: any; currency?: CurrencyName }>> = {
+		const groups: Record<string, StatEntry[]> = {
 			currencies: [],
 			prestige: [],
 			totals: [],
@@ -23,21 +33,21 @@
 			groups.currencies.push({
 				key: currency.name,
 				config: { defaultValue: 0, layer: currency.layer ?? 0, minVersion: 0 },
-				value: gameManager.currencies[currency.name].amount,
+				value: untrack(() => gameManager.currencies[currency.name].amount),
 				icon: undefined,
 				currency: currency.name
 			});
 			groups.currencies.push({
 				key: `${currency.name}:earnedRun`,
 				config: { defaultValue: 0, layer: currency.layer ?? 0, minVersion: 0 },
-				value: gameManager.currencies[currency.name].earnedRun,
+				value: untrack(() => gameManager.currencies[currency.name].earnedRun),
 				icon: undefined,
 				currency: currency.name
 			});
 			groups.currencies.push({
 				key: `${currency.name}:earnedAllTime`,
 				config: { defaultValue: 0, layer: currency.layer ?? 0, minVersion: 0 },
-				value: gameManager.currencies[currency.name].earnedAllTime,
+				value: untrack(() => gameManager.currencies[currency.name].earnedAllTime),
 				icon: undefined,
 				currency: currency.name
 			});
@@ -45,9 +55,9 @@
 
 		Object.entries(statsConfig).forEach(([key, config]) => {
 			if (key === 'realms') return;
-			const value = gameManager[key as keyof GameManager];
+			const value = untrack(() => gameManager[key as keyof GameManager]);
 
-			let icon: any = FileBox;
+			let icon: typeof FileBox = FileBox;
 
 			if (key.startsWith('total')) {
 				icon = BarChart3;
@@ -150,7 +160,7 @@
 	});
 </script>
 
-{#snippet statItem(key: string, value: unknown, icon: any, currency?: CurrencyName)}
+{#snippet statItem(key: string, value: unknown, icon: typeof FileBox | undefined, currency?: CurrencyName)}
 	{@const liveValue = key.includes(':')
 		? gameManager.currencies[key.split(':')[0] as CurrencyName][key.split(':')[1] as 'earnedRun' | 'earnedAllTime']
 		: currency
@@ -175,17 +185,17 @@
 		</div>
 
 		<div class="relative">
-			{#if typeof value === 'boolean'}
+			{#if typeof liveValue === 'boolean'}
 				<div class="flex items-center justify-between h-9 px-2 bg-black/20 rounded-lg border border-white/5">
-					<span class={value ? "text-green-400 text-sm" : "text-red-400 text-sm"}>{value ? 'True' : 'False'}</span>
+					<span class={liveValue ? "text-green-400 text-sm" : "text-red-400 text-sm"}>{liveValue ? 'True' : 'False'}</span>
 					<input
 						type="checkbox"
-						checked={value}
+						checked={liveValue}
 						onchange={(e) => updateStat(key, e.currentTarget.checked)}
 						class="w-4 h-4 rounded border-white/10 bg-black/20 text-accent-500 focus:ring-accent-500/50 cursor-pointer"
 					/>
 				</div>
-			{:else if Array.isArray(value) || (typeof value === 'object' && value !== null)}
+			{:else if Array.isArray(liveValue) || (typeof liveValue === 'object' && liveValue !== null)}
 				{@const isEditing = editingKey === key}
 				<div class="flex flex-col gap-1.5">
 					<div class="relative group/json">
@@ -211,14 +221,14 @@
 							<div
 								role="button"
 								tabindex="0"
-								onclick={() => startEditing(key, JSON.stringify(value, null, 2))}
-								onkeydown={(e) => e.key === 'Enter' && startEditing(key, JSON.stringify(value, null, 2))}
+								onclick={() => startEditing(key, JSON.stringify(liveValue, null, 2))}
+								onkeydown={(e) => e.key === 'Enter' && startEditing(key, JSON.stringify(liveValue, null, 2))}
 								class="w-full bg-black/20 rounded-lg px-3 py-2 text-[10px] border border-white/5 hover:border-accent-500/30 transition-colors text-accent-300/70 font-mono max-h-40 overflow-hidden cursor-pointer break-all line-clamp-6"
 							>
 								<span class="text-white/40 mr-1">
-									{Array.isArray(value) ? `[${value.length}]` : `{${Object.keys(value).length}}`}
+									{Array.isArray(liveValue) ? `[${liveValue.length}]` : `{${Object.keys(liveValue as object).length}}`}
 								</span>
-								{JSON.stringify(value)}
+								{JSON.stringify(liveValue)}
 							</div>
 						{/if}
 					</div>
@@ -287,8 +297,8 @@
 						{:else}
 							<input
 								type="text"
-								value={value}
-								onfocus={() => startEditing(key, value)}
+								value={liveValue as any}
+								onfocus={() => startEditing(key, liveValue)}
 								class="w-full bg-black/20 rounded-lg px-3 py-2 text-sm border border-white/5 hover:border-accent-500/30 transition-colors text-white font-mono cursor-pointer"
 								readonly
 							/>

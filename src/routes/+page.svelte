@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { FeatureTypes } from '$data/features';
+	import { getQuarkShopItem } from '$data/quarkShop';
+	import type { RealmConfig } from '$helpers/RealmManager.svelte';
 	import { gameManager } from '$helpers/GameManager.svelte';
+	import { quarksManager } from '$helpers/QuarksManager.svelte';
 	import { realmManager } from '$helpers/RealmManager.svelte';
 	import { setGlobals } from '$lib/globals';
 	import { formatNumber } from '$lib/utils';
@@ -10,7 +13,7 @@
 	import { remoteMessage } from '$stores/remoteMessage.svelte';
 	import { saveRecovery } from '$stores/saveRecovery';
 	import { supabaseAuth } from '$stores/supabaseAuth.svelte';
-	import { warning } from '$stores/toasts';
+	import { toastStore } from '$stores/toasts.svelte';
 	import { ui } from '$stores/ui.svelte';
 	import { mobile } from '$stores/window.svelte';
 	import Levels from '@components/game/Levels.svelte';
@@ -20,9 +23,26 @@
 	import Toaster from '@components/layout/Toaster.svelte';
 	import OfflineProgress from '@components/modals/OfflineProgress.svelte';
 	import SaveRecovery from '@components/modals/SaveRecovery.svelte';
+	import AtomRealm from '@components/prestige/AtomRealm.svelte';
+	import PhotonRealm from '@components/prestige/PhotonRealm.svelte';
+	import RadiationRealm from '@components/prestige/RadiationRealm.svelte';
 	import AutoSaveIndicator from '@components/system/AutoSaveIndicator.svelte';
 	import Currency from '@components/ui/Currency.svelte';
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy, onMount, type Component } from 'svelte';
+
+	// Realm component mapping
+	const realmComponents: Record<string, Component> = {
+		AtomRealm: AtomRealm,
+		PhotonRealm: PhotonRealm,
+		RadiationRealm: RadiationRealm,
+	};
+
+	// Equipped Quark themes only swap the background gradient; falls back to the realm's default.
+	function getRealmBackground(realm: RealmConfig): string | undefined {
+		const themeId = quarksManager.equippedThemes[realm.id];
+		const theme = themeId ? getQuarkShopItem(themeId)?.theme : undefined;
+		return theme?.background ?? realm.background;
+	}
 
 	autoBuyManager.init();
 	autoUpgradeManager.init();
@@ -48,7 +68,7 @@
 
 			const localGameTime = gameManager.inGameTime || 0;
 			if (cloudSaveInfo.inGameTime > localGameTime + CLOUD_PULL_WARNING_THRESHOLD_MS) {
-				warning({
+				toastStore.warning({
 					action: () => ui.openSettings('cloud'),
 					actionLabel: 'Open Cloud Save',
 					title: 'Cloud Save Available',
@@ -74,6 +94,11 @@
 
 		if (gameManager.offlineProgressSummary && !ui.activeModal) {
 			ui.openModal(OfflineProgress);
+		}
+
+		const tutorial = gameManager.tutorialManager.state;
+		if (!tutorial.completed && !tutorial.active) {
+			gameManager.tutorialManager.start();
 		}
 
 		while (!$app) {
@@ -149,6 +174,9 @@
 
 		<!-- Use transform and opacity for virtual desktop swipe effect -->
 		{#each realmManager.availableRealms as realm, i (realm.id)}
+			{@const RealmComponent = realmComponents[realm.componentId]}
+			{@const background = getRealmBackground(realm)}
+
 			<div
 				class="absolute inset-0 transition-all duration-300 ease-in-out overflow-hidden"
 				class:opacity-100={realmManager.selectedRealm.id === realm.id}
@@ -157,12 +185,12 @@
 				class:pointer-events-none={realmManager.selectedRealm.id !== realm.id}
 				style="transform: translateX({realmManager.selectedRealm.id === realm.id ? '0'
 				: i > realmManager.availableRealms.findIndex(r => r.id === realmManager.selectedRealm.id) ? '100%'
-				: '-100%'}); {realm.background ? `background-image: ${realm.background};` : ''}"
+				: '-100%'}); {background ? `background-image: ${background};` : ''}"
 			>
 				<div class="absolute inset-0 overflow-y-auto custom-scrollbar">
 					<div class="flex flex-col min-h-full">
 						<div class="flex-1">
-							<realm.component />
+							<RealmComponent />
 						</div>
 						<RealmFooter />
 					</div>

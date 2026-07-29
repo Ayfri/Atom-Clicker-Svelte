@@ -43,6 +43,9 @@ export class LeaderboardStore {
 			this.isUpdating = true;
 			if (!supabaseAuth || !supabaseAuth.isAuthenticated || !supabaseAuth.user) return;
 
+			const accessToken = await supabaseAuth.getAccessToken();
+			if (!accessToken) return;
+
 			const username =
 				supabaseAuth.profile?.username ??
 				supabaseAuth.user.user_metadata?.username ??
@@ -54,7 +57,6 @@ export class LeaderboardStore {
 				username,
 				atoms,
 				level,
-				userId: supabaseAuth.user.id,
 				picture:
 					supabaseAuth.profile?.picture ??
 					supabaseAuth.user.user_metadata?.avatar_url ??
@@ -65,7 +67,10 @@ export class LeaderboardStore {
 
 			const response = await fetch('/api/leaderboard', {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${accessToken}`,
+				},
 				body: JSON.stringify(obfuscatedData),
 			});
 

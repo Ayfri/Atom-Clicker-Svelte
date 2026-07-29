@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Icon as IconType } from 'lucide-svelte';
+	import type { Icon as IconType } from '@lucide/svelte';
 	import { CURRENCIES, type CurrencyName } from '$data/currencies';
 	import Currency from '@components/ui/Currency.svelte';
 

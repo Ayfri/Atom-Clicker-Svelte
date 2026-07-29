@@ -3,7 +3,7 @@
 	import Modal from '@components/ui/Modal.svelte';
 	import { CurrenciesTypes, type CurrencyName } from '$data/currencies';
 	import { gameManager } from '$helpers/GameManager.svelte';
-	import { Minus, Plus, Zap } from 'lucide-svelte';
+	import { Minus, Plus, Zap } from '@lucide/svelte';
 
 	interface Props {
 		onClose: () => void;

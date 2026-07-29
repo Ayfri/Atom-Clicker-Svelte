@@ -2,7 +2,7 @@
 	import Currency from '@components/ui/Currency.svelte';
 	import { CurrenciesTypes, type CurrencyName } from '$data/currencies';
 	import { gameManager } from '$helpers/GameManager.svelte';
-	import { Minus, Plus, RefreshCcw, Zap } from 'lucide-svelte';
+	import { Minus, Plus, RefreshCcw, Zap } from '@lucide/svelte';
 
 	const boostableCurrencies: CurrencyName[] = [
 		CurrenciesTypes.ATOMS,

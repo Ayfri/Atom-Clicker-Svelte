@@ -1,16 +1,16 @@
 import type { BuildingType } from '$data/buildings';
 import type { CurrencyName } from '$data/currencies';
+import type { DailyStats } from '$data/dailyQuests';
 import type { RealmType } from '$data/realms';
 import type { GameManager } from '$helpers/GameManager.svelte';
 import type { LayerType } from '$helpers/statConstants';
-import type { Icon } from 'lucide-svelte';
-import type { Component } from 'svelte';
+import type { ToastIcon } from '$stores/toasts.svelte';
 
 export interface Achievement {
 	condition: (manager: GameManager) => boolean;
 	description: string;
 	hiddenCondition?: (manager: GameManager) => boolean;
-	icon?: Component | typeof Icon;
+	icon?: ToastIcon;
 	id: string;
 	name: string;
 }
@@ -73,6 +73,12 @@ export interface Effect {
 		| 'power_up_interval'
 		| 'power_up_multiplier'
 		| 'proton_gain'
+		| 'radiation_control_precision'
+		| 'radiation_critical_chance'
+		| 'radiation_enrichment'
+		| 'radiation_mass_preservation'
+		| 'radiation_mass_regen'
+		| 'radiation_max_cpm'
 		| 'stability_boost'
 		| 'stability_capacity'
 		| 'stability_speed'
@@ -95,12 +101,28 @@ export interface PhotonUpgrade {
 
 export type CurrencyBoosts = Partial<Record<CurrencyName, number>>;
 
+export interface RadiationState {
+	controlRodLevel: number;
+	lastTick: number;
+	mass: number;
+	unlocked: boolean;
+}
+
+export interface TutorialState {
+	active: boolean;
+	completed: boolean;
+	/** Composite `${realmId}:${stepId}` keys of realm-tutorial steps already dismissed. */
+	seenRealmSteps: string[];
+	step: number;
+}
+
 export interface GameState {
 	achievements: string[];
 	activePowerUps: PowerUp[];
 	buildings: Partial<Record<BuildingType, Building>>;
 	currencies: CurrencyStateMap;
 	currencyBoosts: CurrencyBoosts;
+	dailyStats: DailyStats;
 	features: FeatureState;
 	highestAPS: number;
 	inGameTime: number;
@@ -108,7 +130,10 @@ export interface GameState {
 	lastSave: number;
 	photonUpgrades: Record<string, number>;
 	powerUpsCollected: number;
+	radiation: RadiationState;
+	radiationUpgrades: Record<string, number>;
 	realms: Record<RealmType, RealmState>;
+	selectedRealmId?: RealmType;
 	settings: Settings;
 	skillUpgrades: string[];
 	startDate: number;
@@ -122,6 +147,7 @@ export interface GameState {
 	totalUpgradesPurchasedAllTime: number;
 	totalUsers: number;
 	totalXP: number;
+	tutorial: TutorialState;
 	upgrades: string[];
 	version: number;
 }
@@ -147,6 +173,11 @@ export interface OfflineProgressSummary {
 	photonClickExpectedExcited: number;
 	photonClickExpectedNormal: number;
 	photonClickExpectedTotal: number;
+	radiationActive: boolean;
+	radiationAvgMultiplier: number;
+	radiationMassGained: number;
+	radiationMassLost: number;
+	radiationTimeToEmpty: number;
 	xpGained: number;
 }
 
@@ -155,6 +186,7 @@ export interface PowerUp {
 	duration: number;
 	id: string;
 	multiplier: number;
+	name: string;
 	startTime: number;
 }
 

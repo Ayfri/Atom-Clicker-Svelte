@@ -6,9 +6,9 @@
 
 	const sizeClasses = $derived(
 		{
-			lg: 'min-w-[400px] text-base',
-			md: 'min-w-[300px] text-sm',
-			sm: 'min-w-[200px] text-xs',
+			lg: 'min-w-[400px] max-w-[min(480px,90vw)] text-base',
+			md: 'min-w-[300px] max-w-[min(360px,90vw)] text-sm',
+			sm: 'min-w-[200px] max-w-[min(280px,90vw)] text-xs',
 		}[tooltip.size],
 	);
 

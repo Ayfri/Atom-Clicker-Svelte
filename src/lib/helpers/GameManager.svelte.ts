@@ -1,16 +1,18 @@
 import { ACHIEVEMENTS } from '$data/achievements';
 import { type BuildingType, BUILDINGS, BUILDING_LEVEL_UP_COST } from '$data/buildings';
 import { CurrenciesTypes, type CurrencyName } from '$data/currencies';
+import type { DailyStats } from '$data/dailyQuests';
 import { FeatureTypes } from '$data/features';
 import { ALL_PHOTON_UPGRADES, getPhotonUpgradeCost } from '$data/photonUpgrades';
 import { POWER_UP_DEFAULT_INTERVAL } from '$data/powerUp';
-import { REALMS, RealmTypes, type RealmType } from '$data/realms';
-import { PERSISTENT_SKILL_IDS, SKILL_UPGRADES } from '$data/skillTree';
+import { REALMS, RealmTypes } from '$data/realms';
+import { SKILL_UPGRADES } from '$data/skillTree';
 import { UPGRADES } from '$data/upgrades';
-import { BUILDING_COST_MULTIPLIER, ELECTRONS_PROTONS_REQUIRED, PROTONS_ATOMS_REQUIRED } from '$lib/constants';
+import { BUILDING_COST_MULTIPLIER, ELECTRONS_PROTONS_REQUIRED, PROTONS_ATOMS_REQUIRED, XP_PER_ATOM } from '$lib/constants';
 import {
 	type Building,
 	type CurrencyBoosts,
+	type Effect,
 	type FeatureState,
 	type GameState,
 	type OfflineProgressSummary,
@@ -25,18 +27,35 @@ import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
 import { calculateEffects, getUpgradesWithEffects } from '$helpers/effects';
 import { FeaturesManager } from '$helpers/FeaturesManager.svelte';
 import { applyOfflineProgress } from '$helpers/offlineProgress';
+import { radiationManager } from '$helpers/RadiationManager.svelte';
+import { realmManager } from '$helpers/RealmManager.svelte';
 import { SAVE_KEY, SAVE_VERSION, loadSavedState } from '$helpers/saves';
 import { LAYERS, type LayerType, statsConfig } from '$helpers/statConstants';
-import { Trophy } from 'lucide-svelte';
+import { TutorialManager } from '$helpers/TutorialManager.svelte';
 import { leaderboard } from '$stores/leaderboard.svelte';
 import { saveRecovery } from '$stores/saveRecovery';
-import { info } from '$stores/toasts';
+import { toastStore } from '$stores/toasts.svelte';
 
 export class GameManager {
 	// State
 	achievements = $state<string[]>([]);
 	activePowerUps = $state<PowerUp[]>([]);
 	buildings = $state<Partial<Record<BuildingType, Building>>>({});
+	dailyStats = $state<DailyStats>({
+		achievementsUnlocked: 0,
+		atomsEarned: 0,
+		buildingsPurchased: 0,
+		clicks: 0,
+		dayKey: '',
+		electronizes: 0,
+		higgsBosonsCollected: 0,
+		otherDailyQuestsCompleted: 0,
+		powerUpsCollected: 0,
+		protonises: 0,
+		questIds: [],
+		questTargets: {},
+		upgradesPurchased: 0,
+	});
 	featuresManager = new FeaturesManager();
 	highestAPS = $state(0);
 	inGameTime = $state(0);
@@ -47,9 +66,17 @@ export class GameManager {
 	offlineProgressSummary = $state<OfflineProgressSummary | null>(null);
 	photonUpgrades = $state<Record<string, number>>({});
 	powerUpsCollected = $state(0);
-	realms = $state<Record<RealmType, RealmState>>({
+	/**
+	 * Effects of owned Quark shop boosts, pushed in by QuarksManager after sync/purchase/refund.
+	 * GameManager never imports QuarksManager directly, since simulation.worker.ts imports GameManager
+	 * and has no auth/DOM context - see QuarksManager.svelte.ts for the one-way dependency rule.
+	 */
+	quarkBoostEffects = $state<Effect[]>([]);
+	radiationUpgrades = $state<Record<string, number>>({});
+	realms = $state<Record<string, RealmState>>({
 		[RealmTypes.ATOMS]: { unlocked: true },
 		[RealmTypes.PHOTONS]: { unlocked: false },
+		[RealmTypes.RADIATION]: { unlocked: false },
 	});
 	settings = $state<Settings>({
 		automation: {
@@ -78,11 +105,14 @@ export class GameManager {
 	totalUpgradesPurchasedAllTime = $state(0);
 	totalUsers = $derived(leaderboard.stats.totalUsers);
 	totalXP = $state(0);
+	tutorialManager = new TutorialManager();
 	upgrades = $state<string[]>([]);
 
 	// Configuration
 	private statsConfig = statsConfig;
 	private gameInterval: ReturnType<typeof setInterval> | null = null;
+	/** Guards dailyStats increments during applyOfflineProgress, which reuses purchaseBuilding/purchaseUpgrade directly. */
+	applyingOfflineProgress = false;
 
 	initialize() {
 		this.loadGame();
@@ -104,7 +134,9 @@ export class GameManager {
 				id,
 			}));
 
-		return [...baseUpgrades, ...photonUpgrades] as (Upgrade | SkillUpgrade)[];
+		const quarkBoosts = this.quarkBoostEffects.length > 0 ? [{ effects: this.quarkBoostEffects, id: 'quark_boosts' }] : [];
+
+		return [...baseUpgrades, ...photonUpgrades, ...quarkBoosts] as (Upgrade | SkillUpgrade)[];
 	});
 
 	atomsPerSecond = $derived.by(() => {
@@ -209,10 +241,14 @@ export class GameManager {
 		return calculateEffects(upgrades, this, baseChance, options);
 	});
 
+	radiationMultiplier = $derived(radiationManager.radiationMultiplier);
+
 	globalMultiplier = $derived.by(() => {
 		const options = { type: 'global' as const };
 		const globalUpgrades = getUpgradesWithEffects(this.allEffectSources, options);
-		return calculateEffects(globalUpgrades, this, 1, options);
+		const baseMultiplier = calculateEffects(globalUpgrades, this, 1, options);
+		// Radiation multiplier is applied multiplicatively
+		return baseMultiplier * this.radiationMultiplier;
 	});
 
 	hasAvailableSkillUpgrades = $derived.by(() => {
@@ -375,6 +411,7 @@ export class GameManager {
 			buildings: this.buildings,
 			currencies: this.currencies,
 			currencyBoosts: this.skillPointBoosts,
+			dailyStats: this.dailyStats,
 			features: this.features,
 			highestAPS: this.highestAPS,
 			inGameTime: this.inGameTime,
@@ -382,7 +419,10 @@ export class GameManager {
 			lastSave: this.lastSave,
 			photonUpgrades: this.photonUpgrades,
 			powerUpsCollected: this.powerUpsCollected,
+			radiation: radiationManager.getState(),
+			radiationUpgrades: this.radiationUpgrades,
 			realms: this.realms,
+			selectedRealmId: realmManager.selectedRealmId,
 			settings: this.settings,
 			skillUpgrades: this.skillUpgrades,
 			startDate: this.startDate,
@@ -396,6 +436,7 @@ export class GameManager {
 			totalUpgradesPurchasedAllTime: this.totalUpgradesPurchasedAllTime,
 			totalUsers: this.totalUsers,
 			totalXP: this.totalXP,
+			tutorial: this.tutorialManager.state,
 			upgrades: this.upgrades,
 			version: SAVE_VERSION,
 		};
@@ -435,8 +476,12 @@ export class GameManager {
 
 		if (result.success && result.state) {
 			this.loadSaveData(result.state);
+			this.syncFeatures();
+			this.checkRealmUnlocks();
 			this.lastLoadedSave = typeof result.state.lastSave === 'number' ? result.state.lastSave : 0;
+			this.applyingOfflineProgress = true;
 			const offlineSummary = applyOfflineProgress(this);
+			this.applyingOfflineProgress = false;
 			if (offlineSummary) {
 				this.offlineProgressSummary = offlineSummary;
 			}
@@ -481,6 +526,20 @@ export class GameManager {
 					};
 				} else if (key === 'currencyBoosts') {
 					this.skillPointBoosts = data.currencyBoosts ?? {};
+				} else if (key === 'radiation') {
+					// Radiation state is handled by RadiationManager
+					if (data.radiation) {
+						radiationManager.loadState(data.radiation, data.radiationUpgrades ?? {});
+					}
+				} else if (key === 'radiationUpgrades') {
+					this.radiationUpgrades = data.radiationUpgrades ?? {};
+					radiationManager.upgradeLevels = this.radiationUpgrades;
+				} else if (key === 'selectedRealmId') {
+					if (data.selectedRealmId) {
+						realmManager.selectRealm(data.selectedRealmId);
+					}
+				} else if (key === 'tutorial') {
+					this.tutorialManager.state = { ...(this.statsConfig.tutorial.defaultValue as GameState['tutorial']), ...data.tutorial };
 				} else {
 					this[key as keyof this] = data[key as keyof GameState] as any;
 				}
@@ -507,7 +566,9 @@ export class GameManager {
 	save() {
 		this.lastSave = Date.now();
 		const saveData = this.getCurrentState();
-		localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+		if (typeof localStorage !== 'undefined') {
+			localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+		}
 	}
 
 	// Reset Logic
@@ -525,6 +586,8 @@ export class GameManager {
 				this.featuresManager.reset();
 			} else if (key === 'currencyBoosts') {
 				this.skillPointBoosts = {};
+			} else if (key === 'tutorial') {
+				this.tutorialManager.reset();
 			} else {
 				this[key as keyof this] = config.defaultValue;
 			}
@@ -538,6 +601,8 @@ export class GameManager {
 					this.featuresManager.reset();
 				} else if (key === 'currencyBoosts') {
 					this.skillPointBoosts = {};
+				} else if (key === 'tutorial') {
+					this.tutorialManager.reset();
 				} else {
 					this[key as keyof this] = config.defaultValue;
 				}
@@ -625,6 +690,9 @@ export class GameManager {
 		};
 
 		this.totalBuildingsPurchasedAllTime += amount;
+		if (!this.applyingOfflineProgress) {
+			this.dailyStats = { ...this.dailyStats, buildingsPurchased: this.dailyStats.buildingsPurchased + amount };
+		}
 		return true;
 	}
 
@@ -681,6 +749,9 @@ export class GameManager {
 			this.checkRealmUnlocks();
 
 			this.totalUpgradesPurchasedAllTime += 1;
+			if (!this.applyingOfflineProgress) {
+				this.dailyStats = { ...this.dailyStats, upgradesPurchased: this.dailyStats.upgradesPurchased + 1 };
+			}
 			return true;
 		}
 		return false;
@@ -689,9 +760,12 @@ export class GameManager {
 	checkRealmUnlocks() {
 		const state = this.getCurrentState();
 		Object.values(REALMS).forEach(realmDef => {
-			if (!this.realms[realmDef.id].unlocked && realmDef.condition(state)) {
-				this.realms[realmDef.id].unlocked = true;
-				info({ title: 'Realm Unlocked', message: `${realmDef.id} Realm is now available!` });
+			if (!this.realms[realmDef.id]) {
+				this.realms[realmDef.id] = { unlocked: false };
+			}
+			const realmState = this.realms[realmDef.id];
+			if (!realmState.unlocked && realmDef.condition(state)) {
+				realmState.unlocked = true;
 			}
 		});
 	}
@@ -729,6 +803,7 @@ export class GameManager {
 			this.totalElectronizesRun += 1;
 			this.totalElectronizesAllTime += 1;
 			this.totalProtonisesRun = 0;
+			this.dailyStats = { ...this.dailyStats, electronizes: (this.dailyStats.electronizes ?? 0) + 1 };
 
 			this.resetLayer(LAYERS.ELECTRONIZE);
 
@@ -761,6 +836,7 @@ export class GameManager {
 
 			this.totalProtonisesRun += 1;
 			this.totalProtonisesAllTime += 1;
+			this.dailyStats = { ...this.dailyStats, protonises: this.dailyStats.protonises + 1 };
 
 			this.resetLayer(LAYERS.PROTONIZER);
 
@@ -782,14 +858,15 @@ export class GameManager {
 		currenciesManager.add(CurrenciesTypes.ATOMS, amount);
 		if (amount > 0) {
 			if (this.features[FeatureTypes.LEVELS]) {
-				const xpPerAtom = 0.1;
-				this.totalXP += amount * xpPerAtom * this.xpGainMultiplier;
+				this.totalXP += amount * XP_PER_ATOM * this.xpGainMultiplier;
 			}
+			this.dailyStats = { ...this.dailyStats, atomsEarned: this.dailyStats.atomsEarned + amount };
 		}
 	}
 
 	incrementBonusHiggsBosonClicks() {
 		currenciesManager.add(CurrenciesTypes.HIGGS_BOSON, 1);
+		this.dailyStats = { ...this.dailyStats, higgsBosonsCollected: (this.dailyStats.higgsBosonsCollected ?? 0) + 1 };
 		if (!this.upgrades.includes('electron_bypass_bonus_click_stability')) {
 			this.lastInteractionTime = Date.now();
 		}
@@ -798,6 +875,7 @@ export class GameManager {
 	incrementClicks(isAuto = false) {
 		this.totalClicksRun += 1;
 		this.totalClicksAllTime += 1;
+		this.dailyStats = { ...this.dailyStats, clicks: this.dailyStats.clicks + 1 };
 
 		const shouldUpdate =
 			isAuto ?
@@ -809,18 +887,27 @@ export class GameManager {
 		}
 	}
 
+	/**
+	 * Set from outside (see +layout.svelte) rather than imported here, so GameManager never
+	 * statically imports QuarksManager - simulation.worker.ts imports GameManager and has no
+	 * auth/DOM context, see QuarksManager.svelte.ts for the full one-way dependency rule.
+	 */
+	onAchievementUnlocked: ((achievementId: string) => void) | null = null;
+
 	unlockAchievement(achievementId: string) {
 		if (!this.achievements.includes(achievementId)) {
 			this.achievements = [...this.achievements, achievementId];
+			this.dailyStats = { ...this.dailyStats, achievementsUnlocked: (this.dailyStats.achievementsUnlocked ?? 0) + 1 };
 			const achievement = ACHIEVEMENTS[achievementId];
 			if (achievement) {
-				info({
+				toastStore.info({
 					title: 'Achievement unlocked',
 					message: `${achievement.name}\n${achievement.description}`,
 					duration: 10000,
-					icon: achievement.icon || Trophy,
+					icon: achievement.icon || 'Trophy',
 				});
 			}
+			this.onAchievementUnlocked?.(achievementId);
 		}
 	}
 
@@ -830,6 +917,7 @@ export class GameManager {
 		if (!newPowerUp.startTime) newPowerUp.startTime = Date.now();
 		this.activePowerUps = [...this.activePowerUps, newPowerUp];
 		this.powerUpsCollected += 1;
+		this.dailyStats = { ...this.dailyStats, powerUpsCollected: this.dailyStats.powerUpsCollected + 1 };
 		if (!this.upgrades.includes('electron_bypass_bonus_click_stability')) {
 			this.lastInteractionTime = Date.now();
 		}
@@ -895,6 +983,7 @@ export class GameManager {
 
 	// XP Helpers
 	getLevelFromTotalXP(totalXP: number) {
+		if (!isFinite(totalXP) || totalXP <= 0) return 0;
 		let level = 0;
 		let remainingXP = totalXP;
 		while (remainingXP >= this.getXPForLevel(level + 1)) {
@@ -905,9 +994,53 @@ export class GameManager {
 	}
 
 	getXPForLevel(level: number) {
-		const base = 100;
-		const taux = 0.42;
-		return Math.floor(base * Math.pow(1 + taux, level - 1));
+		const base = 100; // Base XP cost for level 1
+		const poly = 1.1;
+		const rate = 1.55;
+		// XP(L) = base * L^poly * rate^(L-1): L^poly scales the base cost linearly so early levels stay gentle, rate^(L-1) compounds each step exponentially making late levels significantly harder
+		return Math.floor(base * Math.pow(level, poly) * Math.pow(rate, level - 1));
+	}
+
+	tick(deltaTime: number = 1000, skipAchievements = false) {
+		this.inGameTime += deltaTime;
+
+		// Production - atoms per second scaled by deltaTime
+		const production = this.atomsPerSecond * (deltaTime / 1000);
+		if (production > 0) {
+			this.addAtoms(production);
+		}
+
+		// Auto-click atoms
+		if (this.settings.automation.autoClick && this.autoClicksPerSecond > 0) {
+			const autoClicks = this.autoClicksPerSecond * (deltaTime / 1000);
+			this.addAtoms(this.clickPower * autoClicks);
+		}
+
+		// Update highest APS
+		if (this.atomsPerSecond > this.highestAPS) {
+			this.highestAPS = this.atomsPerSecond;
+		}
+
+		// Process radiation decay
+		radiationManager.tick(deltaTime);
+
+		// Check achievements
+		if (!skipAchievements) {
+			Object.entries(ACHIEVEMENTS).forEach(([id, achievement]) => {
+				if (!this.achievements.includes(id) && achievement.condition(this)) {
+					this.unlockAchievement(id);
+				}
+			});
+		}
+
+		// Clean expired power-ups
+		if (this.activePowerUps.length > 0) {
+			const expireTime = this.inGameTime;
+			this.activePowerUps = this.activePowerUps.filter(p => {
+				const elapsed = expireTime - (p.startTime ?? 0);
+				return elapsed < p.duration;
+			});
+		}
 	}
 
 	// Intervals
@@ -915,22 +1048,7 @@ export class GameManager {
 		if (this.gameInterval) clearInterval(this.gameInterval);
 
 		this.gameInterval = setInterval(() => {
-			this.inGameTime += 1000;
-
-			if (this.atomsPerSecond > this.highestAPS) {
-				this.highestAPS = this.atomsPerSecond;
-			}
-
-			Object.entries(ACHIEVEMENTS).forEach(([id, achievement]) => {
-				if (!this.achievements.includes(id) && achievement.condition(this)) {
-					this.unlockAchievement(id);
-				}
-			});
-
-			if (this.activePowerUps.length > 0) {
-				const now = Date.now();
-				this.activePowerUps = this.activePowerUps.filter(p => now < p.startTime + p.duration);
-			}
+			this.tick(1000);
 		}, 1000);
 	}
 }

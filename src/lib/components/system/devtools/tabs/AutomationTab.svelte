@@ -13,7 +13,7 @@
 	import PlanetIcon from '@components/icons/buildings/Planet.svelte';
 	import RockIcon from '@components/icons/buildings/Rock.svelte';
 	import StarIcon from '@components/icons/buildings/Star.svelte';
-	import { Zap, Factory, TrendingUp, Clock, CheckCircle2, XCircle, MousePointer2, Play, Lock } from 'lucide-svelte';
+	import { Zap, Factory, TrendingUp, Clock, CheckCircle2, XCircle, MousePointer2, Play, Lock } from '@lucide/svelte';
 	import { formatNumber } from '$lib/utils';
 	import { getUpgradesWithEffects } from '$helpers/effects';
 	import type { Component } from 'svelte';
@@ -169,7 +169,7 @@
 						class="sr-only peer"
 					/>
 					<div
-						class="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-500"
+						class="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:inset-s-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-500"
 					></div>
 				</label>
 				<button

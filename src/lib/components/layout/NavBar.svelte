@@ -1,6 +1,8 @@
 <script lang="ts">
+	import QuarkIcon from '@components/icons/Quark.svelte';
 	import CurrencyBoosts from '@components/modals/CurrencyBoosts.svelte';
 	import Leaderboard from '@components/modals/Leaderboard.svelte';
+	import Quarks from '@components/modals/Quarks.svelte';
 	import Settings from '@components/modals/Settings.svelte';
 	import SkillTree from '@components/modals/SkillTree.svelte';
 	import { SKILL_UPGRADES } from '$data/skillTree';
@@ -10,18 +12,21 @@
 	import { ELECTRONS_PROTONS_REQUIRED, PROTONS_ATOMS_REQUIRED } from '$lib/constants';
 	import { changelog } from '$stores/changelog';
 	import { gameManager } from '$helpers/GameManager.svelte';
+	import { quarksManager } from '$helpers/QuarksManager.svelte';
 	import { remoteMessage } from '$stores/remoteMessage.svelte';
 	import { ui } from '$stores/ui.svelte';
 	import { mobile } from '$stores/window.svelte';
-	import { Atom, Network, Orbit, Settings as SettingsIcon, Trophy, Zap, type Icon as IconType } from 'lucide-svelte';
+	import { Atom, Network, Orbit, Settings as SettingsIcon, Trophy, Zap } from '@lucide/svelte';
 	import { onDestroy, onMount, type Component } from 'svelte';
 
 	type NavBarComponent = Component<{ onClose: () => void }>;
+	type NavBarIcon = Component<{ class?: string; size?: number }>;
 
 	interface Link {
 		component: NavBarComponent;
 		condition?: () => boolean;
-		icon: typeof IconType;
+		icon: NavBarIcon;
+		iconProps?: Record<string, unknown>;
 		label: string;
 		notification?: () => boolean;
 	}
@@ -49,6 +54,14 @@
 			component: CurrencyBoosts,
 			condition: () => gameManager.totalProtonisesAllTime > 0,
 			notification: () => gameManager.skillPointsAvailable > 0,
+		},
+		{
+			icon: QuarkIcon,
+			iconProps: { color: 'white', mono: true },
+			label: 'Quarks',
+			component: Quarks,
+			condition: () => quarksManager.balance > 0,
+			notification: () => quarksManager.hasClaimableAchievement || quarksManager.hasClaimableQuest,
 		},
 		{
 			icon: Atom,
@@ -111,7 +124,7 @@
 					class="flex items-center justify-center rounded-lg bg-accent/90 p-2 text-white transition-all hover:bg-accent pointer-events-auto"
 					onclick={() => ui.openModal(link.component)}
 				>
-					<link.icon size={30} />
+					<link.icon size={30} {...link.iconProps} />
 				</button>
 			</NotificationDot>
 		{/each}
@@ -138,7 +151,7 @@
 					class="group relative flex h-12 w-12 items-center justify-center rounded-lg bg-accent/90 text-white transition-all hover:bg-accent"
 					onclick={() => ui.openModal(link.component)}
 				>
-					<link.icon size={32} />
+					<link.icon size={32} {...link.iconProps} />
 					<span
 						class="label invisible absolute left-[calc(100%+1.25rem)] whitespace-nowrap rounded-lg bg-accent/90 px-3 py-2 text-sm opacity-0 transition-all group-hover:visible group-hover:opacity-100 bg-accent-900 border border-white/10 shadow-xl z-50"
 					>

@@ -9,7 +9,7 @@
 	import Modal from '@components/ui/Modal.svelte';
 	import Tooltip from '@components/ui/Tooltip.svelte';
 	import Value from '@components/ui/Value.svelte';
-	import { Info } from 'lucide-svelte';
+	import { Info } from '@lucide/svelte';
 
 	interface Props {
 		onClose: () => void;

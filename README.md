@@ -64,18 +64,37 @@ Welcome to Atom Clicker, an engaging incremental game where you'll build your ow
 
 1. Install dependencies:
 ```bash
-pnpm install
+bun install
 ```
 
 2. Start the development server:
 ```bash
-pnpm dev
+bun dev
 ```
 
 3. Build for production:
 ```bash
-pnpm build
+bun run build
 ```
+
+### 🗄️ Local Supabase
+
+The backend can run entirely on your machine (requires Docker). The local stack only
+starts Postgres, PostgREST, Auth and Studio, everything else is disabled in
+`supabase/config.toml`.
+
+```bash
+bun db:start    # start the local stack, prints the API URL and keys
+bun db:status   # show URLs and keys again
+bun db:reset    # recreate the database from supabase/migrations + seed.sql
+bun db:types    # regenerate src/lib/types/supabase.ts from the local schema
+bun db:stop     # stop the containers
+```
+
+Copy `.env.example` to `.env` and point `PUBLIC_SUPABASE_URL`,
+`PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY` at the values printed by
+`bun db:start`. OAuth providers are off locally, create a test user from Studio
+(`http://127.0.0.1:54323`) instead.
 
 ## 🛠️ Built With
 
@@ -93,7 +112,7 @@ This project is optimized for [Cloudflare Workers](https://workers.cloudflare.co
 
 ```bash
 # Build for production
-pnpm build
+bun run build
 ```
 
 The build output will be in the `.svelte-kit/cloudflare` directory, ready to be deployed.

@@ -1,13 +1,12 @@
 <script lang="ts">
 	import Login from '@components/modals/Login.svelte';
 	import Profile from '@components/settings/Profile.svelte';
-	import Avatar from '@components/ui/Avatar.svelte';
+	import LeaderboardRow from '@components/ui/LeaderboardRow.svelte';
 	import Modal from '@components/ui/Modal.svelte';
 	import type { LeaderboardEntry } from '$lib/types/leaderboard';
-	import {formatNumber} from '$lib/utils';
 	import {leaderboard} from '$stores/leaderboard.svelte';
 	import {supabaseAuth} from '$stores/supabaseAuth.svelte';
-	import {Search, Users, Trophy, Medal, Crown} from 'lucide-svelte';
+	import {Search, Users} from '@lucide/svelte';
 	import {onDestroy, onMount} from 'svelte';
 	import {VList} from 'virtua/svelte';
 
@@ -16,10 +15,6 @@
 	}
 
 	let { onClose }: Props = $props();
-
-	function getDisplayUsername(user: LeaderboardEntry | undefined): string {
-		return user?.username || 'Anonymous';
-	}
 
 	let refreshInterval: ReturnType<typeof setInterval>;
 	let searchQuery = $state('');
@@ -62,31 +57,6 @@
 		}
 	});
 
-	function getRankIcon(rank: number) {
-		switch (rank) {
-			case 1:
-				return Crown;
-			case 2:
-				return Trophy;
-			case 3:
-				return Medal;
-			default:
-				return null;
-		}
-	}
-
-	function getRankColor(rank: number) {
-		switch (rank) {
-			case 1:
-				return 'text-yellow-400';
-			case 2:
-				return 'text-gray-300';
-			case 3:
-				return 'text-amber-600';
-			default:
-				return 'text-accent';
-		}
-	}
 </script>
 
 <Modal {onClose} containerClass="px-6">
@@ -167,65 +137,9 @@
 			style="height: 72.5%;"
 		>
 			{#snippet children(entry: LeaderboardEntry, index: number)}
-				{@const isCurrentUser = entry.self === true}
-				{@const RankIcon = getRankIcon(entry.rank)}
-				{@const rankColor = getRankColor(entry.rank)}
-				{@const userClass = isCurrentUser
-					? 'flex items-center gap-3 rounded-lg p-4 transition-all hover:scale-[1.02] bg-linear-to-r from-accent/20 via-accent/10 to-transparent ring-2 ring-accent-400'
-					: 'flex items-center gap-3 rounded-lg p-4 transition-all hover:scale-[1.02] bg-black/20'}
-				{@const borderClass = entry.rank === 1
-					? 'border border-yellow-400/30'
-					: entry.rank === 2
-						? 'border border-gray-300/30'
-						: entry.rank === 3
-							? 'border border-amber-600/30'
-							: ''}
-
 				{@const isHundredth = (index + 1) % 100 === 0 && (filteredLeaderboard.length !== index + 1)}
 				<div class="px-3 py-1" class:pb-8={isHundredth}>
-					<div class="{userClass} {borderClass}">
-						<div class="flex items-center gap-2">
-							{#if RankIcon}
-								{@const Icon = RankIcon}
-								<Icon size={24} class={rankColor} />
-							{:else}
-								<div class="flex size-7 items-center justify-center rounded-full bg-accent/30 font-bold text-white text-sm">
-									{entry.rank}
-								</div>
-							{/if}
-						</div>
-						<div class="flex items-center gap-3 flex-1">
-							<Avatar
-								alt={getDisplayUsername(entry)}
-								class="size-10 text-sm"
-								src={entry.picture}
-							/>
-							<div>
-								<div class="font-bold capitalize text-white flex items-center gap-2">
-									{getDisplayUsername(entry)}
-									{#if entry.is_online}
-										<div class="size-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse" title="Online"></div>
-									{/if}
-								</div>
-								<div class="text-sm text-white/60">
-									Level {entry.level}
-									{#if entry.lastUpdated}
-										{@const daysAgo = Math.round((entry.lastUpdated - Date.now()) / (1000 * 60 * 60 * 24))}
-										{@const relativeTime = new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(daysAgo, 'day')}
-										<span title="Last time played">
-											· {relativeTime}
-										</span>
-									{/if}
-								</div>
-							</div>
-						</div>
-						<div class="text-right">
-							<div class="font-bold text-white">
-								{formatNumber(entry.atoms)}
-							</div>
-							<div class="text-sm text-white/60">Atoms</div>
-						</div>
-					</div>
+					<LeaderboardRow {entry} />
 				</div>
 			{/snippet}
 		</VList>

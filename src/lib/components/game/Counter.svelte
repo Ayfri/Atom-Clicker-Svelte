@@ -11,7 +11,7 @@
 	import PlanetIcon from '@components/icons/buildings/Planet.svelte';
 	import RockIcon from '@components/icons/buildings/Rock.svelte';
 	import StarIcon from '@components/icons/buildings/Star.svelte';
-	import { Info } from 'lucide-svelte';
+	import { Info } from '@lucide/svelte';
 	import { getUpgradesWithEffects } from '$helpers/effects';
 	import AutoButton from '@components/ui/AutoButton.svelte';
 	import Tooltip from '@components/ui/Tooltip.svelte';

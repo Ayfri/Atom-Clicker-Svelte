@@ -1,0 +1,2 @@
+-- Seed data applied after migrations on `bun db:reset`.
+-- Keep this file idempotent: it runs on every reset of the local database.

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Discord from '@components/icons/Discord.svelte';
 	import GitHub from '@components/icons/GitHub.svelte';
-	import { Coffee } from 'lucide-svelte';
+	import { Coffee } from '@lucide/svelte';
 	import { gameManager } from '$helpers/GameManager.svelte';
 
 	function handleWebsiteClick() {
