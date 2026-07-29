@@ -98,6 +98,21 @@ export interface QuarkRefundResult {
 // Helper functions for Quarks operations. Every write goes through these RPCs so the daily
 // cap, idempotency and refund-at-paid-price rules stay enforced atomically in Postgres.
 export const quarksService = {
+	async grantAchievementQuarks(userId: string, achievementIds: string[], reward: number): Promise<{ balance: number; granted: number }> {
+		const { data, error } = await supabaseAdmin.rpc('grant_achievement_quarks', {
+			p_achievement_ids: achievementIds,
+			p_reward: reward,
+			p_user_id: userId,
+		});
+
+		if (error) {
+			console.error('Error granting achievement quarks:', error);
+			throw error;
+		}
+
+		return data as unknown as { balance: number; granted: number };
+	},
+
 	async grantQuarks(userId: string, delta: number, reason: string, ref: string, dailyCap?: number): Promise<QuarkGrantResult> {
 		const { data, error } = await supabaseAdmin.rpc('grant_quarks', {
 			p_user_id: userId,

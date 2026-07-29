@@ -237,6 +237,14 @@ export type Database = {
 				Args: { name: string }
 				Returns: string
 			}
+			grant_achievement_quarks: {
+				Args: {
+					p_achievement_ids: string[]
+					p_reward: number
+					p_user_id: string
+				}
+				Returns: Json
+			}
 			grant_quarks: {
 				Args: {
 					p_daily_cap?: number

@@ -30,20 +30,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		// Silently drop ids that aren't real achievements. The reward is our own constant, never the request's.
 		const validIds: string[] = achievementIds.filter(isQuarkAchievement);
 
-		let balance = 0;
-		let granted = 0;
-		for (const achievementId of validIds) {
-			const result = await quarksService.grantQuarks(
-				userId,
-				QUARK_ACHIEVEMENT_REWARD,
-				'achievement',
-				`achievement:${achievementId}`,
-			);
-			balance = result.balance;
-			if (result.status === 'ok') granted += 1;
-		}
+		const result = await quarksService.grantAchievementQuarks(userId, validIds, QUARK_ACHIEVEMENT_REWARD);
 
-		return json({ balance, granted });
+		return json(result);
 	} catch (error) {
 		console.error('Failed to grant achievement quarks:', error);
 		return json({ error: 'Failed to grant achievement quarks' }, { status: 500 });
