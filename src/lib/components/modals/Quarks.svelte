@@ -84,7 +84,6 @@
 	});
 
 	onMount(() => {
-		quarksManager.sync();
 		const interval = setInterval(() => (now = Date.now()), 30_000);
 		return () => clearInterval(interval);
 	});

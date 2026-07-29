@@ -2,6 +2,7 @@
 	import {gameManager} from '$helpers/GameManager.svelte';
 	import {quarksManager} from '$helpers/QuarksManager.svelte';
 	import {ACHIEVEMENTS} from '$data/achievements';
+	import {isQuarkAchievement} from '$data/quarkAchievements';
 	import Quark from '@components/icons/Quark.svelte';
 	import HelpIcon from '@components/ui/HelpIcon.svelte';
 	import QuarkLabel from '@components/ui/QuarkLabel.svelte';
@@ -12,7 +13,10 @@
 		unlocked: gameManager.achievements.includes(name)
 	})));
 
-	const claimableAchievementIds = $derived(gameManager.achievements.filter(id => !quarksManager.claimedAchievementIds.includes(id)));
+	const claimableAchievementIds = $derived(
+		gameManager.achievements.filter(id => isQuarkAchievement(id) && !quarksManager.claimedAchievementIds.includes(id)),
+	);
+	const canClaimAchievements = $derived(quarksManager.hasSynced && claimableAchievementIds.length > 0);
 	const PARTICLE_COUNT = 10;
 
 	interface ClaimParticle {
@@ -50,11 +54,13 @@
 	}
 
 	function claimAchievement(achievementId: string) {
+		if (!quarksManager.hasSynced) return;
 		startBurst(achievementId);
 		quarksManager.claimAchievement(achievementId);
 	}
 
 	function claimAllAchievements() {
+		if (!canClaimAchievements) return;
 		const duration = Math.min(1350, 700 + Math.log10(Math.max(gameManager.atoms, 1)) * 75);
 		const burst = { duration, id: ++nextBurstId, particles: createParticles(PARTICLE_COUNT * 6, 1.35) };
 		claimAllBurst = burst;
@@ -70,7 +76,7 @@
 		<h2 class="font-semibold text-lg">
 		Achievements ({gameManager.achievements.length}/{Object.keys(ACHIEVEMENTS).length})
 		</h2>
-		{#if claimableAchievementIds.length > 0}
+		{#if canClaimAchievements}
 			<div class="relative ml-auto">
 				<button
 					class="rounded-md bg-white/10 px-2 py-1 text-[10px] font-semibold text-white transition-colors hover:bg-white/20 cursor-pointer"
@@ -113,7 +119,7 @@
 					</p>
 				</div>
 				<div class="relative ml-auto shrink-0">
-					{#if achievement.unlocked && !quarksManager.claimedAchievementIds.includes(achievement.id)}
+					{#if quarksManager.hasSynced && achievement.unlocked && !quarksManager.claimedAchievementIds.includes(achievement.id)}
 						<button
 							class="flex items-center gap-1 rounded-md bg-white/10 px-1.5 py-1 text-xs font-bold text-white transition-colors hover:bg-white/20 cursor-pointer"
 							onclick={() => claimAchievement(achievement.id)}
