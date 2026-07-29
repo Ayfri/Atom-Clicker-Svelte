@@ -84,10 +84,12 @@
 	onMount(async () => {
 		gameManager.initialize();
 		await supabaseAuth.init();
+		await quarksManager.sync();
 		await checkCloudSaveOnLoad();
 
 		authUnsubscribe = supabaseAuth.subscribe(() => {
 			if (supabaseAuth.isAuthenticated) {
+				quarksManager.sync();
 				checkCloudSaveOnLoad();
 			}
 		});
