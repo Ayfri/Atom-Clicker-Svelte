@@ -16,6 +16,7 @@ export const GET: RequestHandler = async ({ request }) => {
 			const quests = pickDailyQuests(dayKey);
 			return json({
 				balance: 0,
+				claimedAchievementIds: [],
 				claimedQuestIds: [],
 				dailyCap: getDailyCap(quests),
 				dayKey,
@@ -26,8 +27,9 @@ export const GET: RequestHandler = async ({ request }) => {
 			});
 		}
 
-		const [balanceRow, claimedQuestIds, entitlements] = await Promise.all([
+		const [balanceRow, claimedAchievementIds, claimedQuestIds, entitlements] = await Promise.all([
 			quarksService.getBalance(userId),
+			quarksService.getClaimedAchievementIds(userId),
 			quarksService.getClaimedQuestIds(userId, dayKey),
 			quarksService.getEntitlements(userId),
 		]);
@@ -37,6 +39,7 @@ export const GET: RequestHandler = async ({ request }) => {
 
 		return json({
 			balance: balanceRow?.balance ?? 0,
+			claimedAchievementIds,
 			claimedQuestIds,
 			dailyCap: getDailyCap(quests),
 			dayKey,

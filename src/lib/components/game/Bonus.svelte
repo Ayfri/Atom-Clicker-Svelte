@@ -2,6 +2,7 @@
 	import HiggsBoson from '@components/icons/HiggsBoson.svelte';
 	import { POWER_UPS } from '$data/powerUp';
 	import { gameManager } from '$helpers/GameManager.svelte';
+	import { quarksManager } from '$helpers/QuarksManager.svelte';
 	import type { PowerUp } from '$lib/types';
 	import { randomBetween, randomValue, formatNumber } from '$lib/utils';
 	import { onDestroy, onMount } from 'svelte';
@@ -75,6 +76,7 @@
 		powerUp.startTime = Date.now();
 		gameManager.addPowerUp(powerUp);
 		gameManager.incrementBonusHiggsBosonClicks();
+		quarksManager.collectHiggsBoson();
 
 		setTimeout(() => (messageShown = false), 3000);
 

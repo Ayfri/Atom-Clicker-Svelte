@@ -173,6 +173,21 @@ export const quarksService = {
 		return (data ?? []).map(row => row.item_id);
 	},
 
+	async getClaimedAchievementIds(userId: string) {
+		const { data, error } = await supabaseAdmin
+			.from('quark_ledger')
+			.select('ref')
+			.eq('user_id', userId)
+			.eq('reason', 'achievement');
+
+		if (error) {
+			console.error('Error fetching claimed achievements:', error);
+			throw error;
+		}
+
+		return (data ?? []).map(row => row.ref.replace('achievement:', ''));
+	},
+
 	async getClaimedQuestIds(userId: string, dayKey: string) {
 		const dayStart = new Date(`${dayKey}T00:00:00.000Z`).toISOString();
 		const { data, error } = await supabaseAdmin

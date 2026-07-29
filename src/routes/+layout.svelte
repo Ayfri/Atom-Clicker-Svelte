@@ -7,7 +7,6 @@
 	import SEO from '@components/system/SEO.svelte';
 	import TutorialOverlay from '@components/tutorial/TutorialOverlay.svelte';
 	import TooltipPortal from '@components/ui/TooltipPortal.svelte';
-	import { gameManager } from '$helpers/GameManager.svelte';
 	import { quarksManager } from '$helpers/QuarksManager.svelte';
 	import { prestigeStore } from '$stores/prestige.svelte';
 	import { LoaderCircle } from '@lucide/svelte';
@@ -20,13 +19,7 @@
 	let { children }: Props = $props();
 
 	onMount(() => {
-		gameManager.onAchievementUnlocked = (achievementId: string) => quarksManager.claimAchievement(achievementId);
-		quarksManager.sync().then(() => {
-			// Retroactive backfill: idempotent via the quark_ledger unique ref, safe to run every load.
-			if (gameManager.achievements.length > 0) {
-				quarksManager.claimAchievements(gameManager.achievements);
-			}
-		});
+		quarksManager.sync();
 	});
 </script>
 

@@ -60,7 +60,8 @@
 			iconProps: { color: 'white', mono: true },
 			label: 'Quarks',
 			component: Quarks,
-			notification: () => quarksManager.hasClaimableQuest,
+			condition: () => quarksManager.balance > 0,
+			notification: () => quarksManager.hasClaimableAchievement || quarksManager.hasClaimableQuest,
 		},
 		{
 			icon: Atom,

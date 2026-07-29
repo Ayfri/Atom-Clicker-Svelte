@@ -25,6 +25,7 @@ import { toastStore } from '$stores/toasts.svelte';
 
 interface QuarksApiState {
 	balance: number;
+	claimedAchievementIds: string[];
 	claimedQuestIds: string[];
 	dailyCap: number;
 	dayKey: string;
@@ -36,6 +37,7 @@ interface QuarksApiState {
 
 export class QuarksManager {
 	balance = $state(0);
+	claimedAchievementIds = $state<string[]>([]);
 	claimedQuestIds = $state<string[]>([]);
 	dayKey = $state('');
 	/**
@@ -69,6 +71,10 @@ export class QuarksManager {
 
 	hasClaimableQuest = $derived.by(() => {
 		return this.quests.some(quest => !this.claimedQuestIds.includes(quest.id) && this.isQuestComplete(quest));
+	});
+
+	hasClaimableAchievement = $derived.by(() => {
+		return gameManager.achievements.some(id => !this.claimedAchievementIds.includes(id));
 	});
 
 	setDevOverride(value: boolean) {
@@ -180,6 +186,7 @@ export class QuarksManager {
 
 			const data: QuarksApiState = await response.json();
 			this.balance = data.balance;
+			this.claimedAchievementIds = data.claimedAchievementIds;
 			this.claimedQuestIds = data.claimedQuestIds;
 			this.dayKey = data.dayKey;
 			this.entitlements = data.entitlements;
@@ -251,30 +258,47 @@ export class QuarksManager {
 	}
 
 	async claimAchievement(achievementId: string) {
-		// Opportunistic, fired automatically on every unlock: fail silently while signed out
-		// rather than surfacing a "sign in" toast for something the player didn't initiate.
-		// It is retried by the retroactive backfill on the next sync() after signing in.
-		if (!supabaseAuth.isAuthenticated) return;
-
+		if (this.claimedAchievementIds.includes(achievementId)) return;
 		const result = await this.postAction<{ balance: number; granted: number }>('/api/quarks/achievement', {
 			achievementIds: [achievementId],
 		});
 		if (!result) return;
 
 		this.balance = result.balance;
+		this.claimedAchievementIds = [...new Set([...this.claimedAchievementIds, achievementId])];
 		if (result.granted > 0) {
 			toastStore.info({ message: 'Achievement reward claimed.', title: '+1 Quark' });
 		}
 	}
 
-	/** Retroactive backfill for already-unlocked achievements. Safe to call repeatedly, idempotent via the ledger ref. */
 	async claimAchievements(achievementIds: string[]) {
-		if (!supabaseAuth.isAuthenticated) return;
+		const idsToClaim = achievementIds.filter(id => !this.claimedAchievementIds.includes(id));
+		if (idsToClaim.length === 0) return;
 
-		const result = await this.postAction<{ balance: number; granted: number }>('/api/quarks/achievement', { achievementIds });
+		const result = await this.postAction<{ balance: number; granted: number }>('/api/quarks/achievement', { achievementIds: idsToClaim });
 		if (!result) return;
 
 		this.balance = result.balance;
+		this.claimedAchievementIds = [...new Set([...this.claimedAchievementIds, ...idsToClaim])];
+		if (result.granted > 0) {
+			toastStore.info({ message: `${result.granted} achievement rewards claimed.`, title: `+${result.granted} Quarks` });
+		}
+	}
+
+	async collectHiggsBoson() {
+		if (this.devOverride) {
+			if (Math.random() < 1 / 300) this.balance += 1;
+			return;
+		}
+		if (!supabaseAuth.isAuthenticated) return;
+
+		const result = await this.postAction<{ balance?: number; granted: number }>('/api/quarks/higgs', {});
+		if (!result) return;
+
+		if (typeof result.balance === 'number') this.balance = result.balance;
+		if (result.granted > 0) {
+			toastStore.info({ message: 'A Higgs Boson released a Quark.', title: '+1 Quark' });
+		}
 	}
 
 	async purchase(itemId: string) {
