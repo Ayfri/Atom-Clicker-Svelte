@@ -13,27 +13,40 @@
 	})));
 
 	const claimableAchievementIds = $derived(gameManager.achievements.filter(id => !quarksManager.claimedAchievementIds.includes(id)));
-	const PARTICLE_DIRECTIONS = [
-		[-20, -24], [0, -30], [21, -22], [28, -4], [20, 20], [0, 28], [-22, 18], [-29, -5],
-	] as const;
+	const PARTICLE_COUNT = 10;
+
+	interface ClaimParticle {
+		size: number;
+		x: number;
+		y: number;
+	}
 
 	interface ClaimBurst {
 		duration: number;
 		id: number;
+		particles: ClaimParticle[];
 	}
 
 	let bursts = $state<Record<string, ClaimBurst>>({});
 	let claimAllBurst = $state<ClaimBurst | null>(null);
 	let nextBurstId = 0;
 
-	function startBurst(achievementId: string, duration = 650) {
-		const burst = { duration, id: ++nextBurstId };
+	function createParticles(count: number, distance: number): ClaimParticle[] {
+		return Array.from({ length: count }, () => {
+			const angle = Math.random() * Math.PI * 2;
+			const radius = (10 + Math.random() * 14) * distance;
+			return { size: 4 + Math.random() * 3, x: Math.cos(angle) * radius, y: Math.sin(angle) * radius };
+		});
+	}
+
+	function startBurst(achievementId: string, duration = 540) {
+		const burst = { duration, id: ++nextBurstId, particles: createParticles(PARTICLE_COUNT, 1) };
 		bursts = { ...bursts, [achievementId]: burst };
 		setTimeout(() => {
 			if (bursts[achievementId]?.id !== burst.id) return;
 			const { [achievementId]: _, ...remainingBursts } = bursts;
 			bursts = remainingBursts;
-		}, duration);
+		}, duration + (PARTICLE_COUNT - 1) * 25);
 	}
 
 	function claimAchievement(achievementId: string) {
@@ -42,13 +55,12 @@
 	}
 
 	function claimAllAchievements() {
-		const duration = Math.min(2400, 900 + Math.log10(Math.max(gameManager.atoms, 1)) * 160);
-		const burst = { duration, id: ++nextBurstId };
+		const duration = Math.min(1350, 700 + Math.log10(Math.max(gameManager.atoms, 1)) * 75);
+		const burst = { duration, id: ++nextBurstId, particles: createParticles(PARTICLE_COUNT * 6, 1.35) };
 		claimAllBurst = burst;
-		for (const achievementId of claimableAchievementIds) startBurst(achievementId, duration);
 		setTimeout(() => {
 			if (claimAllBurst?.id === burst.id) claimAllBurst = null;
-		}, duration);
+		}, duration + (PARTICLE_COUNT * 6 - 1) * 22);
 		quarksManager.claimAchievements(claimableAchievementIds);
 	}
 </script>
@@ -67,9 +79,9 @@
 					Claim all
 				</button>
 				{#if claimAllBurst}
-					<span class="claim-burst claim-all-burst pointer-events-none" style:--duration="{claimAllBurst.duration}ms">
-						{#each [...PARTICLE_DIRECTIONS, ...PARTICLE_DIRECTIONS, ...PARTICLE_DIRECTIONS] as [x, y], index (index)}
-							<span class="claim-particle" style:--delay="{index * 18}ms" style:--x="{x * 1.8}px" style:--y="{y * 1.8}px"></span>
+					<span class="claim-burst pointer-events-none" style:--duration={`${claimAllBurst.duration}ms`}>
+						{#each claimAllBurst.particles as particle, index (index)}
+							<span class="claim-particle" style:--delay={`${index * 22}ms`} style:--size={`${particle.size}px`} style:--x={`${particle.x}px`} style:--y={`${particle.y}px`}></span>
 						{/each}
 					</span>
 				{/if}
@@ -83,7 +95,7 @@
 			{/snippet}
 		</HelpIcon>
 	</div>
-	<div class="achievement-grid mt-2 grid gap-1.5 overflow-y-auto flex-1 custom-scrollbar px-1">
+	<div class="achievement-grid mt-2 grid gap-1.5 overflow-x-hidden overflow-y-auto flex-1 custom-scrollbar px-1">
 		{#each unlockedAchievements as achievement}
 			{@const hidden = achievement.hiddenCondition?.(gameManager) === true}
 			<div
@@ -100,9 +112,10 @@
 						{hidden && !achievement.unlocked ? '???' : achievement.description}
 					</p>
 				</div>
+				<div class="relative ml-auto shrink-0">
 					{#if achievement.unlocked && !quarksManager.claimedAchievementIds.includes(achievement.id)}
 						<button
-							class="ml-auto flex shrink-0 items-center gap-1 rounded-md bg-white/10 px-1.5 py-1 text-xs font-bold text-white transition-colors hover:bg-white/20 cursor-pointer"
+							class="flex items-center gap-1 rounded-md bg-white/10 px-1.5 py-1 text-xs font-bold text-white transition-colors hover:bg-white/20 cursor-pointer"
 							onclick={() => claimAchievement(achievement.id)}
 							aria-label="Claim 1 Quark for {achievement.name}"
 							title="Claim 1 Quark"
@@ -111,12 +124,13 @@
 						</button>
 					{/if}
 					{#if bursts[achievement.id]}
-						<span class="claim-burst pointer-events-none" style:--duration="{bursts[achievement.id].duration}ms">
-							{#each PARTICLE_DIRECTIONS as [x, y], index (index)}
-								<span class="claim-particle" style:--delay="{index * 16}ms" style:--x="{x}px" style:--y="{y}px"></span>
+						<span class="claim-burst pointer-events-none" style:--duration={`${bursts[achievement.id].duration}ms`}>
+							{#each bursts[achievement.id].particles as particle, index (index)}
+								<span class="claim-particle" style:--delay={`${index * 25}ms`} style:--size={`${particle.size}px`} style:--x={`${particle.x}px`} style:--y={`${particle.y}px`}></span>
 							{/each}
 						</span>
 					{/if}
+				</div>
 			</div>
 		{/each}
 	</div>
@@ -125,7 +139,7 @@
 <style>
 	.claim-burst {
 		position: absolute;
-		left: 50%;
+		left: calc(50% - 13px);
 		top: 50%;
 		z-index: 10;
 		display: block;
@@ -133,31 +147,30 @@
 		height: 0;
 	}
 
-	.claim-all-burst {
-		top: 100%;
-	}
-
 	.claim-particle {
 		position: absolute;
-		width: 5px;
-		height: 5px;
+		width: var(--size);
+		height: var(--size);
 		border-radius: 999px;
 		background: #ffffff;
-		box-shadow: 0 0 7px #4a9eff;
-		animation: quark-claim-burst var(--duration) cubic-bezier(0.15, 0.8, 0.3, 1) forwards;
+		box-shadow: 0 0 7px currentColor;
+		animation: quark-claim-burst var(--duration) cubic-bezier(0.2, 0.05, 0.25, 1) both;
 		animation-delay: var(--delay);
 	}
 
 	.claim-particle:nth-child(3n + 1) {
 		background: #4a9eff;
+		color: #4a9eff;
 	}
 
 	.claim-particle:nth-child(3n + 2) {
 		background: #3ddc84;
+		color: #3ddc84;
 	}
 
 	.claim-particle:nth-child(3n) {
 		background: #ff5d73;
+		color: #ff5d73;
 	}
 
 	@keyframes quark-claim-burst {
@@ -165,12 +178,17 @@
 			opacity: 0;
 			transform: translate(-50%, -50%) scale(0.2);
 		}
-		15% {
+		18% {
 			opacity: 1;
+			transform: translate(-50%, -50%) scale(1);
+		}
+		68% {
+			opacity: 0.9;
+			transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(0.75);
 		}
 		100% {
 			opacity: 0;
-			transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(0);
+			transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(0.3);
 		}
 	}
 
