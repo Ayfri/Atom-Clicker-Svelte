@@ -14,6 +14,7 @@
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { quarksManager } from '$helpers/QuarksManager.svelte';
 	import { remoteMessage } from '$stores/remoteMessage.svelte';
+	import { supabaseAuth } from '$stores/supabaseAuth.svelte';
 	import { ui } from '$stores/ui.svelte';
 	import { mobile } from '$stores/window.svelte';
 	import { Atom, Network, Orbit, Settings as SettingsIcon, Trophy, Zap } from '@lucide/svelte';
@@ -61,7 +62,7 @@
 			label: 'Quarks',
 			component: Quarks,
 			condition: () => quarksManager.balance > 0,
-			notification: () => quarksManager.hasClaimableAchievement || quarksManager.hasClaimableQuest,
+			notification: () => supabaseAuth.isAuthenticated && quarksManager.hasSynced && quarksManager.hasClaimableQuest,
 		},
 		{
 			icon: Atom,
