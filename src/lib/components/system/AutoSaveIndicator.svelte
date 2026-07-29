@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CloudUpload } from 'lucide-svelte';
+	import { CloudUpload } from '@lucide/svelte';
 	import { autoSave } from '$stores/autoSave.svelte';
 
 	const SAVE_ANIMATION_DURATION = 1000;

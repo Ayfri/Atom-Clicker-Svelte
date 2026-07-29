@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { BUILDING_COLORS, BUILDINGS, BuildingTypes, type BuildingData, type BuildingType } from '$data/buildings';
+	import { BUILDING_COLORS, BUILDING_LEVEL_UP_COST, BUILDINGS, BuildingTypes, type BuildingData, type BuildingType } from '$data/buildings';
 	import { getUpgradesWithEffects } from '$lib/helpers/effects';
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { autoBuyManager } from '$stores/autoBuy.svelte';
@@ -13,6 +13,7 @@
 	import RockIcon from '@components/icons/buildings/Rock.svelte';
 	import StarIcon from '@components/icons/buildings/Star.svelte';
 	import AutoButton from '@components/ui/AutoButton.svelte';
+	import HelpIcon from '@components/ui/HelpIcon.svelte';
 	import Value from '@components/ui/Value.svelte';
 	import type { Component } from 'svelte';
 	import { fade, fly, scale } from 'svelte/transition';
@@ -89,8 +90,18 @@
 	});
 </script>
 
-<div class="bg-black/10 backdrop-blur-xs rounded-lg p-3 flex flex-col gap-2 h-[600px] lg:h-[calc(100vh-180px)]">
-	<h2 class="text-lg">Buildings</h2>
+<div class="bg-black/10 backdrop-blur-xs rounded-lg p-3 flex flex-col gap-2 h-150 lg:h-[calc(100vh-180px)]">
+	<div class="flex items-center gap-1.5">
+		<h2 class="text-lg">Buildings</h2>
+		<HelpIcon position="bottom">
+			{#snippet content()}
+				<p class="text-xs text-white/80">
+					Buildings produce atoms automatically every second. Their cost increases with each purchase, and every
+					{BUILDING_LEVEL_UP_COST} owned levels them up, boosting their production.
+				</p>
+			{/snippet}
+		</HelpIcon>
+	</div>
 	<div class="flex items-center gap-1 my-1">
 		{#each purchaseModes as mode}
 			<button

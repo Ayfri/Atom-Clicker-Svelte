@@ -1,5 +1,19 @@
+# What's new 29-07-2026
+
+- **Quarks & Daily Quests**: Earn this rare currency from daily goals and achievements. Quarks persist through prestige resets.
+- **Quark Shop**: Spend Quarks on refundable boosts, convenience upgrades, Realm themes, and collectible leaderboard banners.
+- **Quarks Tab**: Open the new navigation icon to view your balance, quests, shop items, and cosmetics.
+
+# What's new 28-07-2026
+
+- **First-Time Tutorial**: New players now get a short guided tour covering clicking, buildings, upgrades, prestige, and the skill tree. Replay it anytime from Settings.
+- **Help Icons**: Added contextual (?) help icons in Buildings, Upgrades, Skill Tree, and the Radiation Realm explaining how each system works.
+
 # What's new 02-02-2026
 
+- **Radiation Realm**: Unlock a volatile new realm and harness radiation to amplify your progress.
+- **Reactor Control**: Fuel an unstable nucleus and find your own balance between output and stability.
+- **Radiation Upgrades**: Discover new electron-powered upgrades to improve your reactor.
 - **Bonus Display**: Added a display for active power ups in the atom realm.
 - **Building icons**: Added icons for buildings.
 - **Prestige Animations**: Added new animations for protonise and electronise.

@@ -1,28 +1,30 @@
 <script lang="ts">
 	import '@/app.css';
 	import { browser } from '$app/environment';
-	import Analytics from '@components/system/Analytics.svelte';
-	import { prestigeStore } from '$stores/prestige.svelte';
 	import PrestigeAnimation from '@components/prestige/PrestigeAnimation.svelte';
-	import SEO from '@components/system/SEO.svelte';
+	import Analytics from '@components/system/Analytics.svelte';
 	import DevTools from '@components/system/devtools/DevTools.svelte';
+	import SEO from '@components/system/SEO.svelte';
+	import TutorialOverlay from '@components/tutorial/TutorialOverlay.svelte';
 	import TooltipPortal from '@components/ui/TooltipPortal.svelte';
-	import { LoaderCircle } from 'lucide-svelte';
-	import type { Snippet } from 'svelte';
+	import { quarksManager } from '$helpers/QuarksManager.svelte';
+	import { prestigeStore } from '$stores/prestige.svelte';
+	import { LoaderCircle } from '@lucide/svelte';
+	import { onMount, type Snippet } from 'svelte';
 
 	interface Props {
 		children?: Snippet;
 	}
 
 	let { children }: Props = $props();
+
+	onMount(() => {
+		quarksManager.sync();
+	});
 </script>
 
-<Analytics />
 <SEO />
-<PrestigeAnimation
-	animation={prestigeStore.animation}
-	onComplete={() => prestigeStore.reset()}
-/>
+<Analytics />
 
 {#if !browser}
 	<div class="flex h-screen w-screen items-center justify-center gap-4 flex-col">
@@ -33,9 +35,14 @@
 		/>
 	</div>
 {:else}
+	<PrestigeAnimation
+		animation={prestigeStore.animation}
+		onComplete={() => prestigeStore.reset()}
+	/>
 	{@render children?.()}
 	<DevTools />
 	<TooltipPortal />
+	<TutorialOverlay />
 {/if}
 
 <style>

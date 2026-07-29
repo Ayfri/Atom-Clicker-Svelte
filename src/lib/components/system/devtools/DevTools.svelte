@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { dev } from '$app/environment';
+	import QuarkIcon from '@components/icons/Quark.svelte';
 	import Modal from '@components/ui/Modal.svelte';
 	import AchievementsTab from './tabs/AchievementsTab.svelte';
 	import ActionsTab from './tabs/ActionsTab.svelte';
@@ -7,22 +8,71 @@
 	import BoostsTab from './tabs/BoostsTab.svelte';
 	import IconsTab from './tabs/IconsTab.svelte';
 	import JsonTab from './tabs/JsonTab.svelte';
+	import QuarksTab from './tabs/QuarksTab.svelte';
+	import RadiationTab from './tabs/RadiationTab.svelte';
 	import StatsTab from './tabs/StatsTab.svelte';
 	import UpgradesTab from './tabs/UpgradesTab.svelte';
-	import { BarChart3, Cpu, FileJson, Image, Settings, TrendingUp, Trophy, Zap } from 'lucide-svelte';
+	import {
+		Activity,
+		BarChart3,
+		ChartLine,
+		Cpu,
+		FileJson,
+		FlaskConical,
+		Hammer,
+		Image,
+		LayoutDashboard,
+		Settings,
+		TrendingUp,
+		Trophy,
+		Zap,
+	} from '@lucide/svelte';
+	import type { Component } from 'svelte';
 
 	let isOpen = $state(false);
-	let activeTab = $state<'actions' | 'achievements' | 'automation' | 'boosts' | 'icons' | 'json' | 'stats' | 'upgrades'>('stats');
+	let activeTab = $state<string>('stats');
 
-	const tabs = [
-		{ icon: BarChart3, id: 'stats' as const, label: 'Stats' },
-		{ icon: TrendingUp, id: 'upgrades' as const, label: 'Upgrades' },
-		{ icon: Trophy, id: 'achievements' as const, label: 'Achievements' },
-		{ icon: Cpu, id: 'automation' as const, label: 'Automation' },
-		{ icon: Zap, id: 'boosts' as const, label: 'Boosts' },
-		{ icon: Image, id: 'icons' as const, label: 'Icons' },
-		{ icon: FileJson, id: 'json' as const, label: 'JSON' },
-		{ icon: Zap, id: 'actions' as const, label: 'Actions' },
+	interface Tab {
+		href?: string;
+		icon: Component<{ class?: string; size?: number }>;
+		id: string;
+		label: string;
+	}
+
+	const groups: { icon: Component<{ class?: string; size?: number }>; name: string; tabs: Tab[] }[] = [
+		{
+			name: 'General',
+			icon: LayoutDashboard,
+			tabs: [
+				{ icon: BarChart3, id: 'stats', label: 'Stats' },
+				{ icon: FileJson, id: 'json', label: 'JSON' },
+				{ icon: Zap, id: 'actions', label: 'Actions' },
+			],
+		},
+		{
+			name: 'Progression',
+			icon: TrendingUp,
+			tabs: [
+				{ icon: TrendingUp, id: 'upgrades', label: 'Upgrades' },
+				{ icon: Trophy, id: 'achievements', label: 'Achievements' },
+				{ icon: Cpu, id: 'automation', label: 'Automation' },
+				{ icon: Zap, id: 'boosts', label: 'Boosts' },
+				{ icon: QuarkIcon, id: 'quarks', label: 'Quarks' },
+			],
+		},
+		{
+			name: 'Realms',
+			icon: FlaskConical,
+			tabs: [{ icon: Activity, id: 'radiation', label: 'Radiation' }],
+		},
+		{
+			name: 'Tools',
+			icon: Hammer,
+			tabs: [
+				{ icon: Image, id: 'icons', label: 'Icons' },
+				{ icon: ChartLine, id: 'benchmark', label: 'Benchmark', href: '/benchmark' },
+			],
+		},
 	];
 
 	function toggleDevTools() {
@@ -49,47 +99,76 @@
 			title="Developer Tools"
 			onClose={toggleDevTools}
 			width="xl"
+			containerClass="!p-0 border-t border-white/5"
 		>
-			<!-- Tabs -->
-			<div class="flex gap-4 mb-6 overflow-x-auto pb-4 px-2 border-b border-white/10">
-				{#each tabs as tab}
-					{@const Icon = tab.icon}
-					<button
-						class="flex items-center gap-2.5 px-5 py-2 rounded-lg font-bold transition-all cursor-pointer border-2 {(
-							activeTab === tab.id
-						) ?
-							'bg-accent-500 text-white border-accent-400 scale-105'
-						:	'bg-white/5 text-white/40 hover:text-white/90 hover:bg-white/10 border-transparent hover:border-white/10'}"
-						onclick={() => (activeTab = tab.id)}
-					>
-						<Icon
-							size={18}
-							class={activeTab === tab.id ? 'animate-pulse' : ''}
-						/>
-						<span>{tab.label}</span>
-					</button>
-				{/each}
-			</div>
+			<div class="flex flex-col md:flex-row h-full">
+				<!-- Sidebar -->
+				<div class="w-full md:w-56 flex flex-col gap-6 border-r border-white/5 pt-4 pb-8 px-4 bg-black/20 shrink-0">
+					{#each groups as group}
+						{@const GroupIcon = group.icon}
+						<div class="space-y-2">
+							<h3 class="px-3 text-[10px] font-black uppercase tracking-[0.2em] text-white/20 flex items-center gap-2">
+								<GroupIcon size={12} />
+								{group.name}
+							</h3>
+							<div class="flex flex-col gap-1">
+								{#each group.tabs as tab}
+									{@const TabIcon = tab.icon}
+									{#if tab.href}
+										<a
+											href={tab.href}
+											class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer border-2 text-white/40 hover:text-white/80 hover:bg-white/5 border-transparent"
+										>
+											<TabIcon size={16} />
+											<span>{tab.label}</span>
+											<span class="ml-auto text-xs opacity-50">↗</span>
+										</a>
+									{:else}
+										<button
+											class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer border-2 {(
+												activeTab === tab.id
+											) ?
+												'bg-accent-500/10 text-accent-400 border-accent-500/30'
+											:	'text-white/40 hover:text-white/80 hover:bg-white/5 border-transparent'}"
+											onclick={() => (activeTab = tab.id)}
+										>
+											<TabIcon
+												size={16}
+												class={activeTab === tab.id ? 'text-accent-400' : ''}
+											/>
+											<span>{tab.label}</span>
+										</button>
+									{/if}
+								{/each}
+							</div>
+						</div>
+					{/each}
+				</div>
 
-			<!-- Content -->
-			<div class="min-h-[50vh] **:select-text!">
-				{#if activeTab === 'stats'}
-					<StatsTab />
-				{:else if activeTab === 'upgrades'}
-					<UpgradesTab />
-				{:else if activeTab === 'achievements'}
-					<AchievementsTab />
-				{:else if activeTab === 'boosts'}
-					<BoostsTab />
-				{:else if activeTab === 'icons'}
-					<IconsTab />
-				{:else if activeTab === 'json'}
-					<JsonTab />
-				{:else if activeTab === 'actions'}
-					<ActionsTab />
-				{:else if activeTab === 'automation'}
-					<AutomationTab />
-				{/if}
+				<!-- Content -->
+				<div class="flex-1 **:select-text! overflow-y-auto p-4 pr-3 min-h-0">
+					{#if activeTab === 'stats'}
+						<StatsTab />
+					{:else if activeTab === 'upgrades'}
+						<UpgradesTab />
+					{:else if activeTab === 'achievements'}
+						<AchievementsTab />
+					{:else if activeTab === 'automation'}
+						<AutomationTab />
+					{:else if activeTab === 'boosts'}
+						<BoostsTab />
+					{:else if activeTab === 'quarks'}
+						<QuarksTab />
+					{:else if activeTab === 'radiation'}
+						<RadiationTab />
+					{:else if activeTab === 'icons'}
+						<IconsTab />
+					{:else if activeTab === 'json'}
+						<JsonTab />
+					{:else if activeTab === 'actions'}
+						<ActionsTab />
+					{/if}
+				</div>
 			</div>
 		</Modal>
 	{/if}

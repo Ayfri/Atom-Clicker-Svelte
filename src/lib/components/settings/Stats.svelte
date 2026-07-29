@@ -18,7 +18,7 @@
 		Timer,
 		TrendingUp,
 		Zap,
-	} from 'lucide-svelte';
+	} from '@lucide/svelte';
 
 	const totalAchievements = Object.keys(ACHIEVEMENTS).length;
 

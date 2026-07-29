@@ -17,6 +17,7 @@
 	import HiggsBosonIcon from '@components/icons/HiggsBoson.svelte';
 	import PhotonIcon from '@components/icons/Photon.svelte';
 	import ProtonIcon from '@components/icons/Proton.svelte';
+	import QuarkIcon from '@components/icons/Quark.svelte';
 	import type { Component } from 'svelte';
 
 	const BUILDING_ICONS: Record<BuildingType, Component<{ color?: string; size?: number }>> = {
@@ -38,6 +39,7 @@
 		{ component: HiggsBosonIcon, name: 'Higgs Boson' },
 		{ component: PhotonIcon, name: 'Photon' },
 		{ component: ProtonIcon, name: 'Proton' },
+		{ component: QuarkIcon, name: 'Quark' },
 	];
 
 	const socialIcons = [

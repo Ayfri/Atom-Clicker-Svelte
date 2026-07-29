@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { supabaseAuth } from '$stores/supabaseAuth.svelte';
-	import { HardDrive, Cloud, Download, RefreshCw } from 'lucide-svelte';
+	import { HardDrive, Cloud, Download, RefreshCw } from '@lucide/svelte';
 
 	let jsonView = $state<'save' | 'supabase'>('save');
 	let supabaseData = $state<unknown>(null);

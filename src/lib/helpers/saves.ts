@@ -7,7 +7,7 @@ import { statsConfig } from '$helpers/statConstants';
 import { saveRecovery, type SaveErrorType } from '$stores/saveRecovery';
 
 export const SAVE_KEY = 'atomic-clicker-save';
-export const SAVE_VERSION = 21;
+export const SAVE_VERSION = 24;
 
 export interface LoadSaveResult {
 	errorDetails?: string;
@@ -22,7 +22,9 @@ export function loadSavedState(): LoadSaveResult {
 	let rawData: string | null = null;
 
 	try {
-		rawData = localStorage.getItem(SAVE_KEY);
+		if (typeof localStorage !== 'undefined') {
+			rawData = localStorage.getItem(SAVE_KEY);
+		}
 		if (!rawData) {
 			return { state: null, success: true }; // No save exists, not an error
 		}
@@ -144,11 +146,13 @@ export function validateAndRepairGameState(state: unknown): ValidationResult {
 		features: (v: unknown) => typeof v === 'object' && v !== null,
 		settings: (v: unknown) => {
 			const val = v as Record<string, any>;
-			const hasValidGameplay = typeof val.gameplay === 'undefined' || (
-				typeof val.gameplay === 'object' && typeof val.gameplay?.offlineProgressEnabled === 'boolean'
-			);
+			const hasValidGameplay =
+				typeof val.gameplay === 'undefined' ||
+				(typeof val.gameplay === 'object' && typeof val.gameplay?.offlineProgressEnabled === 'boolean');
 
-			return typeof val === 'object' && val !== null &&
+			return (
+				typeof val === 'object' &&
+				val !== null &&
 				typeof val.automation === 'object' &&
 				Array.isArray(val.automation?.buildings) &&
 				typeof val.automation?.autoClick === 'boolean' &&
@@ -156,8 +160,9 @@ export function validateAndRepairGameState(state: unknown): ValidationResult {
 				typeof val.automation?.upgrades === 'boolean' &&
 				hasValidGameplay &&
 				typeof val.upgrades === 'object' &&
-				typeof val.upgrades?.displayAlreadyBought === 'boolean';
-		}
+				typeof val.upgrades?.displayAlreadyBought === 'boolean'
+			);
+		},
 	};
 
 	// Generate checks from statsConfig
@@ -179,7 +184,7 @@ export function validateAndRepairGameState(state: unknown): ValidationResult {
 		return {
 			defaultValue: config.defaultValue,
 			key,
-			validator
+			validator,
 		};
 	});
 
@@ -231,7 +236,7 @@ export function validateAndRepairGameState(state: unknown): ValidationResult {
 		errors,
 		repaired,
 		repairs,
-		state: allValid ? stateObj as unknown as GameState : null,
+		state: allValid ? (stateObj as unknown as GameState) : null,
 		valid: allValid && errors.length === 0,
 	};
 }
@@ -251,13 +256,16 @@ export function migrateSavedState(savedState: unknown): GameState | undefined {
 
 	if (!('version' in state)) {
 		// Migrate from old format
-		state.buildings = Object.entries(state.buildings as Partial<GameState['buildings']>).reduce((acc, [key, value]) => {
-			acc[key as BuildingType] = {
-				...value,
-				unlocked: true,
-			};
-			return acc;
-		}, {} as GameState['buildings']);
+		state.buildings = Object.entries(state.buildings as Partial<GameState['buildings']>).reduce(
+			(acc, [key, value]) => {
+				acc[key as BuildingType] = {
+					...value,
+					unlocked: true,
+				};
+				return acc;
+			},
+			{} as GameState['buildings'],
+		);
 	}
 
 	if (state.version === 1) {
@@ -274,9 +282,10 @@ export function migrateSavedState(savedState: unknown): GameState | undefined {
 		for (const [key, config] of Object.entries(statsConfig)) {
 			if (config.minVersion <= nextVersion) {
 				if (!(key in state)) {
-					state[key] = typeof config.defaultValue === 'object' && config.defaultValue !== null
-						? structuredClone(config.defaultValue)
-						: config.defaultValue;
+					state[key] =
+						typeof config.defaultValue === 'object' && config.defaultValue !== null ?
+							structuredClone(config.defaultValue)
+						:	config.defaultValue;
 				}
 			}
 		}
@@ -294,7 +303,7 @@ export function migrateSavedState(savedState: unknown): GameState | undefined {
 				state[key].cost = {
 					amount: typeof building.cost === 'number' ? building.cost : building.cost?.amount,
 					currency: CurrenciesTypes.ATOMS,
-				}
+				};
 			});
 		}
 
@@ -309,7 +318,10 @@ export function migrateSavedState(savedState: unknown): GameState | undefined {
 			state.totalAtomsEarned = state.atoms || 0;
 			state.totalAtomsEarnedAllTime = state.atoms || 0;
 			// Count total buildings currently owned as baseline
-			const buildingsOwned = Object.values(state.buildings || {}).reduce((acc: number, b: unknown) => acc + ((b as any)?.count || 0), 0);
+			const buildingsOwned = Object.values(state.buildings || {}).reduce(
+				(acc: number, b: unknown) => acc + ((b as any)?.count || 0),
+				0,
+			);
 			state.totalBuildingsPurchased = buildingsOwned;
 			// Initialize clicks all time from current run
 			state.totalClicksAllTime = state.totalClicks || 0;
@@ -326,13 +338,15 @@ export function migrateSavedState(savedState: unknown): GameState | undefined {
 				delete state.totalBonusPhotonsClicked;
 			}
 			if (state.achievements) {
-				state.achievements = state.achievements.map((id: string) => id.replace('bonus_photons_clicked_', 'bonus_higgs_boson_clicked_'));
+				state.achievements = state.achievements.map((id: string) =>
+					id.replace('bonus_photons_clicked_', 'bonus_higgs_boson_clicked_'),
+				);
 			}
 			if (state.skillUpgrades) {
 				const map: Record<string, string> = {
-					'bonusPhotonSpeed0': 'bonusHiggsBosonSpeed0',
-					'bonusPhotonSpeed1': 'bonusHiggsBosonSpeed1',
-					'bonusPhotonSpeed2': 'bonusHiggsBosonSpeed2',
+					bonusPhotonSpeed0: 'bonusHiggsBosonSpeed0',
+					bonusPhotonSpeed1: 'bonusHiggsBosonSpeed1',
+					bonusPhotonSpeed2: 'bonusHiggsBosonSpeed2',
 				};
 				state.skillUpgrades = state.skillUpgrades.map((id: string) => map[id] || id);
 			}
@@ -349,7 +363,7 @@ export function migrateSavedState(savedState: unknown): GameState | undefined {
 				totalExcitedPhotonsEarned: 'totalExcitedPhotonsEarnedAllTime',
 				totalProtonises: 'totalProtonisesRun',
 				totalProtonsEarned: 'totalProtonsEarnedAllTime',
-				totalUpgradesPurchased: 'totalUpgradesPurchasedAllTime'
+				totalUpgradesPurchased: 'totalUpgradesPurchasedAllTime',
 			};
 
 			for (const [oldKey, newKey] of Object.entries(mapping)) {
@@ -375,42 +389,53 @@ export function migrateSavedState(savedState: unknown): GameState | undefined {
 				[CurrenciesTypes.ATOMS]: {
 					amount: state.atoms || 0,
 					earnedRun: state.totalAtomsEarnedRun || 0,
-					earnedAllTime: state.totalAtomsEarnedAllTime || 0
+					earnedAllTime: state.totalAtomsEarnedAllTime || 0,
 				},
 				[CurrenciesTypes.ELECTRONS]: {
 					amount: state.electrons || 0,
 					earnedRun: state.totalElectronsEarnedRun || 0,
-					earnedAllTime: state.totalElectronsEarnedAllTime || 0
+					earnedAllTime: state.totalElectronsEarnedAllTime || 0,
 				},
 				[CurrenciesTypes.EXCITED_PHOTONS]: {
 					amount: state.excitedPhotons || 0,
 					earnedRun: state.totalExcitedPhotonsEarnedRun || 0,
-					earnedAllTime: state.totalExcitedPhotonsEarnedAllTime || 0
+					earnedAllTime: state.totalExcitedPhotonsEarnedAllTime || 0,
 				},
 				[CurrenciesTypes.HIGGS_BOSON]: {
 					amount: 0,
 					earnedRun: state.totalBonusHiggsBosonClickedRun || 0,
-					earnedAllTime: state.totalBonusHiggsBosonClickedAllTime || 0
+					earnedAllTime: state.totalBonusHiggsBosonClickedAllTime || 0,
 				},
 				[CurrenciesTypes.PHOTONS]: {
 					amount: state.photons || 0,
 					earnedRun: state.totalPhotonsEarnedRun || 0,
-					earnedAllTime: state.totalPhotonsEarnedAllTime || 0
+					earnedAllTime: state.totalPhotonsEarnedAllTime || 0,
 				},
 				[CurrenciesTypes.PROTONS]: {
 					amount: state.protons || 0,
 					earnedRun: state.totalProtonsEarnedRun || 0,
-					earnedAllTime: state.totalProtonsEarnedAllTime || 0
-				}
+					earnedAllTime: state.totalProtonsEarnedAllTime || 0,
+				},
 			};
 
 			const keysToRemove = [
-				'atoms', 'totalAtomsEarnedRun', 'totalAtomsEarnedAllTime',
-				'electrons', 'totalElectronsEarnedRun', 'totalElectronsEarnedAllTime',
-				'excitedPhotons', 'totalExcitedPhotonsEarnedRun', 'totalExcitedPhotonsEarnedAllTime',
-				'totalBonusHiggsBosonClickedRun', 'totalBonusHiggsBosonClickedAllTime',
-				'photons', 'totalPhotonsEarnedRun', 'totalPhotonsEarnedAllTime',
-				'protons', 'totalProtonsEarnedRun', 'totalProtonsEarnedAllTime'
+				'atoms',
+				'electrons',
+				'excitedPhotons',
+				'photons',
+				'protons',
+				'totalAtomsEarnedAllTime',
+				'totalAtomsEarnedRun',
+				'totalBonusHiggsBosonClickedAllTime',
+				'totalBonusHiggsBosonClickedRun',
+				'totalElectronsEarnedAllTime',
+				'totalElectronsEarnedRun',
+				'totalExcitedPhotonsEarnedAllTime',
+				'totalExcitedPhotonsEarnedRun',
+				'totalPhotonsEarnedAllTime',
+				'totalPhotonsEarnedRun',
+				'totalProtonsEarnedAllTime',
+				'totalProtonsEarnedRun',
 			];
 
 			keysToRemove.forEach(key => delete state[key]);
@@ -425,7 +450,8 @@ export function migrateSavedState(savedState: unknown): GameState | undefined {
 		if (state.version === 18) {
 			state.realms = {
 				[RealmTypes.ATOMS]: { unlocked: true },
-				[RealmTypes.PHOTONS]: { unlocked: state.photonRealmUnlocked ?? state.purpleRealmUnlocked ?? false }
+				[RealmTypes.PHOTONS]: { unlocked: state.photonRealmUnlocked ?? state.purpleRealmUnlocked ?? false },
+				[RealmTypes.RADIATION]: { unlocked: false },
 			};
 			delete state.photonRealmUnlocked;
 			delete state.purpleRealmUnlocked;
@@ -455,11 +481,11 @@ export function migrateSavedState(savedState: unknown): GameState | undefined {
 				'powerUpBoost1',
 				'xpBoost0',
 				'xpBoost1',
-				'xpBoost2'
+				'xpBoost2',
 			];
 
 			// Move legacy skills to upgrades
-			legacySkillToUpgradeIds.forEach((id) => {
+			legacySkillToUpgradeIds.forEach(id => {
 				if (skillUpgrades.has(id)) {
 					upgrades.add(id);
 					skillUpgrades.delete(id);
@@ -472,7 +498,7 @@ export function migrateSavedState(savedState: unknown): GameState | undefined {
 				feature_offline_progress: 'offlineProgress',
 				feature_purple_realm: 'purpleRealm',
 				proton_community_boost: 'communityPower',
-				stability_unlock: 'stabilityField'
+				stability_unlock: 'stabilityField',
 			};
 
 			// Convert old feature upgrades to skills
@@ -493,6 +519,11 @@ export function migrateSavedState(savedState: unknown): GameState | undefined {
 			state.skillUpgrades = Array.from(skillUpgrades);
 			state.currencyBoosts = {};
 			state.features = deriveFeatureState({ skillUpgrades: state.skillUpgrades });
+		}
+
+		if (state.version === 22) {
+			// Existing saves shouldn't see the first-time tutorial
+			state.tutorial = { active: false, completed: true, step: 0 };
 		}
 
 		state.version = nextVersion;

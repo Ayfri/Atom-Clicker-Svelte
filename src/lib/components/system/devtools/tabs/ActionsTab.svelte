@@ -4,6 +4,7 @@
 	import { CurrenciesTypes, type CurrencyName } from '$data/currencies';
 	import { FEATURES, type FeatureType } from '$data/features';
 	import { ALL_PHOTON_UPGRADES } from '$data/photonUpgrades';
+	import { REALM_TUTORIALS } from '$data/realmTutorials';
 	import { RealmTypes, type RealmType } from '$data/realms';
 	import { SKILL_UPGRADES } from '$data/skillTree';
 	import { UPGRADES } from '$data/upgrades';
@@ -14,13 +15,14 @@
 	import { SAVE_KEY } from '$helpers/saves';
 	import { prestigeStore } from '$stores/prestige.svelte';
 	import { ui } from '$stores/ui.svelte';
-	import { error, info, success, warning } from '$stores/toasts';
+	import { toastStore } from '$stores/toasts.svelte';
 	import {
 		Atom,
 		Clock,
 		Coins,
 		Download,
 		Factory,
+		GraduationCap,
 		MessageSquare,
 		Save,
 		Sparkles,
@@ -29,7 +31,7 @@
 		Unlock,
 		Upload,
 		Zap,
-	} from 'lucide-svelte';
+	} from '@lucide/svelte';
 
 	// Get skills that unlock features
 	const featureSkills = Object.values(SKILL_UPGRADES).filter(skill => skill.feature);
@@ -72,6 +74,32 @@
 						type="checkbox"
 					/>
 				</label>
+			{/each}
+		</div>
+	</div>
+
+	<!-- Tutorial Management -->
+	<div class="rounded-xl border border-white/5 bg-white/5 p-3">
+		<h3 class="mb-3 flex items-center gap-2 text-base font-bold text-accent-300">
+			<GraduationCap size={18} />
+			<span>Tutorial</span>
+		</h3>
+		<div class="grid grid-cols-1 gap-2 md:grid-cols-2">
+			<button
+				class="flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold transition-all hover:bg-white/20"
+				onclick={() => gameManager.tutorialManager.start()}
+			>
+				<GraduationCap size={16} />
+				<span>Replay Main Tutorial</span>
+			</button>
+			{#each Object.entries(REALM_TUTORIALS) as [id, steps] (id)}
+				<button
+					class="flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold transition-all hover:bg-white/20"
+					onclick={() => gameManager.tutorialManager.forgetRealmSteps(id as RealmType)}
+				>
+					<GraduationCap size={16} />
+					<span>Replay {steps[0]?.title ?? id} Tutorial ({steps.length} steps)</span>
+				</button>
 			{/each}
 		</div>
 	</div>
@@ -136,7 +164,7 @@
 						gameManager.offlineProgressSummary = summary;
 						ui.openModal(OfflineProgress);
 					} else {
-						info({ title: 'Offline progress', message: 'Offline progress is not available with current settings.' });
+						toastStore.info({ title: 'Offline progress', message: 'Offline progress is not available with current settings.' });
 					}
 				}}
 			>
@@ -268,31 +296,31 @@
 		<div class="grid grid-cols-2 gap-2 lg:grid-cols-4">
 			<button
 				class="flex cursor-pointer items-center justify-center rounded-lg border border-green-500/30 bg-green-600/20 p-2 text-xs font-semibold text-green-300 transition-all hover:bg-green-600/40"
-				onclick={() => success({ title: 'Test Success', message: 'This is a success notification message.' })}
+				onclick={() => toastStore.success({ title: 'Test Success', message: 'This is a success notification message.' })}
 			>
 				Success
 			</button>
 			<button
 				class="flex cursor-pointer items-center justify-center rounded-lg border border-red-500/30 bg-red-600/20 p-2 text-xs font-semibold text-red-300 transition-all hover:bg-red-600/40"
-				onclick={() => error({ title: 'Test Error', message: 'This is an error notification message.' })}
+				onclick={() => toastStore.error({ title: 'Test Error', message: 'This is an error notification message.' })}
 			>
 				Error
 			</button>
 			<button
 				class="flex cursor-pointer items-center justify-center rounded-lg border border-blue-500/30 bg-blue-600/20 p-2 text-xs font-semibold text-blue-300 transition-all hover:bg-blue-600/40"
-				onclick={() => info({ title: 'Test Info', message: 'This is an information notification message.' })}
+				onclick={() => toastStore.info({ title: 'Test Info', message: 'This is an information notification message.' })}
 			>
 				Info
 			</button>
 			<button
 				class="flex cursor-pointer items-center justify-center rounded-lg border border-yellow-500/30 bg-yellow-600/20 p-2 text-xs font-semibold text-yellow-300 transition-all hover:bg-yellow-600/40"
-				onclick={() => warning({ title: 'Test Infinite', message: 'This is an infinite warning.', duration: 0, is_infinite: true })}
+				onclick={() => toastStore.warning({ title: 'Test Infinite', message: 'This is an infinite warning.', duration: 0, is_infinite: true })}
 			>
 				Warn Inf
 			</button>
 			<button
 				class="flex cursor-pointer items-center justify-center rounded-lg border border-yellow-500/30 bg-yellow-600/20 p-2 text-xs font-semibold text-yellow-300 transition-all hover:bg-yellow-600/40"
-				onclick={() => warning({ title: 'Test Normal', message: 'This is a 5s warning.', duration: 5000 })}
+				onclick={() => toastStore.warning({ title: 'Test Normal', message: 'This is a 5s warning.', duration: 5000 })}
 			>
 				Warn 5s
 			</button>

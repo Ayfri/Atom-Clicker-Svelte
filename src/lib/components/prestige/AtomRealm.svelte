@@ -7,12 +7,19 @@
 	import Canvas from '@components/game/Canvas.svelte';
 	import Counter from '@components/game/Counter.svelte';
 	import Upgrades from '@components/game/Upgrades.svelte';
+	import { getQuarkShopItem } from '$data/quarkShop';
 	import { RealmTypes } from '$data/realms';
 	import { gameManager } from '$helpers/GameManager.svelte';
+	import { quarksManager } from '$helpers/QuarksManager.svelte';
 	import { realmManager } from '$helpers/RealmManager.svelte';
 	import { mobile } from '$stores/window.svelte';
 
 	let activeTab: 'achievements' | 'buildings' | 'upgrades' = $state('upgrades');
+
+	const themeAccent = $derived.by(() => {
+		const themeId = quarksManager.equippedThemes[RealmTypes.ATOMS];
+		return themeId ? getQuarkShopItem(themeId)?.theme?.accent : undefined;
+	});
 </script>
 
 <div class="relative pt-12 transition-all duration-1000 ease-in-out lg:pt-8 {mobile.current ? 'min-h-screen pb-8' : ''}">
@@ -37,8 +44,10 @@
 					class="backdrop-blur-xs rounded-lg p-1.5 sm:p-2 w-full whitespace-nowrap border-none text-inherit cursor-pointer transition-all duration-200 text-xs sm:text-sm {(
 						activeTab === 'upgrades'
 					) ?
-						'bg-accent-400 text-white'
+						'text-white'
 					:	'bg-white/5 hover:bg-white/10'}"
+					style={activeTab === 'upgrades' ? `background-color: ${themeAccent ?? 'var(--color-accent-400)'};` : ''}
+					data-tutorial-target="upgrades-tab"
 					onclick={() => (activeTab = 'upgrades')}>Upgrades</button
 				>
 				{#if mobile.current}
@@ -46,8 +55,10 @@
 						class="backdrop-blur-xs rounded-lg p-1.5 sm:p-2 w-full whitespace-nowrap border-none text-inherit cursor-pointer transition-all duration-200 text-xs sm:text-sm {(
 							activeTab === 'buildings'
 						) ?
-							'bg-accent-400 text-white'
+							'text-white'
 						:	'bg-white/5 hover:bg-white/10'}"
+						style={activeTab === 'buildings' ? `background-color: ${themeAccent ?? 'var(--color-accent-400)'};` : ''}
+						data-tutorial-target="buildings-tab"
 						onclick={() => (activeTab = 'buildings')}>Buildings</button
 					>
 				{/if}
@@ -55,8 +66,9 @@
 					class="backdrop-blur-xs rounded-lg p-1.5 sm:p-2 w-full whitespace-nowrap border-none text-inherit cursor-pointer transition-all duration-200 text-xs sm:text-sm {(
 						activeTab === 'achievements'
 					) ?
-						'bg-accent-400 text-white'
+						'text-white'
 					:	'bg-white/5 hover:bg-white/10'}"
+					style={activeTab === 'achievements' ? `background-color: ${themeAccent ?? 'var(--color-accent-400)'};` : ''}
 					onclick={() => (activeTab = 'achievements')}
 				>
 					Achievements
@@ -78,7 +90,7 @@
 			<ActivePowerUps />
 		</div>
 		{#if !mobile.current}
-			<div class="grid-area-[buildings] pt-12">
+			<div class="grid-area-[buildings] pt-12" data-tutorial-target="buildings-tab">
 				<Buildings />
 			</div>
 		{/if}

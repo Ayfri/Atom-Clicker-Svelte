@@ -1,22 +1,26 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { Tween } from 'svelte/motion';
+	import type { Component } from 'svelte';
+	import { toastStore, type Toast, type ToastStyle } from '$stores/toasts.svelte';
+	import { Award, Coffee, Globe, Trophy, X } from '@lucide/svelte';
+	import Discord from '@components/icons/Discord.svelte';
+	import GitHub from '@components/icons/GitHub.svelte';
 	import { linear } from 'svelte/easing';
-	import { X } from 'lucide-svelte';
+	import { Tween } from 'svelte/motion';
+	import { onMount } from 'svelte';
 	import { fly } from 'svelte/transition';
-	import type { Toast as ToastType } from '$stores/toasts';
-	import { removeToast } from '$stores/toasts';
+
+	const namedIcons = { Award, Coffee, Discord, GitHub, Globe, Trophy } as const;
 
 	interface Props {
-		toast: ToastType;
-		config: any;
+		config: ToastStyle;
+		toast: Toast;
 	}
 
-	let { toast, config }: Props = $props();
+	let { config, toast }: Props = $props();
 
 	const progress = new Tween(0, {
 		duration: () => toast.duration,
-		easing: linear
+		easing: linear,
 	});
 
 	onMount(() => {
@@ -25,6 +29,15 @@
 		}
 	});
 
+	function resolveIcon(icon: Toast['icon'], fallback: Component): Component {
+		if (typeof icon === 'string') {
+			if (icon in namedIcons) return namedIcons[icon as keyof typeof namedIcons];
+			return fallback;
+		}
+		return icon ?? fallback;
+	}
+
+	const IconComponent = $derived(resolveIcon(toast.icon, config.icon));
 </script>
 
 <div
@@ -33,26 +46,25 @@
 >
 	<div class="flex w-full gap-4">
 		<!-- Icon Container -->
-		<div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white/5 border border-white/5">
-			{#if toast.icon}
-				<toast.icon size={24} class={config.iconColor} />
-			{:else}
-				<config.icon size={24} class={config.iconColor} />
-			{/if}
+		<div class="flex size-10 shrink-0 items-center justify-center border border-white/5 rounded-lg bg-white/5">
+			<IconComponent
+				class={config.iconColor}
+				size={24}
+			/>
 		</div>
 
 		<!-- Content Column -->
 		<div class="flex-1 min-w-0 pr-6">
-			<h3 class="font-bold tracking-tight {config.title} truncate">{toast.title}</h3>
-			<p class="mt-1 text-sm leading-relaxed text-neutral-300 whitespace-pre-line">
+			<h3 class="font-bold tracking-tight truncate {config.title}">{toast.title}</h3>
+			<p class="mt-1 leading-relaxed text-neutral-300 text-sm whitespace-pre-line">
 				{toast.message}
 			</p>
 			{#if toast.action && toast.actionLabel}
 				<button
-					class="mt-3 inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/90 transition-colors hover:bg-white/10"
+					class="mt-3 inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 font-semibold px-3 py-1.5 text-white/90 text-xs transition-colors hover:bg-white/10"
 					onclick={() => {
 						toast.action?.();
-						removeToast(toast.id);
+						toastStore.remove(toast.id);
 					}}
 				>
 					{toast.actionLabel}
@@ -63,7 +75,7 @@
 		<!-- Close Button -->
 		<button
 			class="absolute right-3 top-3 flex size-7 shrink-0 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-white/10 hover:text-white"
-			onclick={() => removeToast(toast.id)}
+			onclick={() => toastStore.remove(toast.id)}
 		>
 			<X size={16} />
 		</button>
@@ -71,9 +83,9 @@
 
 	<!-- Linear Progress -->
 	{#if !toast.is_infinite && toast.duration > 0}
-		<div class="absolute bottom-0 left-0 h-1 bg-white/5 w-full">
+		<div class="absolute bottom-0 left-0 h-1 w-full bg-white/5">
 			<div
-				class="h-full {config.progressBarColor} opacity-40"
+				class="h-full opacity-40 {config.progressBarColor}"
 				style="width: {progress.current}%"
 			></div>
 		</div>

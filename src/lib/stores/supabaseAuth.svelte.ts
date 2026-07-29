@@ -28,6 +28,13 @@ export class SupabaseAuth {
 			return;
 		}
 
+		// Check for localStorage availability (not available in Web Workers)
+		if (typeof localStorage === 'undefined') {
+			console.warn('SupabaseAuth: localStorage not available, skipping init');
+			this.loading = false;
+			return;
+		}
+
 		try {
 			this.supabase = createClient<Database>(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
 				auth: {
@@ -157,6 +164,17 @@ export class SupabaseAuth {
 			clearInterval(this.heartbeatInterval);
 			this.heartbeatInterval = null;
 		}
+	}
+
+	/**
+	 * Returns a fresh access token for authenticating requests to our own API routes.
+	 * Reads from Supabase (which auto-refreshes) rather than the cached session, so it stays valid.
+	 */
+	async getAccessToken(): Promise<string | null> {
+		if (!this.supabase) return null;
+		const { data: { session } } = await this.supabase.auth.getSession();
+		this.currentSession = session;
+		return session?.access_token ?? null;
 	}
 
 	async signInWithProvider(provider: Provider) {

@@ -6,7 +6,7 @@
 	import Changelog from '@components/settings/Changelog.svelte';
 	import Credits from '@components/settings/Credits.svelte';
 	import FeedbackForm from '@components/settings/Feedback.svelte';
-	import { User, Activity, Cloud, Info, MessageSquare, FileText, ChevronLeft } from 'lucide-svelte';
+	import { User, Activity, Cloud, Info, MessageSquare, FileText, ChevronLeft } from '@lucide/svelte';
 
 	interface Props {
 		onClose: () => void;

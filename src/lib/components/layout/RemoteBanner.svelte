@@ -2,7 +2,7 @@
 	import { remoteMessage } from '$stores/remoteMessage.svelte';
 	import { onMount, onDestroy } from 'svelte';
 	import { slide, fade } from 'svelte/transition';
-	import { X, Megaphone } from 'lucide-svelte';
+	import { X, Megaphone } from '@lucide/svelte';
 
 	onMount(() => {
 		remoteMessage.startPolling();

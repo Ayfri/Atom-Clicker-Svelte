@@ -1,12 +1,15 @@
 <script lang="ts">
 	import { PHOTON_UPGRADES, EXCITED_PHOTON_UPGRADES } from '$data/photonUpgrades';
 	import { gameManager } from '$helpers/GameManager.svelte';
-	import { CURRENCIES, CurrenciesTypes, type CurrencyName } from '$data/currencies';
+	import { CURRENCIES, CurrenciesTypes } from '$data/currencies';
+	import { photonUpgradesTab } from '$stores/photonUpgradesTab.svelte';
 	import Currency from '@components/ui/Currency.svelte';
+	import CurrencyLabel from '@components/ui/CurrencyLabel.svelte';
+	import HelpIcon from '@components/ui/HelpIcon.svelte';
 	import PhotonUpgradeItem from './PhotonUpgradeItem.svelte';
-	import { Eye, EyeOff } from 'lucide-svelte';
+	import { Eye, EyeOff } from '@lucide/svelte';
 
-	let selectedCurrency = $state<CurrencyName>(CurrenciesTypes.PHOTONS);
+	const selectedCurrency = $derived(photonUpgradesTab.selected);
 
 	const availableUpgrades = $derived.by(() => {
 		const upgrades = selectedCurrency === CurrenciesTypes.EXCITED_PHOTONS ? EXCITED_PHOTON_UPGRADES : PHOTON_UPGRADES;
@@ -26,9 +29,21 @@
 	const showExcitedTab = $derived(gameManager.currencies[CurrenciesTypes.EXCITED_PHOTONS].earnedAllTime > 0);
 </script>
 
-<div id="photon-upgrades" class="bg-black/10 backdrop-blur-xs rounded-lg p-3 flex flex-col gap-2 h-[600px] lg:h-[calc(100vh-180px)]">
+<div id="photon-upgrades" class="bg-black/10 backdrop-blur-xs rounded-lg p-3 flex flex-col gap-2 h-150 lg:h-[calc(100vh-180px)]">
 	<div class="header flex justify-between items-center gap-2">
-		<h2 class="text-sm lg:text-base text-realm-400">Photon Upgrades</h2>
+		<div class="flex items-center gap-1.5">
+			<h2 class="text-sm lg:text-base text-realm-400">Photon Upgrades</h2>
+			<HelpIcon position="bottom">
+				{#snippet content()}
+					<p class="text-xs text-white/80">
+						Spend <CurrencyLabel name={CurrenciesTypes.PHOTONS} /> on repeatable upgrades.
+						{#if showExcitedTab}
+							Rare <CurrencyLabel name={CurrenciesTypes.EXCITED_PHOTONS} /> unlock a separate tab with stronger effects.
+						{/if}
+					</p>
+				{/snippet}
+			</HelpIcon>
+		</div>
 		<button
 			class="flex items-center justify-center p-1 rounded-md transition-all duration-200 border {gameManager.settings.upgrades.displayAlreadyBought ? 'bg-realm-500/15 text-realm-400 border-realm-500/30 hover:bg-realm-500/25' : 'bg-transparent text-gray-400 border-white/10 hover:bg-white/5'}"
 			onclick={() => gameManager.settings.upgrades.displayAlreadyBought = !gameManager.settings.upgrades.displayAlreadyBought}
@@ -46,7 +61,7 @@
 		<button
 			class="currency-tab flex items-center bg-white/5 border-none rounded-lg cursor-pointer p-2 transition-all duration-200 hover:bg-white/10 active:bg-white/15 active:shadow-[0_0_10px_rgba(255,255,255,0.1)]"
 			class:active={selectedCurrency === CurrenciesTypes.PHOTONS}
-			onclick={() => selectedCurrency = CurrenciesTypes.PHOTONS}
+			onclick={() => photonUpgradesTab.selected = CurrenciesTypes.PHOTONS}
 			title={CURRENCIES[CurrenciesTypes.PHOTONS].name}
 		>
 			<Currency name={CurrenciesTypes.PHOTONS} />
@@ -55,7 +70,7 @@
 			<button
 				class="currency-tab flex items-center bg-white/5 border-none rounded-lg cursor-pointer p-2 transition-all duration-200 hover:bg-white/10 active:bg-white/15 active:shadow-[0_0_10px_rgba(255,255,255,0.1)]"
 				class:active={selectedCurrency === CurrenciesTypes.EXCITED_PHOTONS}
-				onclick={() => selectedCurrency = CurrenciesTypes.EXCITED_PHOTONS}
+				onclick={() => photonUpgradesTab.selected = CurrenciesTypes.EXCITED_PHOTONS}
 				title={CURRENCIES[CurrenciesTypes.EXCITED_PHOTONS].name}
 			>
 				<Currency name={CurrenciesTypes.EXCITED_PHOTONS} />

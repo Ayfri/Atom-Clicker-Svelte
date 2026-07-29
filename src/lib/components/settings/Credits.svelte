@@ -4,7 +4,7 @@
 	import Currency from '@components/ui/Currency.svelte';
 	import { CurrenciesTypes } from '$data/currencies';
 	import { gameManager } from '$helpers/GameManager.svelte';
-	import { SquareArrowOutUpRight } from 'lucide-svelte';
+	import { SquareArrowOutUpRight } from '@lucide/svelte';
 	import { fade } from 'svelte/transition';
 
 	// Check if achievements are already unlocked

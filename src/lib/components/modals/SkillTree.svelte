@@ -3,6 +3,7 @@
 	import { Background, Controls, type Edge, type Node, Position, SvelteFlow } from '@xyflow/svelte';
 	import { dev } from '$app/environment';
 	import SkillNode from '@components/game/SkillNode.svelte';
+	import HelpIcon from '@components/ui/HelpIcon.svelte';
 	import Modal from '@components/ui/Modal.svelte';
 	import { CurrenciesTypes } from '$data/currencies';
 	import { RealmTypes } from '$data/realms';
@@ -23,6 +24,7 @@
 
 	const nodeTypes = { skill: SkillNode };
 
+	let ready = $state(false);
 	let nodes = $state.raw<Node[]>([]);
 	let edges = $state.raw<Edge[]>([]);
 
@@ -43,7 +45,10 @@
 	let interval: ReturnType<typeof setInterval>;
 	onMount(() => {
 		updateTree();
-		interval = setInterval(updateTree, 300);
+		requestAnimationFrame(() => {
+			ready = true;
+		});
+		interval = setInterval(updateTree, 1000);
 	});
 	onDestroy(() => clearInterval(interval));
 
@@ -51,11 +56,6 @@
 		const skillList = Object.values(SKILL_UPGRADES);
 		const unlockedSkills = gameManager.skillUpgrades;
 
-		// A skill is visible if:
-		// 1. It is already unlocked
-		// 2. It has no requirements (root nodes)
-		// 3. Any of its requirements are already unlocked
-		// 4. Mode dev is enabled and showHiddenSkills is true
 		const visibleSkillIds = new Set(
 			skillList
 				.filter((skill) => {
@@ -66,6 +66,40 @@
 				})
 				.map((s) => s.id)
 		);
+
+		const srcHandles = new Map<string, Set<Position>>();
+		const tgtHandles = new Map<string, Set<Position>>();
+		for (const id of visibleSkillIds) {
+			srcHandles.set(id, new Set());
+			tgtHandles.set(id, new Set());
+		}
+
+		const edgeList: Edge[] = [];
+		for (const skill of skillList) {
+			if (!visibleSkillIds.has(skill.id)) continue;
+			for (const requireId of (skill.requires ?? [])) {
+				if (!visibleSkillIds.has(requireId)) continue;
+				const req = SKILL_UPGRADES[requireId];
+				const diff = { x: skill.position.x - req.position.x, y: skill.position.y - req.position.y };
+				const isHoriz = Math.abs(diff.x) > Math.abs(diff.y);
+				const [srcDir, tgtDir] = isHoriz
+					? diff.x > 0 ? [Position.Right, Position.Left] : [Position.Left, Position.Right]
+					: diff.y > 0 ? [Position.Bottom, Position.Top] : [Position.Top, Position.Bottom];
+
+				srcHandles.get(requireId)!.add(srcDir);
+				tgtHandles.get(skill.id)!.add(tgtDir);
+
+				edgeList.push({
+					id: `${requireId}-${skill.id}`,
+					source: requireId,
+					target: skill.id,
+					sourceHandle: `${requireId}-src-${srcDir}`,
+					targetHandle: `${skill.id}-tgt-${tgtDir}`,
+					type: 'smoothstep',
+					class: canUnlockSkill(skill) || unlockedSkills.includes(skill.id) ? 'unlocking' : ''
+				});
+			}
+		}
 
 		nodes = skillList
 			.filter((skill) => visibleSkillIds.has(skill.id))
@@ -79,54 +113,55 @@
 					(currency === CurrenciesTypes.EXCITED_PHOTONS && gameManager.realms[RealmTypes.PHOTONS].unlocked) ||
 					(currency === CurrenciesTypes.HIGGS_BOSON && gameManager.realms[RealmTypes.PHOTONS].unlocked);
 
+				const unlocked = unlockedSkills.includes(skill.id);
+				const effectBreakdown = unlocked && skill.effects.length > 0
+					? skill.effects.map(effect => {
+						const result = effect.apply(1, gameManager);
+						return {
+							description: effect.description,
+							percentChange: (result - 1) * 100,
+							type: effect.type,
+						};
+					})
+					: null;
+
 				return {
 					id: skill.id,
 					type: 'skill',
 					position: { ...skill.position },
+					width: 288,
+					height: 144,
 					data: {
 						...skill,
 						available: canUnlockSkill(skill),
 						currencyUnlocked,
-						unlocked: unlockedSkills.includes(skill.id)
+						effectBreakdown,
+						sourceHandles: Array.from(srcHandles.get(skill.id) ?? []),
+						targetHandles: Array.from(tgtHandles.get(skill.id) ?? []),
+						unlocked,
 					}
 				};
 			});
 
-		edges = skillList
-			.filter((skill) => visibleSkillIds.has(skill.id))
-			.flatMap((skill) =>
-				(skill.requires ?? [])
-					.filter((reqId) => visibleSkillIds.has(reqId))
-					.map<Edge>((requireId) => {
-						const req = SKILL_UPGRADES[requireId];
-						const diff = { x: skill.position.x - req.position.x, y: skill.position.y - req.position.y };
-						const isHoriz = Math.abs(diff.x) > Math.abs(diff.y);
-						const [srcDir, tgtDir] = isHoriz
-							? diff.x > 0
-								? [Position.Right, Position.Left]
-								: [Position.Left, Position.Right]
-							: diff.y > 0
-								? [Position.Bottom, Position.Top]
-								: [Position.Top, Position.Bottom];
-
-						return {
-							id: `${requireId}-${skill.id}`,
-							source: requireId,
-							target: skill.id,
-							sourceHandle: `${requireId}-${srcDir}`,
-							targetHandle: `${skill.id}-${tgtDir}`,
-							type: 'smoothstep',
-							class: canUnlockSkill(skill) || unlockedSkills.includes(skill.id) ? 'unlocking' : ''
-						};
-					})
-			);
+		edges = edgeList;
 	}
 </script>
 
 <Modal {onClose} containerClass="m-2 !p-0 rounded-xl" width="lg">
 	{#snippet header()}
 		<div class="flex w-full items-center justify-between gap-4 pr-10">
-			<h2 class="text-2xl font-bold text-white">Skill Tree</h2>
+			<div class="flex items-center gap-2">
+				<h2 class="text-2xl font-bold text-white">Skill Tree</h2>
+				<HelpIcon position="bottom">
+					{#snippet content()}
+						<p class="text-xs text-white/80">
+							Skill points are earned by leveling up buildings. Spend them here to unlock nodes that grant permanent passive
+							bonuses or new features. Nodes require their prerequisites to be unlocked first, and the currency shown on each node
+							is the cost to unlock it.
+						</p>
+					{/snippet}
+				</HelpIcon>
+			</div>
 			{#if dev}
 				<button
 					class="rounded-lg bg-accent-800 px-3 py-1 text-sm font-medium text-white transition-colors hover:bg-accent-700 active:bg-accent-600"
@@ -141,29 +176,35 @@
 		</div>
 	{/snippet}
 
-	<SvelteFlow
-		bind:nodes
-		bind:edges
-		{nodeTypes}
-		colorMode="dark"
-		minZoom={0.3}
-		maxZoom={2}
-		initialViewport={{ x: mobile.current ? 100 : 500, y: 200, zoom: 0.8 }}
-		translateExtent={[[-10000, -10000], [10000, 10000]]}
-		elementsSelectable={false}
-		nodesConnectable={false}
-		nodesDraggable={false}
-		panOnScroll={false}
-		preventScrolling={true}
-		zoomOnPinch={true}
-		zoomOnScroll={true}
-		onnodeclick={({ node }) => unlockSkill(node.data as unknown as SkillUpgrade)}
-	>
-		<Background gap={35} lineWidth={1} />
-		{#if !mobile.current}
-			<Controls showZoom={true} showFitView={false} showLock={false} position="bottom-right" />
-		{/if}
-	</SvelteFlow>
+	{#if ready}
+		<SvelteFlow
+			{nodes}
+			{edges}
+			{nodeTypes}
+			colorMode="dark"
+			minZoom={0.3}
+			maxZoom={2}
+			initialViewport={{ x: mobile.current ? 100 : 500, y: 200, zoom: 0.8 }}
+			translateExtent={[[-10000, -10000], [10000, 10000]]}
+			elementsSelectable={false}
+			nodesConnectable={false}
+			nodesDraggable={false}
+			panOnScroll={false}
+			preventScrolling={true}
+			zoomOnPinch={true}
+			zoomOnScroll={true}
+			onnodeclick={({ node }) => unlockSkill(node.data as unknown as SkillUpgrade)}
+		>
+			<Background gap={35} lineWidth={1} />
+			{#if !mobile.current}
+				<Controls showZoom={true} showFitView={false} showLock={false} position="bottom-right" />
+			{/if}
+		</SvelteFlow>
+	{:else}
+		<div class="flex h-full min-h-96 items-center justify-center">
+			<div class="h-8 w-8 animate-spin rounded-full border-2 border-accent-400 border-t-transparent"></div>
+		</div>
+	{/if}
 </Modal>
 
 <style>
