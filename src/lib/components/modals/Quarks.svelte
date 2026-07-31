@@ -283,59 +283,75 @@
 				{#each REALM_ORDER as realmId (realmId)}
 					{@const realmThemes = themesForRealm(realmId)}
 					{#if realmThemes.length > 0}
-						<div class="flex flex-col gap-2">
-							<h4 class="text-sm font-semibold text-white/60">
-								{realmTitle(realmId)}
-								{#if !isRealmUnlocked(realmId)}<Lock size={12} class="inline" />{/if}
-							</h4>
-							<div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
-								{#each realmThemes as item (item.id)}
-									{@const owned = quarksManager.entitlements.includes(item.id)}
-									{@const equipped = quarksManager.equippedThemes[realmId] === item.id}
-									{@const purchasePending = quarksManager.isActionPending(`purchase:${item.id}`)}
-									{@const equipPending = quarksManager.isActionPending(`equip-theme:${realmId}`)}
-									<div
-										class="flex flex-col gap-2 rounded-lg border p-3 transition-colors {equipped
-											? 'border-emerald-300 bg-emerald-500/15 ring-1 ring-emerald-300/30'
-											: owned
-												? 'border-emerald-400/60 bg-emerald-500/8'
-												: 'border-white/10 bg-accent-800/50'}"
-									>
+						{@const unlocked = isRealmUnlocked(realmId)}
+						<div class="relative">
+							{#if !unlocked}
+								<div class="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-black/30 p-4 text-center">
+									<span class="flex items-center gap-2 text-sm font-medium text-white/80">
+										<Lock size={14} class="shrink-0" /> Progress further in the game to reveal
+									</span>
+								</div>
+							{/if}
+							<div
+								class="flex flex-col gap-2"
+								class:blur-md={!unlocked}
+								class:pointer-events-none={!unlocked}
+								class:select-none={!unlocked}
+								aria-hidden={!unlocked}
+							>
+								<h4 class="flex items-center gap-1 text-sm font-semibold text-white/60">
+									{realmTitle(realmId)}
+									{#if !unlocked}<Lock size={12} />{/if}
+								</h4>
+								<div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+									{#each realmThemes as item (item.id)}
+										{@const owned = quarksManager.entitlements.includes(item.id)}
+										{@const equipped = quarksManager.equippedThemes[realmId] === item.id}
+										{@const purchasePending = quarksManager.isActionPending(`purchase:${item.id}`)}
+										{@const equipPending = quarksManager.isActionPending(`equip-theme:${realmId}`)}
 										<div
-											class="h-12 rounded-lg"
-											style="background: linear-gradient(135deg, {item.theme?.accent}, {item.theme?.accentSecondary ?? item.theme?.accent})"
-										></div>
-										<div class="flex items-center justify-between gap-2">
-											<span class="font-medium text-white">{item.name}</span>
-											<span class="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold {equipped ? 'bg-emerald-300 text-emerald-950' : owned ? 'bg-emerald-400/20 text-emerald-200' : 'bg-white/8 text-white/45'}">
-												{#if owned}<Check size={12} />{/if}
-												{equipped ? 'Equipped' : owned ? 'Owned' : 'Not owned'}
-											</span>
+											class="flex flex-col gap-2 rounded-lg border p-3 transition-colors {equipped
+												? 'border-emerald-300 bg-emerald-500/15 ring-1 ring-emerald-300/30'
+												: owned
+													? 'border-emerald-400/60 bg-emerald-500/8'
+													: 'border-white/10 bg-accent-800/50'}"
+										>
+											<div
+												class="h-12 rounded-lg"
+												style="background: linear-gradient(135deg, {item.theme?.accent}, {item.theme?.accentSecondary ?? item.theme?.accent})"
+											></div>
+											<div class="flex items-center justify-between gap-2">
+												<span class="font-medium text-white">{item.name}</span>
+												<span class="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold {equipped ? 'bg-emerald-300 text-emerald-950' : owned ? 'bg-emerald-400/20 text-emerald-200' : 'bg-white/8 text-white/45'}">
+													{#if owned}<Check size={12} />{/if}
+													{equipped ? 'Equipped' : owned ? 'Owned' : 'Not owned'}
+												</span>
+											</div>
+											<p class="text-sm text-white/60">{item.description}</p>
+											<div class="flex items-center justify-between">
+												<span class="flex items-center gap-1 text-sm text-white/60">{@render quarkAmount(item.cost)}</span>
+												{#if owned}
+													<button
+														class="cursor-pointer rounded-lg px-3 py-1 text-sm font-medium transition-colors {equipped ? 'bg-white/10 text-white/50' : 'bg-accent-600 text-white hover:bg-accent-500'}"
+														disabled={equipPending}
+														onclick={() => quarksManager.equipTheme(realmId, equipped ? null : item.id)}
+													>
+														{equipPending ? 'Applying...' : equipped ? 'Equipped' : 'Equip'}
+													</button>
+												{:else}
+													<button
+														class="cursor-pointer flex items-center gap-1 rounded-lg bg-accent-600 px-3 py-1 text-sm font-medium text-white transition-colors hover:bg-accent-500 disabled:cursor-not-allowed disabled:opacity-30"
+														disabled={quarksManager.balance < item.cost || !supabaseAuth.isAuthenticated || purchasePending}
+														onclick={() => quarksManager.purchase(item.id)}
+													>
+														{supabaseAuth.isAuthenticated ? purchasePending ? 'Buying...' : 'Buy' : ''}
+														{#if !supabaseAuth.isAuthenticated}<Lock size={14} />{/if}
+													</button>
+												{/if}
+											</div>
 										</div>
-										<p class="text-sm text-white/60">{item.description}</p>
-										<div class="flex items-center justify-between">
-											<span class="flex items-center gap-1 text-sm text-white/60">{@render quarkAmount(item.cost)}</span>
-											{#if owned}
-												<button
-													class="cursor-pointer rounded-lg px-3 py-1 text-sm font-medium transition-colors {equipped ? 'bg-white/10 text-white/50' : 'bg-accent-600 text-white hover:bg-accent-500'}"
-													disabled={equipPending}
-													onclick={() => quarksManager.equipTheme(realmId, equipped ? null : item.id)}
-												>
-													{equipPending ? 'Applying...' : equipped ? 'Equipped' : 'Equip'}
-												</button>
-											{:else}
-												<button
-													class="cursor-pointer flex items-center gap-1 rounded-lg bg-accent-600 px-3 py-1 text-sm font-medium text-white transition-colors hover:bg-accent-500 disabled:cursor-not-allowed disabled:opacity-30"
-													disabled={quarksManager.balance < item.cost || !supabaseAuth.isAuthenticated || purchasePending}
-													onclick={() => quarksManager.purchase(item.id)}
-												>
-													{supabaseAuth.isAuthenticated ? purchasePending ? 'Buying...' : 'Buy' : ''}
-													{#if !supabaseAuth.isAuthenticated}<Lock size={14} />{/if}
-												</button>
-											{/if}
-										</div>
-									</div>
-								{/each}
+									{/each}
+								</div>
 							</div>
 						</div>
 					{/if}
