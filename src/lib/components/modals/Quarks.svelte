@@ -283,12 +283,27 @@
 				{#each REALM_ORDER as realmId (realmId)}
 					{@const realmThemes = themesForRealm(realmId)}
 					{#if realmThemes.length > 0}
-						<div class="flex flex-col gap-2">
-							<h4 class="text-sm font-semibold text-white/60">
-								{realmTitle(realmId)}
-								{#if !isRealmUnlocked(realmId)}<Lock size={12} class="inline" />{/if}
-							</h4>
-							<div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+						{@const unlocked = isRealmUnlocked(realmId)}
+						<div class="relative">
+							{#if !unlocked}
+								<div class="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-black/30 p-4 text-center">
+									<span class="flex items-center gap-2 text-sm font-medium text-white/80">
+										<Lock size={14} class="shrink-0" /> Progress further in the game to reveal
+									</span>
+								</div>
+							{/if}
+							<div
+								class="flex flex-col gap-2"
+								class:blur-md={!unlocked}
+								class:pointer-events-none={!unlocked}
+								class:select-none={!unlocked}
+								aria-hidden={!unlocked}
+							>
+								<h4 class="flex items-center gap-1 text-sm font-semibold text-white/60">
+									{realmTitle(realmId)}
+									{#if !unlocked}<Lock size={12} />{/if}
+								</h4>
+								<div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
 								{#each realmThemes as item (item.id)}
 									{@const owned = quarksManager.entitlements.includes(item.id)}
 									{@const equipped = quarksManager.equippedThemes[realmId] === item.id}
@@ -336,6 +351,7 @@
 										</div>
 									</div>
 								{/each}
+								</div>
 							</div>
 						</div>
 					{/if}
