@@ -571,5 +571,14 @@ export function migrateSavedState(savedState: unknown): GameState | undefined {
 		state.version = nextVersion;
 	}
 
+	if (Array.isArray(state.activePowerUps)) {
+		const seenIds = new Set<string>();
+		state.activePowerUps = state.activePowerUps.filter((p: any) => {
+			if (!p?.id || seenIds.has(p.id)) return false;
+			seenIds.add(p.id);
+			return true;
+		});
+	}
+
 	return state;
 }
