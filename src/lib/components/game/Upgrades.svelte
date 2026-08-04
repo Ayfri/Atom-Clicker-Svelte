@@ -131,7 +131,7 @@
 		{/if}
 	</div>
 
-	<div class="flex-1 overflow-y-auto px-1 custom-scrollbar">
+	<div id="upgrades-list" class="flex-1 overflow-y-auto px-1 custom-scrollbar">
 		<div class="grid gap-1.5">
 			{#each availableUpgrades as upgrade (upgrade.id)}
 				{@const isBought = boughtUpgrades.has(upgrade.id)}
