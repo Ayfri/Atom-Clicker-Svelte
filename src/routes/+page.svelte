@@ -162,6 +162,7 @@
 						) ?
 							'bg-accent-500/60 border-accent-400/50'
 						:	'bg-white/5 hover:bg-white/10'}"
+						id="realm-{realm.id}"
 						onclick={() => realmManager.selectRealm(realm.id)}
 						title="{realm.title} - {formatNumber(realmManager.realmValues[realm.id] ?? 0)} {realm.currency.name.toLowerCase()}"
 					>
