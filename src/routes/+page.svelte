@@ -150,14 +150,16 @@
 	<AutoSaveIndicator />
 
 	{#if realmManager.availableRealms.length > 1}
+		<!-- The panel itself is click-through: at phone widths it sits over the top of the nav grid, and its
+		     own padding would otherwise swallow taps meant for the button underneath. -->
 		<div
-			class="fixed right-4 z-30 bg-black/10 backdrop-blur-xs border border-white/10 rounded-lg p-1 transition-all duration-300"
+			class="fixed right-4 z-30 bg-black/10 backdrop-blur-xs border border-white/10 rounded-lg p-1 transition-all duration-300 pointer-events-none"
 			style="top: {remoteMessage.message && remoteMessage.isVisible ? 'calc(1.5rem + 5rem)' : '5rem'}"
 		>
 			<div class="flex flex-col gap-1">
 				{#each realmManager.availableRealms as realm (realm.id)}
 					<button
-						class="flex items-center gap-2 px-2 py-1.5 rounded-sm transition-all duration-200 hover:scale-105 {(
+						class="flex items-center gap-2 px-2 py-1.5 rounded-sm transition-all duration-200 hover:scale-105 pointer-events-auto {(
 							realmManager.selectedRealmId === realm.id
 						) ?
 							'bg-accent-500/60 border-accent-400/50'
