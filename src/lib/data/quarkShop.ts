@@ -13,11 +13,15 @@ export interface ThemeDefinition {
 
 export type BannerPattern =
 	| 'aurora'
+	| 'beam'
 	| 'cells'
 	| 'chevrons'
+	| 'cloud'
 	| 'constellation'
 	| 'hazard'
 	| 'lattice'
+	| 'nucleus'
+	| 'orbitals'
 	| 'rays'
 	| 'rings'
 	| 'stripes'
@@ -388,6 +392,38 @@ export const QUARK_SHOP: Record<string, QuarkShopItem> = {
 		description: 'A dark, composite banner for a Hadron jet.',
 		id: 'banner_hadron',
 		name: 'Hadron Jet',
+		type: 'banner',
+	},
+	banner_atom: {
+		banner: { gradient: ['#1d4ed8', '#132a5e', '#080c18'], pattern: 'orbitals' },
+		cost: 40,
+		description: 'A blue banner tracing the electron shells of a whole atom.',
+		id: 'banner_atom',
+		name: 'Atom',
+		type: 'banner',
+	},
+	banner_proton: {
+		banner: { gradient: ['#a16207', '#533a06', '#141005'], pattern: 'nucleus' },
+		cost: 40,
+		description: 'A golden banner showing the three quarks bound inside a proton.',
+		id: 'banner_proton',
+		name: 'Proton',
+		type: 'banner',
+	},
+	banner_electron: {
+		banner: { gradient: ['#166534', '#0b3320', '#06120c'], pattern: 'cloud' },
+		cost: 40,
+		description: 'A green banner made of the probability cloud of an electron.',
+		id: 'banner_electron',
+		name: 'Electron',
+		type: 'banner',
+	},
+	banner_photon: {
+		banner: { gradient: ['#7e22ce', '#3f1470', '#0d0818'], pattern: 'beam' },
+		cost: 40,
+		description: 'A violet banner carrying a photon travelling as a wave.',
+		id: 'banner_photon',
+		name: 'Photon',
 		type: 'banner',
 	},
 };
