@@ -8,6 +8,7 @@
 	import Value from '@components/ui/Value.svelte';
 	import { getUpgradesWithEffects } from '$helpers/effects';
 	import { autoUpgradeManager } from '$stores/autoUpgrade.svelte';
+	import { clock } from '$stores/clock.svelte';
 	import CurrencyLabel from '@components/ui/CurrencyLabel.svelte';
 	import HelpIcon from '@components/ui/HelpIcon.svelte';
 	import { fly, scale } from 'svelte/transition';
@@ -73,12 +74,26 @@
 					{/if}
 				</button>
 				{#if hasAutomation}
+					{#snippet autoUpgradeTooltip()}
+						<div class="flex flex-col gap-1">
+							<p class="text-xs text-white/80">Automatically buys the cheapest affordable upgrade.</p>
+							{#if gameManager.settings.automation.upgrades && autoUpgradeManager.autoUpgradeInterval}
+								<p class="text-xs text-white/60">
+									Checks every {(autoUpgradeManager.autoUpgradeInterval / 1000).toFixed(1)}s
+									{#if autoUpgradeManager.nextFireTime}
+										- next in {Math.max(0, (autoUpgradeManager.nextFireTime - clock.now) / 1000).toFixed(1)}s
+									{/if}
+								</p>
+							{/if}
+						</div>
+					{/snippet}
 					<AutoButton
 						onClick={(e) => {
 							e.stopPropagation();
 							gameManager.toggleUpgradeAutomation();
 						}}
 						toggled={gameManager.settings.automation.upgrades}
+						tooltipContent={autoUpgradeTooltip}
 					/>
 				{/if}
 			</div>

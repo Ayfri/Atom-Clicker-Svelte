@@ -80,6 +80,7 @@
 					<AutoButton
 						onClick={() => gameManager.toggleAutoClick()}
 						toggled={gameManager.settings.automation.autoClick}
+						tooltipContent={autoClickTooltip}
 					/>
 				</div>
 			{/if}
@@ -139,6 +140,16 @@
 		<AutoButton
 			onClick={() => gameManager.toggleAutoClick()}
 			toggled={gameManager.settings.automation.autoClick}
+			tooltipContent={autoClickTooltip}
 		/>
 	{/if}
 </div>
+
+{#snippet autoClickTooltip()}
+	<div class="flex flex-col gap-1">
+		<p class="text-xs text-white/80">Automatically clicks the atom for you, continuously.</p>
+		{#if gameManager.settings.automation.autoClick && gameManager.autoClicksPerSecond > 0}
+			<p class="text-xs text-white/60">Currently clicking {formatNumber(gameManager.autoClicksPerSecond, 1)} times per second.</p>
+		{/if}
+	</div>
+{/snippet}
