@@ -5,7 +5,6 @@
 	import {createClickParticleSync, createClickTextParticleSync, type Particle} from '$helpers/particles';
 	import {formatNumber} from '$lib/utils';
 	import {shouldCreateParticles, addParticles} from '$stores/canvas';
-	import {app} from '$stores/pixi';
 	import { CurrenciesTypes } from '$data/currencies';
 
 	let atomElement = $state<HTMLButtonElement>();
@@ -41,7 +40,7 @@
 		// TODO: Re-add main atom click animation
 
 		// Only create particles if graphics support is available
-		if (shouldCreateParticles() && $app?.canvas) {
+		if (shouldCreateParticles()) {
 			const newParticles: Particle[] = [];
 			const textParticle = createClickTextParticleSync(
 				event.clientX + Math.random() * 10,

@@ -1,5 +1,8 @@
 # What's new 12-08-2026
 
+- **Smoother Photon Realm**: The realm now draws its photons on a single canvas, which runs much faster on older phones. It looks and plays exactly the same.
+- **Swipe to Collect**: With Hover Collection unlocked, you can now slide your finger across the Photon Realm on mobile to collect photons, just like hovering on desktop.
+- **Lighter Game**: Click particles no longer need a heavy graphics library, so the game downloads less and starts faster, especially on older devices.
 - **Design**: Every achievement/upgrades now shows its own icon.
 - **New Banners**: Four new leaderboard banners in the Quark Shop: Atom, Proton, Electron and Photon.
 - **New Quark Shop Items**: Stable Currency Boosts (60 Quarks) keeps your Currency Boosts through prestige, and Stable Skill Tree (80 Quarks) keeps your Skill Tree entries through prestige.
