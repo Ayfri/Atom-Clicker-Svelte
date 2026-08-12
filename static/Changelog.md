@@ -1,3 +1,7 @@
+# What's new 12-08-2026
+
+- **New Quark Shop Items**: Stable Currency Boosts (60 Quarks) keeps your Currency Boosts through prestige, and Stable Skill Tree (80 Quarks) keeps your Skill Tree entries through prestige.
+
 # What's new 29-07-2026
 
 - **Quarks & Daily Quests**: Earn this rare currency from daily goals and achievements. Quarks persist through prestige resets.

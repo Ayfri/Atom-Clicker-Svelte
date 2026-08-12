@@ -118,6 +118,20 @@ export const QUARK_SHOP: Record<string, QuarkShopItem> = {
 		name: 'Extended Power-Ups',
 		type: 'convenience',
 	},
+	convenience_keep_currency_boosts: {
+		cost: 60,
+		description: 'Keeps your Currency Boosts through Protonise and Electronize.',
+		id: 'convenience_keep_currency_boosts',
+		name: 'Stable Currency Boosts',
+		type: 'convenience',
+	},
+	convenience_keep_skill_tree: {
+		cost: 80,
+		description: 'Keeps your Skill Tree entries through Protonise and Electronize.',
+		id: 'convenience_keep_skill_tree',
+		name: 'Stable Skill Tree',
+		type: 'convenience',
+	},
 	theme_atoms_amethyst: {
 		cost: 25,
 		description: 'Recolors the Atoms Realm with a violet accent.',
