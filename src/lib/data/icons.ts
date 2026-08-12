@@ -19,7 +19,7 @@ import HiggsBosonIcon from '@components/icons/HiggsBoson.svelte';
 import PhotonIcon from '@components/icons/Photon.svelte';
 import ProtonIcon from '@components/icons/Proton.svelte';
 import QuarkIcon from '@components/icons/Quark.svelte';
-import { Activity, ArrowBigUp, Award, Building2, Clock, Coffee, FileText, Gauge, Globe, Layers, MousePointerClick, Network, Radiation, Sparkles, TrendingUp, Trophy, Zap } from '@lucide/svelte';
+import { Activity, ArrowBigUp, Award, Building2, Clock, Coffee, FileText, Gauge, Globe, Layers, Milestone, MousePointerClick, Network, Radiation, Sparkles, TrendingUp, Trophy, Zap } from '@lucide/svelte';
 
 /** Every icon component in the game accepts at least these two props, which is all `IconStack` needs. */
 export type IconComponent = Component<{ color?: string; size?: number }>;
@@ -47,6 +47,7 @@ export const ICONS = {
 	layers: Layers,
 	level: ArrowBigUp,
 	microorganism: MicroorganismIcon,
+	milestone: Milestone,
 	molecule: MoleculeIcon,
 	nanostructure: NanostructureIcon,
 	neutronStar: NeutronStarIcon,

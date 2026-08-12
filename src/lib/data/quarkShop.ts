@@ -1,4 +1,5 @@
 import { RealmTypes, type RealmType } from '$data/realms';
+import type { IconStackSpec } from '$helpers/iconStacks';
 import type { Effect } from '$lib/types';
 
 export interface ThemeDefinition {
@@ -34,6 +35,7 @@ export interface QuarkShopItem {
 	cost: number;
 	description: string;
 	effects?: Effect[]; // boosts and convenience items only
+	iconStack?: IconStackSpec; // boosts and convenience items only
 	id: string;
 	name: string;
 	theme?: ThemeDefinition; // themes only
@@ -44,6 +46,7 @@ export const QUARK_SHOP: Record<string, QuarkShopItem> = {
 	convenience_third_daily_quest: {
 		cost: 100,
 		description: 'Adds a third daily quest while owned.',
+		iconStack: { icon: 'milestone' },
 		id: 'convenience_third_daily_quest',
 		name: 'Third Daily Quest',
 		type: 'convenience',
@@ -58,6 +61,7 @@ export const QUARK_SHOP: Record<string, QuarkShopItem> = {
 				type: 'click',
 			},
 		],
+		iconStack: { icon: 'click' },
 		id: 'boost_click_power',
 		name: 'Heavy Click Boost',
 		type: 'boost',
@@ -72,6 +76,7 @@ export const QUARK_SHOP: Record<string, QuarkShopItem> = {
 				type: 'global',
 			},
 		],
+		iconStack: { icon: 'trendingUp' },
 		id: 'boost_global_production',
 		name: 'Global Production Boost',
 		type: 'boost',
@@ -86,6 +91,7 @@ export const QUARK_SHOP: Record<string, QuarkShopItem> = {
 				type: 'xp_gain',
 			},
 		],
+		iconStack: { icon: 'level' },
 		id: 'boost_xp_gain',
 		name: 'Experience Boost',
 		type: 'boost',
@@ -100,6 +106,7 @@ export const QUARK_SHOP: Record<string, QuarkShopItem> = {
 				type: 'auto_speed',
 			},
 		],
+		iconStack: { icon: 'speed' },
 		id: 'convenience_auto_buy_speed',
 		name: 'Faster Auto-Buyers',
 		type: 'convenience',
@@ -114,6 +121,7 @@ export const QUARK_SHOP: Record<string, QuarkShopItem> = {
 				type: 'power_up_duration',
 			},
 		],
+		iconStack: { icon: 'offline' },
 		id: 'convenience_power_up_duration',
 		name: 'Extended Power-Ups',
 		type: 'convenience',
@@ -121,6 +129,7 @@ export const QUARK_SHOP: Record<string, QuarkShopItem> = {
 	convenience_keep_currency_boosts: {
 		cost: 60,
 		description: 'Keeps your Currency Boosts through Protonise and Electronize.',
+		iconStack: { icon: 'stabilityMeter' },
 		id: 'convenience_keep_currency_boosts',
 		name: 'Stable Currency Boosts',
 		type: 'convenience',
@@ -128,6 +137,7 @@ export const QUARK_SHOP: Record<string, QuarkShopItem> = {
 	convenience_keep_skill_tree: {
 		cost: 80,
 		description: 'Keeps your Skill Tree entries through Protonise and Electronize.',
+		iconStack: { icon: 'skillTreeMaster' },
 		id: 'convenience_keep_skill_tree',
 		name: 'Stable Skill Tree',
 		type: 'convenience',

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Quark from '@components/icons/Quark.svelte';
 	import HelpIcon from '@components/ui/HelpIcon.svelte';
+	import IconStack from '@components/ui/IconStack.svelte';
 	import LeaderboardRow from '@components/ui/LeaderboardRow.svelte';
 	import Modal from '@components/ui/Modal.svelte';
 	import QuarkLabel from '@components/ui/QuarkLabel.svelte';
@@ -245,7 +246,12 @@
 						{@const owned = quarksManager.entitlements.includes(item.id)}
 						<div class="flex flex-col gap-2 rounded-lg bg-accent-800/50 p-3">
 							<div class="flex items-center justify-between">
-								<span class="font-medium text-white">{item.name}</span>
+								<span class="flex items-center gap-2 font-medium text-white">
+									{#if item.iconStack}
+										<IconStack color={item.iconStack.color} count={item.iconStack.count} icon={item.iconStack.icon} label={item.iconStack.label} size={22} />
+									{/if}
+									{item.name}
+								</span>
 								<span class="flex items-center gap-1 text-sm text-white/60">{@render quarkAmount(item.cost)}</span>
 							</div>
 							<p class="text-sm text-white/60">{item.description}</p>
