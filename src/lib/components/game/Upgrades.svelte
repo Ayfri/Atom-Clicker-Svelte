@@ -2,6 +2,7 @@
 	import {CURRENCIES, CurrenciesTypes, type CurrencyName} from '$data/currencies';
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { UPGRADES } from '$data/upgrades';
+	import { ICONS } from '$data/icons';
 	import AutoButton from '@components/ui/AutoButton.svelte';
 	import Currency from '@components/ui/Currency.svelte';
 	import Value from '@components/ui/Value.svelte';
@@ -121,6 +122,7 @@
 				{@const isBought = boughtUpgrades.has(upgrade.id)}
 				{@const affordable = gameManager.canAfford(upgrade.cost) && !isBought}
 				{@const wasAutoPurchased = autoUpgradeManager.recentlyAutoPurchased.has(upgrade.id)}
+				{@const Icon = upgrade.icon ? ICONS[upgrade.icon] : null}
 				<button
 					class="relative text-start rounded-lg p-2 transition-all duration-200 border
 					{isBought
@@ -142,6 +144,9 @@
 						</div>
 					{/if}
 					<h3 class="{isBought ? 'text-blue-400' : 'text-blue-400'} text-sm flex items-center gap-2">
+						{#if Icon}
+							<Icon size={14} color="currentColor" />
+						{/if}
 						{upgrade.name}
 						{#if isBought}
 							<span class="text-[10px] uppercase font-bold text-white/50 bg-white/10 px-1 rounded-sm">Bought</span>

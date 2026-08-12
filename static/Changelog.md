@@ -1,5 +1,6 @@
 # What's new 12-08-2026
 
+- **Design**: Every achievement/upgrades now shows its own icon.
 - **New Quark Shop Items**: Stable Currency Boosts (60 Quarks) keeps your Currency Boosts through prestige, and Stable Skill Tree (80 Quarks) keeps your Skill Tree entries through prestige.
 
 # What's new 29-07-2026

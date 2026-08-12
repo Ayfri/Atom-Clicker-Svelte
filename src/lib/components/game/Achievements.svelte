@@ -5,6 +5,7 @@
 	import {isQuarkAchievement} from '$data/quarkAchievements';
 	import Quark from '@components/icons/Quark.svelte';
 	import HelpIcon from '@components/ui/HelpIcon.svelte';
+	import IconStack from '@components/ui/IconStack.svelte';
 	import QuarkLabel from '@components/ui/QuarkLabel.svelte';
 
 	const unlockedAchievements = $derived(Object.entries(ACHIEVEMENTS).map(([name, achievement]) => ({
@@ -109,8 +110,19 @@
 					? 'bg-[#486f9b]'
 					: 'cursor-not-allowed bg-white/5 opacity-50'}"
 			>
-				<!-- <div class="icon">{achievement.icon}</div> -->
-				<div>
+				<!-- Hidden achievements fall back to a neutral icon, otherwise the stack would spoil what they are about. -->
+				{#if hidden && !achievement.unlocked}
+					<IconStack color="rgba(255, 255, 255, 0.35)" icon="award" label="?" size={34} />
+				{:else if achievement.iconStack}
+					<IconStack
+						color={achievement.iconStack.color}
+						count={achievement.iconStack.count}
+						icon={achievement.iconStack.icon}
+						label={achievement.iconStack.label}
+						size={34}
+					/>
+				{/if}
+				<div class="min-w-0">
 					<h3 class="m-0 font-semibold text-sm">
 						{hidden && !achievement.unlocked ? '???' : achievement.name}
 					</h3>

@@ -918,7 +918,7 @@ export class GameManager {
 					title: 'Achievement unlocked',
 					message: `${achievement.name}\n${achievement.description}`,
 					duration: 10000,
-					icon: achievement.icon || 'Trophy',
+					icon: achievement.iconStack ?? achievement.icon ?? 'Trophy',
 				});
 			}
 			this.onAchievementUnlocked?.(achievementId);
