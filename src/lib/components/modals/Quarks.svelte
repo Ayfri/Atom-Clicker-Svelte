@@ -6,6 +6,7 @@
 	import Modal from '@components/ui/Modal.svelte';
 	import QuarkLabel from '@components/ui/QuarkLabel.svelte';
 	import { getQuestTarget } from '$data/dailyQuests';
+	import { CURRENCY_ICON_NAMES } from '$data/icons';
 	import { QUARK_SHOP } from '$data/quarkShop';
 	import { RealmTypes, type RealmType } from '$data/realms';
 	import { gameManager } from '$helpers/GameManager.svelte';
@@ -54,6 +55,10 @@
 
 	function realmTitle(realmId: RealmType) {
 		return realmManager.realms.find(r => r.id === realmId)?.title ?? realmId;
+	}
+
+	function realmCurrency(realmId: RealmType) {
+		return realmManager.realms.find(r => r.id === realmId)?.currency;
 	}
 
 	function isRealmUnlocked(realmId: RealmType) {
@@ -290,6 +295,7 @@
 					{@const realmThemes = themesForRealm(realmId)}
 					{#if realmThemes.length > 0}
 						{@const unlocked = isRealmUnlocked(realmId)}
+						{@const currency = realmCurrency(realmId)}
 						<div class="relative">
 							{#if !unlocked}
 								<div class="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-black/30 p-4 text-center">
@@ -305,7 +311,10 @@
 								class:select-none={!unlocked}
 								aria-hidden={!unlocked}
 							>
-								<h4 class="flex items-center gap-1 text-sm font-semibold text-white/60">
+								<h4 class="flex items-center gap-1.5 text-sm font-semibold text-white/60">
+									{#if currency}
+										<IconStack color={currency.color} icon={CURRENCY_ICON_NAMES[currency.name]} size={16} />
+									{/if}
 									{realmTitle(realmId)}
 									{#if !unlocked}<Lock size={12} />{/if}
 								</h4>
