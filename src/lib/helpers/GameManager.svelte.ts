@@ -29,7 +29,7 @@ import { FeaturesManager } from '$helpers/FeaturesManager.svelte';
 import { applyOfflineProgress } from '$helpers/offlineProgress';
 import { radiationManager } from '$helpers/RadiationManager.svelte';
 import { realmManager } from '$helpers/RealmManager.svelte';
-import { SAVE_KEY, SAVE_VERSION, loadSavedState } from '$helpers/saves';
+import { SAVE_KEY, SAVE_VERSION, loadSavedState, serializeSaveState } from '$helpers/saves';
 import { LAYERS, type LayerType, statsConfig } from '$helpers/statConstants';
 import { TutorialManager } from '$helpers/TutorialManager.svelte';
 import { leaderboard } from '$stores/leaderboard.svelte';
@@ -84,6 +84,10 @@ export class GameManager {
 		[RealmTypes.PHOTONS]: { unlocked: false },
 		[RealmTypes.RADIATION]: { unlocked: false },
 	});
+	/** True once the loaded save fails its checksum, see saveIntegrity.ts. */
+	saveIntegrityTampered = $state(false);
+	/** Plausibility warnings from checkStatePlausibility, see saves.ts. */
+	saveIntegrityWarnings = $state<string[]>([]);
 	settings = $state<Settings>({
 		automation: {
 			autoClick: false,
@@ -485,6 +489,18 @@ export class GameManager {
 			this.syncFeatures();
 			this.checkRealmUnlocks();
 			this.lastLoadedSave = typeof result.state.lastSave === 'number' ? result.state.lastSave : 0;
+			this.saveIntegrityTampered = result.integrityTampered ?? false;
+			this.saveIntegrityWarnings = result.integrityWarnings ?? [];
+			if (this.saveIntegrityTampered || this.saveIntegrityWarnings.length > 0) {
+				console.warn('Save integrity check flagged this save:', {
+					tampered: this.saveIntegrityTampered,
+					warnings: this.saveIntegrityWarnings,
+				});
+				toastStore.warning({
+					title: 'Save check',
+					message: 'This save looks like it was edited outside the game. Leaderboard submission is disabled for this session.',
+				});
+			}
 			this.applyingOfflineProgress = true;
 			const offlineSummary = applyOfflineProgress(this);
 			this.applyingOfflineProgress = false;
@@ -573,7 +589,7 @@ export class GameManager {
 		this.lastSave = Date.now();
 		const saveData = this.getCurrentState();
 		if (typeof localStorage !== 'undefined') {
-			localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+			localStorage.setItem(SAVE_KEY, serializeSaveState(saveData));
 		}
 	}
 
