@@ -101,7 +101,7 @@ Copy `.env.example` to `.env` and point `PUBLIC_SUPABASE_URL`,
 - **Framework:** [SvelteKit](https://kit.svelte.dev/)
 - **Language:** [TypeScript](https://www.typescriptlang.org/)
 - **Styling:** [TailwindCSS](https://tailwindcss.com/)
-- **Graphics Engine:** [Pixi.js](https://pixijs.com/)
+- **Graphics Engine:** HTML5 Canvas 2D
 - **Backend & Auth:** [Supabase](https://supabase.com/)
 - **Icons:** [Lucide Icons](https://lucide.dev)
 - **Flow Diagrams:** [Svelte Flow](https://svelteflow.dev)

@@ -6,6 +6,7 @@ import { SvelteSet } from 'svelte/reactivity';
 
 class AutoUpgradeManager {
 	recentlyAutoPurchased = new SvelteSet<string>();
+	nextFireTime = $state<number | null>(null);
 	private timer: ReturnType<typeof setInterval> | null = null;
 
 	get autoUpgradeInterval() {
@@ -55,7 +56,17 @@ class AutoUpgradeManager {
 				const interval = this.autoUpgradeInterval;
 
 				if (this.timer) clearInterval(this.timer);
-				this.timer = interval > 0 ? setInterval(() => this.purchaseAvailableUpgrades(), interval) : null;
+
+				if (interval > 0) {
+					this.nextFireTime = Date.now() + interval;
+					this.timer = setInterval(() => {
+						this.purchaseAvailableUpgrades();
+						this.nextFireTime = Date.now() + interval;
+					}, interval);
+				} else {
+					this.nextFireTime = null;
+					this.timer = null;
+				}
 
 				return () => {
 					if (this.timer) clearInterval(this.timer);

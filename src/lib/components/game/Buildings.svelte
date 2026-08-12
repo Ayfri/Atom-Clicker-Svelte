@@ -3,6 +3,7 @@
 	import { getUpgradesWithEffects } from '$lib/helpers/effects';
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { autoBuyManager } from '$stores/autoBuy.svelte';
+	import { clock } from '$stores/clock.svelte';
 	import BlackHoleIcon from '@components/icons/buildings/BlackHole.svelte';
 	import CrystalIcon from '@components/icons/buildings/Crystal.svelte';
 	import MicroorganismIcon from '@components/icons/buildings/Microorganism.svelte';
@@ -132,6 +133,22 @@
 				getUpgradesWithEffects(gameManager.currentUpgradesBought, { type: 'auto_buy', target: type }).length > 0}
 			{@const autoPurchasedCount = autoBuyManager.recentlyAutoPurchasedBuildings.get(type) || 0}
 			{@const IconComponent = BUILDING_ICONS[type]}
+			{@const autoBuyInterval = autoBuyManager.autoBuyIntervals[type]}
+			{@const autoBuyNextFire = autoBuyManager.nextFireTimes.get(type)}
+
+			{#snippet autoBuyTooltip()}
+				<div class="flex flex-col gap-1">
+					<p class="text-xs text-white/80">Automatically buys 1 {building.name} whenever you can afford it.</p>
+					{#if isAutomated && autoBuyInterval}
+						<p class="text-xs text-white/60">
+							Checks every {(autoBuyInterval / 1000).toFixed(1)}s
+							{#if autoBuyNextFire}
+								- next in {Math.max(0, (autoBuyNextFire - clock.now) / 1000).toFixed(1)}s
+							{/if}
+						</p>
+					{/if}
+				</div>
+			{/snippet}
 
 			<button
 				class="relative text-start bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer p-2 transition-all duration-200 {(
@@ -216,6 +233,7 @@
 								gameManager.toggleAutomation(type);
 							}}
 							toggled={isAutomated}
+							tooltipContent={autoBuyTooltip}
 						/>
 					{/if}
 				</div>

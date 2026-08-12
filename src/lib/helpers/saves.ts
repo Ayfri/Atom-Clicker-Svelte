@@ -4,17 +4,55 @@ import { RealmTypes } from '$data/realms';
 import type { Building, GameState } from '$lib/types';
 import { deriveFeatureState } from '$helpers/FeaturesManager.svelte';
 import { statsConfig } from '$helpers/statConstants';
+import { unwrapStoredSave, wrapSaveForStorage } from '$lib/utils/saveIntegrity';
 import { saveRecovery, type SaveErrorType } from '$stores/saveRecovery';
 
 export const SAVE_KEY = 'atomic-clicker-save';
 export const SAVE_VERSION = 24;
 
+/** Tolerance for clock drift when comparing inGameTime to wall-clock time. */
+const PLAUSIBILITY_TIME_TOLERANCE_MS = 60_000;
+
 export interface LoadSaveResult {
 	errorDetails?: string;
 	errorType?: SaveErrorType;
+	integrityTampered?: boolean;
+	integrityWarnings?: string[];
 	rawData?: string;
 	state: GameState | null;
 	success: boolean;
+}
+
+/** Serializes and checksum-wraps a game state, see saveIntegrity.ts. */
+export function serializeSaveState(state: GameState): string {
+	return wrapSaveForStorage(JSON.stringify(state));
+}
+
+/** Balance-independent sanity checks (currency vs earned totals, inGameTime vs wall clock). */
+export function checkStatePlausibility(state: GameState): string[] {
+	const warnings: string[] = [];
+
+	if (state.currencies && typeof state.currencies === 'object') {
+		for (const [name, currency] of Object.entries(state.currencies)) {
+			if (!currency || typeof currency !== 'object') continue;
+			const { amount, earnedAllTime, earnedRun } = currency as { amount: number; earnedAllTime: number; earnedRun: number };
+			if (typeof amount === 'number' && typeof earnedAllTime === 'number' && amount > earnedAllTime) {
+				warnings.push(`Currency ${name}: amount (${amount}) exceeds earnedAllTime (${earnedAllTime})`);
+			}
+			if (typeof earnedRun === 'number' && typeof earnedAllTime === 'number' && earnedRun > earnedAllTime) {
+				warnings.push(`Currency ${name}: earnedRun (${earnedRun}) exceeds earnedAllTime (${earnedAllTime})`);
+			}
+		}
+	}
+
+	if (typeof state.inGameTime === 'number' && typeof state.startDate === 'number' && typeof state.lastSave === 'number') {
+		const maxPossibleInGameTime = state.lastSave - state.startDate + PLAUSIBILITY_TIME_TOLERANCE_MS;
+		if (state.inGameTime > maxPossibleInGameTime) {
+			warnings.push(`inGameTime (${state.inGameTime}) exceeds wall-clock time since startDate (${maxPossibleInGameTime})`);
+		}
+	}
+
+	return warnings;
 }
 
 // Helper functions for state management
@@ -29,10 +67,12 @@ export function loadSavedState(): LoadSaveResult {
 			return { state: null, success: true }; // No save exists, not an error
 		}
 
+		const { payload, tampered: integrityTampered } = unwrapStoredSave(rawData);
+
 		// Step 1: Try to parse JSON
 		let parsedData: any;
 		try {
-			parsedData = JSON.parse(rawData);
+			parsedData = JSON.parse(payload);
 		} catch (parseError) {
 			console.error('Failed to parse save JSON:', parseError);
 			return {
@@ -78,13 +118,15 @@ export function loadSavedState(): LoadSaveResult {
 		const validationResult = validateAndRepairGameState(migratedState);
 		if (validationResult.valid) {
 			console.log('Valid game state:', validationResult.state);
-			return { state: validationResult.state, success: true };
+			const integrityWarnings = checkStatePlausibility(validationResult.state!);
+			return { integrityTampered, integrityWarnings, state: validationResult.state, success: true };
 		}
 
 		// If repair was attempted but still invalid
 		if (validationResult.repaired && validationResult.state) {
 			console.log('Game state repaired:', validationResult.repairs);
-			return { state: validationResult.state, success: true };
+			const integrityWarnings = checkStatePlausibility(validationResult.state);
+			return { integrityTampered, integrityWarnings, state: validationResult.state, success: true };
 		}
 
 		return {

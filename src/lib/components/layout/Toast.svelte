@@ -1,9 +1,11 @@
 <script lang="ts">
 	import type { Component } from 'svelte';
+	import type { IconStackSpec } from '$helpers/iconStacks';
 	import { toastStore, type Toast, type ToastStyle } from '$stores/toasts.svelte';
 	import { Award, Coffee, Globe, Trophy, X } from '@lucide/svelte';
 	import Discord from '@components/icons/Discord.svelte';
 	import GitHub from '@components/icons/GitHub.svelte';
+	import IconStack from '@components/ui/IconStack.svelte';
 	import { linear } from 'svelte/easing';
 	import { Tween } from 'svelte/motion';
 	import { onMount } from 'svelte';
@@ -29,14 +31,20 @@
 		}
 	});
 
+	function isIconStack(icon: Toast['icon']): icon is IconStackSpec {
+		return typeof icon === 'object' && icon !== null && 'icon' in icon;
+	}
+
 	function resolveIcon(icon: Toast['icon'], fallback: Component): Component {
 		if (typeof icon === 'string') {
 			if (icon in namedIcons) return namedIcons[icon as keyof typeof namedIcons];
 			return fallback;
 		}
+		if (isIconStack(icon)) return fallback;
 		return icon ?? fallback;
 	}
 
+	const iconStack = $derived(isIconStack(toast.icon) ? toast.icon : undefined);
 	const IconComponent = $derived(resolveIcon(toast.icon, config.icon));
 </script>
 
@@ -47,10 +55,20 @@
 	<div class="flex w-full gap-4">
 		<!-- Icon Container -->
 		<div class="flex size-10 shrink-0 items-center justify-center border border-white/5 rounded-lg bg-white/5">
-			<IconComponent
-				class={config.iconColor}
-				size={24}
-			/>
+			{#if iconStack}
+				<IconStack
+					color={iconStack.color}
+					count={iconStack.count}
+					icon={iconStack.icon}
+					label={iconStack.label}
+					size={26}
+				/>
+			{:else}
+				<IconComponent
+					class={config.iconColor}
+					size={24}
+				/>
+			{/if}
 		</div>
 
 		<!-- Content Column -->

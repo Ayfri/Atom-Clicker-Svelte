@@ -6,7 +6,7 @@
 		size?: number | string;
 	}
 
-	let { color = '#000000', size = 24, ...props }: Props = $props();
+	let { color = '#4a90e2', size = 24, ...props }: Props = $props();
 </script>
 
 <svg

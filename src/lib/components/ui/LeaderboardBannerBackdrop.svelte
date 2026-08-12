@@ -73,6 +73,51 @@
 			<path d="m96 36 88-28m-88 28 100-12M96 36l88 28m-88-28 100 12" stroke="white" stroke-width="1.5" opacity=".52" />
 			<circle cx="96" cy="36" r="7" fill="white" opacity=".84" /><circle cx="82" cy="36" r="5" stroke="white" stroke-width="2" opacity=".55" />
 			<g fill="white"><circle cx="152" cy="18" r="2.5" /><circle cx="176" cy="27" r="1.75" /><circle cx="161" cy="53" r="2" /><circle cx="206" cy="56" r="2.5" /><circle cx="216" cy="14" r="1.75" /></g>
+		{:else if banner.pattern === 'orbitals'}
+			<!-- Atom: a nucleus wrapped in three crossing electron shells. -->
+			<g stroke="white" fill="none">
+				<ellipse cx="120" cy="36" rx="104" ry="24" stroke-width="1.5" opacity=".46" />
+				<ellipse cx="120" cy="36" rx="104" ry="24" stroke-width="1.5" opacity=".46" transform="rotate(-11 120 36)" />
+				<ellipse cx="120" cy="36" rx="104" ry="24" stroke-width="1.5" opacity=".46" transform="rotate(11 120 36)" />
+				<circle cx="120" cy="36" r="16" stroke-width=".75" stroke-dasharray="2 5" opacity=".3" />
+			</g>
+			<circle cx="120" cy="36" r="7" fill="white" opacity=".9" /><circle cx="120" cy="36" r="10.5" stroke="white" stroke-width="1.25" opacity=".5" />
+			<g fill="white"><circle cx="24" cy="30" r="2.75" opacity=".82" /><circle cx="72" cy="17" r="2.25" opacity=".7" /><circle cx="182" cy="17" r="2.25" opacity=".7" /><circle cx="216" cy="42" r="2.75" opacity=".82" /><circle cx="150" cy="57" r="2" opacity=".6" /></g>
+		{:else if banner.pattern === 'nucleus'}
+			<!-- Proton: two up quarks and one down quark bound by the strong force. -->
+			<circle cx="120" cy="36" r="27" fill="white" opacity=".1" />
+			<circle cx="120" cy="36" r="27" stroke="white" stroke-width="1.75" opacity=".7" />
+			<circle cx="120" cy="36" r="35" stroke="white" stroke-width=".75" stroke-dasharray="3 6" opacity=".34" />
+			<path d="M108 27h24m-12 25 12-21m-24 0 12 21" stroke="white" stroke-width="1.25" opacity=".45" />
+			<g fill="white"><circle cx="108" cy="27" r="5.5" opacity=".92" /><circle cx="132" cy="27" r="5.5" opacity=".76" /><circle cx="120" cy="48" r="5.5" opacity=".62" /></g>
+			<path d="M28 30h14m-7-7v14m170 0h14m-7-7v14" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity=".66" />
+			<g fill="white"><circle cx="66" cy="52" r="2" opacity=".5" /><circle cx="176" cy="18" r="2" opacity=".5" /></g>
+		{:else if banner.pattern === 'cloud'}
+			<!-- Electron: a diffuse probability cloud around a single charge. -->
+			<g stroke="white" fill="none" stroke-dasharray="2 6">
+				<ellipse cx="120" cy="36" rx="96" ry="28" stroke-width="1.25" opacity=".44" />
+				<ellipse cx="120" cy="36" rx="62" ry="18" stroke-width="1" opacity=".32" />
+			</g>
+			<circle cx="120" cy="36" r="46" fill="white" opacity=".07" /><circle cx="120" cy="36" r="26" fill="white" opacity=".08" />
+			<circle cx="216" cy="36" r="5" fill="white" opacity=".9" /><path d="M209 36h14" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity=".7" />
+			<g fill="white"><circle cx="48" cy="24" r="1.5" opacity=".55" /><circle cx="76" cy="47" r="2" opacity=".62" /><circle cx="99" cy="18" r="1.25" opacity=".45" /><circle cx="118" cy="55" r="1.75" opacity=".58" /><circle cx="143" cy="24" r="1.5" opacity=".5" /><circle cx="166" cy="49" r="2" opacity=".6" /><circle cx="188" cy="22" r="1.25" opacity=".45" /><circle cx="30" cy="45" r="1.25" opacity=".4" /></g>
+		{:else if banner.pattern === 'beam'}
+			<!-- Photon: an oscillating wave packet travelling to the right at c. -->
+			<path
+				d="M-4 36c8-20 16-20 24 0s16 20 24 0 16-20 24 0 16 20 24 0 16-20 24 0 16 20 24 0 16-20 24 0 16 20 24 0 16-20 24 0 16 20 24 0"
+				stroke="white"
+				stroke-width="2"
+				opacity=".76"
+			/>
+			<path
+				d="M-4 36c8 12 16 12 24 0s16-12 24 0 16 12 24 0 16-12 24 0 16 12 24 0 16-12 24 0 16 12 24 0 16-12 24 0 16 12 24 0 16-12 24 0"
+				stroke="white"
+				stroke-width="1"
+				opacity=".34"
+			/>
+			<path d="M0 36h240" stroke="white" stroke-width=".5" stroke-dasharray="4 6" opacity=".28" />
+			<path d="m226 27 10 9-10 9" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity=".82" />
+			<g fill="white"><circle cx="20" cy="16" r="2" opacity=".6" /><circle cx="116" cy="56" r="2" opacity=".55" /><circle cx="164" cy="16" r="1.75" opacity=".5" /></g>
 		{/if}
 	</svg>
 	<div class="absolute inset-0 bg-linear-to-b from-white/8 via-transparent to-black/18"></div>

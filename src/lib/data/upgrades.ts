@@ -1,6 +1,7 @@
 import { BUILDING_TYPES, BUILDINGS, type BuildingType } from '$data/buildings';
 import { CurrenciesTypes, type CurrencyName } from '$data/currencies';
 import { FeatureTypes } from '$data/features';
+import { BUILDING_ICON_NAMES, type IconName } from '$data/icons';
 import type { GameManager } from '$helpers/GameManager.svelte';
 import type { Effect, Upgrade } from '$lib/types';
 import { capitalize, formatNumber, shortNumberText } from '$lib/utils';
@@ -12,6 +13,7 @@ interface CreateUpgradesOptions {
 	currency?: CurrencyName;
 	description: (index: number) => string;
 	effects: (index: number) => Effect[];
+	icon?: IconName;
 	id: string;
 	idForIndex?: (index: number) => string;
 	name: (index: number) => string;
@@ -30,6 +32,7 @@ function createUpgrades(options: CreateUpgradesOptions): Upgrade[] {
 			},
 			description: options.description(i),
 			effects,
+			icon: options.icon,
 			id,
 			name: options.name(i),
 		} as Upgrade);
@@ -42,6 +45,7 @@ function createBuildingUpgrades(buildingType: BuildingType) {
 	return createUpgrades({
 		condition: (_, state) => state.buildings[buildingType]?.unlocked === true,
 		count: 20,
+		icon: BUILDING_ICON_NAMES[buildingType],
 		id: buildingType.toLowerCase(),
 		name: i => `${building.name} Boost ${i}`,
 		description: i => `${capitalize(shortNumberText(1 + Math.ceil(i / 5)))} ${building.name} production`,
@@ -62,6 +66,7 @@ function createClickPowerUpgrades() {
 	upgrades.push(
 		...createUpgrades({
 			count: 20,
+			icon: 'click',
 			id: 'click_power_mul',
 			name: i => `Click Power ${i}`,
 			description: i => `${i < 6 ? '1.5x' : '2x'} click power`,
@@ -82,6 +87,7 @@ function createClickPowerUpgrades() {
 	upgrades.push(
 		...createUpgrades({
 			count: 15,
+			icon: 'click',
 			id: 'click_power_val',
 			name: i => `Click Value ${i}`,
 			description: i => `+${formatNumber(Math.ceil(10 ** i / 10))} base value per click`,
@@ -102,6 +108,7 @@ function createClickPowerUpgrades() {
 	upgrades.push(
 		...createUpgrades({
 			count: 7,
+			icon: 'trendingUp',
 			id: 'click_power_aps',
 			name: i => `Global Click Power ${Math.ceil(i / 2)}`,
 			description: i => `+${Math.ceil(i / 2)}% of your Atoms per second per click`,
@@ -126,6 +133,7 @@ function createGlobalUpgrades() {
 	const upgrades = createUpgrades({
 		id: 'global_boost',
 		count: 50,
+		icon: 'globe',
 		name: i => `Global Boost ${i}`,
 		description: i => `${formatNumber(1 + i / 100)}x all production`,
 		cost: i => {
@@ -152,6 +160,7 @@ function createGlobalUpgrades() {
 			id: 'global_achievements_mul',
 			count: 11,
 			condition: (i, state) => (i > 1 ? state.achievements.length > 10 * i : true),
+			icon: 'trophy',
 			name: i => `Atom Soup ${i}`,
 			description: i => `+${Math.ceil(i / 5)}% production per achievement`,
 			cost: i => Math.pow(10, i * 3 + 2),
@@ -215,6 +224,7 @@ function createOfflineCapUpgrades() {
 		currency: CurrenciesTypes.ATOMS,
 		description: (index) => caps[index - 1]?.description ?? '',
 		effects: () => [],
+		icon: 'offline',
 		id: 'offline_cap',
 		idForIndex: (index) => caps[index - 1]?.id ?? `offline_cap_${index}`,
 		name: (index) => caps[index - 1]?.name ?? `Offline Cap ${index}`,
@@ -224,6 +234,7 @@ function createOfflineCapUpgrades() {
 function createPowerUpIntervalUpgrades() {
 	return createUpgrades({
 		condition: (_, state) => (state.currencies[CurrenciesTypes.HIGGS_BOSON]?.earnedAllTime ?? 0) > 0,
+		icon: 'higgsBoson',
 		id: 'power_up_interval',
 		count: 15,
 		name: i => `Power Up Interval ${i + 1}`,
@@ -255,6 +266,7 @@ function createLevelBoostUpgrades() {
 				currency: 'Atoms',
 			},
 			condition: state => state.features[FeatureTypes.LEVELS] === true,
+			icon: 'level',
 			effects: [
 				{
 					type: 'global',
@@ -279,6 +291,7 @@ function createProtonUpgrades() {
 			id: 'proton_boost',
 			count: 10,
 			currency: CurrenciesTypes.PROTONS,
+			icon: 'proton',
 			name: i => `Proton Boost ${i}`,
 			description: i => `${2 + i}x all production`,
 			cost: i => {
@@ -301,6 +314,7 @@ function createProtonUpgrades() {
 			id: 'proton_electron_boost_1',
 			name: 'Double Electrons',
 			description: '2x electrons gained from electronize',
+			icon: 'electron',
 			cost: {
 				amount: 8_000_000_000,
 				currency: CurrenciesTypes.PROTONS,
@@ -318,6 +332,7 @@ function createProtonUpgrades() {
 			name: 'Double Electrons II',
 			description: '2x electrons gained from electronize',
 			condition: state => state.upgrades.includes('proton_electron_boost_1'),
+			icon: 'electron',
 			cost: {
 				amount: 350_000_000_000,
 				currency: CurrenciesTypes.PROTONS,
@@ -334,6 +349,7 @@ function createProtonUpgrades() {
 			id: 'proton_electron_boost_3',
 			name: 'Triple Electrons',
 			description: '3x electrons gained from electronize',
+			icon: 'electron',
 			cost: {
 				amount: 20_000_000_000_000,
 				currency: CurrenciesTypes.PROTONS,
@@ -350,6 +366,7 @@ function createProtonUpgrades() {
 			id: 'proton_electron_boost_total_protonises',
 			name: 'Total Protonises',
 			description: '+1 electron per protonise',
+			icon: 'electron',
 			cost: {
 				amount: 125_000_000_000_000,
 				currency: CurrenciesTypes.PROTONS,
@@ -370,6 +387,7 @@ function createProtonUpgrades() {
 			id: 'protonise_boost',
 			count: 5,
 			currency: CurrenciesTypes.PROTONS,
+			icon: 'proton',
 			name: i => `Protonise Master ${i}`,
 			description: i => `+${25 * i}% production per protonise`,
 			cost: i => {
@@ -395,6 +413,7 @@ function createProtonUpgrades() {
 			id: 'protonise_start',
 			count: 3,
 			currency: CurrenciesTypes.PROTONS,
+			icon: 'atom',
 			name: i => `Quick Start ${i}`,
 			description: i => `Start with ${formatNumber(10 ** (3 + i))} atoms after protonising`,
 			cost: i => {
@@ -417,6 +436,7 @@ function createProtonUpgrades() {
 			id: 'proton_auto_click',
 			count: 5,
 			currency: CurrenciesTypes.PROTONS,
+			icon: 'click',
 			name: i => `Auto Clicker ${i}`,
 			description: i => `Automatically clicks ${Math.ceil(i / 2)} time${Math.ceil(i / 2) > 1 ? 's' : ''} per second`,
 			cost: i => {
@@ -443,6 +463,7 @@ function createProtonUpgrades() {
 			},
 			description: 'Unlock offline auto-upgrades (1/120 speed)',
 			effects: [],
+			icon: 'offline',
 			id: 'proton_offline_autobuy',
 			name: 'Offline Auto-upgrades',
 		} as Upgrade,
@@ -454,6 +475,7 @@ function createProtonUpgrades() {
 			},
 			description: 'Unlock offline atom auto-clicks (1/120 speed)',
 			effects: [],
+			icon: 'offline',
 			id: 'proton_offline_autoclick',
 			name: 'Offline Atom Auto-click',
 		} as Upgrade,
@@ -465,6 +487,7 @@ function createProtonUpgrades() {
 			id: 'stability_boost',
 			count: 5,
 			currency: CurrenciesTypes.PROTONS,
+			icon: 'stabilityMeter',
 			name: i => `Stable Resonance ${i}`,
 			description: i => `+${25 * i}% effect from Stability Meter`,
 			condition: (_, state) => state.features[FeatureTypes.STABILITY_FIELD] === true,
@@ -488,6 +511,7 @@ function createProtonUpgrades() {
 			id: 'stability_speed',
 			count: 10,
 			currency: CurrenciesTypes.PROTONS,
+			icon: 'stabilityMeter',
 			name: i => `Field Coherence ${i}`,
 			description: i => `Stability grows 10% faster`,
 			condition: (_, state) => state.features[FeatureTypes.STABILITY_FIELD] === true,
@@ -511,6 +535,7 @@ function createProtonUpgrades() {
 			id: 'stability_expansion',
 			count: 5,
 			currency: CurrenciesTypes.PROTONS,
+			icon: 'stabilityMeter',
 			name: i => `Temporal Expansion ${i}`,
 			description: i => `Extends stability capacity and max bonus`,
 			condition: (_, state) => state.features[FeatureTypes.STABILITY_FIELD] === true,
@@ -546,6 +571,7 @@ function createElectronUpgrades() {
 					amount: 2 + index,
 					currency: CurrenciesTypes.ELECTRONS,
 				},
+				icon: BUILDING_ICON_NAMES[buildingType],
 				effects: [
 					{
 						type: 'auto_buy',
@@ -571,6 +597,7 @@ function createElectronUpgrades() {
 					amount: 3 + index,
 					currency: CurrenciesTypes.ELECTRONS,
 				},
+				icon: BUILDING_ICON_NAMES[buildingType],
 				effects: [
 					{
 						type: 'auto_buy',
@@ -589,6 +616,7 @@ function createElectronUpgrades() {
 			id: 'electron_auto_upgrade',
 			count: 4,
 			currency: CurrenciesTypes.ELECTRONS,
+			icon: 'upgrade',
 			name: i => `${i === 1 ? 'Auto' : 'Faster Auto'} Upgrade ${i > 1 ? i : ''}`,
 			description: i =>
 				`${i === 1 ? 'Automatically buys' : 'Reduces auto-upgrade interval by'} ${
@@ -612,6 +640,7 @@ function createElectronUpgrades() {
 			id: 'electron_power_up_interval',
 			count: 4,
 			currency: CurrenciesTypes.ELECTRONS,
+			icon: 'higgsBoson',
 			name: i => `${i === 1 ? 'Faster' : 'Even Faster'} Power-ups ${i > 1 ? i : ''}`,
 			description: i => `Reduces power-up spawn interval by ${i * 10}%`,
 			condition: (i, state) => i === 1 || state.upgrades.includes(`electron_power_up_interval_${i - 1}`),
@@ -636,6 +665,7 @@ function createElectronUpgrades() {
 				amount: 50,
 				currency: CurrenciesTypes.ELECTRONS,
 			},
+			icon: 'atom',
 			effects: [],
 		},
 		{
@@ -646,6 +676,7 @@ function createElectronUpgrades() {
 				amount: 100,
 				currency: CurrenciesTypes.ELECTRONS,
 			},
+			icon: 'photon',
 			effects: [],
 		},
 		{
@@ -656,6 +687,7 @@ function createElectronUpgrades() {
 				amount: 250,
 				currency: CurrenciesTypes.ELECTRONS,
 			},
+			icon: 'photon',
 			effects: [],
 		},
 		{
@@ -666,6 +698,7 @@ function createElectronUpgrades() {
 				amount: 400,
 				currency: CurrenciesTypes.ELECTRONS,
 			},
+			icon: 'atom',
 			effects: [],
 		},
 		{
@@ -676,6 +709,7 @@ function createElectronUpgrades() {
 				amount: 500,
 				currency: CurrenciesTypes.ELECTRONS,
 			},
+			icon: 'higgsBoson',
 			effects: [],
 		},
 	);

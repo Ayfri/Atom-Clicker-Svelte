@@ -5,6 +5,7 @@ import { browser } from '$app/environment';
 
 class AutoBuyManager {
 	recentlyAutoPurchasedBuildings = $state(new Map<BuildingType, number>());
+	nextFireTimes = $state(new Map<BuildingType, number>());
 	private timers: Record<string, ReturnType<typeof setInterval>> = {};
 
 	get autoBuyIntervals() {
@@ -60,10 +61,14 @@ class AutoBuyManager {
 				// Clear existing timers
 				Object.values(this.timers).forEach(clearInterval);
 				this.timers = {};
+				this.nextFireTimes.clear();
 
 				Object.entries(intervals).forEach(([buildingType, interval]) => {
+					const type = buildingType as BuildingType;
+					this.nextFireTimes.set(type, Date.now() + interval);
 					this.timers[buildingType] = setInterval(() => {
-						this.purchaseBuilding(buildingType as BuildingType);
+						this.purchaseBuilding(type);
+						this.nextFireTimes.set(type, Date.now() + interval);
 					}, interval);
 				});
 

@@ -1,11 +1,14 @@
 import { sveltekit } from '@sveltejs/kit/vite';
+import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import tailwindcss from '@tailwindcss/vite';
 import { loadEnv, defineConfig, type Plugin } from 'vite';
 
-// Workaround for https://github.com/sveltejs/kit/issues/12394
-// Rolldown's worker bundler doesn't get SvelteKit's plugin chain, so virtual modules
-// like __sveltekit/environment and $env/* are unresolvable. Shim them with safe defaults:
-// workers are always browser-side (browser=true), never auth/env-aware.
+/**
+ * Workaround for https://github.com/sveltejs/kit/issues/12394.
+ * Rolldown's worker bundler skips SvelteKit's plugin chain, so `__sveltekit/environment`
+ * and `$env/*` are unresolvable. Shims them with safe defaults (workers are always
+ * browser-side, never auth/env-aware).
+ */
 function skitWorkerShim(publicEnv: Record<string, string>): Plugin {
 	const publicEnvExports =
 		Object.entries(publicEnv)
@@ -37,7 +40,9 @@ export default defineConfig(({ mode }) => {
 	return {
 		plugins: [tailwindcss(), sveltekit()],
 		worker: {
-			plugins: () => [skitWorkerShim(env)],
+			// `svelte()` is also needed here so .svelte files pulled in transitively (e.g. icon
+			// components imported by data files) compile instead of being parsed as plain JS.
+			plugins: () => [skitWorkerShim(env), svelte({ preprocess: vitePreprocess() })],
 		},
 	};
 });

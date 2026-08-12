@@ -27,6 +27,7 @@
 					<AutoButton
 						onClick={() => gameManager.toggleAutoClickPhotons()}
 						toggled={gameManager.settings.automation.autoClickPhotons}
+						tooltipContent={autoClickPhotonsTooltip}
 					/>
 				</div>
 			{/if}
@@ -46,7 +47,19 @@
 			<AutoButton
 				onClick={() => gameManager.toggleAutoClickPhotons()}
 				toggled={gameManager.settings.automation.autoClickPhotons}
+				tooltipContent={autoClickPhotonsTooltip}
 			/>
 		</div>
 	{/if}
 </div>
+
+{#snippet autoClickPhotonsTooltip()}
+	<div class="flex flex-col gap-1">
+		<p class="text-xs text-white/80">Automatically clicks purple circles for you, continuously.</p>
+		{#if gameManager.settings.automation.autoClickPhotons && gameManager.photonAutoClicksPer5Seconds > 0}
+			<p class="text-xs text-white/60">
+				Currently clicking {formatNumber(gameManager.photonAutoClicksPer5Seconds / 5, 1)} times per second.
+			</p>
+		{/if}
+	</div>
+{/snippet}

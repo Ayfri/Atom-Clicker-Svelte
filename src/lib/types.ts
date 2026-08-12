@@ -1,8 +1,10 @@
 import type { BuildingType } from '$data/buildings';
 import type { CurrencyName } from '$data/currencies';
 import type { DailyStats } from '$data/dailyQuests';
+import type { IconName } from '$data/icons';
 import type { RealmType } from '$data/realms';
 import type { GameManager } from '$helpers/GameManager.svelte';
+import type { IconStackSpec } from '$helpers/iconStacks';
 import type { LayerType } from '$helpers/statConstants';
 import type { ToastIcon } from '$stores/toasts.svelte';
 
@@ -10,7 +12,10 @@ export interface Achievement {
 	condition: (manager: GameManager) => boolean;
 	description: string;
 	hiddenCondition?: (manager: GameManager) => boolean;
+	/** Toast icon shown when the achievement unlocks. */
 	icon?: ToastIcon;
+	/** Composed icon shown in the achievements list, see `IconStack.svelte`. */
+	iconStack?: IconStackSpec;
 	id: string;
 	name: string;
 }
@@ -231,6 +236,7 @@ export interface Upgrade {
 	cost: Price;
 	description: string;
 	effects: Effect[];
+	icon?: IconName;
 	id: string;
 	name: string;
 }

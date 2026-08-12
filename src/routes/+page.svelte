@@ -9,7 +9,6 @@
 	import { formatNumber } from '$lib/utils';
 	import { autoBuyManager } from '$stores/autoBuy.svelte';
 	import { autoUpgradeManager } from '$stores/autoUpgrade.svelte';
-	import { app } from '$stores/pixi';
 	import { remoteMessage } from '$stores/remoteMessage.svelte';
 	import { saveRecovery } from '$stores/saveRecovery';
 	import { supabaseAuth } from '$stores/supabaseAuth.svelte';
@@ -49,14 +48,17 @@
 
 	const SAVE_INTERVAL = 1000;
 	const CLOUD_PULL_WARNING_THRESHOLD_MS = 5_000;
+	// Long gaps (background tab, stalled frame) are clamped so production never jumps, offline progress handles those.
+	const MAX_FRAME_MS = 100;
 	let saveLoop: ReturnType<typeof setInterval>;
-	let gameUpdateInterval: ReturnType<typeof setInterval> | null = null;
+	let gameUpdateFrame = 0;
 	let hasCheckedCloudSaveOnLoad = false;
 	let authUnsubscribe: (() => void) | null = null;
+	let lastUpdateTime = 0;
 	let quarkUserId: string | null = null;
 
-	function update(ticker: any) {
-		gameManager.addAtoms((gameManager.atomsPerSecond * ticker.deltaMS) / 1000);
+	function update(deltaMs: number) {
+		gameManager.addAtoms((gameManager.atomsPerSecond * deltaMs) / 1000);
 	}
 
 	async function checkCloudSaveOnLoad() {
@@ -115,17 +117,12 @@
 			gameManager.tutorialManager.start();
 		}
 
-		while (!$app) {
-			await new Promise(resolve => setTimeout(resolve, 100));
-		}
-
-		if ($app.ticker?.add) {
-			$app.ticker.add(update);
-		} else {
-			gameUpdateInterval = setInterval(() => {
-				update({ deltaMS: 16.67 });
-			}, 16.67);
-		}
+		lastUpdateTime = performance.now();
+		gameUpdateFrame = requestAnimationFrame(function loop(now) {
+			gameUpdateFrame = requestAnimationFrame(loop);
+			update(Math.min(now - lastUpdateTime, MAX_FRAME_MS));
+			lastUpdateTime = now;
+		});
 
 		setGlobals();
 
@@ -140,7 +137,7 @@
 
 	onDestroy(() => {
 		if (saveLoop) clearInterval(saveLoop);
-		if (gameUpdateInterval) clearInterval(gameUpdateInterval);
+		cancelAnimationFrame(gameUpdateFrame);
 		if (authUnsubscribe) authUnsubscribe();
 		gameManager.cleanup();
 	});

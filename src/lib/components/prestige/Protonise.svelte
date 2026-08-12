@@ -6,6 +6,7 @@
 	import { prestigeStore } from '$stores/prestige.svelte';
 	import { PROTONS_ATOMS_REQUIRED } from '$lib/constants';
 	import { formatDuration, formatNumber } from '$lib/utils';
+	import HoldButton from '@components/ui/HoldButton.svelte';
 	import Modal from '@components/ui/Modal.svelte';
 	import Tooltip from '@components/ui/Tooltip.svelte';
 	import Value from '@components/ui/Value.svelte';
@@ -256,19 +257,20 @@
 			</div>
 		</div>
 
-		<button
+		<HoldButton
 			class="
 				protonise-button group relative flex items-center justify-center w-full py-4 px-6 rounded-lg text-white font-bold text-lg shadow-lg overflow-hidden transition-all duration-300 transform border-2 border-transparent bg-clip-padding hover:scale-[1.02]
 				disabled:before:hidden disabled:opacity-50 disabled:cursor-not-allowed disabled:border-red-900 disabled:bg-black/50 disabled:hover:scale-100
 			"
 			disabled={!canProtonise || gameManager.protoniseProtonsGain === 0}
-			onclick={handleProtonise}
+			onHoldComplete={handleProtonise}
+			style="--hold-color: #fbbf24; --hold-color-2: #f59e0b; --hold-glow: rgba(251, 191, 36, 0.7);"
 		>
 			<div
 				class="absolute inset-0.5 bg-gray-900 rounded transition-all duration-150 group-hover:inset-8 group-hover:rounded-3xl"
 			></div>
-			<span class="z-10 relative">Protonise</span>
-		</button>
+			<span class="z-10 relative">Hold to Protonise</span>
+		</HoldButton>
 
 		{#if !canProtonise}
 			<p class="text-sm text-gray-400 text-center">Reach 1 billion atoms to unlock Protonise</p>
@@ -335,7 +337,7 @@
 </Modal>
 
 <style>
-	.protonise-button::before {
+	:global(.protonise-button)::before {
 		content: '';
 		position: absolute;
 		inset: -2px;
@@ -352,7 +354,7 @@
 		background-size: 300% 100%;
 	}
 
-	.protonise-button:hover::before {
+	:global(.protonise-button):hover::before {
 		animation: rotate 4s linear infinite;
 	}
 

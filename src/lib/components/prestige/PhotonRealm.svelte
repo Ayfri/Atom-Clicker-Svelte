@@ -5,12 +5,12 @@
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { calculateEffects, getUpgradesWithEffects } from '$helpers/effects';
 	import { createClickParticleSync, type Particle } from '$helpers/particles';
+	import { drawPhotonIcon, pulseOpacity } from '$helpers/photonCanvas';
 	import { formatNumber } from '$lib/utils';
 	import { addParticles } from '$stores/canvas';
 	import { mobile } from '$stores/window.svelte';
 	import PhotonCounter from '@components/prestige/PhotonCounter.svelte';
 	import PhotonUpgrades from '@components/prestige/PhotonUpgrades.svelte';
-	import Currency from '@components/ui/Currency.svelte';
 	import { onMount } from 'svelte';
 
 	export function simulateClick() {
@@ -54,10 +54,19 @@
 		baseValue?: number;
 	}
 
-	let circles: Circle[] = $state([]);
+	// Circles are drawn to a canvas, so they deliberately stay out of the reactive graph.
+	let circles: Circle[] = [];
 	let nextId = 0;
+	let canvas = $state<HTMLCanvasElement>();
+	let canvasHeight = 0;
+	let canvasWidth = 0;
 	let container = $state<HTMLDivElement>();
+	let collectedWhileDown = false;
+	let ctx: CanvasRenderingContext2D | null = null;
+	let hovering = $state(false);
+	let lastHoveredId: number | null = null;
 	let lastUpdateTime = Date.now();
+	let pointerDown = false;
 
 	// Base values - will be modified by upgrades
 	let baseSpawnRate = 2000;
@@ -69,6 +78,13 @@
 	const MAX_SIZE = 80;
 	const MIN_PHOTONS = 1;
 	const MAX_PHOTONS = 10;
+
+	// Mirrors the label styling of the previous DOM markup: `font-bold text-xs` on the app font.
+	const FONT_FAMILY = 'Inter, system-ui, Avenir, Helvetica, Arial, sans-serif';
+	const FONT_SIZE = 12;
+	const LABEL_SHADOW_BLUR = 5;
+	// Cheap phones often report a 3x ratio, which triples the fill cost for no visible gain here.
+	const MAX_PIXEL_RATIO = 2;
 
 	function getSizeMultiplier() {
 		const options = { type: 'photon_size' as const };
@@ -121,6 +137,25 @@
 		const type = circle.type === 'excited' ? 'excited_photon_stability' : 'photon_stability';
 		const upgrades = getUpgradesWithEffects(gameManager.allEffectSources, { type });
 		return Math.floor(calculateEffects(upgrades, gameManager, amount, { type }));
+	}
+
+	// Labels are redrawn every frame, so results are memoized until the effect sources change.
+	let labelCache = new Map<string, string>();
+	let labelCacheKey: unknown = null;
+
+	function getCircleLabel(circle: Circle) {
+		if (labelCacheKey !== gameManager.allEffectSources) {
+			labelCacheKey = gameManager.allEffectSources;
+			labelCache.clear();
+		}
+
+		const key = `${circle.type}:${circle.photons}`;
+		let label = labelCache.get(key);
+		if (label === undefined) {
+			label = `+${formatNumber(getCircleValue(circle))}`;
+			labelCache.set(key, label);
+		}
+		return label;
 	}
 
 	function spawnCircle() {
@@ -176,9 +211,8 @@
 			baseValue: isExcited ? 1 : 1
 		};
 
-		circles = [...circles, circle];
 		// Limit the number of circles to 100
-		circles = circles.slice(0, MAX_CIRCLES);
+		if (circles.length < MAX_CIRCLES) circles.push(circle);
 	}
 
 	function clickCircle(circle: Circle, event: MouseEvent) {
@@ -192,7 +226,9 @@
 			currenciesManager.add(CurrenciesTypes.PHOTONS, amount);
 		}
 
-		circles = circles.filter((c) => c.id !== circle.id);
+		const index = circles.indexOf(circle);
+		if (index !== -1) circles.splice(index, 1);
+		if (lastHoveredId === circle.id) lastHoveredId = null;
 
 		const particleCount = Math.floor(circle.photons / 2) + 1;
 		const addedParticles: Particle[] = [];
@@ -224,12 +260,134 @@
 		const deltaTime = currentTime - lastUpdateTime;
 		lastUpdateTime = currentTime;
 
-		circles = circles
-			.map((circle) => ({
-				...circle,
-				lifetime: circle.lifetime + deltaTime
-			}))
-			.filter((circle) => circle.lifetime < circle.maxLifetime);
+		// In-place compaction, this runs ~60 times per second on up to 100 circles.
+		let alive = 0;
+		for (const circle of circles) {
+			circle.lifetime += deltaTime;
+			if (circle.lifetime < circle.maxLifetime) circles[alive++] = circle;
+		}
+		circles.length = alive;
+	}
+
+	function opacity(circle: Circle) {
+		return Math.max(0, 1 - circle.lifetime / circle.maxLifetime);
+	}
+
+	function scale(circle: Circle) {
+		const fadeInDuration = 150; // 0.15s
+		if (circle.lifetime < fadeInDuration) {
+			return circle.lifetime / fadeInDuration;
+		}
+		return 1;
+	}
+
+	function resizeCanvas() {
+		if (!canvas || !container || !ctx) return;
+
+		const rect = container.getBoundingClientRect();
+		const ratio = Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO);
+
+		canvasWidth = rect.width;
+		canvasHeight = rect.height;
+		canvas.width = Math.max(1, Math.round(rect.width * ratio));
+		canvas.height = Math.max(1, Math.round(rect.height * ratio));
+		ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+	}
+
+	function render() {
+		if (!canvas || !ctx) return;
+
+		ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+		for (const circle of circles) {
+			const alpha = opacity(circle);
+			if (alpha <= 0) continue;
+
+			const currentScale = scale(circle);
+			const size = circle.size * currentScale;
+			const excited = circle.type === 'excited';
+
+			ctx.save();
+			ctx.translate(circle.x, circle.y);
+
+			ctx.save();
+			ctx.rotate((circle.rotation * Math.PI) / 180);
+			drawPhotonIcon(ctx, excited, size, excited ? alpha * pulseOpacity(circle.lifetime) : alpha);
+			ctx.restore();
+
+			ctx.globalAlpha = alpha;
+			ctx.font = `700 ${FONT_SIZE * currentScale}px ${FONT_FAMILY}`;
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'middle';
+			ctx.fillStyle = excited ? '#FFD700' : '#ffffff';
+			ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+			ctx.shadowBlur = LABEL_SHADOW_BLUR * currentScale;
+			ctx.fillText(getCircleLabel(circle), 0, 0);
+
+			ctx.restore();
+		}
+	}
+
+	function circleAt(x: number, y: number) {
+		// Later circles are drawn on top, so they take the pointer first.
+		for (let i = circles.length - 1; i >= 0; i--) {
+			const circle = circles[i];
+			const radius = (circle.size * scale(circle)) / 2;
+			const dx = x - circle.x;
+			const dy = y - circle.y;
+			if (dx * dx + dy * dy <= radius * radius) return circle;
+		}
+		return null;
+	}
+
+	function circleFromEvent(event: MouseEvent) {
+		if (!canvas) return null;
+		const rect = canvas.getBoundingClientRect();
+		return circleAt(event.clientX - rect.left, event.clientY - rect.top);
+	}
+
+	function handleClick(event: MouseEvent) {
+		// A drag that already collected photons must not also count as a tap.
+		if (collectedWhileDown) {
+			collectedWhileDown = false;
+			return;
+		}
+
+		const circle = circleFromEvent(event);
+		if (circle) clickCircle(circle, event);
+	}
+
+	function handlePointerDown(event: PointerEvent) {
+		pointerDown = true;
+		collectedWhileDown = false;
+		lastHoveredId = circleFromEvent(event)?.id ?? null;
+	}
+
+	function handlePointerUp() {
+		pointerDown = false;
+	}
+
+	function handlePointerMove(event: PointerEvent) {
+		const circle = circleFromEvent(event);
+		hovering = circle !== null;
+
+		// Equivalent of the per-circle `onpointerenter`: only fire when entering a new circle.
+		// Touch only emits moves while pressed, so this doubles as swipe-to-collect on mobile.
+		if (circle && circle.id !== lastHoveredId && hoverCollection) {
+			clickCircle(circle, event);
+			if (pointerDown) collectedWhileDown = true;
+			lastHoveredId = null;
+			hovering = false;
+			return;
+		}
+
+		lastHoveredId = circle?.id ?? null;
+	}
+
+	function handlePointerLeave() {
+		hovering = false;
+		pointerDown = false;
+		lastHoveredId = null;
 	}
 
 	// Update circles logic
@@ -238,6 +396,30 @@
 		const interval = setInterval(updateCircles, 16);
 		return () => clearInterval(interval);
 	});
+
+	// Draw on the browser's own frame cadence, and not at all while the tab is hidden.
+	$effect(() => {
+		if (!canvas) return;
+
+		ctx = canvas.getContext('2d');
+		resizeCanvas();
+
+		const observer = new ResizeObserver(resizeCanvas);
+		if (container) observer.observe(container);
+
+		let frame = requestAnimationFrame(function loop() {
+			frame = requestAnimationFrame(loop);
+			if (!document.hidden) render();
+		});
+
+		return () => {
+			cancelAnimationFrame(frame);
+			observer.disconnect();
+		};
+	});
+
+	// Collecting by dragging over photons also has to suppress the page scroll on touch devices.
+	const hoverCollection = $derived(gameManager.features[FeatureTypes.HOVER_COLLECTION]);
 
 	// Calculate auto-clicks per second from photon upgrades
 	const photonAutoClicksPer5Seconds = $derived(gameManager.photonAutoClicksPer5Seconds);
@@ -263,15 +445,6 @@
 	onMount(() => {
 		lastUpdateTime = Date.now();
 	});
-
-	const opacity = $derived((circle: Circle) => Math.max(0, 1 - circle.lifetime / circle.maxLifetime));
-	const scale = $derived((circle: Circle) => {
-		const fadeInDuration = 150; // 0.15s
-		if (circle.lifetime < fadeInDuration) {
-			return circle.lifetime / fadeInDuration;
-		}
-		return 1;
-	});
 </script>
 
 <div class="relative pt-12 lg:pt-4 transition-all duration-1000 ease-in-out">
@@ -285,38 +458,19 @@
 				data-photon-realm
 				bind:this={container}
 			>
-				{#each circles as circle (circle.id)}
-					<button
-						class="absolute cursor-pointer flex items-center justify-center rounded-full"
-						onclick={(event) => clickCircle(circle, event)}
-						onpointerenter={(event) => {
-							if (gameManager.features[FeatureTypes.HOVER_COLLECTION]) {
-								clickCircle(circle, event);
-							}
-						}}
-						style="
-							height: {circle.size}px;
-							left: {circle.x}px;
-							opacity: {opacity(circle)};
-							top: {circle.y}px;
-							transform: translate(-50%, -50%) scale({scale(circle)});
-							width: {circle.size}px;
-						"
-					>
-						<div class="w-full h-full {circle.type === 'excited' ? 'animate-pulse' : ''}">
-							<Currency
-								name={circle.type === 'excited' ? CurrenciesTypes.EXCITED_PHOTONS : CurrenciesTypes.PHOTONS}
-								class="w-full h-full object-contain drop-shadow-[0_0_10px_{circle.type === 'excited' ? 'rgba(255,215,0,0.8)' : 'rgba(139,69,191,0.5)'}]"
-								style="transform: rotate({circle.rotation}deg);"
-							/>
-						</div>
-						<span
-							class="absolute font-bold text-xs pointer-events-none drop-shadow-[0_0_5px_rgba(0,0,0,0.8)] {circle.type === 'excited' ? 'text-[#FFD700]' : 'text-white'}"
-						>
-							+{formatNumber(getCircleValue(circle))}
-						</span>
-					</button>
-				{/each}
+				<!-- `pointer-events-auto` opts out of the global `canvas` rule in app.css, which targets the PixiJS overlay. -->
+				<canvas
+					bind:this={canvas}
+					class="absolute inset-0 w-full h-full pointer-events-auto"
+					class:cursor-pointer={hovering}
+					onclick={handleClick}
+					onpointercancel={handlePointerUp}
+					onpointerdown={handlePointerDown}
+					onpointerleave={handlePointerLeave}
+					onpointermove={handlePointerMove}
+					onpointerup={handlePointerUp}
+					style:touch-action={hoverCollection ? 'none' : 'auto'}
+				></canvas>
 			</div>
 		</div>
 

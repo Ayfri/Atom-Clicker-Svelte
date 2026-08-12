@@ -103,9 +103,10 @@ export class QuarksManager {
 		this.applyBoostEffects();
 	}
 
-	/** Pushes owned boost/convenience effects into GameManager. Called whenever `entitlements` changes. */
+	/** Pushes owned boost/convenience effects and entitlements into GameManager. Called whenever `entitlements` changes. */
 	private applyBoostEffects() {
 		gameManager.quarkBoostEffects = this.ownedBoostEffects;
+		gameManager.quarkEntitlements = this.entitlements;
 	}
 
 	isQuestComplete(quest: DailyQuest): boolean {

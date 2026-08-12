@@ -1,68 +1,43 @@
-import { CURRENCIES, type CurrencyName } from "$data/currencies";
+import { CURRENCIES, type CurrencyName } from '$data/currencies';
 import { type Writable } from 'svelte/store';
-
-let PIXI: typeof import('pixi.js');
-let hitTextStyle: any;
 
 // --- Interfaces ---
 
 export interface Particle {
-	sprite: any;
+	/** Higher layers are drawn last. Text sits above icons. */
+	layer: number;
+	draw: (ctx: CanvasRenderingContext2D) => void;
 	update: (dt: number) => boolean;
 }
 
-// --- Pooling ---
+// --- Constants ---
 
-const POOL_LIMIT = 100;
-const pool = {
-	icon: [] as any[],
-	text: [] as any[]
-};
-
-const recycle = (p: Particle) => {
-	const s = p.sprite;
-	s.visible = false;
-	s.removeFromParent();
-
-	const type = s instanceof PIXI.Text ? 'text' : 'icon';
-	if (pool[type].length < POOL_LIMIT) {
-		pool[type].push(s);
-	} else {
-		s.destroy();
-	}
-};
-
-const getSprite = (type: 'icon' | 'text', setup: (s: any) => void) => {
-	let s = pool[type].pop();
-	if (!s) {
-		s = type === 'text'
-			? new PIXI.Text({ style: hitTextStyle, anchor: 0.5 })
-			: new PIXI.Sprite({ anchor: 0.5 });
-		s.eventMode = 'none';
-	}
-	s.visible = true;
-	setup(s);
-	return s;
-};
+const MAX_PARTICLES = 150;
+const ICON_LAYER = 0;
+const TEXT_LAYER = 1;
+/** Matches the previous PixiJS text: 26px bold Arial drawn at a 0.5 scale. */
+const TEXT_FONT = 'bold 13px Arial, sans-serif';
 
 // --- Assets ---
 
+const images = new Map<string, HTMLImageElement>();
+
 export const loadParticleAssets = async () => {
 	try {
-		PIXI = await import('pixi.js');
-		const icons = Object.values(CURRENCIES).map(c => c.id);
-
-		await PIXI.Assets.load(icons.map(alias => ({
-			alias,
-			src: `currencies/${alias}.svg`,
-			data: { parse: true }
-		})));
-
-		hitTextStyle = new PIXI.TextStyle({
-			fill: 'white',
-			fontWeight: 'bold',
-			fontFamily: 'Arial, sans-serif' // Explicit font family for consistency
-		});
+		await Promise.all(
+			Object.values(CURRENCIES).map(
+				currency =>
+					new Promise<void>(resolve => {
+						const image = new Image();
+						image.onload = () => {
+							images.set(currency.id, image);
+							resolve();
+						};
+						image.onerror = () => resolve();
+						image.src = `/currencies/${currency.id}.svg`;
+					})
+			)
+		);
 	} catch (e) {
 		console.warn('Particle assets failed:', e);
 	}
@@ -71,55 +46,65 @@ export const loadParticleAssets = async () => {
 // --- Creators ---
 
 export const createClickParticleSync = (x: number, y: number, currency: CurrencyName): Particle | null => {
-	if (!PIXI) return null;
+	const image = images.get(CURRENCIES[currency].id);
+	if (!image) return null;
 
-	const sprite = getSprite('icon', s => {
-		s.texture = PIXI.Assets.get(CURRENCIES[currency].id);
-		s.alpha = 0.8;
-		s.scale.set(0.1);
-		s.position.set(x, y + document.documentElement.scrollTop);
-		s.rotation = Math.random() * Math.PI * 2;
-	});
-
-	let sx = (1.5 + Math.random() * 0.5) * Math.cos(sprite.rotation);
-	let sy = (1.5 + Math.random() * 0.5) * Math.sin(sprite.rotation);
+	const rotation = Math.random() * Math.PI * 2;
+	let alpha = 0.8;
+	let scale = 0.1;
+	let px = x;
+	let py = y + document.documentElement.scrollTop;
+	let sx = (1.5 + Math.random() * 0.5) * Math.cos(rotation);
+	let sy = (1.5 + Math.random() * 0.5) * Math.sin(rotation);
 
 	return {
-		sprite,
-		update: (dt) => {
+		layer: ICON_LAYER,
+		draw: ctx => {
+			const width = image.width * scale;
+			const height = image.height * scale;
+
+			ctx.save();
+			ctx.globalAlpha = alpha;
+			ctx.translate(px, py);
+			ctx.rotate(rotation);
+			ctx.drawImage(image, -width / 2, -height / 2, width, height);
+			ctx.restore();
+		},
+		update: dt => {
 			const damp = Math.pow(0.995, dt);
 			sx *= damp;
 			sy *= damp;
-			sprite.x += sx * dt;
-			sprite.y += sy * dt;
-			sprite.scale.x -= 0.001 * dt;
-			sprite.scale.y -= 0.001 * dt;
-			sprite.alpha -= 0.015 * dt;
-			return sprite.alpha > 0 && sprite.scale.x > 0;
+			px += sx * dt;
+			py += sy * dt;
+			scale -= 0.001 * dt;
+			alpha -= 0.015 * dt;
+			return alpha > 0 && scale > 0;
 		}
 	};
 };
 
 export const createClickTextParticleSync = (x: number, y: number, text: string): Particle | null => {
-	if (!PIXI) return null;
-
-	const sprite = getSprite('text', s => {
-		s.text = text;
-		s.alpha = 1;
-		s.scale.set(0.5);
-		s.position.set(x, y + document.documentElement.scrollTop);
-		s.zIndex = 10; // Ensure text is consistently on top
-	});
-
+	let alpha = 1;
+	let py = y + document.documentElement.scrollTop;
 	let sy = -1.5;
 
 	return {
-		sprite,
-		update: (dt) => {
+		layer: TEXT_LAYER,
+		draw: ctx => {
+			ctx.save();
+			ctx.globalAlpha = alpha;
+			ctx.fillStyle = 'white';
+			ctx.font = TEXT_FONT;
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'middle';
+			ctx.fillText(text, x, py);
+			ctx.restore();
+		},
+		update: dt => {
 			sy *= Math.pow(0.995, dt);
-			sprite.y += sy * dt;
-			sprite.alpha -= 0.015 * dt;
-			return sprite.alpha > 0;
+			py += sy * dt;
+			alpha -= 0.015 * dt;
+			return alpha > 0;
 		}
 	};
 };
@@ -128,31 +113,14 @@ export const createClickTextParticleSync = (x: number, y: number, text: string):
 
 export class ParticleEngine {
 	private particles: Particle[] = [];
-	private container: any;
 	private unsubscribe: () => void;
 
-	constructor(
-		private PIXI_INSTANCE: typeof import('pixi.js'),
-		private stage: any,
-		queue: Writable<Particle[]>
-	) {
-		this.container = new PIXI_INSTANCE.Container({
-			isRenderGroup: true,
-			sortableChildren: true // Required for text zIndex
-		});
-		this.container.cullable = true;
-		stage.addChild(this.container);
-
+	constructor(queue: Writable<Particle[]>) {
 		this.unsubscribe = queue.subscribe(newParticles => {
 			if (!newParticles.length) return;
-			// Add valid particles to system
-			for (const p of newParticles) {
-				if (this.particles.length < 150 && p.sprite) {
-					this.container.addChild(p.sprite);
-					this.particles.push(p);
-				} else {
-					recycle(p);
-				}
+			for (const particle of newParticles) {
+				if (this.particles.length >= MAX_PARTICLES) break;
+				this.particles.push(particle);
 			}
 			queue.set([]);
 		});
@@ -160,18 +128,25 @@ export class ParticleEngine {
 
 	update(dt: number) {
 		for (let i = this.particles.length - 1; i >= 0; i--) {
-			const p = this.particles[i];
-			if (!p.update(dt)) {
-				recycle(p);
-				this.particles.splice(i, 1);
-			}
+			if (!this.particles[i].update(dt)) this.particles.splice(i, 1);
 		}
+	}
+
+	draw(ctx: CanvasRenderingContext2D) {
+		for (const particle of this.particles) {
+			if (particle.layer === ICON_LAYER) particle.draw(ctx);
+		}
+		for (const particle of this.particles) {
+			if (particle.layer === TEXT_LAYER) particle.draw(ctx);
+		}
+	}
+
+	get count() {
+		return this.particles.length;
 	}
 
 	destroy() {
 		this.unsubscribe();
-		this.particles.forEach(recycle);
 		this.particles = [];
-		this.container.destroy({ children: true });
 	}
 }

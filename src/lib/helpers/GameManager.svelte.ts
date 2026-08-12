@@ -29,7 +29,7 @@ import { FeaturesManager } from '$helpers/FeaturesManager.svelte';
 import { applyOfflineProgress } from '$helpers/offlineProgress';
 import { radiationManager } from '$helpers/RadiationManager.svelte';
 import { realmManager } from '$helpers/RealmManager.svelte';
-import { SAVE_KEY, SAVE_VERSION, loadSavedState } from '$helpers/saves';
+import { SAVE_KEY, SAVE_VERSION, loadSavedState, serializeSaveState } from '$helpers/saves';
 import { LAYERS, type LayerType, statsConfig } from '$helpers/statConstants';
 import { TutorialManager } from '$helpers/TutorialManager.svelte';
 import { leaderboard } from '$stores/leaderboard.svelte';
@@ -72,12 +72,22 @@ export class GameManager {
 	 * and has no auth/DOM context - see QuarksManager.svelte.ts for the one-way dependency rule.
 	 */
 	quarkBoostEffects = $state<Effect[]>([]);
+	/**
+	 * IDs of owned Quark shop items, pushed in by QuarksManager after sync/purchase/refund. Used to
+	 * gate prestige-persistence behaviors (e.g. keeping skill tree/currency boosts) that the generic
+	 * Effect pipeline can't express. Same one-way dependency rule as `quarkBoostEffects`.
+	 */
+	quarkEntitlements = $state<string[]>([]);
 	radiationUpgrades = $state<Record<string, number>>({});
 	realms = $state<Record<string, RealmState>>({
 		[RealmTypes.ATOMS]: { unlocked: true },
 		[RealmTypes.PHOTONS]: { unlocked: false },
 		[RealmTypes.RADIATION]: { unlocked: false },
 	});
+	/** True once the loaded save fails its checksum, see saveIntegrity.ts. */
+	saveIntegrityTampered = $state(false);
+	/** Plausibility warnings from checkStatePlausibility, see saves.ts. */
+	saveIntegrityWarnings = $state<string[]>([]);
 	settings = $state<Settings>({
 		automation: {
 			autoClick: false,
@@ -479,6 +489,18 @@ export class GameManager {
 			this.syncFeatures();
 			this.checkRealmUnlocks();
 			this.lastLoadedSave = typeof result.state.lastSave === 'number' ? result.state.lastSave : 0;
+			this.saveIntegrityTampered = result.integrityTampered ?? false;
+			this.saveIntegrityWarnings = result.integrityWarnings ?? [];
+			if (this.saveIntegrityTampered || this.saveIntegrityWarnings.length > 0) {
+				console.warn('Save integrity check flagged this save:', {
+					tampered: this.saveIntegrityTampered,
+					warnings: this.saveIntegrityWarnings,
+				});
+				toastStore.warning({
+					title: 'Save check',
+					message: 'This save looks like it was edited outside the game. Leaderboard submission is disabled for this session.',
+				});
+			}
 			this.applyingOfflineProgress = true;
 			const offlineSummary = applyOfflineProgress(this);
 			this.applyingOfflineProgress = false;
@@ -567,7 +589,7 @@ export class GameManager {
 		this.lastSave = Date.now();
 		const saveData = this.getCurrentState();
 		if (typeof localStorage !== 'undefined') {
-			localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+			localStorage.setItem(SAVE_KEY, serializeSaveState(saveData));
 		}
 	}
 
@@ -600,7 +622,9 @@ export class GameManager {
 				if (key === 'features') {
 					this.featuresManager.reset();
 				} else if (key === 'currencyBoosts') {
-					this.skillPointBoosts = {};
+					if (!this.quarkEntitlements.includes('convenience_keep_currency_boosts')) {
+						this.skillPointBoosts = {};
+					}
 				} else if (key === 'tutorial') {
 					this.tutorialManager.reset();
 				} else {
@@ -791,14 +815,17 @@ export class GameManager {
 
 		if (this.protons >= ELECTRONS_PROTONS_REQUIRED || electronGain > 0) {
 			const persistentUpgrades = this.upgrades.filter(id => id.startsWith('electron') || id.startsWith('proton'));
-			const persistentSkills = this.skillUpgrades.filter(id => {
-				const skill = SKILL_UPGRADES[id];
-				return (
-					!!skill?.feature ||
-					skill?.cost.currency === CurrenciesTypes.PROTONS ||
-					skill?.cost.currency === CurrenciesTypes.ELECTRONS
-				);
-			});
+			const persistentSkills =
+				this.quarkEntitlements.includes('convenience_keep_skill_tree') ?
+					this.skillUpgrades
+				:	this.skillUpgrades.filter(id => {
+						const skill = SKILL_UPGRADES[id];
+						return (
+							!!skill?.feature ||
+							skill?.cost.currency === CurrenciesTypes.PROTONS ||
+							skill?.cost.currency === CurrenciesTypes.ELECTRONS
+						);
+					});
 
 			this.totalElectronizesRun += 1;
 			this.totalElectronizesAllTime += 1;
@@ -825,14 +852,17 @@ export class GameManager {
 
 		if (this.atoms >= PROTONS_ATOMS_REQUIRED || protonGain > 0) {
 			const persistentUpgrades = this.upgrades.filter(id => id.startsWith('proton') || id.startsWith('electron'));
-			const persistentSkills = this.skillUpgrades.filter(id => {
-				const skill = SKILL_UPGRADES[id];
-				return (
-					!!skill?.feature ||
-					skill?.cost.currency === CurrenciesTypes.PROTONS ||
-					skill?.cost.currency === CurrenciesTypes.ELECTRONS
-				);
-			});
+			const persistentSkills =
+				this.quarkEntitlements.includes('convenience_keep_skill_tree') ?
+					this.skillUpgrades
+				:	this.skillUpgrades.filter(id => {
+						const skill = SKILL_UPGRADES[id];
+						return (
+							!!skill?.feature ||
+							skill?.cost.currency === CurrenciesTypes.PROTONS ||
+							skill?.cost.currency === CurrenciesTypes.ELECTRONS
+						);
+					});
 
 			this.totalProtonisesRun += 1;
 			this.totalProtonisesAllTime += 1;
@@ -904,7 +934,7 @@ export class GameManager {
 					title: 'Achievement unlocked',
 					message: `${achievement.name}\n${achievement.description}`,
 					duration: 10000,
-					icon: achievement.icon || 'Trophy',
+					icon: achievement.iconStack ?? achievement.icon ?? 'Trophy',
 				});
 			}
 			this.onAchievementUnlocked?.(achievementId);
