@@ -5,6 +5,7 @@
 	import { ELECTRONS_PROTONS_REQUIRED } from '$lib/constants';
 	import { formatNumber } from '$lib/utils';
 	import { prestigeStore } from '$stores/prestige.svelte';
+	import HoldButton from '@components/ui/HoldButton.svelte';
 	import Modal from '@components/ui/Modal.svelte';
 	import Tooltip from '@components/ui/Tooltip.svelte';
 	import Value from '@components/ui/Value.svelte';
@@ -226,14 +227,15 @@
 			</div>
 		</div>
 
-		<button
+		<HoldButton
 			class="electronize-button"
-			onclick={handleElectronize}
 			disabled={!canElectronize || gameManager.electronizeElectronsGain === 0}
+			onHoldComplete={handleElectronize}
+			style="--hold-color: #34d399; --hold-color-2: #10b981; --hold-glow: rgba(52, 211, 153, 0.7);"
 		>
 			<div class="pulse-overlay"></div>
-			<span class="z-10 relative">Electronize</span>
-		</button>
+			<span class="z-10 relative">Hold to Electronize</span>
+		</HoldButton>
 
 		{#if !canElectronize}
 			<p class="text-sm text-gray-400 text-center">Reach 1 billion protons to unlock Electronize</p>
@@ -242,7 +244,7 @@
 </Modal>
 
 <style>
-	.electronize-button {
+	:global(.electronize-button) {
 		background: linear-gradient(45deg, #45d945 0%, #2a862a 100%);
 		border: none;
 		border-radius: 8px;
@@ -255,14 +257,15 @@
 		position: relative;
 		text-transform: uppercase;
 		transition: all 0.3s;
+		width: 100%;
 	}
 
-	.electronize-button:disabled {
+	:global(.electronize-button:disabled) {
 		cursor: not-allowed;
 		opacity: 0.5;
 	}
 
-	.electronize-button:not(:disabled):hover {
+	:global(.electronize-button:not(:disabled)):hover {
 		transform: translateY(-2px);
 		box-shadow: 0 5px 15px rgba(69, 217, 69, 0.4);
 	}
