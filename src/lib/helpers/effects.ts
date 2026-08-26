@@ -32,6 +32,7 @@ export function getUpgradesWithEffects(upgrades: (Upgrade | SkillUpgrade)[], opt
  */
 export function foldEffects(upgrades: (Upgrade | SkillUpgrade)[], manager: GameManager, defaultValue: number, options: SearchEffectsOptions): number {
 	let value = defaultValue;
+	const groupContributions = new Map<string, number>();
 
 	for (const upgrade of upgrades) {
 		if (!('effects' in upgrade) || !Array.isArray(upgrade.effects)) continue;
@@ -39,22 +40,24 @@ export function foldEffects(upgrades: (Upgrade | SkillUpgrade)[], manager: GameM
 		for (const effect of upgrade.effects) {
 			if (options.type && effect.type !== options.type) continue;
 			if (options.target && effect.target !== options.target) continue;
+
+			if (effect.group) {
+				const contribution = effect.apply(0, manager);
+				groupContributions.set(effect.group, (groupContributions.get(effect.group) ?? 0) + contribution);
+				continue;
+			}
+
 			value = effect.apply(value, manager);
 		}
+	}
+
+	for (const contribution of groupContributions.values()) {
+		value *= 1 + contribution;
 	}
 
 	return value;
 }
 
 export function calculateEffects(upgrades: (Upgrade | SkillUpgrade)[], manager: GameManager, defaultValue: number = 0, options?: SearchEffectsOptions): number {
-	return upgrades.reduce((currentValue, upgrade) => {
-		if ('effects' in upgrade && Array.isArray(upgrade.effects)) {
-			return upgrade.effects.reduce((value, effect) => {
-				if (options?.type && effect.type !== options.type) return value;
-				if (options?.target && effect.target !== options.target) return value;
-				return effect.apply(value, manager);
-			}, currentValue);
-		}
-		return currentValue;
-	}, defaultValue);
+	return foldEffects(upgrades, manager, defaultValue, options ?? {});
 }
