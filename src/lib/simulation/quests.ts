@@ -104,7 +104,7 @@ export class QuestTracker {
 			if (quest.metric !== 'clicks') continue;
 			const target = this.targets[quest.id] ?? quest.floor;
 			if (gameManager.dailyStats.clicks >= target) continue;
-			gameManager.dailyStats = { ...gameManager.dailyStats, clicks: gameManager.dailyStats.clicks + 5 };
+			gameManager.dailyStats.clicks += 5;
 		}
 	}
 }

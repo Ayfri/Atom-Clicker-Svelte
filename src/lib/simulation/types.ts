@@ -4,6 +4,8 @@ export interface BenchmarkConfig {
 	botBehavior: BotBehavior;
 	name: string;
 	prestigeStrategy: PrestigeStrategy;
+	/** Seeds the engine's power-up draws. Two runs of the same config and seed are identical. */
+	seed?: number;
 	snapshotInterval: number;
 	targetHours: number;
 	tickRate: number;
@@ -51,8 +53,11 @@ export interface SimulationSnapshot {
 	actionCounts: Partial<Record<SimulationActionType, number>>;
 	atoms: number;
 	atomsCurrencyBoost: number;
+	atomsEarnedAllTime: number;
 	atomsPerClick: number;
 	atomsPerSecond: number;
+	/** APS with the power-up bonus divided back out: a live power-up otherwise reads as a 5x jump in the growth curve. */
+	atomsPerSecondRaw: number;
 	bonusMultiplier: number;
 	buildingLevels: number;
 	buildingLevelFactors: Partial<Record<BuildingType, number>>;
@@ -65,6 +70,8 @@ export interface SimulationSnapshot {
 	dayNumber: number;
 	electrons: number;
 	electronizes: number;
+	excitedPhotons: number;
+	excitedPhotonsEarned: number;
 	globalAchievementMultiplier: number;
 	globalFlatMultiplier: number;
 	globalLevelMultiplier: number;
@@ -79,7 +86,11 @@ export interface SimulationSnapshot {
 	globalProtonBoostMultiplier: number;
 	globalProtoniseMultiplier: number;
 	globalSkillsMultiplier: number;
+	/** Peak APS with the power-up bonus divided out, tracked per tick. Monotonic, so a prestige reset cannot fake a stall. */
+	peakAtomsPerSecond: number;
 	photons: number;
+	photonsEarned: number;
+	photonsExpired: number;
 	photonUpgradeLevels: number;
 	playerLevel: number;
 	protons: number;
@@ -163,24 +174,27 @@ export interface SimulationResult {
 	spikes: SpikeEvent[];
 }
 
-/** Fields a milestone predicate may read: the engine builds only these between snapshots instead of a full snapshot. */
-export type MilestoneCheckData = Pick<
-	SimulationSnapshot,
-	| 'achievements'
-	| 'atoms'
-	| 'atomsPerSecond'
-	| 'buildingsEverPurchased'
-	| 'dayNumber'
-	| 'electronizes'
-	| 'electrons'
-	| 'photonUpgradeLevels'
-	| 'playerLevel'
-	| 'protonises'
-	| 'protons'
-	| 'quarks'
-	| 'skillPointsUsed'
-	| 'skills'
-	| 'timestamp'
-	| 'totalBuildings'
-	| 'upgrades'
->;
+/**
+ * Fields a milestone predicate may read. Checked on every tick, so this is a mutable scratch object the engine reuses
+ * and `buildingsEverPurchased` is the engine's own set rather than a copy.
+ */
+export interface MilestoneCheckData {
+	achievements: number;
+	atoms: number;
+	atomsPerSecond: number;
+	buildingsEverPurchased: ReadonlySet<string>;
+	dayNumber: number;
+	electronizes: number;
+	electrons: number;
+	excitedPhotons: number;
+	photonUpgradeLevels: number;
+	playerLevel: number;
+	protonises: number;
+	protons: number;
+	quarks: number;
+	skillPointsUsed: number;
+	skills: number;
+	timestamp: number;
+	totalBuildings: number;
+	upgrades: number;
+}

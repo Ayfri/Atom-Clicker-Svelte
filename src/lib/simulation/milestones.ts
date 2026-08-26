@@ -21,7 +21,7 @@ const at = (field: NumericField, value: number, id: string, name: string, descri
 });
 
 const firstPurchase = (type: (typeof BUILDING_TYPES)[number]): MilestoneEntry => ({
-	check: snapshot => snapshot.buildingsEverPurchased.includes(type),
+	check: snapshot => snapshot.buildingsEverPurchased.has(type),
 	milestone: {
 		description: `Purchased first ${BUILDINGS[type].name}`,
 		id: `first_building_${type}`,
@@ -52,6 +52,9 @@ export const MILESTONE_ENTRIES: MilestoneEntry[] = [
 	at('protons', 1000, 'protons_1k', '1K Protons', 'Earned 1K Protons'),
 	at('electronizes', 1, 'first_electronize', '1st Electronize', 'First Electronize'),
 	at('electrons', 100, 'electrons_100', '100 Electrons', 'Earned 100 Electrons'),
+
+	at('excitedPhotons', 1, 'excited_1', '1st Excited Photon', 'Collected an excited photon'),
+	at('excitedPhotons', 100, 'excited_100', '100 Excited Photons', 'Earned 100 excited photons'),
 
 	at('upgrades', 10, 'upgrades_10', '10 Upgrades', 'Bought 10 upgrades'),
 	at('upgrades', 50, 'upgrades_50', '50 Upgrades', 'Bought 50 upgrades'),

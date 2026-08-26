@@ -14,6 +14,8 @@ export interface RunState {
 	actionCounts: Partial<Record<SimulationActionType, number>>;
 	actions: SimulationAction[];
 	everPurchasedBuildings: Set<string>;
+	peakAtomsPerSecond: number;
+	photonsExpired: number;
 	quarksFromAchievements: number;
 	quests: QuestTracker;
 }
@@ -24,30 +26,33 @@ function sumValues(source: Record<string, number | undefined> | undefined): numb
 	return total;
 }
 
-/** Milestone predicates read a handful of counters, so between-snapshot checks skip the full snapshot build. */
-export function createMilestoneData(run: RunState): MilestoneCheckData {
+/**
+ * Milestone predicates read a handful of counters, so between-snapshot checks skip the full snapshot build.
+ * The engine checks every tick, so the target object is written in place instead of allocated per call.
+ */
+export function fillMilestoneData(run: RunState, target: MilestoneCheckData): MilestoneCheckData {
 	let totalBuildings = 0;
 	for (const type of BUILDING_TYPES) totalBuildings += gameManager.buildings[type]?.count ?? 0;
 
-	return {
-		achievements: gameManager.achievements.length,
-		atoms: currenciesManager.getAmount(CurrenciesTypes.ATOMS),
-		atomsPerSecond: gameManager.atomsPerSecond,
-		buildingsEverPurchased: [...run.everPurchasedBuildings],
-		dayNumber: gameManager.inGameTime / DAY_MS,
-		electronizes: gameManager.totalElectronizesAllTime,
-		electrons: currenciesManager.getAmount(CurrenciesTypes.ELECTRONS),
-		photonUpgradeLevels: sumValues(gameManager.photonUpgrades),
-		playerLevel: gameManager.getLevelFromTotalXP(gameManager.totalXP),
-		protonises: gameManager.totalProtonisesAllTime,
-		protons: currenciesManager.getAmount(CurrenciesTypes.PROTONS),
-		quarks: run.quarksFromAchievements + run.quests.quarks,
-		skillPointsUsed: sumValues(gameManager.skillPointBoosts),
-		skills: gameManager.skillUpgrades.length,
-		timestamp: gameManager.inGameTime,
-		totalBuildings,
-		upgrades: gameManager.upgrades.length,
-	};
+	target.achievements = gameManager.achievements.length;
+	target.atoms = currenciesManager.getAmount(CurrenciesTypes.ATOMS);
+	target.atomsPerSecond = gameManager.atomsPerSecond;
+	target.buildingsEverPurchased = run.everPurchasedBuildings;
+	target.dayNumber = gameManager.inGameTime / DAY_MS;
+	target.electronizes = gameManager.totalElectronizesAllTime;
+	target.electrons = currenciesManager.getAmount(CurrenciesTypes.ELECTRONS);
+	target.excitedPhotons = currenciesManager.getAmount(CurrenciesTypes.EXCITED_PHOTONS);
+	target.photonUpgradeLevels = sumValues(gameManager.photonUpgrades);
+	target.playerLevel = gameManager.playerLevel;
+	target.protonises = gameManager.totalProtonisesAllTime;
+	target.protons = currenciesManager.getAmount(CurrenciesTypes.PROTONS);
+	target.quarks = run.quarksFromAchievements + run.quests.quarks;
+	target.skillPointsUsed = sumValues(gameManager.skillPointBoosts);
+	target.skills = gameManager.skillUpgrades.length;
+	target.timestamp = gameManager.inGameTime;
+	target.totalBuildings = totalBuildings;
+	target.upgrades = gameManager.upgrades.length;
+	return target;
 }
 
 export function createSnapshotData(run: RunState): SimulationSnapshot {
@@ -110,8 +115,10 @@ export function createSnapshotData(run: RunState): SimulationSnapshot {
 		actions: [...run.actions],
 		atoms: currenciesManager.getAmount(CurrenciesTypes.ATOMS),
 		atomsCurrencyBoost: gameManager.getCurrencyBoostMultiplier(CurrenciesTypes.ATOMS),
+		atomsEarnedAllTime: currenciesManager.getEarnedAllTime(CurrenciesTypes.ATOMS),
 		atomsPerClick: gameManager.clickPower,
 		atomsPerSecond: gameManager.atomsPerSecond,
+		atomsPerSecondRaw: gameManager.atomsPerSecond / (gameManager.bonusMultiplier || 1),
 		bonusMultiplier: gameManager.bonusMultiplier,
 		buildingLevelFactors,
 		buildingLevels,
@@ -124,6 +131,8 @@ export function createSnapshotData(run: RunState): SimulationSnapshot {
 		dayNumber: gameManager.inGameTime / DAY_MS,
 		electrons: currenciesManager.getAmount(CurrenciesTypes.ELECTRONS),
 		electronizes: gameManager.totalElectronizesAllTime,
+		excitedPhotons: currenciesManager.getAmount(CurrenciesTypes.EXCITED_PHOTONS),
+		excitedPhotonsEarned: currenciesManager.getEarnedAllTime(CurrenciesTypes.EXCITED_PHOTONS),
 		globalAchievementMultiplier: fold(achievementSources),
 		globalFlatMultiplier: fold(flatSources),
 		globalLevelMultiplier: fold(levelSources),
@@ -140,9 +149,12 @@ export function createSnapshotData(run: RunState): SimulationSnapshot {
 			protonBoost: contributions('proton_boost', 10),
 			protoniseBoost: contributions('protonise_boost', 5),
 		},
+		peakAtomsPerSecond: run.peakAtomsPerSecond,
 		photons: currenciesManager.getAmount(CurrenciesTypes.PHOTONS),
+		photonsEarned: currenciesManager.getEarnedAllTime(CurrenciesTypes.PHOTONS),
+		photonsExpired: run.photonsExpired,
 		photonUpgradeLevels: sumValues(gameManager.photonUpgrades),
-		playerLevel: gameManager.getLevelFromTotalXP(gameManager.totalXP),
+		playerLevel: gameManager.playerLevel,
 		protons: currenciesManager.getAmount(CurrenciesTypes.PROTONS),
 		protonises: gameManager.totalProtonisesAllTime,
 		quarks: run.quarksFromAchievements + run.quests.quarks,

@@ -8,11 +8,13 @@ import { gameManager } from '$helpers/GameManager.svelte';
 import { radiationManager } from '$helpers/RadiationManager.svelte';
 import { MILESTONE_ENTRIES, type MilestoneEntry } from './milestones';
 import { PurchasePlanner } from './purchases';
+import { DEFAULT_SEED, createRandom } from './random';
 import { QuestTracker } from './quests';
-import { createMilestoneData, createSnapshotData, type RunState } from './snapshots';
+import { createSnapshotData, fillMilestoneData, type RunState } from './snapshots';
 import {
 	DETAILED_ACTION_TYPES,
 	type BenchmarkConfig,
+	type MilestoneCheckData,
 	type MilestoneHit,
 	type SimulationAction,
 	type SimulationActionType,
@@ -41,13 +43,30 @@ export interface SimulationProgress {
 
 export type ProgressCallback = (progress: SimulationProgress) => void;
 
+interface PhotonRealmEffects {
+	excitedLifetimeMultiplier: number;
+	excitedValue: number;
+	lifetimeMs: number;
+	normalValue: number;
+}
+
+export interface SimulationEngineOptions {
+	/** Ticks between yields to the host event loop. 0 never yields, which is what a headless CLI run wants. */
+	yieldInterval?: number;
+}
+
 const schedulerYield = (globalThis as any).scheduler?.yield as (() => Promise<void>) | undefined;
 const yieldToMain: () => Promise<void> =
 	typeof schedulerYield === 'function'
 		? () => schedulerYield.call((globalThis as any).scheduler)
 		: () => new Promise(resolve => setTimeout(resolve, 0));
 
-const EXCITED_PHOTON_BASE_CHANCE = 0.002;
+// Photon realm geometry, mirrored from PhotonRealm.svelte: circles spawn on a timer, live a while, and cap out on screen.
+const PHOTON_BASE_LIFETIME_MS = 5000;
+const PHOTON_MAX_CIRCLES = 100;
+const PHOTON_MAX_VALUE = 10;
+const PHOTON_MIN_VALUE = 1;
+const PHOTON_AVERAGE_VALUE = (PHOTON_MIN_VALUE + PHOTON_MAX_VALUE) / 2;
 
 // Prestige budgets are a pacing limit per play session, not a lifetime cap.
 const PRESTIGE_WINDOW_MS = 3_600_000;
@@ -87,20 +106,38 @@ export class SimulationEngine {
 	private spikeWindowActions: SimulationAction[] = [];
 	private spikeWindowAps = 0;
 	private spikeWindowStart = 0;
+	private yieldInterval: number;
 
-	constructor(config: BenchmarkConfig) {
+	/** Uncollected circles on screen, as expected counts: the realm is a spawn-and-expire queue, not one payout per click. */
+	private photonPoolExcited = 0;
+	private photonPoolNormal = 0;
+	private peakAtomsPerSecond = 0;
+	private photonsExpired = 0;
+	private photonEffects: PhotonRealmEffects | null = null;
+	private photonEffectsSources: unknown = null;
+	private photonEffectsStability = 0;
+	private milestoneScratch = {} as MilestoneCheckData;
+	private runStateCache = {} as RunState;
+	private random: () => number = createRandom(DEFAULT_SEED);
+
+	constructor(config: BenchmarkConfig, options: SimulationEngineOptions = {}) {
 		this.config = config;
 		this.quests = new QuestTracker(config.botBehavior.questBehavior);
+		this.yieldInterval = options.yieldInterval ?? YIELD_INTERVAL;
+		this.random = createRandom(config.seed ?? DEFAULT_SEED);
 	}
 
+	/** Read on every tick by the milestone check, so the object is reused instead of rebuilt. */
 	private get runState(): RunState {
-		return {
-			actionCounts: this.actionCounts,
-			actions: this.actions,
-			everPurchasedBuildings: this.everPurchasedBuildings,
-			quarksFromAchievements: this.quarksFromAchievements,
-			quests: this.quests,
-		};
+		const state = this.runStateCache;
+		state.actionCounts = this.actionCounts;
+		state.actions = this.actions;
+		state.everPurchasedBuildings = this.everPurchasedBuildings;
+		state.peakAtomsPerSecond = this.peakAtomsPerSecond;
+		state.photonsExpired = this.photonsExpired;
+		state.quarksFromAchievements = this.quarksFromAchievements;
+		state.quests = this.quests;
+		return state;
 	}
 
 	cancel() {
@@ -125,6 +162,7 @@ export class SimulationEngine {
 		this.activeNow = false;
 		this.planner.reset();
 		this.quests.reset(this.config.botBehavior.questBehavior);
+		this.random = createRandom(this.config.seed ?? DEFAULT_SEED);
 		this.everPurchasedBuildings.clear();
 		this.ownedAchievements = new Set(gameManager.achievements);
 		this.pendingMilestones = MILESTONE_ENTRIES;
@@ -133,6 +171,12 @@ export class SimulationEngine {
 		this.lastWasActive = false;
 		this.milestones = [];
 		this.nextPowerUpTime = this.rollPowerUpInterval();
+		this.photonEffects = null;
+		this.photonEffectsSources = null;
+		this.photonPoolExcited = 0;
+		this.photonPoolNormal = 0;
+		this.peakAtomsPerSecond = 0;
+		this.photonsExpired = 0;
 		this.powerUpCounter = 0;
 		this.prestigesThisActiveWindow = 0;
 		this.prestigeWindowStart = 0;
@@ -151,7 +195,6 @@ export class SimulationEngine {
 		const totalTicks = Math.floor(totalGameTimeMs / this.config.tickRate);
 		const snapshotIntervalTicks = Math.floor((this.config.snapshotInterval * 1000) / this.config.tickRate);
 		const achievementCheckInterval = Math.max(1, Math.round(1000 / this.config.tickRate));
-		const milestoneCheckInterval = Math.max(1, Math.round(5000 / this.config.tickRate));
 		this.takeSnapshot();
 
 		let lastProgressUpdate = startRealTime;
@@ -160,20 +203,25 @@ export class SimulationEngine {
 		let cancelled = false;
 		const tickRate = this.config.tickRate;
 
+		const yieldInterval = this.yieldInterval;
+
 		try {
 			for (let tick = 0; tick < totalTicks; tick++) {
-				if (tick % YIELD_INTERVAL === 0) {
-					await yieldToMain();
+				if (yieldInterval > 0 ? tick % yieldInterval === 0 : tick % CHUNK_SIZE === 0) {
+					if (yieldInterval > 0) await yieldToMain();
 					if (signal.aborted) {
 						cancelled = true;
 						break;
 					}
 				}
 				gameManager.tick(tickRate, true);
+				// Sampled per tick rather than per snapshot, and with the power-up bonus out, so the ratchet is honest.
+				const rawAps = gameManager.atomsPerSecond / (gameManager.bonusMultiplier || 1);
+				if (rawAps > this.peakAtomsPerSecond) this.peakAtomsPerSecond = rawAps;
 				const activeNow = this.isInActiveWindow();
 				this.activeNow = activeNow;
 				this.simulateClicks();
-				this.simulatePhotonRealmClicks();
+				this.simulatePhotonRealm();
 				this.tickPowerUps();
 				this.quests.checkDayRollover();
 				// An always-active run never crosses an inactive edge, so the budget also expires on a simulated-hour timer.
@@ -192,9 +240,8 @@ export class SimulationEngine {
 				if (tick % achievementCheckInterval === 0) {
 					this.checkAchievements();
 				}
-				if (tick % milestoneCheckInterval === 0) {
-					this.checkMilestones();
-				}
+				// Every tick, not on a sampling interval: a counter that rises and is spent inside one window still counts.
+				this.checkMilestones();
 
 				if ((tick + 1) % snapshotIntervalTicks === 0) {
 					this.takeSnapshot();
@@ -323,7 +370,7 @@ export class SimulationEngine {
 		const pending = this.pendingMilestones;
 		if (pending.length === 0) return;
 
-		const snapshot = createMilestoneData(this.runState);
+		const snapshot = fillMilestoneData(this.runState, this.milestoneScratch);
 		let stillPending: MilestoneEntry[] | null = null;
 
 		for (let i = 0; i < pending.length; i++) {
@@ -515,59 +562,115 @@ export class SimulationEngine {
 		const clickPower = gameManager.clickPower;
 
 		gameManager.addAtoms(clickPower * clicksThisTick);
-		gameManager.totalClicksAllTime += Math.floor(clicksThisTick);
-		gameManager.totalClicksRun += Math.floor(clicksThisTick);
+		const wholeClicks = Math.floor(clicksThisTick);
+		gameManager.totalClicksAllTime += wholeClicks;
+		gameManager.totalClicksRun += wholeClicks;
 		// Bypasses gameManager.incrementClicks() for performance, so dailyStats needs its own bump here.
-		gameManager.dailyStats = { ...gameManager.dailyStats, clicks: gameManager.dailyStats.clicks + Math.floor(clicksThisTick) };
+		if (wholeClicks > 0) gameManager.dailyStats.clicks += wholeClicks;
 	}
 
-	/** Mirrors offlineProgress.ts photon math, plus auto-click. */
-	private simulatePhotonRealmClicks() {
+	/**
+	 * The realm pays per circle collected, not per click: circles spawn on `photonSpawnInterval`, expire after their
+	 * lifetime, and cap at 100 on screen. Clicking faster than circles spawn earns nothing extra, which is the whole
+	 * difference between this and the offline approximation.
+	 */
+	private simulatePhotonRealm() {
 		if (!gameManager.realms[RealmTypes.PHOTONS]?.unlocked) return;
 
 		const deltaSeconds = this.config.tickRate / 1000;
+		const effects = this.photonRealmEffects();
+
+		const spawnInterval = Math.max(1, gameManager.photonSpawnInterval);
+		const spawns = (deltaSeconds * 1000) / spawnInterval;
+		const excitedChance = gameManager.excitedPhotonChance;
+
+		// Circles die of old age; with spawn times spread evenly the share reaching the cutoff over a tick is delta/lifetime.
+		const normalLifetime = Math.max(1, effects.lifetimeMs) / 1000;
+		const excitedLifetime = normalLifetime * effects.excitedLifetimeMultiplier;
+		const expiredNormal = this.photonPoolNormal * Math.min(1, deltaSeconds / normalLifetime);
+		const expiredExcited = this.photonPoolExcited * Math.min(1, deltaSeconds / excitedLifetime);
+		this.photonPoolNormal -= expiredNormal;
+		this.photonPoolExcited -= expiredExcited;
+		this.photonsExpired += expiredNormal + expiredExcited;
+
+		this.photonPoolNormal += spawns * (1 - excitedChance);
+		this.photonPoolExcited += spawns * excitedChance;
+
+		const onScreen = this.photonPoolNormal + this.photonPoolExcited;
+		if (onScreen > PHOTON_MAX_CIRCLES) {
+			const overflow = onScreen - PHOTON_MAX_CIRCLES;
+			const scale = PHOTON_MAX_CIRCLES / onScreen;
+			this.photonPoolNormal *= scale;
+			this.photonPoolExcited *= scale;
+			this.photonsExpired += overflow;
+		}
+
 		const manualClicks = this.activeNow ? this.config.botBehavior.clicksPerSecond * this.clickShare() * deltaSeconds : 0;
 		const autoClicks = gameManager.photonAutoClicksPer5Seconds > 0 ? (gameManager.photonAutoClicksPer5Seconds / 5) * deltaSeconds : 0;
-		const totalClicks = manualClicks + autoClicks;
-		if (totalClicks <= 0) return;
+		if (manualClicks + autoClicks <= 0) return;
 
-		const { doubleChance, excitedChance, excitedDoubleChance, excitedFromMaxBonus, photonValueBonus } = this.photonClickEffects();
-		// Photon realm caps excited chance behind 'excited_auto_click' upgrade for auto-clicks only.
-		const autoAllowsExcited = (gameManager.photonUpgrades['excited_auto_click'] || 0) > 0;
-		const excitedChanceManual = excitedChance;
-		const excitedChanceAuto = autoAllowsExcited ? excitedChanceManual : 0;
+		let collectedNormal = 0;
+		let collectedExcited = 0;
 
-		const basePhotonAvg = (1 + 10) / 2;
-		const normalPhotonsPerClick = (basePhotonAvg + photonValueBonus) * (1 + doubleChance);
-		const excitedPhotonsPerClick = (1 + excitedDoubleChance) + (10 + photonValueBonus) * excitedFromMaxBonus;
+		// The auto-clicker picks uniformly among circles it may target, so excited ones stay put until it is upgraded.
+		const autoTargetsExcited = (gameManager.photonUpgrades['excited_auto_click'] ?? 0) > 0;
+		if (autoClicks > 0) {
+			const reachable = this.photonPoolNormal + (autoTargetsExcited ? this.photonPoolExcited : 0);
+			if (reachable > 0) {
+				const taken = Math.min(autoClicks, reachable);
+				const normal = (taken * this.photonPoolNormal) / reachable;
+				const excited = taken - normal;
+				this.photonPoolNormal -= normal;
+				this.photonPoolExcited -= excited;
+				collectedNormal += normal;
+				collectedExcited += excited;
+			}
+		}
 
-		const photonsMultiplier = gameManager.getCurrencyBoostMultiplier(CurrenciesTypes.PHOTONS);
-		const excitedMultiplier = gameManager.getCurrencyBoostMultiplier(CurrenciesTypes.EXCITED_PHOTONS);
+		if (manualClicks > 0) {
+			const reachable = this.photonPoolNormal + this.photonPoolExcited;
+			if (reachable > 0) {
+				const taken = Math.min(manualClicks, reachable);
+				const normal = (taken * this.photonPoolNormal) / reachable;
+				const excited = taken - normal;
+				this.photonPoolNormal -= normal;
+				this.photonPoolExcited -= excited;
+				collectedNormal += normal;
+				collectedExcited += excited;
+			}
+		}
 
-		const normalClicks = manualClicks * (1 - excitedChanceManual) + autoClicks * (1 - excitedChanceAuto);
-		const excitedClicks = manualClicks * excitedChanceManual + autoClicks * excitedChanceAuto;
-
-		const photonsGain = normalClicks * normalPhotonsPerClick * photonsMultiplier;
-		const excitedGain = excitedClicks * excitedPhotonsPerClick * excitedMultiplier;
-
-		if (photonsGain > 0) currenciesManager.add(CurrenciesTypes.PHOTONS, photonsGain);
-		if (excitedGain > 0) currenciesManager.add(CurrenciesTypes.EXCITED_PHOTONS, excitedGain);
+		if (collectedNormal > 0) {
+			const gain = collectedNormal * effects.normalValue * gameManager.getCurrencyBoostMultiplier(CurrenciesTypes.PHOTONS);
+			currenciesManager.add(CurrenciesTypes.PHOTONS, gain);
+		}
+		if (collectedExcited > 0) {
+			const gain = collectedExcited * effects.excitedValue * gameManager.getCurrencyBoostMultiplier(CurrenciesTypes.EXCITED_PHOTONS);
+			currenciesManager.add(CurrenciesTypes.EXCITED_PHOTONS, gain);
+		}
 	}
 
-	private photonClickEffects(): {
-		doubleChance: number;
-		excitedChance: number;
-		excitedDoubleChance: number;
-		excitedFromMaxBonus: number;
-		photonValueBonus: number;
-	} {
+	/**
+	 * One pass over the effect sources for everything a circle is worth and how long it lives.
+	 * Memoized on the effect-source identity, which only changes on a purchase, plus the stability field that the two
+	 * stability upgrades read live.
+	 */
+	private photonRealmEffects(): PhotonRealmEffects {
+		const sources = gameManager.allEffectSources;
+		const stability = gameManager.stabilityMultiplier;
+		const cached = this.photonEffects;
+		if (cached && this.photonEffectsSources === sources && this.photonEffectsStability === stability) return cached;
+
 		let doubleChance = 0;
-		let excitedChance = EXCITED_PHOTON_BASE_CHANCE;
 		let excitedDoubleChance = 0;
 		let excitedFromMaxBonus = 0;
+		let excitedLifetimeMultiplier = 1;
+		let excitedStability = 1;
+		let lifetimeBonusMs = 0;
+		let normalStability = 1;
 		let photonValueBonus = 0;
 
-		for (const source of gameManager.allEffectSources) {
+		for (const source of sources) {
 			if (!('effects' in source) || !Array.isArray(source.effects)) continue;
 			const isPhotonValue = source.id === 'photon_value';
 
@@ -576,28 +679,48 @@ export class SimulationEngine {
 					case 'click':
 						if (isPhotonValue) photonValueBonus = effect.apply(photonValueBonus, gameManager);
 						break;
-					case 'excited_photon_chance':
-						excitedChance = effect.apply(excitedChance, gameManager);
-						break;
 					case 'excited_photon_double':
 						excitedDoubleChance = effect.apply(excitedDoubleChance, gameManager);
+						break;
+					case 'excited_photon_duration':
+						excitedLifetimeMultiplier = effect.apply(excitedLifetimeMultiplier, gameManager);
 						break;
 					case 'excited_photon_from_max':
 						excitedFromMaxBonus = effect.apply(excitedFromMaxBonus, gameManager);
 						break;
+					case 'excited_photon_stability':
+						excitedStability = effect.apply(excitedStability, gameManager);
+						break;
 					case 'photon_double_chance':
 						doubleChance = effect.apply(doubleChance, gameManager);
+						break;
+					case 'photon_duration':
+						lifetimeBonusMs = effect.apply(lifetimeBonusMs, gameManager);
+						break;
+					case 'photon_stability':
+						normalStability = effect.apply(normalStability, gameManager);
 						break;
 				}
 			}
 		}
 
-		return { doubleChance, excitedChance, excitedDoubleChance, excitedFromMaxBonus, photonValueBonus };
+		const effects: PhotonRealmEffects = {
+			excitedLifetimeMultiplier,
+			excitedValue:
+				(1 + excitedDoubleChance + (PHOTON_MAX_VALUE + photonValueBonus) * excitedFromMaxBonus) * excitedStability,
+			lifetimeMs: PHOTON_BASE_LIFETIME_MS + lifetimeBonusMs,
+			normalValue: (PHOTON_AVERAGE_VALUE + photonValueBonus) * (1 + doubleChance) * normalStability,
+		};
+
+		this.photonEffects = effects;
+		this.photonEffectsSources = sources;
+		this.photonEffectsStability = stability;
+		return effects;
 	}
 
 	private rollPowerUpInterval(): number {
 		const [min, max] = gameManager.powerUpInterval;
-		return gameManager.inGameTime + min + Math.random() * (max - min);
+		return gameManager.inGameTime + min + this.random() * (max - min);
 	}
 
 	private tickPowerUps() {
@@ -606,7 +729,7 @@ export class SimulationEngine {
 		this.nextPowerUpTime = this.rollPowerUpInterval();
 		if (!this.activeNow) return;
 
-		const base = POWER_UPS[Math.floor(Math.random() * POWER_UPS.length)];
+		const base = POWER_UPS[Math.floor(this.random() * POWER_UPS.length)];
 		const multiplier = base.multiplier * gameManager.powerUpEffectMultiplier;
 		const duration = base.duration * gameManager.powerUpDurationMultiplier;
 
