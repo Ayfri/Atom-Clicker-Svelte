@@ -15,7 +15,7 @@
 	import PhotonUpgrades from '@components/prestige/PhotonUpgrades.svelte';
 	import { onMount } from 'svelte';
 
-	export function simulateClick() {
+	function simulateClick() {
 		if (!container || circles.length === 0) return;
 
 		// Filter valid targets
@@ -27,20 +27,8 @@
 		// Get a random circle from our valid circles array
 		const randomCircle = validCircles[Math.floor(Math.random() * validCircles.length)];
 
-		// Get the container's position to calculate absolute coordinates
 		const containerRect = container.getBoundingClientRect();
-		const absoluteX = containerRect.left + randomCircle.x;
-		const absoluteY = containerRect.top + randomCircle.y;
-
-		// Create a synthetic mouse event with the circle's coordinates
-		const event = new MouseEvent('click', {
-			clientX: absoluteX,
-			clientY: absoluteY,
-			bubbles: true
-		});
-
-		// Trigger the click directly on the circle
-		clickCircle(randomCircle, event);
+		clickCircle(randomCircle, containerRect.left + randomCircle.x, containerRect.top + randomCircle.y, true);
 	}
 
 	interface Circle {
@@ -218,7 +206,7 @@
 		if (circles.length < MAX_CIRCLES) circles.push(circle);
 	}
 
-	function clickCircle(circle: Circle, event: MouseEvent) {
+	function clickCircle(circle: Circle, x: number, y: number, isAuto: boolean) {
 		const baseAmount = getCircleValue(circle);
 
 		if (circle.type === 'excited') {
@@ -238,7 +226,7 @@
 		const currencyType = circle.type === 'excited' ? CurrenciesTypes.EXCITED_PHOTONS : CurrenciesTypes.PHOTONS;
 
 		for (let i = 0; i < particleCount; i++) {
-			const particle = createClickParticleSync(event.clientX, event.clientY, currencyType);
+			const particle = createClickParticleSync(x, y, currencyType);
 			if (particle) addedParticles.push(particle);
 		}
 		if (addedParticles.length > 0) {
@@ -248,7 +236,6 @@
 		// Excited stabilization: interacting with the realm resets/collapses it
 		const excitedStabilizationLevel = gameManager.photonUpgrades['excited_stabilization'] || 0;
 		if (excitedStabilizationLevel > 0) {
-			const isAuto = !event.isTrusted;
 			const hasAutoBypass = gameManager.upgrades.includes('electron_bypass_photon_autoclick_stability');
 			const hasManualBypass = gameManager.upgrades.includes('electron_bypass_photon_click_stability');
 
@@ -362,7 +349,7 @@
 		}
 
 		const circle = circleFromEvent(event);
-		if (circle) clickCircle(circle, event);
+		if (circle) clickCircle(circle, event.clientX, event.clientY, false);
 	}
 
 	function handlePointerDown(event: PointerEvent) {
@@ -382,7 +369,7 @@
 		// Equivalent of the per-circle `onpointerenter`: only fire when entering a new circle.
 		// Touch only emits moves while pressed, so this doubles as swipe-to-collect on mobile.
 		if (circle && circle.id !== lastHoveredId && hoverCollection) {
-			clickCircle(circle, event);
+			clickCircle(circle, event.clientX, event.clientY, false);
 			if (pointerDown) collectedWhileDown = true;
 			lastHoveredId = null;
 			hovering = false;

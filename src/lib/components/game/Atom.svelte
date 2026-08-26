@@ -9,19 +9,29 @@
 
 	let atomElement = $state<HTMLButtonElement>();
 
-	export function simulateClick() {
-		if (!atomElement) return;
+	// getBoundingClientRect forces a synchronous reflow, so the auto-clicker reuses the last measurement instead of taking one per click.
+	let cachedRect: DOMRect | null = null;
 
-		const rect = atomElement.getBoundingClientRect();
-		const x = rect.left + Math.random() * rect.width;
-		const y = rect.top + Math.random() * rect.height;
+	function getRect() {
+		if (!cachedRect && atomElement) cachedRect = atomElement.getBoundingClientRect();
+		return cachedRect;
+	}
 
-		const event = new MouseEvent('click', {
-			clientX: x,
-			clientY: y,
-			bubbles: true
-		});
-		atomElement.dispatchEvent(event);
+	$effect(() => {
+		const invalidate = () => (cachedRect = null);
+		window.addEventListener('resize', invalidate, { passive: true });
+		window.addEventListener('scroll', invalidate, { capture: true, passive: true });
+		return () => {
+			window.removeEventListener('resize', invalidate);
+			window.removeEventListener('scroll', invalidate, { capture: true });
+		};
+	});
+
+	function simulateClick() {
+		const rect = getRect();
+		if (!rect) return;
+
+		click(rect.left + Math.random() * rect.width, rect.top + Math.random() * rect.height, true);
 	}
 
 	let interval: ReturnType<typeof setInterval>;
@@ -29,39 +39,27 @@
 		const value = gameManager.autoClicksPerSecond;
 		if (interval) clearInterval(interval);
 		if (value > 0) {
-			interval = setInterval(() => simulateClick(), 1000 / value);
+			interval = setInterval(simulateClick, 1000 / value);
 		}
 	});
 
-	async function handleClick(event: MouseEvent) {
-		gameManager.addAtoms(gameManager.clickPower);
-		gameManager.incrementClicks(!event.isTrusted);
+	function click(x: number, y: number, isAuto: boolean) {
+		const clickPower = gameManager.clickPower;
+		gameManager.addAtoms(clickPower);
+		gameManager.incrementClicks(isAuto);
 
-		// TODO: Re-add main atom click animation
+		if (!shouldCreateParticles()) return;
 
-		// Only create particles if graphics support is available
-		if (shouldCreateParticles()) {
-			const newParticles: Particle[] = [];
-			const textParticle = createClickTextParticleSync(
-				event.clientX + Math.random() * 10,
-				event.clientY + Math.random() * 10,
-				`+${formatNumber(gameManager.clickPower)}`
-			);
-			if (textParticle) newParticles.push(textParticle);
+		const newParticles: Particle[] = [];
+		const textParticle = createClickTextParticleSync(x + Math.random() * 10, y + Math.random() * 10, `+${formatNumber(clickPower)}`);
+		if (textParticle) newParticles.push(textParticle);
 
-			for (let i = 0; i < 5; i++) {
-				const particle = createClickParticleSync(
-					event.clientX + Math.random() * 10,
-					event.clientY + Math.random() * 10,
-					CurrenciesTypes.ATOMS
-				);
-				if (particle) newParticles.push(particle);
-			}
-
-			if (newParticles.length > 0) {
-				addParticles(newParticles);
-			}
+		for (let i = 0; i < 5; i++) {
+			const particle = createClickParticleSync(x + Math.random() * 10, y + Math.random() * 10, CurrenciesTypes.ATOMS);
+			if (particle) newParticles.push(particle);
 		}
+
+		if (newParticles.length > 0) addParticles(newParticles);
 	}
 
 	onDestroy(() => clearInterval(interval));
@@ -71,7 +69,7 @@
 	class="atom relative mt-20 flex size-64 sm:size-75 md:size-90 lg:size-112.5 items-center justify-center cursor-pointer bg-transparent"
 	class:bonus={gameManager.hasBonus}
 	data-tutorial-target="atom-click"
-	onclick={async e => await handleClick(e)}
+	onclick={e => click(e.clientX, e.clientY, false)}
 	bind:this={atomElement}
 >
 	{#each BUILDING_TYPES.filter(name => name in gameManager.buildings) as name, i}
