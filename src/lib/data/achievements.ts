@@ -185,11 +185,8 @@ function createBuildingTotalAchievements(): Achievement[] {
 			name: `${count} Buildings`,
 			description: `Own a total of ${count} buildings`,
 			iconStack: tierIconStack('layers', tierIndex, count),
-			hiddenCondition: (manager: GameManager) => Object.values(manager.buildings).every(b => b.count === 0),
-			condition: (manager: GameManager) => {
-				const totalBuildings = Object.values(manager.buildings).reduce((sum, b) => sum + b.count, 0);
-				return totalBuildings >= count;
-			},
+			hiddenCondition: (manager: GameManager) => manager.buildingTotals.count === 0,
+			condition: (manager: GameManager) => manager.buildingTotals.count >= count,
 		};
 	}
 
@@ -203,11 +200,8 @@ function createBuildingLevelsAchievements(): Achievement[] {
 			name: `Levels ${level}`,
 			description: `Have a total of ${level} buildings levels`,
 			iconStack: tierIconStack('buildingLevel', tierIndex, level),
-			hiddenCondition: (manager: GameManager) => Object.values(manager.buildings).every(b => b.level === 0),
-			condition: (manager: GameManager) => {
-				const totalLevels = Object.values(manager.buildings).reduce((sum, b) => sum + b.level, 0);
-				return totalLevels >= level;
-			},
+			hiddenCondition: (manager: GameManager) => manager.buildingTotals.levels === 0,
+			condition: (manager: GameManager) => manager.buildingTotals.levels >= level,
 		};
 	}
 

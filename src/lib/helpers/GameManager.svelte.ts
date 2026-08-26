@@ -170,8 +170,20 @@ export class GameManager {
 
 	bonusMultiplier = $derived(this.activePowerUps.reduce((acc, powerUp) => acc * powerUp.multiplier, 1));
 
+	/** Achievement conditions read these every sweep, so the totals are folded once per buildings change. */
+	buildingTotals = $derived.by(() => {
+		let count = 0;
+		let levels = 0;
+		for (const building of Object.values(this.buildings)) {
+			if (!building) continue;
+			count += building.count;
+			levels += building.level;
+		}
+		return { count, levels };
+	});
+
 	// Currency Boost System (from building levels, 10% boost per point, max 20 per currency)
-	skillPointsTotal = $derived(Object.values(this.buildings).reduce((sum, building) => sum + (building?.level ?? 0), 0));
+	skillPointsTotal = $derived(this.buildingTotals.levels);
 	skillPointsUsed = $derived(Object.values(this.skillPointBoosts).reduce((sum, points) => sum + (points ?? 0), 0));
 	skillPointsAvailable = $derived(this.skillPointsTotal - this.skillPointsUsed);
 
