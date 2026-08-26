@@ -4,8 +4,11 @@ import { POWER_UPS } from '$data/powerUp';
 import { QUARK_ACHIEVEMENT_REWARD } from '$data/quarkAchievements';
 import { RealmTypes } from '$data/realms';
 import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
+import { foldEffects } from '$helpers/effects';
 import { gameManager } from '$helpers/GameManager.svelte';
 import { radiationManager } from '$helpers/RadiationManager.svelte';
+import { connectDeriveds } from '$helpers/reactiveRoot.svelte';
+import type { SkillUpgrade, Upgrade } from '$lib/types';
 import { MILESTONE_ENTRIES, type MilestoneEntry } from './milestones';
 import { PurchasePlanner } from './purchases';
 import { DEFAULT_SEED, createRandom } from './random';
@@ -116,6 +119,8 @@ export class SimulationEngine {
 	private photonEffects: PhotonRealmEffects | null = null;
 	private photonEffectsSources: unknown = null;
 	private photonEffectsStability = 0;
+	private photonValueKey: unknown = null;
+	private photonValueSources: (Upgrade | SkillUpgrade)[] = [];
 	private milestoneScratch = {} as MilestoneCheckData;
 	private runStateCache = {} as RunState;
 	private random: () => number = createRandom(DEFAULT_SEED);
@@ -149,6 +154,7 @@ export class SimulationEngine {
 		const { signal } = this.abortController;
 
 		const startRealTime = performance.now();
+		const disconnect = connectDeriveds([gameManager, currenciesManager, radiationManager]);
 		// Simulation mutates global game state; save and restore so main game is unchanged.
 		this.savedState = JSON.stringify(gameManager.getCurrentState());
 		gameManager.resetAll();
@@ -178,6 +184,7 @@ export class SimulationEngine {
 		this.nextPowerUpTime = this.rollPowerUpInterval();
 		this.photonEffects = null;
 		this.photonEffectsSources = null;
+		this.photonValueKey = null;
 		this.photonPoolExcited = 0;
 		this.photonPoolNormal = 0;
 		this.peakAtomsPerSecond = 0;
@@ -289,6 +296,7 @@ export class SimulationEngine {
 				this.takeSnapshot();
 			}
 		} finally {
+			disconnect();
 			gameManager.clock = () => Date.now();
 			radiationManager.random = () => Math.random();
 			if (this.savedState) {
@@ -668,48 +676,21 @@ export class SimulationEngine {
 		const cached = this.photonEffects;
 		if (cached && this.photonEffectsSources === sources && this.photonEffectsStability === stability) return cached;
 
-		let doubleChance = 0;
-		let excitedDoubleChance = 0;
-		let excitedFromMaxBonus = 0;
-		let excitedLifetimeMultiplier = 1;
-		let excitedStability = 1;
-		let lifetimeBonusMs = 0;
-		let normalStability = 1;
-		let photonValueBonus = 0;
-
-		for (const source of sources) {
-			if (!('effects' in source) || !Array.isArray(source.effects)) continue;
-			const isPhotonValue = source.id === 'photon_value';
-
-			for (const effect of source.effects) {
-				switch (effect.type) {
-					case 'click':
-						if (isPhotonValue) photonValueBonus = effect.apply(photonValueBonus, gameManager);
-						break;
-					case 'excited_photon_double':
-						excitedDoubleChance = effect.apply(excitedDoubleChance, gameManager);
-						break;
-					case 'excited_photon_duration':
-						excitedLifetimeMultiplier = effect.apply(excitedLifetimeMultiplier, gameManager);
-						break;
-					case 'excited_photon_from_max':
-						excitedFromMaxBonus = effect.apply(excitedFromMaxBonus, gameManager);
-						break;
-					case 'excited_photon_stability':
-						excitedStability = effect.apply(excitedStability, gameManager);
-						break;
-					case 'photon_double_chance':
-						doubleChance = effect.apply(doubleChance, gameManager);
-						break;
-					case 'photon_duration':
-						lifetimeBonusMs = effect.apply(lifetimeBonusMs, gameManager);
-						break;
-					case 'photon_stability':
-						normalStability = effect.apply(normalStability, gameManager);
-						break;
-				}
-			}
+		// Only the photon_value upgrade's click effect counts here, so it keeps its own stable one-source list to fold.
+		if (this.photonValueKey !== sources) {
+			const source = sources.find(entry => entry.id === 'photon_value');
+			this.photonValueKey = sources;
+			this.photonValueSources = source ? [source] : [];
 		}
+
+		const photonValueBonus = foldEffects(this.photonValueSources, gameManager, 0, { type: 'click' });
+		const doubleChance = foldEffects(sources, gameManager, 0, { type: 'photon_double_chance' });
+		const excitedDoubleChance = foldEffects(sources, gameManager, 0, { type: 'excited_photon_double' });
+		const excitedFromMaxBonus = foldEffects(sources, gameManager, 0, { type: 'excited_photon_from_max' });
+		const excitedLifetimeMultiplier = foldEffects(sources, gameManager, 1, { type: 'excited_photon_duration' });
+		const excitedStability = foldEffects(sources, gameManager, 1, { type: 'excited_photon_stability' });
+		const lifetimeBonusMs = foldEffects(sources, gameManager, 0, { type: 'photon_duration' });
+		const normalStability = foldEffects(sources, gameManager, 1, { type: 'photon_stability' });
 
 		const effects: PhotonRealmEffects = {
 			excitedLifetimeMultiplier,
