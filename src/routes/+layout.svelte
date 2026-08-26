@@ -1,6 +1,8 @@
 <script lang="ts">
 	import '@/app.css';
 	import { browser } from '$app/environment';
+	import { beforeNavigate } from '$app/navigation';
+	import { updated } from '$app/state';
 	import PrestigeAnimation from '@components/prestige/PrestigeAnimation.svelte';
 	import Analytics from '@components/system/Analytics.svelte';
 	import DevTools from '@components/system/devtools/DevTools.svelte';
@@ -8,6 +10,7 @@
 	import TutorialOverlay from '@components/tutorial/TutorialOverlay.svelte';
 	import TooltipPortal from '@components/ui/TooltipPortal.svelte';
 	import { prestigeStore } from '$stores/prestige.svelte';
+	import { toastStore } from '$stores/toasts.svelte';
 	import { LoaderCircle } from '@lucide/svelte';
 	import { type Snippet } from 'svelte';
 
@@ -16,6 +19,28 @@
 	}
 
 	let { children }: Props = $props();
+
+	let updatePromptShown = false;
+
+	// The old build's chunks are gone from Cloudflare, so a client-side navigation would hit a dead import
+	beforeNavigate(navigation => {
+		if (updated.current && navigation.to?.url) {
+			navigation.cancel();
+			location.href = navigation.to.url.href;
+		}
+	});
+
+	$effect(() => {
+		if (!updated.current || updatePromptShown) return;
+		updatePromptShown = true;
+		toastStore.info({
+			action: () => location.reload(),
+			actionLabel: 'Reload',
+			title: 'New Version Available',
+			message: 'Reload to get the latest version, your progress is saved.',
+			is_infinite: true,
+		});
+	});
 </script>
 
 <SEO />
