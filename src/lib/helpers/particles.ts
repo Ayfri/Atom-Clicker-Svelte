@@ -36,6 +36,12 @@ interface ParticleSprite {
 
 const sprites = new Map<string, ParticleSprite>();
 
+/** Cached instead of read live: `document.documentElement.scrollTop` forces a synchronous reflow when DOM state is dirty, which happens on every click. */
+let cachedScrollTop = typeof document === 'undefined' ? 0 : document.documentElement.scrollTop;
+if (typeof window !== 'undefined') {
+	window.addEventListener('scroll', () => { cachedScrollTop = document.documentElement.scrollTop; }, { passive: true });
+}
+
 function rasterize(image: HTMLImageElement): ParticleSprite {
 	const width = image.naturalWidth || image.width || FALLBACK_ICON_SIZE;
 	const height = image.naturalHeight || image.height || FALLBACK_ICON_SIZE;
@@ -80,7 +86,7 @@ export const createClickParticleSync = (x: number, y: number, currency: Currency
 	let alpha = 0.8;
 	let scale = ICON_START_SCALE;
 	let px = x;
-	let py = y + document.documentElement.scrollTop;
+	let py = y + cachedScrollTop;
 	let sx = (1.5 + Math.random() * 0.5) * Math.cos(rotation);
 	let sy = (1.5 + Math.random() * 0.5) * Math.sin(rotation);
 
@@ -112,7 +118,7 @@ export const createClickParticleSync = (x: number, y: number, currency: Currency
 
 export const createClickTextParticleSync = (x: number, y: number, text: string): Particle | null => {
 	let alpha = 1;
-	let py = y + document.documentElement.scrollTop;
+	let py = y + cachedScrollTop;
 	let sy = -1.5;
 
 	return {
