@@ -10,7 +10,6 @@
 	import { isLocalStorageUnavailable } from '$lib/utils/safeLocalStorage';
 	import { autoBuyManager } from '$stores/autoBuy.svelte';
 	import { autoUpgradeManager } from '$stores/autoUpgrade.svelte';
-	import { remoteMessage } from '$stores/remoteMessage.svelte';
 	import { saveRecovery } from '$stores/saveRecovery';
 	import { supabaseAuth } from '$stores/supabaseAuth.svelte';
 	import { toastStore } from '$stores/toasts.svelte';
@@ -180,7 +179,7 @@
 		     own padding would otherwise swallow taps meant for the button underneath. -->
 		<div
 			class="fixed right-4 z-30 bg-black/10 backdrop-blur-xs border border-white/10 rounded-lg p-1 transition-all duration-300 pointer-events-none"
-			style="top: {remoteMessage.message && remoteMessage.isVisible ? 'calc(1.5rem + 5rem)' : '5rem'}"
+			style="top: calc(var(--banner-height) + 5rem)"
 		>
 			<div class="flex flex-col gap-1">
 				{#each realmManager.availableRealms as realm (realm.id)}
@@ -206,7 +205,7 @@
 		class="relative flex-1 {mobile.current ? 'overflow-y-auto overflow-x-hidden' : (
 			'overflow-hidden'
 		)} lg:pb-4 transition-all duration-300"
-		style="padding-top: {remoteMessage.message && remoteMessage.isVisible ? 'calc(3rem + 1.5rem)' : '3rem'};"
+		style="padding-top: calc(3rem + var(--banner-height));"
 	>
 		{#if gameManager.features[FeatureTypes.LEVELS]}
 			<Levels />

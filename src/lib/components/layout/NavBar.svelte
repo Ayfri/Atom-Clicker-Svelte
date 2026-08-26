@@ -13,7 +13,6 @@
 	import { changelog } from '$stores/changelog';
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { quarksManager } from '$helpers/QuarksManager.svelte';
-	import { remoteMessage } from '$stores/remoteMessage.svelte';
 	import { supabaseAuth } from '$stores/supabaseAuth.svelte';
 	import { ui } from '$stores/ui.svelte';
 	import { mobile } from '$stores/window.svelte';
@@ -148,7 +147,7 @@
 {:else}
 	<nav
 		class="fixed left-0 z-50 flex h-full flex-col items-center gap-5 bg-black/20 px-3 py-6 backdrop-blur-xs transition-all duration-300"
-		style="top: {remoteMessage.message && remoteMessage.isVisible ? '1.5rem' : '0'}"
+		style="top: var(--banner-height)"
 	>
 		{#each visibleComponents as link}
 			<NotificationDot hasNotification={link.notification ? link.notification() : false}>
