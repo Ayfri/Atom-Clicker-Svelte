@@ -10,6 +10,7 @@ import { totalActionCount, type SimulationAction, type SimulationResult, type Si
 
 const CURVE_ROWS = 16;
 const GROWTH_MAX = 4;
+const HOUR_MS = 3_600_000;
 const GROWTH_MIN = 0.5;
 const MILESTONE_WINDOW_MS = 600_000;
 const STALL_GROWTH = 1.05;
@@ -159,35 +160,45 @@ function findStalls(snapshots: SimulationSnapshot[]): { end: number; growth: num
  * atoms, so an atom-based rate reports minus thirty decades an hour every time the run resets and says nothing.
  */
 function growthSection(snapshots: SimulationSnapshot[]): string {
-	const rows: string[][] = [];
-	const step = Math.max(1, Math.ceil(snapshots.length / CURVE_ROWS));
-	let inBand = 0;
-	let measured = 0;
-
-	for (let i = 1; i < snapshots.length; i++) {
-		const hours = (snapshots[i].timestamp - snapshots[i - 1].timestamp) / 3_600_000;
-		if (hours <= 0) continue;
-		const previous = peakAps(snapshots[i - 1]);
-		const current = peakAps(snapshots[i]);
-		if (previous <= 0 || current <= 0) continue;
-		const decadesPerHour = (Math.log10(current) - Math.log10(previous)) / hours;
-		measured++;
-		if (decadesPerHour >= GROWTH_MIN && decadesPerHour <= GROWTH_MAX) inBand++;
-		if (i % step === 0 || i === snapshots.length - 1) {
-			rows.push([
-				simTime(snapshots[i].timestamp),
-				decadesPerHour.toFixed(2),
-				decadesPerHour < GROWTH_MIN ? 'slow' : decadesPerHour > GROWTH_MAX ? 'fast' : 'ok',
-				formatNumber(current),
-			]);
-		}
+	// The band is stated per hour, so the measurement window is an hour: a two-minute slice of a ratchet reads zero
+	// almost everywhere and says nothing about pacing.
+	const last = snapshots[snapshots.length - 1];
+	const totalHours = Math.max(1, Math.ceil(last.timestamp / HOUR_MS));
+	const atHour: SimulationSnapshot[] = [];
+	let cursor = 0;
+	for (let hour = 0; hour <= totalHours; hour++) {
+		const target = hour * HOUR_MS;
+		while (cursor + 1 < snapshots.length && snapshots[cursor + 1].timestamp <= target) cursor++;
+		atHour[hour] = snapshots[cursor];
 	}
 
-	const share = measured > 0 ? inBand / measured : 0;
+	const hourly: { decades: number; hour: number; peak: number }[] = [];
+	for (let hour = 1; hour <= totalHours; hour++) {
+		const previous = peakAps(atHour[hour - 1]);
+		const current = peakAps(atHour[hour]);
+		if (current <= 0) continue;
+		hourly.push({ decades: previous > 0 ? Math.log10(current) - Math.log10(previous) : Infinity, hour, peak: current });
+	}
+
+	const measured = hourly.filter(entry => Number.isFinite(entry.decades));
+	const inBand = measured.filter(entry => entry.decades >= GROWTH_MIN && entry.decades <= GROWTH_MAX).length;
+	const share = measured.length > 0 ? inBand / measured.length : 0;
+	const step = Math.max(1, Math.ceil(hourly.length / CURVE_ROWS));
+
 	return [
-		`Target band: ${GROWTH_MIN} to ${GROWTH_MAX} decades of peak APS per hour. In band for **${pct(share)}** of the run.`,
+		`Target band: ${GROWTH_MIN} to ${GROWTH_MAX} decades of peak APS per hour. In band for **${pct(share)}** of the ${measured.length} measured hours.`,
 		'',
-		table(['t', 'decades/h', 'band', 'peak APS'], rows),
+		table(
+			['hour', 'decades', 'band', 'peak APS'],
+			hourly
+				.filter((_, i) => i % step === 0 || i === hourly.length - 1)
+				.map(entry => [
+					`${entry.hour}h`,
+					Number.isFinite(entry.decades) ? entry.decades.toFixed(2) : '-',
+					entry.decades < GROWTH_MIN ? 'slow' : entry.decades > GROWTH_MAX ? 'fast' : 'ok',
+					formatNumber(entry.peak),
+				]),
+		),
 	].join('\n');
 }
 
