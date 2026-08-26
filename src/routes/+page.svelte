@@ -51,15 +51,28 @@
 	const CLOUD_PULL_WARNING_THRESHOLD_MS = 5_000;
 	// Long gaps (background tab, stalled frame) are clamped so production never jumps, offline progress handles those.
 	const MAX_FRAME_MS = 100;
+	// Production is summed outside the reactive state and committed at this rate, so displays stay smooth without invalidating every frame.
+	const COMMIT_INTERVAL_MS = 20;
 	let saveLoop: ReturnType<typeof setInterval>;
 	let gameUpdateFrame = 0;
 	let hasCheckedCloudSaveOnLoad = false;
 	let authUnsubscribe: (() => void) | null = null;
+	let lastCommitTime = 0;
 	let lastUpdateTime = 0;
+	let pendingAtoms = 0;
 	let quarkUserId: string | null = null;
 
-	function update(deltaMs: number) {
-		gameManager.addAtoms((gameManager.atomsPerSecond * deltaMs) / 1000);
+	function commitPendingAtoms() {
+		if (pendingAtoms <= 0) return;
+		gameManager.addAtoms(pendingAtoms);
+		pendingAtoms = 0;
+	}
+
+	function update(deltaMs: number, now: number) {
+		pendingAtoms += (gameManager.atomsPerSecond * deltaMs) / 1000;
+		if (now - lastCommitTime < COMMIT_INTERVAL_MS) return;
+		commitPendingAtoms();
+		lastCommitTime = now;
 	}
 
 	async function checkCloudSaveOnLoad() {
@@ -128,9 +141,10 @@
 		}
 
 		lastUpdateTime = performance.now();
+		lastCommitTime = lastUpdateTime;
 		gameUpdateFrame = requestAnimationFrame(function loop(now) {
 			gameUpdateFrame = requestAnimationFrame(loop);
-			update(Math.min(now - lastUpdateTime, MAX_FRAME_MS));
+			update(Math.min(now - lastUpdateTime, MAX_FRAME_MS), now);
 			lastUpdateTime = now;
 		});
 
@@ -138,6 +152,7 @@
 
 		saveLoop = setInterval(() => {
 			try {
+				commitPendingAtoms();
 				gameManager.save();
 			} catch (e) {
 				console.error('Failed to save game:', e);
@@ -148,6 +163,7 @@
 	onDestroy(() => {
 		if (saveLoop) clearInterval(saveLoop);
 		cancelAnimationFrame(gameUpdateFrame);
+		commitPendingAtoms();
 		if (authUnsubscribe) authUnsubscribe();
 		gameManager.cleanup();
 	});
