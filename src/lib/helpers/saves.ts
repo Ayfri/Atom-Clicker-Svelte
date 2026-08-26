@@ -4,6 +4,7 @@ import { RealmTypes } from '$data/realms';
 import type { Building, GameState } from '$lib/types';
 import { deriveFeatureState } from '$helpers/FeaturesManager.svelte';
 import { statsConfig } from '$helpers/statConstants';
+import { getItem } from '$lib/utils/safeLocalStorage';
 import { unwrapStoredSave, wrapSaveForStorage } from '$lib/utils/saveIntegrity';
 import { saveRecovery, type SaveErrorType } from '$stores/saveRecovery';
 
@@ -60,9 +61,7 @@ export function loadSavedState(): LoadSaveResult {
 	let rawData: string | null = null;
 
 	try {
-		if (typeof localStorage !== 'undefined') {
-			rawData = localStorage.getItem(SAVE_KEY);
-		}
+		rawData = getItem(SAVE_KEY);
 		if (!rawData) {
 			return { state: null, success: true }; // No save exists, not an error
 		}
@@ -569,6 +568,15 @@ export function migrateSavedState(savedState: unknown): GameState | undefined {
 		}
 
 		state.version = nextVersion;
+	}
+
+	if (Array.isArray(state.activePowerUps)) {
+		const seenIds = new Set<string>();
+		state.activePowerUps = state.activePowerUps.filter((p: any) => {
+			if (!p?.id || seenIds.has(p.id)) return false;
+			seenIds.add(p.id);
+			return true;
+		});
 	}
 
 	return state;

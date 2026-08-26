@@ -1,4 +1,5 @@
 import { browser } from '$app/environment';
+import { getJSON, setItem } from '$lib/utils/safeLocalStorage';
 import { supabaseAuth } from '$stores/supabaseAuth.svelte';
 import type { GameMessage } from '$lib/types/supabase';
 
@@ -11,7 +12,7 @@ export class RemoteMessageStore {
 
 	constructor() {
 		if (browser) {
-			this.dismissedIds = JSON.parse(localStorage.getItem('dismissed_messages') || '[]');
+			this.dismissedIds = getJSON<string[]>('dismissed_messages', []);
 
 			// Reactively fetch message when supabase is available
 			$effect.root(() => {
@@ -62,7 +63,7 @@ export class RemoteMessageStore {
 		const newDismissedIds = [...new Set([...this.dismissedIds, this.message.id])];
 		this.dismissedIds = newDismissedIds;
 		if (browser) {
-			localStorage.setItem('dismissed_messages', JSON.stringify(newDismissedIds));
+			setItem('dismissed_messages', JSON.stringify(newDismissedIds));
 		}
 		this.isVisible = false;
 	}

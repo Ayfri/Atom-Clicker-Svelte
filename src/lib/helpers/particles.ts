@@ -17,10 +17,37 @@ const ICON_LAYER = 0;
 const TEXT_LAYER = 1;
 /** Matches the previous PixiJS text: 26px bold Arial drawn at a 0.5 scale. */
 const TEXT_FONT = 'bold 13px Arial, sans-serif';
+/** Icons start at this scale and only ever shrink, so it is the largest size ever drawn. */
+const ICON_START_SCALE = 0.1;
+/** Same cap as the canvas backing store, see Canvas.svelte. */
+const MAX_PIXEL_RATIO = 2;
+/** Fallback for SVGs that report no intrinsic size. */
+const FALLBACK_ICON_SIZE = 150;
 
 // --- Assets ---
 
-const images = new Map<string, HTMLImageElement>();
+interface ParticleSprite {
+	/** Natural icon height, the particle scale math keeps working in these units. */
+	height: number;
+	/** Pre-rasterized bitmap: drawing the SVG directly re-vectorizes it on every frame. */
+	source: CanvasImageSource;
+	width: number;
+}
+
+const sprites = new Map<string, ParticleSprite>();
+
+function rasterize(image: HTMLImageElement): ParticleSprite {
+	const width = image.naturalWidth || image.width || FALLBACK_ICON_SIZE;
+	const height = image.naturalHeight || image.height || FALLBACK_ICON_SIZE;
+	const ratio = Math.min(typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1, MAX_PIXEL_RATIO);
+
+	const raster = document.createElement('canvas');
+	raster.width = Math.max(1, Math.round(width * ICON_START_SCALE * ratio));
+	raster.height = Math.max(1, Math.round(height * ICON_START_SCALE * ratio));
+	raster.getContext('2d')?.drawImage(image, 0, 0, raster.width, raster.height);
+
+	return { height, source: raster, width };
+}
 
 export const loadParticleAssets = async () => {
 	try {
@@ -30,7 +57,7 @@ export const loadParticleAssets = async () => {
 					new Promise<void>(resolve => {
 						const image = new Image();
 						image.onload = () => {
-							images.set(currency.id, image);
+							sprites.set(currency.id, rasterize(image));
 							resolve();
 						};
 						image.onerror = () => resolve();
@@ -46,12 +73,12 @@ export const loadParticleAssets = async () => {
 // --- Creators ---
 
 export const createClickParticleSync = (x: number, y: number, currency: CurrencyName): Particle | null => {
-	const image = images.get(CURRENCIES[currency].id);
-	if (!image) return null;
+	const sprite = sprites.get(CURRENCIES[currency].id);
+	if (!sprite) return null;
 
 	const rotation = Math.random() * Math.PI * 2;
 	let alpha = 0.8;
-	let scale = 0.1;
+	let scale = ICON_START_SCALE;
 	let px = x;
 	let py = y + document.documentElement.scrollTop;
 	let sx = (1.5 + Math.random() * 0.5) * Math.cos(rotation);
@@ -60,14 +87,14 @@ export const createClickParticleSync = (x: number, y: number, currency: Currency
 	return {
 		layer: ICON_LAYER,
 		draw: ctx => {
-			const width = image.width * scale;
-			const height = image.height * scale;
+			const width = sprite.width * scale;
+			const height = sprite.height * scale;
 
 			ctx.save();
 			ctx.globalAlpha = alpha;
 			ctx.translate(px, py);
 			ctx.rotate(rotation);
-			ctx.drawImage(image, -width / 2, -height / 2, width, height);
+			ctx.drawImage(sprite.source, -width / 2, -height / 2, width, height);
 			ctx.restore();
 		},
 		update: dt => {

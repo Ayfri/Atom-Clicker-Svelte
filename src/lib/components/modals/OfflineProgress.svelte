@@ -68,10 +68,10 @@
 		width="lg"
 	>
 		<div class="flex flex-col gap-4">
-			<div class="flex items-center gap-1.5 rounded-xl border border-white/10 bg-black/20 p-4 text-base text-white/80 sm:text-lg">
+			<div class="rounded-xl border border-white/10 bg-black/20 p-4 text-base text-white/80 sm:text-lg">
 				<Clock
 					size={20}
-					class="mr-1 inline text-white/40"
+					class="mr-1 mb-0.5 inline-block shrink-0 align-middle text-white/40"
 				/>
 				You were away for <span class="font-semibold text-white">{formatDuration(summary.awayMs)}</span>. The game simulated
 				<span class="font-semibold text-white">{formatDuration(summary.appliedMs)}</span>

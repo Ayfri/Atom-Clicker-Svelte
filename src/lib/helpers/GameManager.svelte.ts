@@ -23,6 +23,7 @@ import {
 	type SkillUpgrade,
 	type Upgrade,
 } from '$lib/types';
+import { setItem } from '$lib/utils/safeLocalStorage';
 import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
 import { calculateEffects, getUpgradesWithEffects } from '$helpers/effects';
 import { FeaturesManager } from '$helpers/FeaturesManager.svelte';
@@ -588,9 +589,7 @@ export class GameManager {
 	save() {
 		this.lastSave = Date.now();
 		const saveData = this.getCurrentState();
-		if (typeof localStorage !== 'undefined') {
-			localStorage.setItem(SAVE_KEY, serializeSaveState(saveData));
-		}
+		setItem(SAVE_KEY, serializeSaveState(saveData));
 	}
 
 	// Reset Logic
@@ -890,7 +889,7 @@ export class GameManager {
 			if (this.features[FeatureTypes.LEVELS]) {
 				this.totalXP += amount * XP_PER_ATOM * this.xpGainMultiplier;
 			}
-			this.dailyStats = { ...this.dailyStats, atomsEarned: this.dailyStats.atomsEarned + amount };
+			this.dailyStats.atomsEarned += amount;
 		}
 	}
 

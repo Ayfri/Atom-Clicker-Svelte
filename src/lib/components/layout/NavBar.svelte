@@ -122,7 +122,9 @@
 		{#each visibleComponents as link}
 			<NotificationDot hasNotification={link.notification ? link.notification() : false}>
 				<button
+					aria-label={link.label}
 					class="flex items-center justify-center rounded-lg bg-accent/90 p-2 text-white transition-all hover:bg-accent pointer-events-auto"
+					id="nav-{link.label.toLowerCase().replace(/\s+/g, '-')}"
 					onclick={() => ui.openModal(link.component)}
 				>
 					<link.icon size={30} {...link.iconProps} />
@@ -134,7 +136,9 @@
 		<!-- For mobile, just append it to the list effectively -->
 		<NotificationDot hasNotification={settingsLink.notification ? settingsLink.notification() : false}>
 			<button
+				aria-label={settingsLink.label}
 				class="flex items-center justify-center rounded-lg bg-accent/90 p-2 text-white transition-all hover:bg-accent pointer-events-auto"
+				id="nav-{settingsLink.label.toLowerCase().replace(/\s+/g, '-')}"
 				onclick={() => ui.openModal(settingsLink.component)}
 			>
 				<settingsLink.icon size={30} />
@@ -150,6 +154,7 @@
 			<NotificationDot hasNotification={link.notification ? link.notification() : false}>
 				<button
 					class="group relative flex h-12 w-12 items-center justify-center rounded-lg bg-accent/90 text-white transition-all hover:bg-accent"
+					id="nav-{link.label.toLowerCase().replace(/\s+/g, '-')}"
 					onclick={() => ui.openModal(link.component)}
 				>
 					<link.icon size={32} {...link.iconProps} />
@@ -167,6 +172,7 @@
 		<NotificationDot hasNotification={settingsLink.notification ? settingsLink.notification() : false}>
 			<button
 				class="group relative flex h-12 w-12 items-center justify-center rounded-lg bg-accent/90 text-white transition-all hover:bg-accent"
+				id="nav-{settingsLink.label.toLowerCase().replace(/\s+/g, '-')}"
 				onclick={() => ui.openModal(settingsLink.component)}
 			>
 				<div class="transition-transform duration-500 group-hover:rotate-90">

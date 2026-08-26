@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { CurrenciesTypes } from '$data/currencies';
 	import { FeatureTypes } from '$data/features';
+	import { RealmTypes } from '$data/realms';
 	import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
 	import { gameManager } from '$helpers/GameManager.svelte';
+	import { realmManager } from '$helpers/RealmManager.svelte';
 	import { calculateEffects, getUpgradesWithEffects } from '$helpers/effects';
 	import { createClickParticleSync, type Particle } from '$helpers/particles';
 	import { drawPhotonIcon, pulseOpacity } from '$helpers/photonCanvas';
@@ -63,6 +65,7 @@
 	let container = $state<HTMLDivElement>();
 	let collectedWhileDown = false;
 	let ctx: CanvasRenderingContext2D | null = null;
+	let hadCircles = false;
 	let hovering = $state(false);
 	let lastHoveredId: number | null = null;
 	let lastUpdateTime = Date.now();
@@ -297,6 +300,11 @@
 	function render() {
 		if (!canvas || !ctx) return;
 
+		// Nothing to show: skip the clear entirely once the last circle is gone.
+		const hasCircles = circles.length > 0;
+		if (!hasCircles && !hadCircles) return;
+		hadCircles = hasCircles;
+
 		ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
 		for (const circle of circles) {
@@ -397,7 +405,9 @@
 		return () => clearInterval(interval);
 	});
 
-	// Draw on the browser's own frame cadence, and not at all while the tab is hidden.
+	// Every realm stays mounted, the hidden ones are only translated off screen, so the canvas has to know.
+	const visible = $derived(realmManager.selectedRealmId === RealmTypes.PHOTONS);
+
 	$effect(() => {
 		if (!canvas) return;
 
@@ -407,15 +417,19 @@
 		const observer = new ResizeObserver(resizeCanvas);
 		if (container) observer.observe(container);
 
+		return () => observer.disconnect();
+	});
+
+	// Draw on the browser's own frame cadence, and not at all while the tab or the realm is hidden.
+	$effect(() => {
+		if (!canvas || !visible) return;
+
 		let frame = requestAnimationFrame(function loop() {
 			frame = requestAnimationFrame(loop);
 			if (!document.hidden) render();
 		});
 
-		return () => {
-			cancelAnimationFrame(frame);
-			observer.disconnect();
-		};
+		return () => cancelAnimationFrame(frame);
 	});
 
 	// Collecting by dragging over photons also has to suppress the page scroll on touch devices.

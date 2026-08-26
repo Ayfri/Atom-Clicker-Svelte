@@ -1,14 +1,18 @@
-import { browser, dev } from '$app/environment';
+import { browser, dev, version } from '$app/environment';
+import { CurrenciesTypes, type CurrencyName } from '$data/currencies';
 import { gameManager } from '$helpers/GameManager.svelte';
 import { supabaseAuth } from '$stores/supabaseAuth.svelte';
 
+/** Client context, stored as `browser_info`, everything here identifies the runtime rather than the player. */
 export interface BrowserInfo {
+	/** SvelteKit build id, so a report can be tied back to the deploy that produced it. */
+	appVersion: string;
 	language: string;
-	platform: string;
 	screenHeight: number;
 	screenWidth: number;
+	/** Groups every report coming from the same page load. */
+	sessionId: string;
 	userAgent: string;
-	vendor: string;
 }
 
 export interface ErrorReport {
@@ -23,6 +27,62 @@ export interface ErrorReport {
 // Deduplication cache - stores hashes of recent errors to avoid sending duplicates
 const recentErrorHashes = new Set<string>();
 const DEDUP_WINDOW = 5 * 60 * 1000; // 5 minutes
+
+const SESSION_ID = createSessionId();
+
+function createSessionId(): string {
+	if (!browser) return '';
+
+	try {
+		return crypto.randomUUID();
+	} catch {
+		return `fallback-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+	}
+}
+
+/** Frames that belong to somebody else's code, an extension, an injected script or our analytics loader. */
+const THIRD_PARTY_FRAME_PATTERN = /chrome-extension:\/\/|moz-extension:\/\/|safari-web-extension:\/\/|ms-browser-extension:\/\/|\/cdn-cgi\/|\[native code\]/;
+
+/** Our own bundle, every chunk Vite emits is served under `/_app/`. */
+const APP_FRAME_PATTERN = /\/_app\//;
+
+/** Stackless errors surfaced by extensions or injected scripts, none of these strings exist in the codebase. */
+const THIRD_PARTY_MESSAGE_PATTERNS = [
+	/^Request timeout /,
+	/^The string did not match the expected pattern\.$/,
+	/WKWebView API client did not respond to this postMessage/,
+	/is not defined$/,
+	/el\.click is not a function/,
+	/Cannot read properties of undefined \(reading '_source'\)/,
+];
+
+const CRAWLER_UA_PATTERN = /bot|crawler|spider|crawling|bingpreview|slurp|headlesschrome/i;
+
+/**
+ * Zaraz frames carry a `?z=<base64>` payload that encodes the player's referrer and inflates the field
+ */
+function sanitizeStackTrace(stackTrace: string | null): string | null {
+	if (!stackTrace) return null;
+	return stackTrace.replace(/\?z=[^\s):]*/g, '');
+}
+
+/**
+ * Drops reports with no frame from our own bundle. Our errors thrown inside an extension-triggered
+ * callback still carry app frames, so anchoring on "has at least one app frame" keeps real bugs.
+ */
+export function isThirdPartyError(errorMessage: string, stackTrace: string | null): boolean {
+	if (stackTrace) {
+		if (APP_FRAME_PATTERN.test(stackTrace)) return false;
+		return THIRD_PARTY_FRAME_PATTERN.test(stackTrace) || THIRD_PARTY_MESSAGE_PATTERNS.some(pattern => pattern.test(errorMessage));
+	}
+
+	return THIRD_PARTY_MESSAGE_PATTERNS.some(pattern => pattern.test(errorMessage));
+}
+
+/** A bot hitting a dead chunk or a broken page is not actionable. */
+function isCrawler(): boolean {
+	return browser && CRAWLER_UA_PATTERN.test(navigator.userAgent);
+}
 
 /**
  * Creates a hash for deduplication based on error message and stack trace
@@ -57,29 +117,30 @@ export function getBrowserInfo(): BrowserInfo | null {
 	if (!browser) return null;
 
 	return {
+		appVersion: version,
 		language: navigator.language,
-		platform: navigator.platform,
 		screenHeight: window.screen.height,
 		screenWidth: window.screen.width,
-		userAgent: navigator.userAgent,
-		vendor: navigator.vendor
+		sessionId: SESSION_ID,
+		userAgent: navigator.userAgent
 	};
 }
 
 /**
- * Safely captures the current game state, removing circular references
- * and limiting the size of the payload
+ * Captures an explicit summary of the game state, an allow-list rather than the whole
+ * state, so the payload stays small and a newly saved field never leaks in by accident
  */
 export function captureGameState(): Record<string, unknown> | null {
 	if (!browser) return null;
 
 	try {
 		const state = gameManager.getCurrentState();
+		const amount = (currency: CurrencyName) => state.currencies?.[currency]?.amount ?? 0;
 
-		const safeState: Record<string, unknown> = {
-			...state,
+		return {
 			achievements: state.achievements?.length ?? 0,
 			activePowerUps: state.activePowerUps?.length ?? 0,
+			atoms: amount(CurrenciesTypes.ATOMS),
 			buildings: Object.entries(state.buildings || {}).reduce(
 				(acc, [key, building]) => {
 					if (building) {
@@ -89,11 +150,27 @@ export function captureGameState(): Record<string, unknown> | null {
 				},
 				{} as Record<string, { count: number; level: number }>
 			),
+			electronizes: state.totalElectronizesAllTime ?? 0,
+			electrons: amount(CurrenciesTypes.ELECTRONS),
+			excitedPhotons: amount(CurrenciesTypes.EXCITED_PHOTONS),
+			higgsBoson: amount(CurrenciesTypes.HIGGS_BOSON),
+			highestAPS: state.highestAPS ?? 0,
+			inGameTime: state.inGameTime ?? 0,
+			photons: amount(CurrenciesTypes.PHOTONS),
+			protonises: state.totalProtonisesAllTime ?? 0,
+			protons: amount(CurrenciesTypes.PROTONS),
+			radiationMass: state.radiation?.mass ?? 0,
+			radiationUnlocked: state.radiation?.unlocked ?? false,
+			// Which realm is on screen, every realm stays mounted so this is the visible one only
+			realm: state.selectedRealmId ?? null,
+			saveTampered: gameManager.saveIntegrityTampered,
+			saveWarnings: gameManager.saveIntegrityWarnings,
 			skillUpgrades: state.skillUpgrades?.length ?? 0,
-			upgrades: state.upgrades?.length ?? 0
+			totalClicks: state.totalClicksAllTime ?? 0,
+			totalXP: state.totalXP ?? 0,
+			upgrades: state.upgrades?.length ?? 0,
+			version: state.version
 		};
-
-		return safeState;
 	} catch {
 		// If we can't capture state, return null rather than crashing
 		return null;
@@ -124,7 +201,7 @@ export function createErrorReport(error: Error | string): ErrorReport {
 		browserInfo: getBrowserInfo(),
 		errorMessage,
 		gameState: captureGameState(),
-		stackTrace,
+		stackTrace: sanitizeStackTrace(stackTrace),
 		url: browser ? window.location.href : null,
 		userId: getCurrentUserId()
 	};
@@ -141,8 +218,15 @@ export async function reportError(error: Error | string): Promise<void> {
 		return;
 	}
 
+	if (isCrawler()) return;
+
 	try {
 		const report = createErrorReport(error);
+
+		if (isThirdPartyError(report.errorMessage, report.stackTrace)) {
+			console.log('[ErrorReporting] Skipping third-party error');
+			return;
+		}
 
 		// Skip if this is a duplicate error
 		if (isDuplicateError(report.errorMessage, report.stackTrace)) {

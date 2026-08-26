@@ -118,7 +118,7 @@
 		{/each}
 	</div>
 
-	<div class="flex flex-col gap-1.5 overflow-y-auto custom-scrollbar px-1 flex-1">
+	<div id="buildings-list" class="flex flex-col gap-1.5 overflow-y-auto custom-scrollbar px-1 flex-1">
 		{#each buildingsEntries as [type, building], i}
 			{@const saveData = gameManager.buildings[type]}
 			{@const unaffordable = !affordableBuildings.includes(type)}

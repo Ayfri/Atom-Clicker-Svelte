@@ -9,6 +9,8 @@ Welcome to Atom Clicker, an engaging incremental game where you'll build your ow
 🎮 [Play Now](https://atom-clicker.ayfri.com) | 💬 [Discord](https://discord.ayfri.com)
 
 ![Atom Clicker Gameplay](static/ingame-screenshot.png)
+![Atom Clicker Gameplay](static/ingame-screenshot2.png)
+![Atom Clicker Gameplay](static/ingame-screenshot3.png)
 
 ## 🎮 How to Play
 
@@ -55,9 +57,19 @@ Welcome to Atom Clicker, an engaging incremental game where you'll build your ow
   - Unlock a mysterious gameplay dimension with interactive violet circles
   - Discover rare **Excited Photons** for exotic upgrades
 
+- ☢️ Radiation Realm
+  - Simulate and control a nuclear reactor: manage mass, control rods and CPM
+  - Unlock reactor upgrades for passive mass regeneration and better output
+  - Boost your empire through a radiation multiplier
+
+- ✨ Quarks & Daily Quests
+  - Earn Quarks from achievements and daily quests
+  - Spend them in the Quark Shop for permanent upgrades
+  - Complete rotating daily quests for bonus rewards
+
 ### Social Features
 - 📊 Global Leaderboard
-- 🏆 Achievement System
+- 🏆 Achievement System with claimable rewards
 - 🔒 Secure Authentication
 
 ## 🚀 Getting Started

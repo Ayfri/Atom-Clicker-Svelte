@@ -12,6 +12,10 @@ const config = {
 			'$helpers': 'src/lib/helpers/*',
 			'$stores': 'src/lib/stores/*',
 		},
+		version: {
+			// A tab left open across a deploy asks Cloudflare for a chunk hash that no longer exists
+			pollInterval: 300_000,
+		},
 	},
 	preprocess: vitePreprocess(),
 	onwarn: (warning, handler) => {

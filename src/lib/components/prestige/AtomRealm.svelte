@@ -68,6 +68,7 @@
 					) ?
 						'text-white'
 					:	'bg-white/5 hover:bg-white/10'}"
+					id="tab-achievements"
 					style={activeTab === 'achievements' ? `background-color: ${themeAccent ?? 'var(--color-accent-400)'};` : ''}
 					onclick={() => (activeTab = 'achievements')}
 				>

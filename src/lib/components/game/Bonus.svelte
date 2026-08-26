@@ -17,7 +17,7 @@
 	const powerUp = $state({
 		description: '',
 		duration: 0,
-		id: Date.now().toString(),
+		id: crypto.randomUUID(),
 		multiplier: 0,
 		name: '',
 		startTime: Date.now(),
@@ -47,7 +47,7 @@
 		powerUp.duration = randomPowerUp.duration * gameManager.powerUpDurationMultiplier;
 		// powerUp.duration = 60000; // Debug
 		powerUp.description = `Multiplies atoms by ${formatNumber(powerUp.multiplier)} for ${formatNumber(powerUp.duration / 1000)} seconds`;
-		powerUp.id = Date.now().toString();
+		powerUp.id = crypto.randomUUID();
 		powerUp.name = randomPowerUp.name;
 
 		showBonus = true;

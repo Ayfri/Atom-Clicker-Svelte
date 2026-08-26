@@ -7,6 +7,7 @@
 	import { realmManager } from '$helpers/RealmManager.svelte';
 	import { setGlobals } from '$lib/globals';
 	import { formatNumber } from '$lib/utils';
+	import { isLocalStorageUnavailable } from '$lib/utils/safeLocalStorage';
 	import { autoBuyManager } from '$stores/autoBuy.svelte';
 	import { autoUpgradeManager } from '$stores/autoUpgrade.svelte';
 	import { remoteMessage } from '$stores/remoteMessage.svelte';
@@ -50,15 +51,28 @@
 	const CLOUD_PULL_WARNING_THRESHOLD_MS = 5_000;
 	// Long gaps (background tab, stalled frame) are clamped so production never jumps, offline progress handles those.
 	const MAX_FRAME_MS = 100;
+	// Production is summed outside the reactive state and committed at this rate, so displays stay smooth without invalidating every frame.
+	const COMMIT_INTERVAL_MS = 20;
 	let saveLoop: ReturnType<typeof setInterval>;
 	let gameUpdateFrame = 0;
 	let hasCheckedCloudSaveOnLoad = false;
 	let authUnsubscribe: (() => void) | null = null;
+	let lastCommitTime = 0;
 	let lastUpdateTime = 0;
+	let pendingAtoms = 0;
 	let quarkUserId: string | null = null;
 
-	function update(deltaMs: number) {
-		gameManager.addAtoms((gameManager.atomsPerSecond * deltaMs) / 1000);
+	function commitPendingAtoms() {
+		if (pendingAtoms <= 0) return;
+		gameManager.addAtoms(pendingAtoms);
+		pendingAtoms = 0;
+	}
+
+	function update(deltaMs: number, now: number) {
+		pendingAtoms += (gameManager.atomsPerSecond * deltaMs) / 1000;
+		if (now - lastCommitTime < COMMIT_INTERVAL_MS) return;
+		commitPendingAtoms();
+		lastCommitTime = now;
 	}
 
 	async function checkCloudSaveOnLoad() {
@@ -86,6 +100,15 @@
 
 	onMount(async () => {
 		gameManager.initialize();
+
+		if (isLocalStorageUnavailable()) {
+			toastStore.warning({
+				title: 'Progress Will Not Be Saved',
+				message: 'Your browser is blocking storage for this page, so the game cannot save locally. Sign in to save to the cloud, or allow site data.',
+				duration: 20_000,
+			});
+		}
+
 		const authInitialization = supabaseAuth.init();
 		while (supabaseAuth.loading && !supabaseAuth.isAuthenticated) {
 			await new Promise(resolve => setTimeout(resolve, 0));
@@ -118,9 +141,10 @@
 		}
 
 		lastUpdateTime = performance.now();
+		lastCommitTime = lastUpdateTime;
 		gameUpdateFrame = requestAnimationFrame(function loop(now) {
 			gameUpdateFrame = requestAnimationFrame(loop);
-			update(Math.min(now - lastUpdateTime, MAX_FRAME_MS));
+			update(Math.min(now - lastUpdateTime, MAX_FRAME_MS), now);
 			lastUpdateTime = now;
 		});
 
@@ -128,6 +152,7 @@
 
 		saveLoop = setInterval(() => {
 			try {
+				commitPendingAtoms();
 				gameManager.save();
 			} catch (e) {
 				console.error('Failed to save game:', e);
@@ -138,6 +163,7 @@
 	onDestroy(() => {
 		if (saveLoop) clearInterval(saveLoop);
 		cancelAnimationFrame(gameUpdateFrame);
+		commitPendingAtoms();
 		if (authUnsubscribe) authUnsubscribe();
 		gameManager.cleanup();
 	});
@@ -150,18 +176,21 @@
 	<AutoSaveIndicator />
 
 	{#if realmManager.availableRealms.length > 1}
+		<!-- The panel itself is click-through: at phone widths it sits over the top of the nav grid, and its
+		     own padding would otherwise swallow taps meant for the button underneath. -->
 		<div
-			class="fixed right-4 z-30 bg-black/10 backdrop-blur-xs border border-white/10 rounded-lg p-1 transition-all duration-300"
+			class="fixed right-4 z-30 bg-black/10 backdrop-blur-xs border border-white/10 rounded-lg p-1 transition-all duration-300 pointer-events-none"
 			style="top: {remoteMessage.message && remoteMessage.isVisible ? 'calc(1.5rem + 5rem)' : '5rem'}"
 		>
 			<div class="flex flex-col gap-1">
 				{#each realmManager.availableRealms as realm (realm.id)}
 					<button
-						class="flex items-center gap-2 px-2 py-1.5 rounded-sm transition-all duration-200 hover:scale-105 {(
+						class="flex items-center gap-2 px-2 py-1.5 rounded-sm transition-all duration-200 hover:scale-105 pointer-events-auto {(
 							realmManager.selectedRealmId === realm.id
 						) ?
 							'bg-accent-500/60 border-accent-400/50'
 						:	'bg-white/5 hover:bg-white/10'}"
+						id="realm-{realm.id}"
 						onclick={() => realmManager.selectRealm(realm.id)}
 						title="{realm.title} - {formatNumber(realmManager.realmValues[realm.id] ?? 0)} {realm.currency.name.toLowerCase()}"
 					>

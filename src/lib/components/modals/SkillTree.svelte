@@ -182,7 +182,7 @@
 			{edges}
 			{nodeTypes}
 			colorMode="dark"
-			minZoom={0.3}
+			minZoom={0.15}
 			maxZoom={2}
 			initialViewport={{ x: mobile.current ? 100 : 500, y: 200, zoom: 0.8 }}
 			translateExtent={[[-10000, -10000], [10000, 10000]]}
