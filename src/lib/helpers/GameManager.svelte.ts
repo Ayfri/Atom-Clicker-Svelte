@@ -889,7 +889,7 @@ export class GameManager {
 			if (this.features[FeatureTypes.LEVELS]) {
 				this.totalXP += amount * XP_PER_ATOM * this.xpGainMultiplier;
 			}
-			this.dailyStats = { ...this.dailyStats, atomsEarned: this.dailyStats.atomsEarned + amount };
+			this.dailyStats.atomsEarned += amount;
 		}
 	}
 
