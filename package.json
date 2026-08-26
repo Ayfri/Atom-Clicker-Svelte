@@ -9,6 +9,7 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"benchmark": "vite dev --open /benchmark",
+		"bench": "bun run scripts/benchmark.ts",
 		"db:start": "supabase start",
 		"db:stop": "supabase stop",
 		"db:status": "supabase status",
