@@ -62,6 +62,12 @@ export class GameManager {
 	highestAPS = $state(0);
 	inGameTime = $state(0);
 	lastInteractionTime = $state(Date.now());
+	/**
+	 * Source of "now" for the interaction clock the stability field runs on. Real time in the game; the simulation
+	 * swaps it for its own clock, because a 24h benchmark run finishes in seconds of wall time and would otherwise
+	 * read the stability field off whatever the machine happened to be doing.
+	 */
+	clock: () => number = () => Date.now();
 	lastLoadedSave = $state(0);
 	lastSave = $state(Date.now());
 
@@ -324,7 +330,7 @@ export class GameManager {
 		// 3. Calculate Progress (0 to 1)
 		// Reactivity trigger: this.inGameTime changes every second
 		this.inGameTime;
-		const elapsed = Date.now() - this.lastInteractionTime;
+		const elapsed = this.clock() - this.lastInteractionTime;
 		const progress = Math.min(Math.max(elapsed / timeRequired, 0), 1);
 
 		if (progress <= 0) return 1;
@@ -817,7 +823,7 @@ export class GameManager {
 			this.checkRealmUnlocks();
 			currenciesManager.add(CurrenciesTypes.ELECTRONS, electronGain);
 
-			this.lastInteractionTime = Date.now();
+			this.lastInteractionTime = this.clock();
 			this.save();
 			return true;
 		}
@@ -853,7 +859,7 @@ export class GameManager {
 			this.checkRealmUnlocks();
 			currenciesManager.add(CurrenciesTypes.PROTONS, protonGain);
 
-			this.lastInteractionTime = Date.now();
+			this.lastInteractionTime = this.clock();
 			this.save();
 			return true;
 		}
@@ -875,7 +881,7 @@ export class GameManager {
 		currenciesManager.add(CurrenciesTypes.HIGGS_BOSON, 1);
 		this.dailyStats = { ...this.dailyStats, higgsBosonsCollected: (this.dailyStats.higgsBosonsCollected ?? 0) + 1 };
 		if (!this.upgrades.includes('electron_bypass_bonus_click_stability')) {
-			this.lastInteractionTime = Date.now();
+			this.lastInteractionTime = this.clock();
 		}
 	}
 
@@ -890,7 +896,7 @@ export class GameManager {
 			:	!this.upgrades.includes('electron_bypass_atom_click_stability');
 
 		if (shouldUpdate) {
-			this.lastInteractionTime = Date.now();
+			this.lastInteractionTime = this.clock();
 		}
 	}
 
@@ -921,12 +927,12 @@ export class GameManager {
 	// Power-Ups
 	addPowerUp(powerUp: PowerUp) {
 		const newPowerUp = { ...powerUp };
-		if (!newPowerUp.startTime) newPowerUp.startTime = Date.now();
+		if (!newPowerUp.startTime) newPowerUp.startTime = this.clock();
 		this.activePowerUps = [...this.activePowerUps, newPowerUp];
 		this.powerUpsCollected += 1;
 		this.dailyStats = { ...this.dailyStats, powerUpsCollected: this.dailyStats.powerUpsCollected + 1 };
 		if (!this.upgrades.includes('electron_bypass_bonus_click_stability')) {
-			this.lastInteractionTime = Date.now();
+			this.lastInteractionTime = this.clock();
 		}
 
 		setTimeout(() => {

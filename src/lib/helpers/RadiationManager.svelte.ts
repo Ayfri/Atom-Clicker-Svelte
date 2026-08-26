@@ -19,6 +19,8 @@ class RadiationManager {
 	// State
 	controlRodLevel = $state(0); // Start at 0 (safe)
 	lastTick = $state(Date.now());
+	/** Swapped by the simulation for a seeded generator so a benchmark run is reproducible. */
+	random: () => number = () => Math.random();
 	mass = $state(0);
 	unlocked = $state(false);
 
@@ -151,7 +153,7 @@ class RadiationManager {
 		let decay = this.decayRate * seconds;
 
 		// Mass preservation chance
-		if (this.preservationChance > 0 && Math.random() < this.preservationChance) {
+		if (this.preservationChance > 0 && this.random() < this.preservationChance) {
 			decay *= 0.5;
 		}
 

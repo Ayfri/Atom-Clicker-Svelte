@@ -153,6 +153,11 @@ export class SimulationEngine {
 		this.savedState = JSON.stringify(gameManager.getCurrentState());
 		gameManager.resetAll();
 		currenciesManager.hardReset();
+		// Every wall-clock read inside the game is swapped for the simulated clock, or the stability field and the
+		// power-up bookkeeping would follow how fast the host machine happens to be running.
+		gameManager.clock = () => gameManager.inGameTime;
+		gameManager.lastInteractionTime = 0;
+		radiationManager.random = () => this.random();
 
 		// A real engaged player turns auto-click on as soon as upgrades unlock it; the derived returns 0 if no upgrade.
 		if (!gameManager.settings.automation.autoClick) gameManager.toggleAutoClick();
@@ -284,6 +289,8 @@ export class SimulationEngine {
 				this.takeSnapshot();
 			}
 		} finally {
+			gameManager.clock = () => Date.now();
+			radiationManager.random = () => Math.random();
 			if (this.savedState) {
 				const originalState = JSON.parse(this.savedState);
 				gameManager.loadSaveData(originalState);
