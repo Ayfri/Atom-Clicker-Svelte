@@ -32,17 +32,22 @@ export function getUpgradesWithEffects(upgrades: (Upgrade | SkillUpgrade)[], opt
  */
 export function foldEffects(upgrades: (Upgrade | SkillUpgrade)[], manager: GameManager, defaultValue: number, options: SearchEffectsOptions): number {
 	let value = defaultValue;
-	const groupContributions = new Map<string, number>();
+	// Most folds have no grouped effect at all, and this runs on every derived read, so the map is allocated on demand.
+	let groupContributions: Map<string, number> | null = null;
+	const wantedType = options.type;
+	const wantedTarget = options.target;
 
 	for (const upgrade of upgrades) {
-		if (!('effects' in upgrade) || !Array.isArray(upgrade.effects)) continue;
+		const effects = (upgrade as { effects?: Effect[] }).effects;
+		if (!Array.isArray(effects)) continue;
 
-		for (const effect of upgrade.effects) {
-			if (options.type && effect.type !== options.type) continue;
-			if (options.target && effect.target !== options.target) continue;
+		for (const effect of effects) {
+			if (wantedType && effect.type !== wantedType) continue;
+			if (wantedTarget && effect.target !== wantedTarget) continue;
 
 			if (effect.group) {
 				const contribution = effect.apply(0, manager);
+				groupContributions ??= new Map();
 				groupContributions.set(effect.group, (groupContributions.get(effect.group) ?? 0) + contribution);
 				continue;
 			}
@@ -51,8 +56,10 @@ export function foldEffects(upgrades: (Upgrade | SkillUpgrade)[], manager: GameM
 		}
 	}
 
-	for (const contribution of groupContributions.values()) {
-		value *= 1 + contribution;
+	if (groupContributions) {
+		for (const contribution of groupContributions.values()) {
+			value *= 1 + contribution;
+		}
 	}
 
 	return value;

@@ -33,6 +33,7 @@ import { realmManager } from '$helpers/RealmManager.svelte';
 import { SAVE_KEY, SAVE_VERSION, loadSavedState, serializeSaveState } from '$helpers/saves';
 import { LAYERS, type LayerType, statsConfig } from '$helpers/statConstants';
 import { TutorialManager } from '$helpers/TutorialManager.svelte';
+import { levelFromTotalXP, totalXPForLevel, xpForLevel } from '$helpers/xp';
 import { leaderboard } from '$stores/leaderboard.svelte';
 import { saveRecovery } from '$stores/saveRecovery';
 import { toastStore } from '$stores/toasts.svelte';
@@ -216,9 +217,7 @@ export class GameManager {
 	currentLevelXP = $derived.by(() => {
 		const level = this.getLevelFromTotalXP(this.totalXP);
 		if (level === 0) return this.totalXP;
-		let previousLevelXP = 0;
-		for (let i = 1; i <= level; i++) previousLevelXP += this.getXPForLevel(i);
-		return Math.max(0, this.totalXP - previousLevelXP);
+		return Math.max(0, this.totalXP - totalXPForLevel(level));
 	});
 
 	currentUpgradesBought = $derived.by(() => {
@@ -992,23 +991,11 @@ export class GameManager {
 	// XP Helpers
 	getLevelFromTotalXP(totalXP: number) {
 		if (!isFinite(totalXP) || totalXP <= 0) return 0;
-		let level = 0;
-		let remainingXP = totalXP;
-		let nextCost = this.getXPForLevel(1);
-		while (remainingXP >= nextCost) {
-			remainingXP -= nextCost;
-			level++;
-			nextCost = this.getXPForLevel(level + 1);
-		}
-		return level;
+		return levelFromTotalXP(totalXP);
 	}
 
 	getXPForLevel(level: number) {
-		const base = 100; // Base XP cost for level 1
-		const poly = 1.1;
-		const rate = 1.55;
-		// XP(L) = base * L^poly * rate^(L-1): L^poly scales the base cost linearly so early levels stay gentle, rate^(L-1) compounds each step exponentially making late levels significantly harder
-		return Math.floor(base * Math.pow(level, poly) * Math.pow(rate, level - 1));
+		return xpForLevel(level);
 	}
 
 	tick(deltaTime: number = 1000, skipAchievements = false) {
@@ -1044,13 +1031,11 @@ export class GameManager {
 			}
 		}
 
-		// Clean expired power-ups
+		// Reassigning unconditionally would invalidate the whole production chain on every tick a power-up is live.
 		if (this.activePowerUps.length > 0) {
 			const expireTime = this.inGameTime;
-			this.activePowerUps = this.activePowerUps.filter(p => {
-				const elapsed = expireTime - (p.startTime ?? 0);
-				return elapsed < p.duration;
-			});
+			const remaining = this.activePowerUps.filter(p => expireTime - (p.startTime ?? 0) < p.duration);
+			if (remaining.length !== this.activePowerUps.length) this.activePowerUps = remaining;
 		}
 	}
 
