@@ -1,3 +1,9 @@
+# What's new 26-08-2026
+
+- **Rebalancing**: Building level bonus is now a smooth doubling every 100 owned plus a 1.5x per level, replacing the old cliff at exactly 100 owned.
+- **Rebalancing**: Level Boost and Atom Soup (achievement) upgrades now stack additively within their own family instead of multiplying each other into absurd numbers.
+- **Rebalancing**: Power-ups can no longer spawn closer together than 20 seconds apart.
+
 # What's new 12-08-2026
 
 - **Design**: Every achievement/upgrades now shows its own icon.
