@@ -4,6 +4,7 @@
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { realmManager } from '$helpers/RealmManager.svelte';
 	import { ui } from '$stores/ui.svelte';
+	import { highlightCurrencies } from '$lib/utils/highlightCurrencies';
 	import { innerHeight, innerWidth } from 'svelte/reactivity/window';
 	import { fade } from 'svelte/transition';
 
@@ -145,7 +146,7 @@
 	>
 		<div class="w-full max-w-md rounded-2xl border border-white/10 bg-linear-to-br from-accent-900 to-accent-800 p-6 shadow-2xl">
 			<h2 class="text-xl font-bold text-white">{pendingRealmStep.step.title}</h2>
-			<p class="mt-2 text-sm text-white/70">{pendingRealmStep.step.description}</p>
+			<p class="mt-2 text-sm text-white/70">{@html highlightCurrencies(pendingRealmStep.step.description)}</p>
 			<div class="mt-6 flex justify-end">
 				<button
 					class="rounded-lg bg-accent-500 px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-accent-400"
@@ -174,7 +175,7 @@
 		>
 			{@render stepCounter()}
 			<h3 class="text-base font-bold text-white">{step.title}</h3>
-			<p class="mt-1.5 text-sm text-white/70">{step.description}</p>
+			<p class="mt-1.5 text-sm text-white/70">{@html highlightCurrencies(step.description)}</p>
 			<div class="mt-4 flex items-center justify-between">
 				<button class="text-xs font-semibold text-white/40 hover:text-white transition-colors" onclick={skip}>Skip tutorial</button>
 				<button
@@ -193,7 +194,7 @@
 			<div class="w-full max-w-md rounded-2xl border border-white/10 bg-linear-to-br from-accent-900 to-accent-800 p-6 shadow-2xl">
 				{@render stepCounter()}
 				<h2 class="text-xl font-bold text-white">{step.title}</h2>
-				<p class="mt-2 text-sm text-white/70">{step.description}</p>
+				<p class="mt-2 text-sm text-white/70">{@html highlightCurrencies(step.description)}</p>
 				<div class="mt-6 flex items-center justify-between">
 					<button class="text-xs font-semibold text-white/40 hover:text-white transition-colors" onclick={skip}>Skip tutorial</button>
 					<button
