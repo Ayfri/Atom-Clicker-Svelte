@@ -110,10 +110,7 @@ export const BUILDING_LEVEL_UP_COST = 100;
 
 /** Production multiplier granted by a building's level. Single source of truth for the game, the simulation and the charts. */
 export function getBuildingLevelMultiplier(count: number, level: number): number {
-	if (level <= 0) return 1;
-	const oldMultiplier = Math.pow(count / 2, level + 1) / 5;
-	const linearMultiplier = (level + 1) * 100;
-	return Math.sqrt(oldMultiplier * linearMultiplier);
+	return Math.pow(2, count / BUILDING_LEVEL_UP_COST) * Math.pow(1.5, level);
 }
 
 export const BUILDING_COLORS = [
