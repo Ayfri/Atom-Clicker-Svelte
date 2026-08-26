@@ -448,3 +448,6 @@ const achievementsArray: Achievement[] = [
 ];
 
 export const ACHIEVEMENTS = Object.fromEntries(achievementsArray.map(achievement => [achievement.id, achievement]));
+
+/** Pre-built so the per-tick achievement sweep does not rebuild an entries array every second. */
+export const ACHIEVEMENT_ENTRIES = Object.entries(ACHIEVEMENTS);

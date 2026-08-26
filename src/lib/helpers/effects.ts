@@ -26,6 +26,26 @@ export function getUpgradesWithEffects(upgrades: (Upgrade | SkillUpgrade)[], opt
     });
 }
 
+/**
+ * Fused `getUpgradesWithEffects` + `calculateEffects`: the filter pass only exists to drop sources the fold
+ * would skip anyway, so the hot derived stats walk the effects once and skip the intermediate array.
+ */
+export function foldEffects(upgrades: (Upgrade | SkillUpgrade)[], manager: GameManager, defaultValue: number, options: SearchEffectsOptions): number {
+	let value = defaultValue;
+
+	for (const upgrade of upgrades) {
+		if (!('effects' in upgrade) || !Array.isArray(upgrade.effects)) continue;
+
+		for (const effect of upgrade.effects) {
+			if (options.type && effect.type !== options.type) continue;
+			if (options.target && effect.target !== options.target) continue;
+			value = effect.apply(value, manager);
+		}
+	}
+
+	return value;
+}
+
 export function calculateEffects(upgrades: (Upgrade | SkillUpgrade)[], manager: GameManager, defaultValue: number = 0, options?: SearchEffectsOptions): number {
 	return upgrades.reduce((currentValue, upgrade) => {
 		if ('effects' in upgrade && Array.isArray(upgrade.effects)) {
