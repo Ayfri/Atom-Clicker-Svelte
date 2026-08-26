@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Chart from '$lib/components/benchmark/Chart.svelte';
 	import type { ChartSeries } from '$lib/components/benchmark/BaseChart.svelte';
-	import { BUILDINGS, BUILDING_COLORS, BUILDING_TYPES } from '$data/buildings';
+	import { BUILDINGS, BUILDING_COLORS, BUILDING_LEVEL_UP_COST, BUILDING_TYPES } from '$data/buildings';
 	import type { SimulationSnapshot } from '$lib/simulation/types';
 
 	interface SeriesDef {
@@ -172,7 +172,8 @@
 					useLog: true,
 				},
 				{
-					buildCustomSeries: buildingSeries(s => s.buildingUpgradeFactors, 0, 1),
+					buildCustomSeries: buildingSeries(s => s.buildingUpgradeFactors, 0, 0),
+					description: 'Every building the run ever owned. A line flat at 1× means no building upgrade for that tier was ever bought.',
 					half: true,
 					height: 300,
 					series: [],
@@ -180,7 +181,8 @@
 					useLog: true,
 				},
 				{
-					buildCustomSeries: buildingSeries(s => s.buildingLevelFactors, 0, 1),
+					buildCustomSeries: buildingSeries(s => s.buildingLevelFactors, 0, 0),
+					description: `Levels come from owning ${BUILDING_LEVEL_UP_COST} of a building. A line flat at 1× means that tier never reached level 1.`,
 					half: true,
 					height: 300,
 					series: [],
