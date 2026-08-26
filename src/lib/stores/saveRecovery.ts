@@ -1,3 +1,4 @@
+import { getItem, keys, removeItem, setItem } from '$lib/utils/safeLocalStorage';
 import { writable } from 'svelte/store';
 
 export type SaveErrorType = 'corrupted' | 'invalid_json' | 'migration_failed' | 'validation_failed' | 'unknown';
@@ -30,13 +31,8 @@ function createSaveRecoveryStore() {
 			const backupKey = rawSaveData ? `atomic-clicker-backup-${Date.now()}` : null;
 
 			// Save backup if we have raw data
-			if (backupKey && rawSaveData) {
-				try {
-					localStorage.setItem(backupKey, rawSaveData);
-					console.log(`Backup saved to: ${backupKey}`);
-				} catch (e) {
-					console.warn('Failed to create backup:', e);
-				}
+			if (backupKey && rawSaveData && setItem(backupKey, rawSaveData)) {
+				console.log(`Backup saved to: ${backupKey}`);
 			}
 
 			update(state => ({
@@ -62,28 +58,18 @@ function createSaveRecoveryStore() {
 
 		// Attempt to recover a backup
 		getBackupData(backupKey: string): string | null {
-			try {
-				return localStorage.getItem(backupKey);
-			} catch {
-				return null;
-			}
+			return getItem(backupKey);
 		},
 
 		// List all backups
 		listBackups(): { key: string; date: Date }[] {
 			const backups: { key: string; date: Date }[] = [];
-			try {
-				for (let i = 0; i < localStorage.length; i++) {
-					const key = localStorage.key(i);
-					if (key?.startsWith('atomic-clicker-backup-')) {
-						const timestamp = parseInt(key.replace('atomic-clicker-backup-', ''));
-						if (!isNaN(timestamp)) {
-							backups.push({ key, date: new Date(timestamp) });
-						}
-					}
+			for (const key of keys()) {
+				if (!key.startsWith('atomic-clicker-backup-')) continue;
+				const timestamp = parseInt(key.replace('atomic-clicker-backup-', ''));
+				if (!isNaN(timestamp)) {
+					backups.push({ key, date: new Date(timestamp) });
 				}
-			} catch {
-				// Ignore localStorage errors
 			}
 			return backups.sort((a, b) => b.date.getTime() - a.date.getTime());
 		},
@@ -93,11 +79,7 @@ function createSaveRecoveryStore() {
 			const backups = this.listBackups();
 			const toDelete = backups.slice(3);
 			for (const backup of toDelete) {
-				try {
-					localStorage.removeItem(backup.key);
-				} catch {
-					// Ignore errors
-				}
+				removeItem(backup.key);
 			}
 		}
 	};

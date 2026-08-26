@@ -13,6 +13,7 @@
 	import { gameManager } from '$helpers/GameManager.svelte';
 	import { applyOfflineProgress } from '$helpers/offlineProgress';
 	import { SAVE_KEY } from '$helpers/saves';
+	import { getItem, removeItem, setItem } from '$lib/utils/safeLocalStorage';
 	import { prestigeStore } from '$stores/prestige.svelte';
 	import { ui } from '$stores/ui.svelte';
 	import { toastStore } from '$stores/toasts.svelte';
@@ -138,7 +139,7 @@
 				class="flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-red-600/80 px-4 py-2 text-sm font-semibold shadow-lg transition-all hover:bg-red-600"
 				onclick={() => {
 					if (confirm('Are you sure you want to hard reset? This will delete ALL progress!')) {
-						localStorage.removeItem(SAVE_KEY);
+						removeItem(SAVE_KEY);
 						location.reload();
 					}
 				}}
@@ -254,7 +255,7 @@
 			<button
 				class="flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold transition-all hover:bg-white/20"
 				onclick={() => {
-					const data = localStorage.getItem(SAVE_KEY);
+					const data = getItem(SAVE_KEY);
 					if (data) {
 						navigator.clipboard.writeText(data);
 						alert('Save data copied to clipboard!');
@@ -273,7 +274,7 @@
 					if (data) {
 						try {
 							JSON.parse(data);
-							localStorage.setItem(SAVE_KEY, data);
+							setItem(SAVE_KEY, data);
 							location.reload();
 						} catch (e) {
 							alert('Invalid save data!');

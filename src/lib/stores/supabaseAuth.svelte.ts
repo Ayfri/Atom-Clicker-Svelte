@@ -3,6 +3,7 @@ import { browser } from '$app/environment';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_PUBLISHABLE_KEY } from '$env/static/public';
 import type { GameState } from '$lib/types';
 import type { Database, Profile } from '$lib/types/supabase';
+import { isLocalStorageAvailable } from '$lib/utils/safeLocalStorage';
 import { multiTabDetector } from '$stores/multiTab.svelte';
 import { isValidGameState, SAVE_VERSION, migrateSavedState, validateAndRepairGameState } from '$helpers/saves';
 
@@ -28,8 +29,8 @@ export class SupabaseAuth {
 			return;
 		}
 
-		// Check for localStorage availability (not available in Web Workers)
-		if (typeof localStorage === 'undefined') {
+		// Not available in Web Workers, and blocked outright when site data is disabled or storage is partitioned
+		if (!isLocalStorageAvailable()) {
 			console.warn('SupabaseAuth: localStorage not available, skipping init');
 			this.loading = false;
 			return;

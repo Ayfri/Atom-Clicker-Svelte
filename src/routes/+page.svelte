@@ -7,6 +7,7 @@
 	import { realmManager } from '$helpers/RealmManager.svelte';
 	import { setGlobals } from '$lib/globals';
 	import { formatNumber } from '$lib/utils';
+	import { isLocalStorageUnavailable } from '$lib/utils/safeLocalStorage';
 	import { autoBuyManager } from '$stores/autoBuy.svelte';
 	import { autoUpgradeManager } from '$stores/autoUpgrade.svelte';
 	import { remoteMessage } from '$stores/remoteMessage.svelte';
@@ -86,6 +87,15 @@
 
 	onMount(async () => {
 		gameManager.initialize();
+
+		if (isLocalStorageUnavailable()) {
+			toastStore.warning({
+				title: 'Progress Will Not Be Saved',
+				message: 'Your browser is blocking storage for this page, so the game cannot save locally. Sign in to save to the cloud, or allow site data.',
+				duration: 20_000,
+			});
+		}
+
 		const authInitialization = supabaseAuth.init();
 		while (supabaseAuth.loading && !supabaseAuth.isAuthenticated) {
 			await new Promise(resolve => setTimeout(resolve, 0));

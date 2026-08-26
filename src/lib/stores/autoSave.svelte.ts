@@ -1,9 +1,10 @@
 import { browser } from '$app/environment';
 import { gameManager } from '$helpers/GameManager.svelte';
+import { getItem, setItem } from '$lib/utils/safeLocalStorage';
 import { supabaseAuth } from '$stores/supabaseAuth.svelte';
 
 class AutoSaveStore {
-	enabled = $state(browser && localStorage.getItem('cloudAutoSaveEnabled') === 'true');
+	enabled = $state(browser && getItem('cloudAutoSaveEnabled') === 'true');
 	isSaving = $state(false);
 	lastSaveTime = $state(0);
 
@@ -13,7 +14,7 @@ class AutoSaveStore {
 		if (browser) {
 			$effect.root(() => {
 				$effect(() => {
-					localStorage.setItem('cloudAutoSaveEnabled', String(this.enabled));
+					setItem('cloudAutoSaveEnabled', String(this.enabled));
 				});
 
 				$effect(() => {
