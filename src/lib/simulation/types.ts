@@ -47,7 +47,9 @@ export interface PrestigeStrategy {
 
 export interface SimulationSnapshot {
 	achievements: number;
+	/** Only the types the report inspects by id (upgrade, skill, photon_upgrade). Volume types are counted in actionCounts. */
 	actions: SimulationAction[];
+	actionCounts: Partial<Record<SimulationActionType, number>>;
 	atoms: number;
 	atomsCurrencyBoost: number;
 	atomsPerClick: number;
@@ -100,12 +102,36 @@ export interface SimulationSnapshot {
 	upgrades: number;
 }
 
+export type SimulationActionType =
+	| 'achievement'
+	| 'building'
+	| 'electronize'
+	| 'photon_upgrade'
+	| 'power_up'
+	| 'protonise'
+	| 'skill'
+	| 'upgrade';
+
+/** Action types kept in full on a snapshot; the rest only survive as counts and inside spike windows. */
+export const DETAILED_ACTION_TYPES: ReadonlySet<SimulationActionType> = new Set<SimulationActionType>([
+	'photon_upgrade',
+	'skill',
+	'upgrade',
+]);
+
 export interface SimulationAction {
 	apsDelta?: number;
 	details?: string;
 	isFirstPurchase?: boolean;
 	timestamp: number;
-	type: 'achievement' | 'building' | 'electronize' | 'photon_upgrade' | 'power_up' | 'protonise' | 'skill' | 'upgrade';
+	type: SimulationActionType;
+}
+
+export function totalActionCount(counts: SimulationSnapshot['actionCounts'] | undefined): number {
+	if (!counts) return 0;
+	let total = 0;
+	for (const count of Object.values(counts)) total += count ?? 0;
+	return total;
 }
 
 export interface MilestoneDefinition {

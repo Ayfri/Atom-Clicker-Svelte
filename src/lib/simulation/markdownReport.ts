@@ -5,7 +5,7 @@ import { ALL_PHOTON_UPGRADES } from '$data/photonUpgrades';
 import { SKILL_UPGRADES } from '$data/skillTree';
 import { UPGRADES } from '$data/upgrades';
 import { formatDuration, formatNumber } from '$lib/utils';
-import { MILESTONES, type SimulationAction, type SimulationResult, type SimulationSnapshot } from './types';
+import { MILESTONES, totalActionCount, type SimulationAction, type SimulationResult, type SimulationSnapshot } from './types';
 
 const CURVE_ROWS = 16;
 const STALL_GROWTH = 1.05;
@@ -208,9 +208,21 @@ export function buildMarkdownReport(result: SimulationResult): string {
 	const reachedIds = new Set(result.milestones.map(m => m.milestone.id));
 	const missing = MILESTONES.filter(m => !reachedIds.has(m.id));
 	const stalls = findStalls(snapshots);
-	const totalActions = actions.length;
+	// Snapshots keep counts for every action type but detail only the ones looked up by id, so totals come from the counters.
+	let totalActions = 0;
 	const actionsByType = new Map<string, number>();
-	for (const action of actions) actionsByType.set(action.type, (actionsByType.get(action.type) ?? 0) + 1);
+	for (const snapshot of snapshots) {
+		const counts = snapshot.actionCounts;
+		if (!counts) {
+			for (const action of snapshot.actions) actionsByType.set(action.type, (actionsByType.get(action.type) ?? 0) + 1);
+			totalActions += snapshot.actions.length;
+			continue;
+		}
+		totalActions += totalActionCount(counts);
+		for (const [type, count] of Object.entries(counts)) {
+			actionsByType.set(type, (actionsByType.get(type) ?? 0) + (count ?? 0));
+		}
+	}
 
 	const lines: string[] = [];
 

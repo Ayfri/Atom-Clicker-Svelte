@@ -15,6 +15,7 @@ import { foldEffects } from '$helpers/effects';
 import { gameManager } from '$helpers/GameManager.svelte';
 import { radiationManager } from '$helpers/RadiationManager.svelte';
 import {
+	DETAILED_ACTION_TYPES,
 	MILESTONES,
 	MILESTONE_CHECKS,
 	type BenchmarkConfig,
@@ -22,6 +23,7 @@ import {
 	type MilestoneCheckData,
 	type MilestoneHit,
 	type SimulationAction,
+	type SimulationActionType,
 	type SimulationResult,
 	type SimulationSnapshot,
 	type SpikeEvent,
@@ -63,7 +65,8 @@ export interface SimulationProgress {
 	percent: number;
 	recentMilestones: MilestoneHit[];
 	recentSpikes: SpikeEvent[];
-	snapshots: SimulationSnapshot[];
+	/** Only the snapshots taken since the previous callback: sending the whole array every time is quadratic. */
+	newSnapshots: SimulationSnapshot[];
 	ticksPerSecond: number;
 	totalHours: number;
 }
@@ -90,6 +93,7 @@ const SPIKE_MIN_RATE = 50;
 
 export class SimulationEngine {
 	private abortController: AbortController | null = null;
+	private actionCounts: Partial<Record<SimulationActionType, number>> = {};
 	private actions: SimulationAction[] = [];
 	private activeNow = false;
 	private cachedSkillsRef: string[] | null = null;
@@ -123,6 +127,7 @@ export class SimulationEngine {
 	private simQuestTargets: Record<string, number> = {};
 	private simQuests: DailyQuest[] = [];
 	private snapshots: SimulationSnapshot[] = [];
+	private snapshotsSent = 0;
 	private spikeRateHistory: number[] = [];
 	private spikes: SpikeEvent[] = [];
 	private spikeWindowActions: SimulationAction[] = [];
@@ -150,6 +155,7 @@ export class SimulationEngine {
 		// A real engaged player turns auto-click on as soon as upgrades unlock it; the derived returns 0 if no upgrade.
 		if (!gameManager.settings.automation.autoClick) gameManager.toggleAutoClick();
 		if (!gameManager.settings.automation.autoClickPhotons) gameManager.toggleAutoClickPhotons();
+		this.actionCounts = {};
 		this.actions = [];
 		this.activeNow = false;
 		this.cachedSkillsRef = null;
@@ -179,6 +185,7 @@ export class SimulationEngine {
 		this.simQuestTargets = {};
 		this.simQuests = [];
 		this.snapshots = [];
+		this.snapshotsSent = 0;
 		this.spikeRateHistory = [];
 		this.spikes = [];
 		this.spikeWindowActions = [];
@@ -258,11 +265,12 @@ export class SimulationEngine {
 						percent: (tick / totalTicks) * 100,
 						recentMilestones: [...this.recentMilestones],
 						recentSpikes: [...this.recentSpikes],
-						snapshots: this.snapshots,
+						newSnapshots: this.snapshots.slice(this.snapshotsSent),
 						ticksPerSecond: lastTicksPerSecond,
 						totalHours: this.config.targetHours,
 					});
 
+					this.snapshotsSent = this.snapshots.length;
 					this.recentMilestones = [];
 					this.recentSpikes = [];
 					lastProgressUpdate = now;
@@ -327,7 +335,9 @@ export class SimulationEngine {
 	}
 
 	private pushAction(action: SimulationAction) {
-		this.actions.push(action);
+		this.actionCounts[action.type] = (this.actionCounts[action.type] ?? 0) + 1;
+		// Buildings and power-ups run into the millions over a multi-day run and nothing reads them back by id.
+		if (DETAILED_ACTION_TYPES.has(action.type)) this.actions.push(action);
 		this.spikeWindowActions.push(action);
 	}
 
@@ -596,6 +606,7 @@ export class SimulationEngine {
 
 		return {
 			achievements: gameManager.achievements.length,
+			actionCounts: { ...this.actionCounts },
 			actions: [...this.actions],
 			atoms: currenciesManager.getAmount(CurrenciesTypes.ATOMS),
 			atomsCurrencyBoost: gameManager.getCurrencyBoostMultiplier(CurrenciesTypes.ATOMS),
@@ -1098,6 +1109,7 @@ export class SimulationEngine {
 
 	private takeSnapshot() {
 		this.snapshots.push(this.createSnapshotData());
+		this.actionCounts = {};
 		this.actions = [];
 	}
 }

@@ -2,7 +2,7 @@
 	import Chart from '$lib/components/benchmark/Chart.svelte';
 	import type { ChartSeries } from '$lib/components/benchmark/BaseChart.svelte';
 	import { BUILDINGS, BUILDING_COLORS, BUILDING_LEVEL_UP_COST, BUILDING_TYPES } from '$data/buildings';
-	import type { SimulationSnapshot } from '$lib/simulation/types';
+	import { totalActionCount, type SimulationSnapshot } from '$lib/simulation/types';
 
 	interface SeriesDef {
 		color: string;
@@ -86,7 +86,7 @@
 				},
 				{
 					description: 'Purchases, prestiges and achievements per minute. Flat zones = the player has nothing affordable to do.',
-					series: [{ color: '#f87171', fillOpacity: 0.4, getValue: (s, iMin) => s.actions.length / iMin, label: 'Actions / min' }],
+					series: [{ color: '#f87171', fillOpacity: 0.4, getValue: (s, iMin) => (totalActionCount(s.actionCounts) || s.actions.length) / iMin, label: 'Actions / min' }],
 					title: 'Game Pace (Actions per Minute)',
 					yAxisSuffix: '/m',
 				},

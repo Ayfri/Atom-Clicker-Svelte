@@ -11,6 +11,7 @@
 		type PrestigePresetId,
 		type QuestBehavior,
 		type SimulationResult,
+		type SimulationSnapshot,
 		type SpikeEvent,
 	} from '$lib/simulation/types';
 	import { type SimulationProgress } from '$lib/simulation/engine';
@@ -30,6 +31,8 @@
 	let isRunning = $state(false);
 	let liveMilestones = $state<MilestoneHit[]>([]);
 	let liveSpikes = $state<SpikeEvent[]>([]);
+	// The worker streams snapshots incrementally, so the running view accumulates them here.
+	let liveSnapshots = $state<SimulationSnapshot[]>([]);
 	let progress = $state<SimulationProgress | null>(null);
 	let result = $state<SimulationResult | null>(null);
 	let loadedReport = $state<BenchmarkReport | null>(null);
@@ -123,7 +126,7 @@
 	);
 
 	const currentSnapshots = $derived(
-		loadedReport?.snapshots ?? result?.snapshots ?? progress?.snapshots ?? [],
+		loadedReport?.snapshots ?? result?.snapshots ?? liveSnapshots,
 	);
 	const simulationDurationHours = $derived.by(() => {
 		const snapshots = loadedReport?.snapshots ?? result?.snapshots;
@@ -150,6 +153,7 @@
 		result = null;
 		loadedReport = null;
 		liveMilestones = [];
+		liveSnapshots = [];
 		liveSpikes = [];
 		lastSavedId = null;
 		await tick();
@@ -161,6 +165,9 @@
 				const { type, payload } = e.data;
 				if (type === 'progress') {
 					progress = payload;
+					if (payload.newSnapshots.length > 0) {
+						liveSnapshots = [...liveSnapshots, ...payload.newSnapshots];
+					}
 					if (payload.recentMilestones.length > 0) {
 						liveMilestones = [...liveMilestones, ...payload.recentMilestones];
 					}
@@ -208,7 +215,7 @@
 			config: currentConfig,
 			durationMs,
 			milestones: liveMilestones,
-			snapshots: progress?.snapshots ?? [],
+			snapshots: liveSnapshots,
 			spikes: liveSpikes,
 		};
 		terminateWorker();
