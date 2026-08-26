@@ -5,7 +5,8 @@ import { ALL_PHOTON_UPGRADES } from '$data/photonUpgrades';
 import { SKILL_UPGRADES } from '$data/skillTree';
 import { UPGRADES } from '$data/upgrades';
 import { formatDuration, formatNumber } from '$lib/utils';
-import { MILESTONES, totalActionCount, type SimulationAction, type SimulationResult, type SimulationSnapshot } from './types';
+import { MILESTONES } from './milestones';
+import { totalActionCount, type SimulationAction, type SimulationResult, type SimulationSnapshot } from './types';
 
 const CURVE_ROWS = 16;
 const STALL_GROWTH = 1.05;

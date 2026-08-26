@@ -5,14 +5,16 @@
 		configToPresets,
 		PLAYSTYLE_PRESETS,
 		type ActivityPresetId,
-		type BenchmarkConfig,
-		type MilestoneHit,
 		type PlaystylePresetId,
 		type PrestigePresetId,
-		type QuestBehavior,
-		type SimulationResult,
-		type SimulationSnapshot,
-		type SpikeEvent,
+	} from '$lib/simulation/presets';
+	import type {
+		BenchmarkConfig,
+		MilestoneHit,
+		QuestBehavior,
+		SimulationResult,
+		SimulationSnapshot,
+		SpikeEvent,
 	} from '$lib/simulation/types';
 	import { type SimulationProgress } from '$lib/simulation/engine';
 	import { ChartLine, GitCompare, History, Save } from '@lucide/svelte';

@@ -8,11 +8,10 @@
 		PRESTIGE_PRESETS,
 		buildBenchmarkConfig,
 		type ActivityPresetId,
-		type BenchmarkConfig,
 		type PlaystylePresetId,
 		type PrestigePresetId,
-		type QuestBehavior,
-	} from '$lib/simulation/types';
+	} from '$lib/simulation/presets';
+	import type { BenchmarkConfig, QuestBehavior } from '$lib/simulation/types';
 
 	const QUEST_BEHAVIOR_OPTIONS: { id: QuestBehavior; label: string }[] = [
 		{ id: 'ignore', label: 'Ignore (never claims)' },
