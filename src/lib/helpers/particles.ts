@@ -13,6 +13,9 @@ export interface Particle {
 // --- Constants ---
 
 const MAX_PARTICLES = 150;
+/** Reserved separately from icons: a click autoclicker firing hundreds of times a second floods icon slots and would otherwise starve the "+N" text. */
+const MAX_TEXT_PARTICLES = 40;
+const MAX_ICON_PARTICLES = MAX_PARTICLES - MAX_TEXT_PARTICLES;
 const ICON_LAYER = 0;
 const TEXT_LAYER = 1;
 /** Matches the previous PixiJS text: 26px bold Arial drawn at a 0.5 scale. */
@@ -146,13 +149,21 @@ export const createClickTextParticleSync = (x: number, y: number, text: string):
 
 export class ParticleEngine {
 	private particles: Particle[] = [];
+	private iconCount = 0;
+	private textCount = 0;
 	private unsubscribe: () => void;
 
 	constructor(queue: Writable<Particle[]>) {
 		this.unsubscribe = queue.subscribe(newParticles => {
 			if (!newParticles.length) return;
 			for (const particle of newParticles) {
-				if (this.particles.length >= MAX_PARTICLES) break;
+				if (particle.layer === TEXT_LAYER) {
+					if (this.textCount >= MAX_TEXT_PARTICLES) continue;
+					this.textCount++;
+				} else {
+					if (this.iconCount >= MAX_ICON_PARTICLES) continue;
+					this.iconCount++;
+				}
 				this.particles.push(particle);
 			}
 			queue.set([]);
@@ -161,7 +172,11 @@ export class ParticleEngine {
 
 	update(dt: number) {
 		for (let i = this.particles.length - 1; i >= 0; i--) {
-			if (!this.particles[i].update(dt)) this.particles.splice(i, 1);
+			if (!this.particles[i].update(dt)) {
+				if (this.particles[i].layer === TEXT_LAYER) this.textCount--;
+				else this.iconCount--;
+				this.particles.splice(i, 1);
+			}
 		}
 	}
 
