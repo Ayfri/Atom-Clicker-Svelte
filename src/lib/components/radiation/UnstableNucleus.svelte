@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { RealmTypes } from '$data/realms';
 	import { radiationManager } from '$helpers/RadiationManager.svelte';
+	import { realmManager } from '$helpers/RealmManager.svelte';
 	import { onDestroy } from 'svelte';
 
 	const mass = $derived(radiationManager.mass);
@@ -184,7 +186,12 @@
 		animationFrame = requestAnimationFrame(animate);
 	}
 
+	// The realm stays mounted while another one is on screen, animating it then costs a frame for nothing.
+	const visible = $derived(realmManager.selectedRealmId === RealmTypes.RADIATION);
+
 	$effect(() => {
+		if (!visible) return;
+
 		animationFrame = requestAnimationFrame(animate);
 		return () => cancelAnimationFrame(animationFrame);
 	});
