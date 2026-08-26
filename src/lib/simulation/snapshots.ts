@@ -20,12 +20,6 @@ export interface RunState {
 	quests: QuestTracker;
 }
 
-function sumValues(source: Record<string, number | undefined> | undefined): number {
-	let total = 0;
-	for (const value of Object.values(source ?? {})) total += value ?? 0;
-	return total;
-}
-
 /**
  * Milestone predicates read a handful of counters, so between-snapshot checks skip the full snapshot build.
  * The engine checks every tick, so the target object is written in place instead of allocated per call.
@@ -42,12 +36,12 @@ export function fillMilestoneData(run: RunState, target: MilestoneCheckData): Mi
 	target.electronizes = gameManager.totalElectronizesAllTime;
 	target.electrons = currenciesManager.getAmount(CurrenciesTypes.ELECTRONS);
 	target.excitedPhotons = currenciesManager.getAmount(CurrenciesTypes.EXCITED_PHOTONS);
-	target.photonUpgradeLevels = sumValues(gameManager.photonUpgrades);
+	target.photonUpgradeLevels = gameManager.photonUpgradeLevels;
 	target.playerLevel = gameManager.playerLevel;
 	target.protonises = gameManager.totalProtonisesAllTime;
 	target.protons = currenciesManager.getAmount(CurrenciesTypes.PROTONS);
 	target.quarks = run.quarksFromAchievements + run.quests.quarks;
-	target.skillPointsUsed = sumValues(gameManager.skillPointBoosts);
+	target.skillPointsUsed = gameManager.skillPointsUsed;
 	target.skills = gameManager.skillUpgrades.length;
 	target.timestamp = gameManager.inGameTime;
 	target.totalBuildings = totalBuildings;
@@ -153,7 +147,7 @@ export function createSnapshotData(run: RunState): SimulationSnapshot {
 		photons: currenciesManager.getAmount(CurrenciesTypes.PHOTONS),
 		photonsEarned: currenciesManager.getEarnedAllTime(CurrenciesTypes.PHOTONS),
 		photonsExpired: run.photonsExpired,
-		photonUpgradeLevels: sumValues(gameManager.photonUpgrades),
+		photonUpgradeLevels: gameManager.photonUpgradeLevels,
 		playerLevel: gameManager.playerLevel,
 		protons: currenciesManager.getAmount(CurrenciesTypes.PROTONS),
 		protonises: gameManager.totalProtonisesAllTime,
@@ -164,7 +158,7 @@ export function createSnapshotData(run: RunState): SimulationSnapshot {
 		questsCompletedTotal: run.quests.completedTotal,
 		questsOfferedTotal: run.quests.offeredTotal,
 		radiationMultiplier: gameManager.radiationMultiplier,
-		skillPointsUsed: sumValues(gameManager.skillPointBoosts),
+		skillPointsUsed: gameManager.skillPointsUsed,
 		skills: gameManager.skillUpgrades.length,
 		stabilityMultiplier: gameManager.stabilityMultiplier,
 		timestamp: gameManager.inGameTime,

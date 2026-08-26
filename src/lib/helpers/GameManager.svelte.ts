@@ -38,6 +38,12 @@ import { leaderboard } from '$stores/leaderboard.svelte';
 import { saveRecovery } from '$stores/saveRecovery';
 import { toastStore } from '$stores/toasts.svelte';
 
+/** `tick` already drops expired power-ups on the simulated clock, so this timer is a precision helper and must never hold a headless runtime open. */
+function scheduleExpiry(callback: () => void, delay: number) {
+	const timer = setTimeout(callback, delay) as ReturnType<typeof setTimeout> & { unref?: () => void };
+	timer.unref?.();
+}
+
 export class GameManager {
 	// State
 	achievements = $state<string[]>([]);
@@ -192,6 +198,8 @@ export class GameManager {
 	// Currency Boost System (from building levels, 10% boost per point, max 20 per currency)
 	skillPointsTotal = $derived(this.buildingTotals.levels);
 	skillPointsUsed = $derived(Object.values(this.skillPointBoosts).reduce((sum, points) => sum + (points ?? 0), 0));
+	/** Summing a `$state` record walks the proxy for every key, and the milestone check reads this on every tick. */
+	photonUpgradeLevels = $derived(Object.values(this.photonUpgrades).reduce((sum, level) => sum + (level ?? 0), 0));
 	skillPointsAvailable = $derived(this.skillPointsTotal - this.skillPointsUsed);
 
 	buildingProductions = $derived.by(() => {
@@ -564,8 +572,7 @@ export class GameManager {
 				return now < p.startTime + p.duration;
 			});
 			this.activePowerUps.forEach(p => {
-				const remaining = p.startTime + p.duration - now;
-				setTimeout(() => this.removePowerUp(p.id), remaining);
+				scheduleExpiry(() => this.removePowerUp(p.id), p.startTime + p.duration - now);
 			});
 		}
 	}
@@ -935,9 +942,7 @@ export class GameManager {
 			this.lastInteractionTime = this.clock();
 		}
 
-		setTimeout(() => {
-			this.removePowerUp(newPowerUp.id);
-		}, newPowerUp.duration);
+		scheduleExpiry(() => this.removePowerUp(newPowerUp.id), newPowerUp.duration);
 	}
 
 	removePowerUp(id: string) {
