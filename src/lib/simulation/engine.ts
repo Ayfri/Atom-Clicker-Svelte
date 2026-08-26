@@ -11,13 +11,15 @@ import { RealmTypes } from '$data/realms';
 import { SKILL_UPGRADES } from '$data/skillTree';
 import { UPGRADES } from '$data/upgrades';
 import { currenciesManager } from '$helpers/CurrenciesManager.svelte';
-import { calculateEffects, getUpgradesWithEffects } from '$helpers/effects';
+import { foldEffects } from '$helpers/effects';
 import { gameManager } from '$helpers/GameManager.svelte';
 import { radiationManager } from '$helpers/RadiationManager.svelte';
 import {
 	MILESTONES,
 	MILESTONE_CHECKS,
 	type BenchmarkConfig,
+	type MilestoneDefinition,
+	type MilestoneCheckData,
 	type MilestoneHit,
 	type SimulationAction,
 	type SimulationResult,
@@ -29,9 +31,14 @@ const CHUNK_SIZE = 500;
 const YIELD_INTERVAL = 10;
 
 const ACHIEVEMENT_ENTRIES = Object.entries(ACHIEVEMENTS);
-const UPGRADE_ENTRIES = Object.entries(UPGRADES);
-const SKILL_ENTRIES = Object.entries(SKILL_UPGRADES);
+// Costs are static, so scanning cost-ascending lets the "cheapest affordable" searches stop at their first match.
+const UPGRADE_ENTRIES = Object.entries(UPGRADES).sort(([, a], [, b]) => a.cost.amount - b.cost.amount);
+const SKILL_ENTRIES = Object.entries(SKILL_UPGRADES).sort(([, a], [, b]) => a.cost.amount - b.cost.amount);
 const PHOTON_UPGRADE_ENTRIES = Object.entries(ALL_PHOTON_UPGRADES);
+const RADIATION_UPGRADE_ENTRIES = Object.entries(RADIATION_UPGRADES);
+const MILESTONE_ENTRIES: { check: (s: MilestoneCheckData) => boolean; milestone: MilestoneDefinition }[] = MILESTONES
+	.filter(milestone => milestone.id in MILESTONE_CHECKS)
+	.map(milestone => ({ check: MILESTONE_CHECKS[milestone.id], milestone }));
 
 /** Progress state of a running simulation. */
 export interface SimulationProgress {
@@ -49,12 +56,11 @@ export interface SimulationProgress {
 export type ProgressCallback = (progress: SimulationProgress) => void;
 
 // Yields to main thread so UI stays responsive; uses scheduler.yield when available.
-async function yieldToMain(): Promise<void> {
-	if ('scheduler' in globalThis && typeof (globalThis as any).scheduler?.yield === 'function') {
-		return (globalThis as any).scheduler.yield();
-	}
-	return new Promise(resolve => setTimeout(resolve, 0));
-}
+const schedulerYield = (globalThis as any).scheduler?.yield as (() => Promise<void>) | undefined;
+const yieldToMain: () => Promise<void> =
+	typeof schedulerYield === 'function'
+		? () => schedulerYield.call((globalThis as any).scheduler)
+		: () => new Promise(resolve => setTimeout(resolve, 0));
 
 const SPIKE_WINDOW_MS = 60_000;
 const SPIKE_MIN_HISTORY = 5;
@@ -64,9 +70,15 @@ const SPIKE_MIN_RATE = 50;
 export class SimulationEngine {
 	private abortController: AbortController | null = null;
 	private actions: SimulationAction[] = [];
+	private activeNow = false;
+	private cachedSkillsRef: string[] | null = null;
+	private cachedSkillsSet = new Set<string>();
+	private cachedUpgradesRef: string[] | null = null;
+	private cachedUpgradesSet = new Set<string>();
 	private config: BenchmarkConfig;
 	private everPurchasedBuildings = new Set<string>();
-	private hitMilestones = new Set<string>();
+	private ownedAchievements = new Set<string>();
+	private pendingMilestones = MILESTONE_ENTRIES;
 	private lastWasActive = false;
 	private milestones: MilestoneHit[] = [];
 	private nextPowerUpTime = 0;
@@ -113,8 +125,12 @@ export class SimulationEngine {
 		if (!gameManager.settings.automation.autoClick) gameManager.toggleAutoClick();
 		if (!gameManager.settings.automation.autoClickPhotons) gameManager.toggleAutoClickPhotons();
 		this.actions = [];
+		this.activeNow = false;
+		this.cachedSkillsRef = null;
+		this.cachedUpgradesRef = null;
 		this.everPurchasedBuildings.clear();
-		this.hitMilestones.clear();
+		this.ownedAchievements = new Set(gameManager.achievements);
+		this.pendingMilestones = MILESTONE_ENTRIES;
 		this.lastWasActive = false;
 		this.milestones = [];
 		this.nextPowerUpTime = this.rollPowerUpInterval();
@@ -162,11 +178,12 @@ export class SimulationEngine {
 					}
 				}
 				gameManager.tick(tickRate, true);
+				const activeNow = this.isInActiveWindow();
+				this.activeNow = activeNow;
 				this.simulateClicks();
 				this.simulatePhotonRealmClicks();
 				this.tickPowerUps();
 				this.checkQuestDayRollover();
-				const activeNow = this.isInActiveWindow();
 				if (activeNow && !this.lastWasActive) {
 					this.prestigesThisActiveWindow = 0;
 				}
@@ -280,7 +297,7 @@ export class SimulationEngine {
 	}
 
 	private checkAchievements() {
-		const owned = new Set(gameManager.achievements);
+		const owned = this.ownedAchievements;
 		const newlyEarned: string[] = [];
 
 		for (const [id, achievement] of ACHIEVEMENT_ENTRIES) {
@@ -402,24 +419,65 @@ export class SimulationEngine {
 	}
 
 	private checkMilestones() {
-		const snapshot = this.createSnapshotData();
+		const pending = this.pendingMilestones;
+		if (pending.length === 0) return;
 
-		for (const milestone of MILESTONES) {
-			const checkFn = MILESTONE_CHECKS[milestone.id];
-			if (checkFn && !this.hitMilestones.has(milestone.id) && checkFn(snapshot)) {
-				this.hitMilestones.add(milestone.id);
-				const hit: MilestoneHit = {
-					dayReached: snapshot.dayNumber,
-					milestone,
-					timeReached: snapshot.timestamp,
-				};
-				this.milestones.push(hit);
-				this.recentMilestones.push(hit);
+		const snapshot = this.createMilestoneData();
+		let stillPending: typeof pending | null = null;
+
+		for (let i = 0; i < pending.length; i++) {
+			const entry = pending[i];
+			if (!entry.check(snapshot)) {
+				stillPending?.push(entry);
+				continue;
 			}
+			if (!stillPending) stillPending = pending.slice(0, i);
+			const hit: MilestoneHit = {
+				dayReached: snapshot.dayNumber,
+				milestone: entry.milestone,
+				timeReached: snapshot.timestamp,
+			};
+			this.milestones.push(hit);
+			this.recentMilestones.push(hit);
 		}
+
+		if (stillPending) this.pendingMilestones = stillPending;
+	}
+
+	/** Milestone predicates only read a handful of counters, so the between-snapshot check skips the full snapshot build. */
+	private createMilestoneData(): MilestoneCheckData {
+		let totalBuildings = 0;
+		for (const type of BUILDING_TYPES) totalBuildings += gameManager.buildings[type]?.count ?? 0;
+
+		let photonUpgradeLevels = 0;
+		for (const level of Object.values(gameManager.photonUpgrades || {})) photonUpgradeLevels += level || 0;
+
+		let skillPointsUsed = 0;
+		for (const points of Object.values(gameManager.skillPointBoosts || {})) skillPointsUsed += points ?? 0;
+
+		return {
+			achievements: gameManager.achievements.length,
+			atoms: currenciesManager.getAmount(CurrenciesTypes.ATOMS),
+			atomsPerSecond: gameManager.atomsPerSecond,
+			buildingsEverPurchased: [...this.everPurchasedBuildings],
+			dayNumber: gameManager.inGameTime / (24 * 3600 * 1000),
+			electronizes: gameManager.totalElectronizesAllTime,
+			electrons: currenciesManager.getAmount(CurrenciesTypes.ELECTRONS),
+			photonUpgradeLevels,
+			playerLevel: gameManager.getLevelFromTotalXP(gameManager.totalXP),
+			protonises: gameManager.totalProtonisesAllTime,
+			protons: currenciesManager.getAmount(CurrenciesTypes.PROTONS),
+			quarks: this.quarks,
+			skillPointsUsed,
+			skills: gameManager.skillUpgrades.length,
+			timestamp: gameManager.inGameTime,
+			totalBuildings,
+			upgrades: gameManager.upgrades.length,
+		};
 	}
 
 	private createSnapshotData(): SimulationSnapshot {
+		const effectSources = gameManager.allEffectSources;
 		const buildings: Record<BuildingType, number> = {} as Record<BuildingType, number>;
 		const buildingLevelFactors: Partial<Record<BuildingType, number>> = {};
 		const buildingUpgradeFactors: Partial<Record<BuildingType, number>> = {};
@@ -435,8 +493,7 @@ export class SimulationEngine {
 
 			if (building && count > 0) {
 				const options = { target: type, type: 'building' as const };
-				const upgrades = getUpgradesWithEffects(gameManager.allEffectSources, options);
-				const effectiveRate = calculateEffects(upgrades, gameManager, building.rate, options);
+				const effectiveRate = foldEffects(effectSources, gameManager, building.rate, options);
 				buildingUpgradeFactors[type] = effectiveRate / building.rate;
 
 				const oldMultiplier = Math.pow(count / 2, building.level + 1) / 5;
@@ -453,22 +510,40 @@ export class SimulationEngine {
 		const baseGlobalMultiplier = radiationMultiplier > 0 ? gameManager.globalMultiplier / radiationMultiplier : gameManager.globalMultiplier;
 
 		const globalOptions = { type: 'global' as const };
-		const skillSources = gameManager.allEffectSources.filter(s => s.id in SKILL_UPGRADES);
-		const globalSkillsMultiplier = calculateEffects(getUpgradesWithEffects(skillSources, globalOptions), gameManager, 1, globalOptions);
+		// One pass over the effect sources; each group used to filter the whole list on its own.
+		const skillSources: typeof effectSources = [];
+		const flatSources: typeof effectSources = [];
+		const achievementSources: typeof effectSources = [];
+		const levelSources: typeof effectSources = [];
+		const protonBoostSources: typeof effectSources = [];
+		const protoniseSources: typeof effectSources = [];
 
-		const computeGlobalForPrefix = (prefix: string) => {
-			const sources = gameManager.allEffectSources.filter(s => s.id.startsWith(prefix));
-			return calculateEffects(getUpgradesWithEffects(sources, globalOptions), gameManager, 1, globalOptions);
-		};
-		const globalFlatMultiplier = computeGlobalForPrefix('global_boost_');
-		const globalAchievementMultiplier = computeGlobalForPrefix('global_achievements_mul_');
-		const globalLevelMultiplier = computeGlobalForPrefix('level_boost_');
-		const globalProtonBoostMultiplier = computeGlobalForPrefix('proton_boost_');
-		const globalProtoniseMultiplier = computeGlobalForPrefix('protonise_boost_');
-		const levelBoostCount = gameManager.upgrades.filter(id => id.startsWith('level_boost_')).length;
+		for (const source of effectSources) {
+			const id = source.id;
+			if (id in SKILL_UPGRADES) skillSources.push(source);
+			if (id.startsWith('global_boost_')) flatSources.push(source);
+			else if (id.startsWith('global_achievements_mul_')) achievementSources.push(source);
+			else if (id.startsWith('level_boost_')) levelSources.push(source);
+			else if (id.startsWith('proton_boost_')) protonBoostSources.push(source);
+			else if (id.startsWith('protonise_boost_')) protoniseSources.push(source);
+		}
+
+		const globalSkillsMultiplier = foldEffects(skillSources, gameManager, 1, globalOptions);
+		const globalFlatMultiplier = foldEffects(flatSources, gameManager, 1, globalOptions);
+		const globalAchievementMultiplier = foldEffects(achievementSources, gameManager, 1, globalOptions);
+		const globalLevelMultiplier = foldEffects(levelSources, gameManager, 1, globalOptions);
+		const globalProtonBoostMultiplier = foldEffects(protonBoostSources, gameManager, 1, globalOptions);
+		const globalProtoniseMultiplier = foldEffects(protoniseSources, gameManager, 1, globalOptions);
+
+		let levelBoostCount = 0;
+		const ownedUpgrades = new Set<string>();
+		for (const id of gameManager.upgrades) {
+			ownedUpgrades.add(id);
+			if (id.startsWith('level_boost_')) levelBoostCount++;
+		}
 
 		const getUpgradeContribution = (id: string): number => {
-			if (!gameManager.upgrades.includes(id)) return 1;
+			if (!ownedUpgrades.has(id)) return 1;
 			const upgrade = UPGRADES[id];
 			if (!upgrade) return 1;
 			const globalEffect = upgrade.effects.find(e => e.type === 'global');
@@ -580,9 +655,6 @@ export class SimulationEngine {
 
 		if (!botBehavior.autoBuy) return;
 
-		const ownedUpgrades = new Set(gameManager.upgrades);
-		const ownedSkills = new Set(gameManager.skillUpgrades);
-
 		if (canDoAction() && botBehavior.autoBuyBuildings) {
 			const building = this.selectBuilding();
 			if (building) {
@@ -604,7 +676,7 @@ export class SimulationEngine {
 			}
 		}
 		if (canDoAction() && botBehavior.autoBuyUpgrades) {
-			const affordableUpgrade = this.getAffordableUpgrade(ownedUpgrades);
+			const affordableUpgrade = this.getAffordableUpgrade(this.ownedUpgradeSet());
 			if (affordableUpgrade) {
 				gameManager.purchaseUpgrade(affordableUpgrade);
 				this.pushAction({
@@ -616,7 +688,7 @@ export class SimulationEngine {
 			}
 		}
 		if (canDoAction() && botBehavior.autoBuySkills) {
-			const affordableSkill = this.getAffordableSkill(ownedSkills);
+			const affordableSkill = this.getAffordableSkill(this.ownedSkillSet());
 			if (affordableSkill) {
 				gameManager.purchaseSkill(affordableSkill);
 				this.pushAction({
@@ -683,6 +755,25 @@ export class SimulationEngine {
 		}
 	}
 
+	/** Mirrors gameManager's upgrade arrays into sets, rebuilt only when a purchase swaps the array. */
+	private ownedUpgradeSet(): Set<string> {
+		const owned = gameManager.upgrades;
+		if (owned !== this.cachedUpgradesRef) {
+			this.cachedUpgradesRef = owned;
+			this.cachedUpgradesSet = new Set(owned);
+		}
+		return this.cachedUpgradesSet;
+	}
+
+	private ownedSkillSet(): Set<string> {
+		const owned = gameManager.skillUpgrades;
+		if (owned !== this.cachedSkillsRef) {
+			this.cachedSkillsRef = owned;
+			this.cachedSkillsSet = new Set(owned);
+		}
+		return this.cachedSkillsSet;
+	}
+
 	private getAffordablePhotonUpgrade(photons: number, excitedPhotons: number): string | null {
 		let bestId: string | null = null;
 		let bestCost = Infinity;
@@ -707,7 +798,7 @@ export class SimulationEngine {
 		let bestCost = Infinity;
 		const electrons = currenciesManager.getAmount(CurrenciesTypes.ELECTRONS);
 
-		for (const [id, upgrade] of Object.entries(RADIATION_UPGRADES)) {
+		for (const [id, upgrade] of RADIATION_UPGRADE_ENTRIES) {
 			const currentLevel = radiationManager.upgradeLevels[id] ?? 0;
 			if (currentLevel >= upgrade.maxLevel) continue;
 			const price = getRadiationUpgradePrice(upgrade, currentLevel);
@@ -721,85 +812,78 @@ export class SimulationEngine {
 	}
 
 	private getAffordableSkill(ownedSkills: Set<string>): string | null {
-		let bestId: string | null = null;
-		let bestCost = Infinity;
-
 		for (const [id, skill] of SKILL_ENTRIES) {
 			if (ownedSkills.has(id)) continue;
-			const cost = skill.cost.amount;
-			if (cost >= bestCost) continue;
-			if (currenciesManager.getAmount(skill.cost.currency) < cost) continue;
+			if (currenciesManager.getAmount(skill.cost.currency) < skill.cost.amount) continue;
 			if (skill.requires && !skill.requires.every(req => ownedSkills.has(req))) continue;
 			if (skill.condition && !skill.condition(gameManager)) continue;
-			bestCost = cost;
-			bestId = id;
+			return id;
 		}
 
-		return bestId;
+		return null;
 	}
 
 	private getAffordableUpgrade(ownedUpgrades: Set<string>): string | null {
-		let bestId: string | null = null;
-		let bestCost = Infinity;
-
 		for (const [id, upgrade] of UPGRADE_ENTRIES) {
 			if (ownedUpgrades.has(id)) continue;
-			const cost = upgrade.cost.amount;
-			if (cost >= bestCost) continue;
-			if (currenciesManager.getAmount(upgrade.cost.currency) < cost) continue;
+			if (currenciesManager.getAmount(upgrade.cost.currency) < upgrade.cost.amount) continue;
 			if (upgrade.condition && !upgrade.condition(gameManager)) continue;
-			bestCost = cost;
-			bestId = id;
+			return id;
 		}
 
-		return bestId;
+		return null;
 	}
 
 	private selectBuilding(): BuildingType | null {
 		const { buyStrategy } = this.config.botBehavior;
 		const atoms = currenciesManager.getAmount(CurrenciesTypes.ATOMS);
 
-		const affordableBuildings = BUILDING_TYPES.filter(type => {
-			const cost = gameManager.getBuildingCost(type, 1);
-			return atoms >= cost;
-		});
+		// Costs are stable for the whole selection, so price each building once instead of inside every comparison.
+		const costs: number[] = [];
+		let anyAffordable = false;
+		for (let i = 0; i < BUILDING_TYPES.length; i++) {
+			const cost = gameManager.getBuildingCost(BUILDING_TYPES[i], 1);
+			costs[i] = cost;
+			if (atoms >= cost) anyAffordable = true;
+		}
 
-		if (affordableBuildings.length === 0) return null;
+		if (!anyAffordable) return null;
+
+		const cheapestAffordable = (onlyUnowned: boolean): BuildingType | null => {
+			let best: BuildingType | null = null;
+			let bestCost = Infinity;
+			for (let i = 0; i < BUILDING_TYPES.length; i++) {
+				const type = BUILDING_TYPES[i];
+				if (atoms < costs[i] || costs[i] >= bestCost) continue;
+				if (onlyUnowned && (gameManager.buildings[type]?.count ?? 0) > 0) continue;
+				bestCost = costs[i];
+				best = type;
+			}
+			return best;
+		};
+
+		const mostEfficientAffordable = (): BuildingType | null => {
+			let best: BuildingType | null = null;
+			let bestRate = -Infinity;
+			for (let i = 0; i < BUILDING_TYPES.length; i++) {
+				const type = BUILDING_TYPES[i];
+				if (atoms < costs[i]) continue;
+				const rate = BUILDINGS[type].rate / costs[i];
+				if (best !== null && rate <= bestRate) continue;
+				bestRate = rate;
+				best = type;
+			}
+			return best;
+		};
 
 		switch (buyStrategy) {
-			case 'cheapest': {
-				return affordableBuildings.reduce((cheapest, type) => {
-					const cheapestCost = gameManager.getBuildingCost(cheapest, 1);
-					const typeCost = gameManager.getBuildingCost(type, 1);
-					return typeCost < cheapestCost ? type : cheapest;
-				});
-			}
-			case 'mostEfficient': {
-				return affordableBuildings.reduce((best, type) => {
-					const bestRate = BUILDINGS[best].rate / gameManager.getBuildingCost(best, 1);
-					const typeRate = BUILDINGS[type].rate / gameManager.getBuildingCost(type, 1);
-					return typeRate > bestRate ? type : best;
-				});
-			}
+			case 'cheapest':
+				return cheapestAffordable(false);
+			case 'mostEfficient':
+				return mostEfficientAffordable();
 			case 'balanced':
-			default: {
-				const unowned = BUILDING_TYPES.filter(type => !gameManager.buildings[type] || gameManager.buildings[type]!.count === 0);
-				const affordableUnowned = unowned.filter(type => atoms >= gameManager.getBuildingCost(type, 1));
-
-				if (affordableUnowned.length > 0) {
-					return affordableUnowned.reduce((cheapest, type) => {
-						const cheapestCost = gameManager.getBuildingCost(cheapest, 1);
-						const typeCost = gameManager.getBuildingCost(type, 1);
-						return typeCost < cheapestCost ? type : cheapest;
-					});
-				}
-
-				return affordableBuildings.reduce((best, type) => {
-					const bestRate = BUILDINGS[best].rate / gameManager.getBuildingCost(best, 1);
-					const typeRate = BUILDINGS[type].rate / gameManager.getBuildingCost(type, 1);
-					return typeRate > bestRate ? type : best;
-				});
-			}
+			default:
+				return cheapestAffordable(true) ?? mostEfficientAffordable();
 		}
 	}
 
@@ -814,7 +898,7 @@ export class SimulationEngine {
 
 	private simulateClicks() {
 		const { clicksPerSecond } = this.config.botBehavior;
-		if (!this.isInActiveWindow()) return;
+		if (!this.activeNow) return;
 		if (clicksPerSecond <= 0) return;
 		// When another realm is active the player is clicking there, not the atom button.
 		// Atom auto-click (via upgrades) still fires through gameManager.tick().
@@ -835,15 +919,12 @@ export class SimulationEngine {
 		if (!gameManager.realms[RealmTypes.PHOTONS]?.unlocked) return;
 
 		const deltaSeconds = this.config.tickRate / 1000;
-		const manualClicks = this.isInActiveWindow() ? this.config.botBehavior.clicksPerSecond * deltaSeconds : 0;
+		const manualClicks = this.activeNow ? this.config.botBehavior.clicksPerSecond * deltaSeconds : 0;
 		const autoClicks = gameManager.photonAutoClicksPer5Seconds > 0 ? (gameManager.photonAutoClicksPer5Seconds / 5) * deltaSeconds : 0;
 		const totalClicks = manualClicks + autoClicks;
 		if (totalClicks <= 0) return;
 
-		const photonValueBonus = this.getPhotonValueBonus();
-		const doubleChance = this.getEffect('photon_double_chance');
-		const excitedDoubleChance = this.getEffect('excited_photon_double');
-		const excitedFromMaxBonus = this.getEffect('excited_photon_from_max');
+		const { doubleChance, excitedDoubleChance, excitedFromMaxBonus, photonValueBonus } = this.photonClickEffects();
 		// Photon realm caps excited chance behind 'excited_auto_click' upgrade for auto-clicks only.
 		const autoAllowsExcited = (gameManager.photonUpgrades['excited_auto_click'] || 0) > 0;
 		const excitedChanceManual = gameManager.excitedPhotonChance;
@@ -866,16 +947,36 @@ export class SimulationEngine {
 		if (excitedGain > 0) currenciesManager.add(CurrenciesTypes.EXCITED_PHOTONS, excitedGain);
 	}
 
-	private getEffect(type: 'excited_photon_double' | 'excited_photon_from_max' | 'photon_double_chance'): number {
-		const options = { type } as const;
-		const upgrades = getUpgradesWithEffects(gameManager.allEffectSources, options);
-		return calculateEffects(upgrades, gameManager, 0, options);
-	}
+	/** The four photon click modifiers are folded in a single walk of the effect sources, which runs every tick. */
+	private photonClickEffects(): { doubleChance: number; excitedDoubleChance: number; excitedFromMaxBonus: number; photonValueBonus: number } {
+		let doubleChance = 0;
+		let excitedDoubleChance = 0;
+		let excitedFromMaxBonus = 0;
+		let photonValueBonus = 0;
 
-	private getPhotonValueBonus(): number {
-		const upgrade = gameManager.allEffectSources.find(source => source.id === 'photon_value');
-		if (!upgrade) return 0;
-		return calculateEffects([upgrade], gameManager, 0, { type: 'click' });
+		for (const source of gameManager.allEffectSources) {
+			if (!('effects' in source) || !Array.isArray(source.effects)) continue;
+			const isPhotonValue = source.id === 'photon_value';
+
+			for (const effect of source.effects) {
+				switch (effect.type) {
+					case 'click':
+						if (isPhotonValue) photonValueBonus = effect.apply(photonValueBonus, gameManager);
+						break;
+					case 'excited_photon_double':
+						excitedDoubleChance = effect.apply(excitedDoubleChance, gameManager);
+						break;
+					case 'excited_photon_from_max':
+						excitedFromMaxBonus = effect.apply(excitedFromMaxBonus, gameManager);
+						break;
+					case 'photon_double_chance':
+						doubleChance = effect.apply(doubleChance, gameManager);
+						break;
+				}
+			}
+		}
+
+		return { doubleChance, excitedDoubleChance, excitedFromMaxBonus, photonValueBonus };
 	}
 
 	private rollPowerUpInterval(): number {
@@ -888,7 +989,7 @@ export class SimulationEngine {
 		if (gameManager.inGameTime < this.nextPowerUpTime) return;
 
 		this.nextPowerUpTime = this.rollPowerUpInterval();
-		if (!this.isInActiveWindow()) return;
+		if (!this.activeNow) return;
 
 		const base = POWER_UPS[Math.floor(Math.random() * POWER_UPS.length)];
 		const multiplier = base.multiplier * gameManager.powerUpEffectMultiplier;

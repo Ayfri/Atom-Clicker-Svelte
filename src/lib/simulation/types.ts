@@ -212,7 +212,29 @@ export const MILESTONES: MilestoneDefinition[] = [
 	{ description: 'Earned 100 Quarks', id: 'quarks_100', name: '100 Quarks' },
 ];
 
-export const MILESTONE_CHECKS: Record<string, (s: SimulationSnapshot) => boolean> = {
+/** Fields a milestone predicate may read: the engine builds only these between snapshots instead of a full snapshot. */
+export type MilestoneCheckData = Pick<
+	SimulationSnapshot,
+	| 'achievements'
+	| 'atoms'
+	| 'atomsPerSecond'
+	| 'buildingsEverPurchased'
+	| 'dayNumber'
+	| 'electronizes'
+	| 'electrons'
+	| 'photonUpgradeLevels'
+	| 'playerLevel'
+	| 'protonises'
+	| 'protons'
+	| 'quarks'
+	| 'skillPointsUsed'
+	| 'skills'
+	| 'timestamp'
+	| 'totalBuildings'
+	| 'upgrades'
+>;
+
+export const MILESTONE_CHECKS: Record<string, (s: MilestoneCheckData) => boolean> = {
 	atoms_1k: s => s.atoms >= 1_000,
 	atoms_1m: s => s.atoms >= 1_000_000,
 	atoms_1b: s => s.atoms >= 1_000_000_000,
