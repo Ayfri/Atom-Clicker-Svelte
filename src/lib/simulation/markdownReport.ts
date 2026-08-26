@@ -9,6 +9,9 @@ import { MILESTONES } from './milestones';
 import { totalActionCount, type SimulationAction, type SimulationResult, type SimulationSnapshot } from './types';
 
 const CURVE_ROWS = 16;
+const GROWTH_MAX = 4;
+const GROWTH_MIN = 0.5;
+const MILESTONE_WINDOW_MS = 600_000;
 const STALL_GROWTH = 1.05;
 const MAX_STALLS = 6;
 const MAX_SPIKES = 8;
@@ -111,17 +114,28 @@ function familySection(families: FamilyStats[]): string {
 	return parts.join('\n\n');
 }
 
+/** A power-up live at sample time reads as a 5x jump, so every curve measurement uses APS with the bonus divided out. */
+function rawAps(snapshot: SimulationSnapshot): number {
+	return snapshot.atomsPerSecondRaw ?? snapshot.atomsPerSecond / (snapshot.bonusMultiplier || 1);
+}
+
+/** Monotonic all-time peak, so a stall reads as a flat line instead of as a prestige-shaped sawtooth. */
+function peakAps(snapshot: SimulationSnapshot): number {
+	return snapshot.peakAtomsPerSecond ?? rawAps(snapshot);
+}
+
 /** Longest stretches where APS barely moved: the clearest signal of a progression wall. */
 function findStalls(snapshots: SimulationSnapshot[]): { end: number; growth: number; start: number }[] {
 	const stalls: { end: number; growth: number; start: number }[] = [];
 	let anchor = 0;
 	for (let i = 1; i < snapshots.length; i++) {
-		const growth = snapshots[anchor].atomsPerSecond > 0 ? snapshots[i].atomsPerSecond / snapshots[anchor].atomsPerSecond : Infinity;
+		const anchorAps = peakAps(snapshots[anchor]);
+		const growth = anchorAps > 0 ? peakAps(snapshots[i]) / anchorAps : Infinity;
 		if (growth >= STALL_GROWTH) {
 			if (i - anchor > 1) {
 				stalls.push({
 					end: snapshots[i - 1].timestamp,
-					growth: snapshots[anchor].atomsPerSecond > 0 ? snapshots[i - 1].atomsPerSecond / snapshots[anchor].atomsPerSecond : 1,
+					growth: anchorAps > 0 ? peakAps(snapshots[i - 1]) / anchorAps : 1,
 					start: snapshots[anchor].timestamp,
 				});
 			}
@@ -130,13 +144,64 @@ function findStalls(snapshots: SimulationSnapshot[]): { end: number; growth: num
 	}
 	if (snapshots.length - anchor > 2) {
 		const last = snapshots[snapshots.length - 1];
+		const anchorAps = peakAps(snapshots[anchor]);
 		stalls.push({
 			end: last.timestamp,
-			growth: snapshots[anchor].atomsPerSecond > 0 ? last.atomsPerSecond / snapshots[anchor].atomsPerSecond : 1,
+			growth: anchorAps > 0 ? peakAps(last) / anchorAps : 1,
 			start: snapshots[anchor].timestamp,
 		});
 	}
 	return stalls.sort((a, b) => b.end - b.start - (a.end - a.start)).slice(0, MAX_STALLS);
+}
+
+/**
+ * The balance target is a rate, not a size. Measured on peak APS rather than on the atom counter: a protonise wipes
+ * atoms, so an atom-based rate reports minus thirty decades an hour every time the run resets and says nothing.
+ */
+function growthSection(snapshots: SimulationSnapshot[]): string {
+	const rows: string[][] = [];
+	const step = Math.max(1, Math.ceil(snapshots.length / CURVE_ROWS));
+	let inBand = 0;
+	let measured = 0;
+
+	for (let i = 1; i < snapshots.length; i++) {
+		const hours = (snapshots[i].timestamp - snapshots[i - 1].timestamp) / 3_600_000;
+		if (hours <= 0) continue;
+		const previous = peakAps(snapshots[i - 1]);
+		const current = peakAps(snapshots[i]);
+		if (previous <= 0 || current <= 0) continue;
+		const decadesPerHour = (Math.log10(current) - Math.log10(previous)) / hours;
+		measured++;
+		if (decadesPerHour >= GROWTH_MIN && decadesPerHour <= GROWTH_MAX) inBand++;
+		if (i % step === 0 || i === snapshots.length - 1) {
+			rows.push([
+				simTime(snapshots[i].timestamp),
+				decadesPerHour.toFixed(2),
+				decadesPerHour < GROWTH_MIN ? 'slow' : decadesPerHour > GROWTH_MAX ? 'fast' : 'ok',
+				formatNumber(current),
+			]);
+		}
+	}
+
+	const share = measured > 0 ? inBand / measured : 0;
+	return [
+		`Target band: ${GROWTH_MIN} to ${GROWTH_MAX} decades of peak APS per hour. In band for **${pct(share)}** of the run.`,
+		'',
+		table(['t', 'decades/h', 'band', 'peak APS'], rows),
+	].join('\n');
+}
+
+/** Bunched unlocks read as a dogpile: how many milestones land inside any 10-minute window. */
+function milestoneDensity(milestones: { timeReached: number }[]): { count: number; start: number } {
+	let best = { count: 0, start: 0 };
+	const times = milestones.map(m => m.timeReached).sort((a, b) => a - b);
+	let start = 0;
+	for (let end = 0; end < times.length; end++) {
+		while (times[end] - times[start] > MILESTONE_WINDOW_MS) start++;
+		const count = end - start + 1;
+		if (count > best.count) best = { count, start: times[start] };
+	}
+	return best;
 }
 
 function multiplierBreakdown(s: SimulationSnapshot): string {
@@ -183,11 +248,12 @@ function curveTable(snapshots: SimulationSnapshot[]): string {
 	const step = Math.max(1, Math.ceil(snapshots.length / CURVE_ROWS));
 	const sampled = snapshots.filter((_, i) => i % step === 0 || i === snapshots.length - 1);
 	return table(
-		['t', 'atoms', 'APS', 'APC', 'global ×', 'bldgs', 'upg', 'ach', 'lvl', 'protons', 'electrons'],
+		['t', 'atoms', 'APS', 'peak APS', 'APC', 'global ×', 'bldgs', 'upg', 'ach', 'lvl', 'protons', 'electrons'],
 		sampled.map(s => [
 			simTime(s.timestamp),
 			formatNumber(s.atoms),
-			formatNumber(s.atomsPerSecond),
+			formatNumber(rawAps(s)),
+			formatNumber(peakAps(s)),
 			formatNumber(s.atomsPerClick),
 			mult(s.globalMultiplier),
 			`${s.totalBuildings}`,
@@ -260,10 +326,13 @@ export function buildMarkdownReport(result: SimulationResult): string {
 		table(
 			['stat', 'value', 'stat', 'value'],
 			[
-				['atoms', formatNumber(final.atoms), 'APS', `${formatNumber(final.atomsPerSecond)}/s`],
+				['atoms', formatNumber(final.atoms), 'APS', `${formatNumber(rawAps(final))}/s`],
+				['atoms all-time', formatNumber(final.atomsEarnedAllTime ?? 0), 'peak APS', `${formatNumber(peakAps(final))}/s`],
 				['APC', formatNumber(final.atomsPerClick), 'global ×', mult(final.globalMultiplier)],
 				['protons', formatNumber(final.protons), 'electrons', formatNumber(final.electrons)],
-				['photons', formatNumber(final.photons), 'quarks', formatNumber(final.quarks ?? 0)],
+				['photons held', formatNumber(final.photons), 'photons earned', formatNumber(final.photonsEarned ?? 0)],
+				['excited held', formatNumber(final.excitedPhotons ?? 0), 'excited earned', formatNumber(final.excitedPhotonsEarned ?? 0)],
+				['circles expired', formatNumber(final.photonsExpired ?? 0), 'quarks', formatNumber(final.quarks ?? 0)],
 				['protonises', `${final.protonises}`, 'electronizes', `${final.electronizes}`],
 				['player level', `${final.playerLevel}`, 'total XP', formatNumber(final.totalXP)],
 				['buildings', `${final.totalBuildings}`, 'building levels', `${final.buildingLevels}`],
@@ -278,7 +347,14 @@ export function buildMarkdownReport(result: SimulationResult): string {
 	lines.push('');
 	lines.push('## Growth curve');
 	lines.push('');
+	lines.push('APS is reported with the power-up bonus divided out, so a live power-up cannot read as growth.');
+	lines.push('');
 	lines.push(curveTable(snapshots));
+
+	lines.push('');
+	lines.push('## Growth rate');
+	lines.push('');
+	lines.push(growthSection(snapshots));
 
 	lines.push('');
 	lines.push('## Milestones');
@@ -292,11 +368,17 @@ export function buildMarkdownReport(result: SimulationResult): string {
 	lines.push('');
 	lines.push(`Never reached (${missing.length}): ${missing.length > 0 ? missing.map(m => m.name).join(', ') : 'none'}`);
 
+	if (result.milestones.length > 0) {
+		const densest = milestoneDensity(result.milestones);
+		lines.push('');
+		lines.push(`Densest 10-minute window: **${densest.count} milestones** starting ${simTime(densest.start)} (target: 6 or fewer).`);
+	}
+
 	if (stalls.length > 0) {
 		lines.push('');
 		lines.push('## APS stalls & regressions');
 		lines.push('');
-		lines.push(`Stretches where APS grew less than ${mult(STALL_GROWTH)}. Growth below 1× means a prestige reset the run and it never caught back up.`);
+		lines.push(`Stretches where peak APS grew less than ${mult(STALL_GROWTH)}.`);
 		lines.push('');
 		lines.push(
 			table(
