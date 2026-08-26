@@ -24,7 +24,7 @@ export interface BotBehavior {
 	autoBuyUpgrades: boolean;
 	buyStrategy: 'balanced' | 'cheapest' | 'mostEfficient';
 	clicksPerSecond: number;
-	/** Bot game knowledge 0–1 (affects optimality and hidden achievements). */
+	/** Bot game knowledge 0-1. Blends the naive base-rate building ranking (0) with the real marginal gain per atom spent (1). */
 	gameKnowledge: number;
 	/** Max buy+prestige actions per tick. undefined = no limit (Automated). */
 	maxActionsPerTick?: number;
@@ -37,6 +37,7 @@ export interface BotBehavior {
 /** How a bot engages with daily quests: never claims, claims whatever completes naturally, or steers toward targets. */
 export type QuestBehavior = 'dedicated' | 'ignore' | 'passive';
 
+/** Thresholds are ratios against the previous run's gain, not absolute counts: reset once the next run is worth Nx the last. */
 export interface PrestigeStrategy {
 	autoElectronize: boolean;
 	autoProtonise: boolean;
@@ -390,7 +391,7 @@ export const PLAYSTYLE_PRESETS = {
 
 export type PlaystylePresetId = keyof typeof PLAYSTYLE_PRESETS;
 
-/** When to prestige (reset for multipliers). Higher threshold = fewer prestiges, each more impactful. */
+/** When to prestige, as a multiple of the previous run's gain. Higher threshold = fewer prestiges, each more impactful. */
 export const PRESTIGE_PRESETS = {
 	early: {
 		autoElectronize: true,

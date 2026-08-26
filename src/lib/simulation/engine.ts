@@ -1,6 +1,6 @@
 /** Headless simulation engine (chunked with scheduler.yield). */
 import { ACHIEVEMENTS } from '$data/achievements';
-import { BUILDINGS, BUILDING_TYPES, type BuildingType } from '$data/buildings';
+import { BUILDINGS, BUILDING_LEVEL_UP_COST, BUILDING_TYPES, type BuildingType, getBuildingLevelMultiplier } from '$data/buildings';
 import { CurrenciesTypes, type CurrencyName } from '$data/currencies';
 import { type DailyQuest, type DailyQuestAnchors, getDailyCap, getQuestTarget, pickDailyQuests } from '$data/dailyQuests';
 import { ALL_PHOTON_UPGRADES, getPhotonUpgradeCost } from '$data/photonUpgrades';
@@ -31,9 +31,24 @@ const CHUNK_SIZE = 500;
 const YIELD_INTERVAL = 10;
 
 const ACHIEVEMENT_ENTRIES = Object.entries(ACHIEVEMENTS);
-// Costs are static, so scanning cost-ascending lets the "cheapest affordable" searches stop at their first match.
-const UPGRADE_ENTRIES = Object.entries(UPGRADES).sort(([, a], [, b]) => a.cost.amount - b.cost.amount);
-const SKILL_ENTRIES = Object.entries(SKILL_UPGRADES).sort(([, a], [, b]) => a.cost.amount - b.cost.amount);
+
+/** Costs are only comparable inside one currency, so each currency gets its own cost-ascending list. */
+function groupByCurrency<T extends { cost: { amount: number; currency: CurrencyName } }>(
+	source: Record<string, T>,
+): [CurrencyName, [string, T][]][] {
+	const groups = new Map<CurrencyName, [string, T][]>();
+	for (const entry of Object.entries(source)) {
+		const currency = entry[1].cost.currency;
+		const group = groups.get(currency);
+		if (group) group.push(entry);
+		else groups.set(currency, [entry]);
+	}
+	for (const group of groups.values()) group.sort(([, a], [, b]) => a.cost.amount - b.cost.amount);
+	return [...groups.entries()];
+}
+
+const UPGRADE_GROUPS = groupByCurrency(UPGRADES);
+const SKILL_GROUPS = groupByCurrency(SKILL_UPGRADES);
 const PHOTON_UPGRADE_ENTRIES = Object.entries(ALL_PHOTON_UPGRADES);
 const RADIATION_UPGRADE_ENTRIES = Object.entries(RADIATION_UPGRADES);
 const MILESTONE_ENTRIES: { check: (s: MilestoneCheckData) => boolean; milestone: MilestoneDefinition }[] = MILESTONES
@@ -65,6 +80,9 @@ const yieldToMain: () => Promise<void> =
 // Mirrors gameManager.excitedPhotonChance's base value, folded here alongside the other photon click modifiers.
 const EXCITED_PHOTON_BASE_CHANCE = 0.002;
 
+// Prestige budgets are a pacing limit per play session, not a lifetime cap.
+const PRESTIGE_WINDOW_MS = 3_600_000;
+
 const SPIKE_WINDOW_MS = 60_000;
 const SPIKE_MIN_HISTORY = 5;
 const SPIKE_MULTIPLIER = 4;
@@ -78,17 +96,20 @@ export class SimulationEngine {
 	private cachedSkillsSet = new Set<string>();
 	private cachedUpgradesRef: string[] | null = null;
 	private cachedUpgradesSet = new Set<string>();
-	private unownedSkills = SKILL_ENTRIES;
-	private unownedUpgrades = UPGRADE_ENTRIES;
+	private unownedSkills: typeof SKILL_GROUPS = SKILL_GROUPS;
+	private unownedUpgrades: typeof UPGRADE_GROUPS = UPGRADE_GROUPS;
 	private config: BenchmarkConfig;
 	private everPurchasedBuildings = new Set<string>();
 	private ownedAchievements = new Set<string>();
 	private pendingMilestones = MILESTONE_ENTRIES;
+	private lastElectronizeGain = 0;
+	private lastProtoniseGain = 0;
 	private lastWasActive = false;
 	private milestones: MilestoneHit[] = [];
 	private nextPowerUpTime = 0;
 	private powerUpCounter = 0;
 	private prestigesThisActiveWindow = 0;
+	private prestigeWindowStart = 0;
 	private quarks = 0;
 	private quarksFromAchievements = 0;
 	private quarksFromQuests = 0;
@@ -133,16 +154,19 @@ export class SimulationEngine {
 		this.activeNow = false;
 		this.cachedSkillsRef = null;
 		this.cachedUpgradesRef = null;
-		this.unownedSkills = SKILL_ENTRIES;
-		this.unownedUpgrades = UPGRADE_ENTRIES;
+		this.unownedSkills = SKILL_GROUPS;
+		this.unownedUpgrades = UPGRADE_GROUPS;
 		this.everPurchasedBuildings.clear();
 		this.ownedAchievements = new Set(gameManager.achievements);
 		this.pendingMilestones = MILESTONE_ENTRIES;
+		this.lastElectronizeGain = 0;
+		this.lastProtoniseGain = 0;
 		this.lastWasActive = false;
 		this.milestones = [];
 		this.nextPowerUpTime = this.rollPowerUpInterval();
 		this.powerUpCounter = 0;
 		this.prestigesThisActiveWindow = 0;
+		this.prestigeWindowStart = 0;
 		this.quarks = 0;
 		this.quarksFromAchievements = 0;
 		this.quarksFromQuests = 0;
@@ -191,8 +215,12 @@ export class SimulationEngine {
 				this.simulatePhotonRealmClicks();
 				this.tickPowerUps();
 				this.checkQuestDayRollover();
-				if (activeNow && !this.lastWasActive) {
+				// An always-active run never crosses an inactive edge, so the budget also expires on a simulated-hour timer.
+				const startsActiveWindow = activeNow && !this.lastWasActive;
+				const windowExpired = gameManager.inGameTime - this.prestigeWindowStart >= PRESTIGE_WINDOW_MS;
+				if (startsActiveWindow || windowExpired) {
 					this.prestigesThisActiveWindow = 0;
+					this.prestigeWindowStart = gameManager.inGameTime;
 				}
 				this.lastWasActive = activeNow;
 				if (activeNow) {
@@ -503,9 +531,7 @@ export class SimulationEngine {
 				const effectiveRate = foldEffects(effectSources, gameManager, building.rate, options);
 				buildingUpgradeFactors[type] = effectiveRate / building.rate;
 
-				const oldMultiplier = Math.pow(count / 2, building.level + 1) / 5;
-				const linearMultiplier = (building.level + 1) * 100;
-				buildingLevelFactors[type] = building.level > 0 ? Math.sqrt(oldMultiplier * linearMultiplier) : 1;
+				buildingLevelFactors[type] = getBuildingLevelMultiplier(count, building.level);
 			}
 		}
 
@@ -628,10 +654,14 @@ export class SimulationEngine {
 		const canPrestige = (): boolean =>
 			maxPrestigesPerActiveWindow == null || this.prestigesThisActiveWindow < maxPrestigesPerActiveWindow;
 
-		if (canDoAction() && canPrestige() && prestigeStrategy.autoProtonise && gameManager.protoniseProtonsGain >= prestigeStrategy.protoniseThreshold) {
+		// Thresholds are ratios against the previous run's gain: an absolute proton count is meaningless once the curve takes off.
+		const protoniseGain = gameManager.protoniseProtonsGain;
+		const protoniseTarget = Math.max(1, this.lastProtoniseGain * prestigeStrategy.protoniseThreshold);
+		if (canDoAction() && canPrestige() && prestigeStrategy.autoProtonise && protoniseGain >= protoniseTarget) {
 			if (gameManager.protonise()) {
+				this.lastProtoniseGain = protoniseGain;
 				this.pushAction({
-					details: `+${gameManager.protoniseProtonsGain} protons`,
+					details: `+${protoniseGain} protons`,
 					timestamp: gameManager.inGameTime,
 					type: 'protonise',
 				});
@@ -640,10 +670,13 @@ export class SimulationEngine {
 			}
 		}
 
-		if (canDoAction() && canPrestige() && prestigeStrategy.autoElectronize && gameManager.electronizeElectronsGain >= prestigeStrategy.electronizeThreshold) {
+		const electronizeGain = gameManager.electronizeElectronsGain;
+		const electronizeTarget = Math.max(1, this.lastElectronizeGain * prestigeStrategy.electronizeThreshold);
+		if (canDoAction() && canPrestige() && prestigeStrategy.autoElectronize && electronizeGain >= electronizeTarget) {
 			if (gameManager.electronize()) {
+				this.lastElectronizeGain = electronizeGain;
 				this.pushAction({
-					details: `+${gameManager.electronizeElectronsGain} electrons`,
+					details: `+${electronizeGain} electrons`,
 					timestamp: gameManager.inGameTime,
 					type: 'electronize',
 				});
@@ -674,10 +707,10 @@ export class SimulationEngine {
 				}
 			}
 		}
-		if (canDoAction() && botBehavior.autoBuyUpgrades) {
+		if (botBehavior.autoBuyUpgrades) {
 			this.ownedUpgradeSet();
-			const affordableUpgrade = this.getAffordableUpgrade();
-			if (affordableUpgrade) {
+			for (const affordableUpgrade of this.getAffordableUpgrades()) {
+				if (!canDoAction()) break;
 				gameManager.purchaseUpgrade(affordableUpgrade);
 				this.pushAction({
 					details: affordableUpgrade,
@@ -687,9 +720,10 @@ export class SimulationEngine {
 				actionsThisTick++;
 			}
 		}
-		if (canDoAction() && botBehavior.autoBuySkills) {
-			const affordableSkill = this.getAffordableSkill(this.ownedSkillSet());
-			if (affordableSkill) {
+		if (botBehavior.autoBuySkills) {
+			const ownedSkills = this.ownedSkillSet();
+			for (const affordableSkill of this.getAffordableSkills(ownedSkills)) {
+				if (!canDoAction()) break;
 				gameManager.purchaseSkill(affordableSkill);
 				this.pushAction({
 					details: affordableSkill,
@@ -761,7 +795,10 @@ export class SimulationEngine {
 		if (owned !== this.cachedUpgradesRef) {
 			this.cachedUpgradesRef = owned;
 			this.cachedUpgradesSet = new Set(owned);
-			this.unownedUpgrades = UPGRADE_ENTRIES.filter(([id]) => !this.cachedUpgradesSet.has(id));
+			this.unownedUpgrades = UPGRADE_GROUPS.map<(typeof UPGRADE_GROUPS)[number]>(([currency, entries]) => [
+				currency,
+				entries.filter(([id]) => !this.cachedUpgradesSet.has(id)),
+			]);
 		}
 		return this.cachedUpgradesSet;
 	}
@@ -771,7 +808,10 @@ export class SimulationEngine {
 		if (owned !== this.cachedSkillsRef) {
 			this.cachedSkillsRef = owned;
 			this.cachedSkillsSet = new Set(owned);
-			this.unownedSkills = SKILL_ENTRIES.filter(([id]) => !this.cachedSkillsSet.has(id));
+			this.unownedSkills = SKILL_GROUPS.map<(typeof SKILL_GROUPS)[number]>(([currency, entries]) => [
+				currency,
+				entries.filter(([id]) => !this.cachedSkillsSet.has(id)),
+			]);
 		}
 		return this.cachedSkillsSet;
 	}
@@ -813,29 +853,56 @@ export class SimulationEngine {
 		return bestId;
 	}
 
-	private getAffordableSkill(ownedSkills: Set<string>): string | null {
-		for (const [id, skill] of this.unownedSkills) {
-			if (currenciesManager.getAmount(skill.cost.currency) < skill.cost.amount) continue;
-			if (skill.requires && !skill.requires.every(req => ownedSkills.has(req))) continue;
-			if (skill.condition && !skill.condition(gameManager)) continue;
-			return id;
+	/** One pick per currency: the cheapest affordable entry of each, since amounts across currencies are not comparable. */
+	private getAffordableSkills(ownedSkills: Set<string>): string[] {
+		const picks: string[] = [];
+		for (const [currency, entries] of this.unownedSkills) {
+			const available = currenciesManager.getAmount(currency);
+			for (const [id, skill] of entries) {
+				if (available < skill.cost.amount) break;
+				if (skill.requires && !skill.requires.every(req => ownedSkills.has(req))) continue;
+				if (skill.condition && !skill.condition(gameManager)) continue;
+				picks.push(id);
+				break;
+			}
 		}
-
-		return null;
+		return picks;
 	}
 
-	private getAffordableUpgrade(): string | null {
-		for (const [id, upgrade] of this.unownedUpgrades) {
-			if (currenciesManager.getAmount(upgrade.cost.currency) < upgrade.cost.amount) continue;
-			if (upgrade.condition && !upgrade.condition(gameManager)) continue;
-			return id;
+	private getAffordableUpgrades(): string[] {
+		const picks: string[] = [];
+		for (const [currency, entries] of this.unownedUpgrades) {
+			const available = currenciesManager.getAmount(currency);
+			for (const [id, upgrade] of entries) {
+				if (available < upgrade.cost.amount) break;
+				if (upgrade.condition && !upgrade.condition(gameManager)) continue;
+				picks.push(id);
+				break;
+			}
 		}
+		return picks;
+	}
 
-		return null;
+	/**
+	 * Atoms per second the bot actually gains by taking `amount` more of `type`, level multiplier included.
+	 * The per-unit rate is read back out of buildingProductions so the upgrade chain is counted without re-folding effects.
+	 */
+	private marginalProduction(type: BuildingType, amount: number): number {
+		const building = gameManager.buildings[type];
+		const count = building?.count ?? 0;
+		const currentLevelFactor = getBuildingLevelMultiplier(count, building?.level ?? 0);
+		const perUnit =
+			count > 0
+				? (gameManager.buildingProductions[type] ?? 0) / (count * currentLevelFactor)
+				: BUILDINGS[type].rate * gameManager.globalMultiplier * gameManager.bonusMultiplier * gameManager.stabilityMultiplier;
+
+		const newCount = count + amount;
+		const newLevelFactor = getBuildingLevelMultiplier(newCount, Math.floor(newCount / BUILDING_LEVEL_UP_COST));
+		return (newCount * newLevelFactor - count * currentLevelFactor) * perUnit;
 	}
 
 	private selectBuilding(): BuildingType | null {
-		const { buyStrategy } = this.config.botBehavior;
+		const { buyStrategy, gameKnowledge } = this.config.botBehavior;
 		const atoms = currenciesManager.getAmount(CurrenciesTypes.ATOMS);
 
 		// Costs are stable for the whole selection, so price each building once instead of inside every comparison.
@@ -862,15 +929,22 @@ export class SimulationEngine {
 			return best;
 		};
 
+		// gameKnowledge blends the naive base-rate ranking a newcomer uses with the real marginal gain per atom spent.
 		const mostEfficientAffordable = (): BuildingType | null => {
 			let best: BuildingType | null = null;
-			let bestRate = -Infinity;
+			let bestScore = -Infinity;
 			for (let i = 0; i < BUILDING_TYPES.length; i++) {
 				const type = BUILDING_TYPES[i];
 				if (atoms < costs[i]) continue;
-				const rate = BUILDINGS[type].rate / costs[i];
-				if (best !== null && rate <= bestRate) continue;
-				bestRate = rate;
+				const naive = BUILDINGS[type].rate / costs[i];
+				let score = naive;
+				if (gameKnowledge > 0) {
+					const amount = Math.max(1, gameManager.getMaxAffordableBuilding(type));
+					const informed = this.marginalProduction(type, amount) / gameManager.getBuildingCost(type, amount);
+					score = informed > 0 ? Math.pow(naive, 1 - gameKnowledge) * Math.pow(informed, gameKnowledge) : naive;
+				}
+				if (best !== null && score <= bestScore) continue;
+				bestScore = score;
 				best = type;
 			}
 			return best;
