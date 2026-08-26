@@ -62,6 +62,9 @@ const yieldToMain: () => Promise<void> =
 		? () => schedulerYield.call((globalThis as any).scheduler)
 		: () => new Promise(resolve => setTimeout(resolve, 0));
 
+// Mirrors gameManager.excitedPhotonChance's base value, folded here alongside the other photon click modifiers.
+const EXCITED_PHOTON_BASE_CHANCE = 0.002;
+
 const SPIKE_WINDOW_MS = 60_000;
 const SPIKE_MIN_HISTORY = 5;
 const SPIKE_MULTIPLIER = 4;
@@ -75,6 +78,8 @@ export class SimulationEngine {
 	private cachedSkillsSet = new Set<string>();
 	private cachedUpgradesRef: string[] | null = null;
 	private cachedUpgradesSet = new Set<string>();
+	private unownedSkills = SKILL_ENTRIES;
+	private unownedUpgrades = UPGRADE_ENTRIES;
 	private config: BenchmarkConfig;
 	private everPurchasedBuildings = new Set<string>();
 	private ownedAchievements = new Set<string>();
@@ -128,6 +133,8 @@ export class SimulationEngine {
 		this.activeNow = false;
 		this.cachedSkillsRef = null;
 		this.cachedUpgradesRef = null;
+		this.unownedSkills = SKILL_ENTRIES;
+		this.unownedUpgrades = UPGRADE_ENTRIES;
 		this.everPurchasedBuildings.clear();
 		this.ownedAchievements = new Set(gameManager.achievements);
 		this.pendingMilestones = MILESTONE_ENTRIES;
@@ -676,7 +683,8 @@ export class SimulationEngine {
 			}
 		}
 		if (canDoAction() && botBehavior.autoBuyUpgrades) {
-			const affordableUpgrade = this.getAffordableUpgrade(this.ownedUpgradeSet());
+			this.ownedUpgradeSet();
+			const affordableUpgrade = this.getAffordableUpgrade();
 			if (affordableUpgrade) {
 				gameManager.purchaseUpgrade(affordableUpgrade);
 				this.pushAction({
@@ -761,6 +769,7 @@ export class SimulationEngine {
 		if (owned !== this.cachedUpgradesRef) {
 			this.cachedUpgradesRef = owned;
 			this.cachedUpgradesSet = new Set(owned);
+			this.unownedUpgrades = UPGRADE_ENTRIES.filter(([id]) => !this.cachedUpgradesSet.has(id));
 		}
 		return this.cachedUpgradesSet;
 	}
@@ -770,6 +779,7 @@ export class SimulationEngine {
 		if (owned !== this.cachedSkillsRef) {
 			this.cachedSkillsRef = owned;
 			this.cachedSkillsSet = new Set(owned);
+			this.unownedSkills = SKILL_ENTRIES.filter(([id]) => !this.cachedSkillsSet.has(id));
 		}
 		return this.cachedSkillsSet;
 	}
@@ -812,8 +822,7 @@ export class SimulationEngine {
 	}
 
 	private getAffordableSkill(ownedSkills: Set<string>): string | null {
-		for (const [id, skill] of SKILL_ENTRIES) {
-			if (ownedSkills.has(id)) continue;
+		for (const [id, skill] of this.unownedSkills) {
 			if (currenciesManager.getAmount(skill.cost.currency) < skill.cost.amount) continue;
 			if (skill.requires && !skill.requires.every(req => ownedSkills.has(req))) continue;
 			if (skill.condition && !skill.condition(gameManager)) continue;
@@ -823,9 +832,8 @@ export class SimulationEngine {
 		return null;
 	}
 
-	private getAffordableUpgrade(ownedUpgrades: Set<string>): string | null {
-		for (const [id, upgrade] of UPGRADE_ENTRIES) {
-			if (ownedUpgrades.has(id)) continue;
+	private getAffordableUpgrade(): string | null {
+		for (const [id, upgrade] of this.unownedUpgrades) {
 			if (currenciesManager.getAmount(upgrade.cost.currency) < upgrade.cost.amount) continue;
 			if (upgrade.condition && !upgrade.condition(gameManager)) continue;
 			return id;
@@ -924,10 +932,10 @@ export class SimulationEngine {
 		const totalClicks = manualClicks + autoClicks;
 		if (totalClicks <= 0) return;
 
-		const { doubleChance, excitedDoubleChance, excitedFromMaxBonus, photonValueBonus } = this.photonClickEffects();
+		const { doubleChance, excitedChance, excitedDoubleChance, excitedFromMaxBonus, photonValueBonus } = this.photonClickEffects();
 		// Photon realm caps excited chance behind 'excited_auto_click' upgrade for auto-clicks only.
 		const autoAllowsExcited = (gameManager.photonUpgrades['excited_auto_click'] || 0) > 0;
-		const excitedChanceManual = gameManager.excitedPhotonChance;
+		const excitedChanceManual = excitedChance;
 		const excitedChanceAuto = autoAllowsExcited ? excitedChanceManual : 0;
 
 		const basePhotonAvg = (1 + 10) / 2;
@@ -948,8 +956,15 @@ export class SimulationEngine {
 	}
 
 	/** The four photon click modifiers are folded in a single walk of the effect sources, which runs every tick. */
-	private photonClickEffects(): { doubleChance: number; excitedDoubleChance: number; excitedFromMaxBonus: number; photonValueBonus: number } {
+	private photonClickEffects(): {
+		doubleChance: number;
+		excitedChance: number;
+		excitedDoubleChance: number;
+		excitedFromMaxBonus: number;
+		photonValueBonus: number;
+	} {
 		let doubleChance = 0;
+		let excitedChance = EXCITED_PHOTON_BASE_CHANCE;
 		let excitedDoubleChance = 0;
 		let excitedFromMaxBonus = 0;
 		let photonValueBonus = 0;
@@ -962,6 +977,9 @@ export class SimulationEngine {
 				switch (effect.type) {
 					case 'click':
 						if (isPhotonValue) photonValueBonus = effect.apply(photonValueBonus, gameManager);
+						break;
+					case 'excited_photon_chance':
+						excitedChance = effect.apply(excitedChance, gameManager);
 						break;
 					case 'excited_photon_double':
 						excitedDoubleChance = effect.apply(excitedDoubleChance, gameManager);
@@ -976,7 +994,7 @@ export class SimulationEngine {
 			}
 		}
 
-		return { doubleChance, excitedDoubleChance, excitedFromMaxBonus, photonValueBonus };
+		return { doubleChance, excitedChance, excitedDoubleChance, excitedFromMaxBonus, photonValueBonus };
 	}
 
 	private rollPowerUpInterval(): number {
