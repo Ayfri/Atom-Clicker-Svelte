@@ -45,7 +45,8 @@
 
 	function click(x: number, y: number, isAuto: boolean) {
 		const clickPower = gameManager.clickPower;
-		gameManager.addAtoms(clickPower);
+		// Auto-click atoms are credited once per second by GameManager.tick(), this interval only drives the counters and the visuals.
+		if (!isAuto) gameManager.addAtoms(clickPower);
 		gameManager.incrementClicks(isAuto);
 
 		if (!shouldCreateParticles()) return;
