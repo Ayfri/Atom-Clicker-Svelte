@@ -20,7 +20,7 @@
 	import BenchmarkTimeline from '$lib/components/benchmark/BenchmarkTimeline.svelte';
 	import BenchmarkResults from '$lib/components/benchmark/BenchmarkResults.svelte';
 	import BenchmarkCharts from '$lib/components/benchmark/BenchmarkCharts.svelte';
-	import BenchmarkJson from '$lib/components/benchmark/BenchmarkJson.svelte';
+	import BenchmarkExport from '$lib/components/benchmark/BenchmarkExport.svelte';
 	import HistoryPanel from '$lib/components/benchmark/HistoryPanel.svelte';
 
 	import { getReport, saveReport, type BenchmarkReport } from '$lib/stores/benchmarkHistory.svelte';
@@ -338,7 +338,7 @@
 			{/if}
 
 			{#if displayResult}
-				<BenchmarkJson result={displayResult} />
+				<BenchmarkExport result={displayResult} />
 			{/if}
 		</main>
 
