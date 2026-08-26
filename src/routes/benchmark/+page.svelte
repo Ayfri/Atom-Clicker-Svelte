@@ -37,7 +37,8 @@
 	let playstyleId = $state<PlaystylePresetId>('balanced');
 	let prestigeId = $state<PrestigePresetId>('balanced');
 	let questBehavior = $state<QuestBehavior>(PLAYSTYLE_PRESETS.balanced.questBehavior);
-	let targetHours = $state(10);
+	// Daily quests roll once per in-game day and the layers past protons need several of them, so a meaningful run is measured in days.
+	let targetHours = $state(72);
 	let snapshotInterval = $state<number>(PLAYSTYLE_PRESETS.balanced.snapshotInterval);
 
 	$effect(() => {

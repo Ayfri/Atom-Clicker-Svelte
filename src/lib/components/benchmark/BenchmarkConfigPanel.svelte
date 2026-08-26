@@ -210,11 +210,11 @@
 							{#snippet content()}
 								<div class="prose prose-invert prose-sm max-w-xs">
 									<h4 class="mb-2 text-sm font-semibold">Knowledge</h4>
-									<p class="mb-2">How well the bot plays and what it can see.</p>
+									<p class="mb-2">How well the bot ranks buildings.</p>
 									<ul class="list-inside list-disc space-y-1 text-xs">
-										<li>Affects the <strong>optimality</strong> of buy decisions</li>
-										<li>Determines visibility of <strong>hidden achievements</strong></li>
-										<li>0% = casual, 100% = perfect play</li>
+										<li>0% = base rate per atom only, ignores upgrades and levels</li>
+										<li>100% = real production gained per atom spent</li>
+										<li>In between, the two rankings are blended</li>
 									</ul>
 								</div>
 							{/snippet}
