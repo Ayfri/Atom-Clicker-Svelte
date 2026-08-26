@@ -40,6 +40,50 @@ function createSessionId(): string {
 	}
 }
 
+/** Frames that belong to somebody else's code, an extension, an injected script or our analytics loader. */
+const THIRD_PARTY_FRAME_PATTERN = /chrome-extension:\/\/|moz-extension:\/\/|safari-web-extension:\/\/|ms-browser-extension:\/\/|\/cdn-cgi\/|\[native code\]/;
+
+/** Our own bundle, every chunk Vite emits is served under `/_app/`. */
+const APP_FRAME_PATTERN = /\/_app\//;
+
+/** Stackless errors surfaced by extensions or injected scripts, none of these strings exist in the codebase. */
+const THIRD_PARTY_MESSAGE_PATTERNS = [
+	/^Request timeout /,
+	/^The string did not match the expected pattern\.$/,
+	/WKWebView API client did not respond to this postMessage/,
+	/is not defined$/,
+	/el\.click is not a function/,
+	/Cannot read properties of undefined \(reading '_source'\)/,
+];
+
+const CRAWLER_UA_PATTERN = /bot|crawler|spider|crawling|bingpreview|slurp|headlesschrome/i;
+
+/**
+ * Zaraz frames carry a `?z=<base64>` payload that encodes the player's referrer and inflates the field
+ */
+function sanitizeStackTrace(stackTrace: string | null): string | null {
+	if (!stackTrace) return null;
+	return stackTrace.replace(/\?z=[^\s):]*/g, '');
+}
+
+/**
+ * Drops reports with no frame from our own bundle. Our errors thrown inside an extension-triggered
+ * callback still carry app frames, so anchoring on "has at least one app frame" keeps real bugs.
+ */
+export function isThirdPartyError(errorMessage: string, stackTrace: string | null): boolean {
+	if (stackTrace) {
+		if (APP_FRAME_PATTERN.test(stackTrace)) return false;
+		return THIRD_PARTY_FRAME_PATTERN.test(stackTrace) || THIRD_PARTY_MESSAGE_PATTERNS.some(pattern => pattern.test(errorMessage));
+	}
+
+	return THIRD_PARTY_MESSAGE_PATTERNS.some(pattern => pattern.test(errorMessage));
+}
+
+/** A bot hitting a dead chunk or a broken page is not actionable. */
+function isCrawler(): boolean {
+	return browser && CRAWLER_UA_PATTERN.test(navigator.userAgent);
+}
+
 /**
  * Creates a hash for deduplication based on error message and stack trace
  */
@@ -157,7 +201,7 @@ export function createErrorReport(error: Error | string): ErrorReport {
 		browserInfo: getBrowserInfo(),
 		errorMessage,
 		gameState: captureGameState(),
-		stackTrace,
+		stackTrace: sanitizeStackTrace(stackTrace),
 		url: browser ? window.location.href : null,
 		userId: getCurrentUserId()
 	};
@@ -174,8 +218,15 @@ export async function reportError(error: Error | string): Promise<void> {
 		return;
 	}
 
+	if (isCrawler()) return;
+
 	try {
 		const report = createErrorReport(error);
+
+		if (isThirdPartyError(report.errorMessage, report.stackTrace)) {
+			console.log('[ErrorReporting] Skipping third-party error');
+			return;
+		}
 
 		// Skip if this is a duplicate error
 		if (isDuplicateError(report.errorMessage, report.stackTrace)) {
