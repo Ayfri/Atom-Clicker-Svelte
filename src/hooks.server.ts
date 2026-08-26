@@ -49,9 +49,9 @@ function getUserIdFromCookies(cookies: { get: (name: string) => string | undefin
  * Catches unhandled errors during SSR and reports them
  */
 export const handleError: HandleServerError = async ({ error, event, status, message }) => {
-	// Don't report 404 errors
-	if (status === 404) {
-		return { message: 'Page not found' };
+	// Only server faults are worth an alert, everything below 500 is a bad request, most of them scanners
+	if (status < 500) {
+		return { message: status === 404 ? 'Page not found' : 'This request could not be handled.' };
 	}
 
 	console.error('[Server Error]', error);
