@@ -1,5 +1,5 @@
 import { ACHIEVEMENTS, ACHIEVEMENT_ENTRIES } from '$data/achievements';
-import { type BuildingType, BUILDINGS, BUILDING_LEVEL_UP_COST } from '$data/buildings';
+import { type BuildingType, BUILDINGS, BUILDING_LEVEL_UP_COST, getBuildingLevelMultiplier } from '$data/buildings';
 import { CurrenciesTypes, type CurrencyName } from '$data/currencies';
 import type { DailyStats } from '$data/dailyQuests';
 import { FeatureTypes } from '$data/features';
@@ -199,9 +199,7 @@ export class GameManager {
 
 			const options = { target: type as BuildingType, type: 'building' as const };
 			const multiplier = foldEffects(this.allEffectSources, this, building.rate, options);
-			const oldMultiplier = Math.pow(building.count / 2, building.level + 1) / 5;
-			const linearMultiplier = (building.level + 1) * 100;
-			const levelMultiplier = building.level > 0 ? Math.sqrt(oldMultiplier * linearMultiplier) : 1;
+			const levelMultiplier = getBuildingLevelMultiplier(building.count, building.level);
 			productions[type as BuildingType] = building.count * multiplier * levelMultiplier * commonMultiplier;
 		}
 
