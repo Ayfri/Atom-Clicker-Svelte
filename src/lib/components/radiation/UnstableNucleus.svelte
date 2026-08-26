@@ -39,6 +39,8 @@
 	let nucleons = $state<Nucleon[]>([]);
 	let electrons = $state<Electron[]>([]);
 	let particles = $state<RadiationParticle[]>([]);
+	// Monotonic, because Date.now() based ids collide when two updateCounts() run in the same millisecond and break the keyed each blocks.
+	let nextEntityId = 0;
 	let coreGlow = $state(0.3);
 
 	const targetNucleonCount = $derived(Math.min(60, Math.max(0, Math.floor(mass / 3))));
@@ -84,7 +86,7 @@
 		const speed = 0.5 + Math.random() * 1.5;
 		particles.push({
 			alpha: 1,
-			id: Date.now() + Math.random(),
+			id: nextEntityId++,
 			life: 1.0,
 			size: 0.8 + Math.random() * 1.5, // Smaller: 0.8-2.3
 			vx: Math.cos(angle) * speed,
@@ -100,7 +102,7 @@
 		if (currentN < targetNucleonCount) {
 			const toAdd = Math.min(4, targetNucleonCount - currentN);
 			for (let i = 0; i < toAdd; i++) {
-				nucleons.push(createNucleon(Date.now() + i));
+				nucleons.push(createNucleon(nextEntityId++));
 			}
 			nucleons = [...nucleons]; // Trigger reactivity
 		} else if (currentN > targetNucleonCount) {
