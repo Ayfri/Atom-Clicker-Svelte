@@ -777,18 +777,20 @@ export class SimulationEngine {
 		}
 
 		if (radiationManager.unlocked) {
-			// Passive: fuel the core - keep enough electrons for the next electronize, spend surplus on mass.
+			// Fuelling the core is realm attention like any other, so it competes for the same per-tick budget.
 			const electrons = currenciesManager.getAmount(CurrenciesTypes.ELECTRONS);
 			const electronizeReserve = gameManager.electronizeElectronsGain > 0
 				? gameManager.electronizeElectronsGain * 3
 				: 50;
 			const surplus = electrons - electronizeReserve;
-			if (surplus > 0 && (radiationManager.mass === 0 || radiationManager.timeToEmpty < 3_600_000)) {
+			if (canDoAction() && surplus > 0 && (radiationManager.mass === 0 || radiationManager.timeToEmpty < 3_600_000)) {
 				radiationManager.bombardCore(Math.min(Math.floor(surplus * 0.3), 20));
+				actionsThisTick++;
 			}
 			// Set control rods once the core has fuel.
-			if (radiationManager.mass > 0 && radiationManager.controlRodLevel === 0) {
+			if (canDoAction() && radiationManager.mass > 0 && radiationManager.controlRodLevel === 0) {
 				radiationManager.setControlRodLevel(0.5);
+				actionsThisTick++;
 			}
 			// Buy cheapest radiation upgrade (costs electrons, counts as an action).
 			if (canDoAction()) {
@@ -981,15 +983,23 @@ export class SimulationEngine {
 		return positionInCycle < activeMs;
 	}
 
+	/**
+	 * A player has one realm on screen at a time and switches between them, so over a tick their clicks
+	 * are split across every unlocked realm that accepts clicks rather than going wholly to the newest one.
+	 */
+	private clickShare(): number {
+		let realms = 1;
+		if (gameManager.realms[RealmTypes.PHOTONS]?.unlocked) realms++;
+		return 1 / realms;
+	}
+
 	private simulateClicks() {
 		const { clicksPerSecond } = this.config.botBehavior;
 		if (!this.activeNow) return;
 		if (clicksPerSecond <= 0) return;
-		// When another realm is active the player is clicking there, not the atom button.
-		// Atom auto-click (via upgrades) still fires through gameManager.tick().
-		if (gameManager.realms[RealmTypes.PHOTONS]?.unlocked) return;
 
-		const clicksThisTick = clicksPerSecond * (this.config.tickRate / 1000);
+		const clicksThisTick = clicksPerSecond * this.clickShare() * (this.config.tickRate / 1000);
+		if (clicksThisTick <= 0) return;
 		const clickPower = gameManager.clickPower;
 
 		gameManager.addAtoms(clickPower * clicksThisTick);
@@ -1004,7 +1014,7 @@ export class SimulationEngine {
 		if (!gameManager.realms[RealmTypes.PHOTONS]?.unlocked) return;
 
 		const deltaSeconds = this.config.tickRate / 1000;
-		const manualClicks = this.activeNow ? this.config.botBehavior.clicksPerSecond * deltaSeconds : 0;
+		const manualClicks = this.activeNow ? this.config.botBehavior.clicksPerSecond * this.clickShare() * deltaSeconds : 0;
 		const autoClicks = gameManager.photonAutoClicksPer5Seconds > 0 ? (gameManager.photonAutoClicksPer5Seconds / 5) * deltaSeconds : 0;
 		const totalClicks = manualClicks + autoClicks;
 		if (totalClicks <= 0) return;
