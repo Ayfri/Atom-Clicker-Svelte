@@ -29,6 +29,9 @@ export type ToastOptions = Omit<Toast, 'id' | 'duration' | 'type'> & {
 	duration?: number;
 };
 
+/** Monotonic, because a Date.now() based id can collide with another toast still alive in the list. */
+let nextToastId = 0;
+
 class ToastStore {
 	list = $state<Toast[]>([]);
 
@@ -53,7 +56,7 @@ class ToastStore {
 			actionLabel: options.actionLabel,
 			duration: options.duration ?? 10_000,
 			icon: options.icon,
-			id: Date.now() + Math.floor(Math.random() * 100_000),
+			id: ++nextToastId,
 			is_infinite: options.is_infinite ?? false,
 			message: options.message,
 			title: options.title,
