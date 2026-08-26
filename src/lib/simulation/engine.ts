@@ -514,7 +514,6 @@ export class SimulationEngine {
 		const skillPointsUsed = Object.values(gameManager.skillPointBoosts || {}).reduce((sum, points) => sum + (points ?? 0), 0);
 		const playerLevel = gameManager.getLevelFromTotalXP(gameManager.totalXP);
 		const radiationMultiplier = gameManager.radiationMultiplier;
-		const baseGlobalMultiplier = radiationMultiplier > 0 ? gameManager.globalMultiplier / radiationMultiplier : gameManager.globalMultiplier;
 
 		const globalOptions = { type: 'global' as const };
 		// One pass over the effect sources; each group used to filter the whole list on its own.
@@ -542,12 +541,7 @@ export class SimulationEngine {
 		const globalProtonBoostMultiplier = foldEffects(protonBoostSources, gameManager, 1, globalOptions);
 		const globalProtoniseMultiplier = foldEffects(protoniseSources, gameManager, 1, globalOptions);
 
-		let levelBoostCount = 0;
-		const ownedUpgrades = new Set<string>();
-		for (const id of gameManager.upgrades) {
-			ownedUpgrades.add(id);
-			if (id.startsWith('level_boost_')) levelBoostCount++;
-		}
+		const ownedUpgrades = new Set<string>(gameManager.upgrades);
 
 		const getUpgradeContribution = (id: string): number => {
 			if (!ownedUpgrades.has(id)) return 1;
@@ -581,7 +575,6 @@ export class SimulationEngine {
 			atomsCurrencyBoost: gameManager.getCurrencyBoostMultiplier(CurrenciesTypes.ATOMS),
 			atomsPerClick: gameManager.clickPower,
 			atomsPerSecond: gameManager.atomsPerSecond,
-			baseGlobalMultiplier,
 			bonusMultiplier: gameManager.bonusMultiplier,
 			buildingLevelFactors,
 			buildingLevels,
@@ -602,7 +595,6 @@ export class SimulationEngine {
 			globalProtoniseMultiplier,
 			globalSkillsMultiplier,
 			groupContributions,
-			levelBoostCount,
 			photons: currenciesManager.getAmount(CurrenciesTypes.PHOTONS),
 			photonUpgradeLevels,
 			playerLevel,

@@ -51,7 +51,6 @@ export interface SimulationSnapshot {
 	atomsCurrencyBoost: number;
 	atomsPerClick: number;
 	atomsPerSecond: number;
-	baseGlobalMultiplier: number;
 	bonusMultiplier: number;
 	buildingLevels: number;
 	buildingLevelFactors: Partial<Record<BuildingType, number>>;
@@ -75,7 +74,6 @@ export interface SimulationSnapshot {
 		protonBoost: number[];
 		protoniseBoost: number[];
 	};
-	levelBoostCount: number;
 	globalProtonBoostMultiplier: number;
 	globalProtoniseMultiplier: number;
 	globalSkillsMultiplier: number;
