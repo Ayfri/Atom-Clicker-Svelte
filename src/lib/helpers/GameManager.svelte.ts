@@ -4,7 +4,7 @@ import { CurrenciesTypes, type CurrencyName } from '$data/currencies';
 import type { DailyStats } from '$data/dailyQuests';
 import { FeatureTypes } from '$data/features';
 import { ALL_PHOTON_UPGRADES, getPhotonUpgradeCost } from '$data/photonUpgrades';
-import { POWER_UP_DEFAULT_INTERVAL } from '$data/powerUp';
+import { POWER_UP_DEFAULT_INTERVAL, POWER_UP_MIN_INTERVAL } from '$data/powerUp';
 import { REALMS, RealmTypes } from '$data/realms';
 import { SKILL_UPGRADES } from '$data/skillTree';
 import { UPGRADES } from '$data/upgrades';
@@ -287,7 +287,9 @@ export class GameManager {
 
 	powerUpInterval = $derived.by(() => {
 		const options = { type: 'power_up_interval' as const };
-		return POWER_UP_DEFAULT_INTERVAL.map(interval => foldEffects(this.allEffectSources, this, interval, options)) as [number, number];
+		return POWER_UP_DEFAULT_INTERVAL.map(interval =>
+			Math.max(POWER_UP_MIN_INTERVAL, foldEffects(this.allEffectSources, this, interval, options))
+		) as [number, number];
 	});
 
 	protoniseProtonsGain = $derived.by(() => {
