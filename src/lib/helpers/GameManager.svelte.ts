@@ -904,7 +904,7 @@ export class GameManager {
 	incrementClicks(isAuto = false) {
 		this.totalClicksRun += 1;
 		this.totalClicksAllTime += 1;
-		this.dailyStats = { ...this.dailyStats, clicks: this.dailyStats.clicks + 1 };
+		this.dailyStats.clicks += 1;
 
 		const shouldUpdate =
 			isAuto ?
