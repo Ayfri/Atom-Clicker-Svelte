@@ -38,6 +38,7 @@
 
 <div
 	class="fixed bottom-0 right-0 z-100 flex flex-col gap-3 p-4 sm:bottom-8 sm:right-8 sm:p-0"
+	id="toaster"
 >
 	{#each toastStore.list as toast (toast.id)}
 		<Toast
