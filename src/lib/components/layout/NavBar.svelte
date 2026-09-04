@@ -104,6 +104,17 @@
 
 	onDestroy(() => {
 		if (interval) clearInterval(interval);
+		document.documentElement.style.removeProperty('--mobile-nav-bottom');
+	});
+
+	// The phone nav floats over the realm, so anything else floating there reads this to dock below it instead of on top of it.
+	let mobileNavHeight = $state(0);
+	$effect(() => {
+		if (!mobile.current) {
+			document.documentElement.style.removeProperty('--mobile-nav-bottom');
+			return;
+		}
+		document.documentElement.style.setProperty('--mobile-nav-bottom', `calc(33vh + ${mobileNavHeight / 2}px)`);
 	});
 </script>
 
@@ -117,6 +128,7 @@
 		class:px-4={visibleComponents.length + 1 >= 5}
 		class:w-full={visibleComponents.length + 1 >= 5}
 		style:grid-template-columns={visibleComponents.length + 1 >= 5 ? 'auto auto' : 'auto'}
+		bind:clientHeight={mobileNavHeight}
 	>
 		{#each visibleComponents as link}
 			<NotificationDot hasNotification={link.notification ? link.notification() : false}>

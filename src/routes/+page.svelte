@@ -179,7 +179,7 @@
 		     own padding would otherwise swallow taps meant for the button underneath. -->
 		<div
 			class="fixed right-4 z-30 bg-black/10 backdrop-blur-xs border border-white/10 rounded-lg p-1 transition-all duration-300 pointer-events-none"
-			style="top: calc(var(--banner-height) + 5rem)"
+			style="top: {mobile.current ? 'calc(var(--mobile-nav-bottom, 33vh) + 1rem)' : 'calc(var(--banner-height) + 5rem)'}"
 		>
 			<div class="flex flex-col gap-1">
 				{#each realmManager.availableRealms as realm (realm.id)}
@@ -217,12 +217,15 @@
 			{@const background = getRealmBackground(realm)}
 
 			<div
-				class="absolute inset-0 transition-all duration-300 ease-in-out overflow-hidden"
+				class="absolute inset-x-0 bottom-0 transition-all duration-300 ease-in-out overflow-hidden"
 				class:opacity-100={realmManager.selectedRealm.id === realm.id}
 				class:translate-x-0={realmManager.selectedRealm.id === realm.id}
 				class:opacity-0={realmManager.selectedRealm.id !== realm.id}
 				class:pointer-events-none={realmManager.selectedRealm.id !== realm.id}
-				style="transform: translateX({realmManager.selectedRealm.id === realm.id ? '0'
+				style="top: {mobile.current ? 'calc(3rem + var(--banner-height))' : '0'}; transform: translateX({(
+					realmManager.selectedRealm.id === realm.id
+				) ?
+					'0'
 				: i > realmManager.availableRealms.findIndex(r => r.id === realmManager.selectedRealm.id) ? '100%'
 				: '-100%'}); {background ? `background-image: ${background};` : ''}"
 			>
