@@ -79,11 +79,11 @@
 		hasCheckedCloudSaveOnLoad = true;
 
 		try {
-			const cloudSaveInfo = await supabaseAuth.getCloudSaveInfo();
-			if (typeof cloudSaveInfo?.inGameTime !== 'number') return;
+			const cloudGameTime = await supabaseAuth.getCloudSaveTime();
+			if (cloudGameTime === null) return;
 
 			const localGameTime = gameManager.inGameTime || 0;
-			if (cloudSaveInfo.inGameTime > localGameTime + CLOUD_PULL_WARNING_THRESHOLD_MS) {
+			if (cloudGameTime > localGameTime + CLOUD_PULL_WARNING_THRESHOLD_MS) {
 				toastStore.warning({
 					action: () => ui.openSettings('cloud'),
 					actionLabel: 'Open Cloud Save',
@@ -97,25 +97,12 @@
 		}
 	}
 
-	onMount(async () => {
-		gameManager.initialize();
+	/** Account bootstrap is network-bound, so it runs beside the game loop instead of delaying it. */
+	async function bootstrapAccount() {
+		await supabaseAuth.init();
 
-		if (isLocalStorageUnavailable()) {
-			toastStore.warning({
-				title: 'Progress Will Not Be Saved',
-				message: 'Your browser is blocking storage for this page, so the game cannot save locally. Sign in to save to the cloud, or allow site data.',
-				duration: 20_000,
-			});
-		}
-
-		const authInitialization = supabaseAuth.init();
-		while (supabaseAuth.loading && !supabaseAuth.isAuthenticated) {
-			await new Promise(resolve => setTimeout(resolve, 0));
-		}
 		quarkUserId = supabaseAuth.user?.id ?? null;
-		if (quarkUserId) await quarksManager.sync();
-		await authInitialization;
-		await checkCloudSaveOnLoad();
+		await Promise.all([quarkUserId ? quarksManager.sync() : Promise.resolve(), checkCloudSaveOnLoad()]);
 
 		authUnsubscribe = supabaseAuth.subscribe(() => {
 			const userId = supabaseAuth.user?.id ?? null;
@@ -129,6 +116,18 @@
 				checkCloudSaveOnLoad();
 			}
 		});
+	}
+
+	onMount(() => {
+		gameManager.initialize();
+
+		if (isLocalStorageUnavailable()) {
+			toastStore.warning({
+				title: 'Progress Will Not Be Saved',
+				message: 'Your browser is blocking storage for this page, so the game cannot save locally. Sign in to save to the cloud, or allow site data.',
+				duration: 20_000,
+			});
+		}
 
 		if (gameManager.offlineProgressSummary && !ui.activeModal) {
 			ui.openModal(OfflineProgress);
@@ -157,6 +156,8 @@
 				console.error('Failed to save game:', e);
 			}
 		}, SAVE_INTERVAL);
+
+		bootstrapAccount();
 	});
 
 	onDestroy(() => {
