@@ -100,12 +100,12 @@
 			--speed: 2;
 		}
 
-		@media screen and (width <= 1000px) {
+		@media screen and (width < 64rem) {
 			--electron-line-spacing: 40px;
 			--initial-electrons-spacing: 110px;
 		}
 
-		@media screen and (width <= 600px) {
+		@media screen and (width < 40rem) {
 			--electron-line-spacing: 30px;
 			--initial-electrons-spacing: 100px;
 			--nucleus-size: 50px;
