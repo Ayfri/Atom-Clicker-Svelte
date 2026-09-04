@@ -754,6 +754,7 @@ export class GameManager {
 
 	purchaseUpgrade(id: string) {
 		const upgrade = UPGRADES[id];
+		if (!upgrade) return false;
 		const purchased = this.upgrades.includes(id);
 
 		if (!purchased && this.spendCurrency(upgrade.cost)) {

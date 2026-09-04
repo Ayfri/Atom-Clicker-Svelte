@@ -42,7 +42,9 @@
 	function startHold(event: PointerEvent) {
 		if (disabled || holding) return;
 		// Capture keeps the hold alive when the finger drifts off the button, which touch devices do constantly.
-		(event.currentTarget as HTMLButtonElement).setPointerCapture(event.pointerId);
+		try {
+			(event.currentTarget as HTMLButtonElement).setPointerCapture(event.pointerId);
+		} catch {}
 		holding = true;
 		startTime = performance.now();
 		frame = requestAnimationFrame(tick);
