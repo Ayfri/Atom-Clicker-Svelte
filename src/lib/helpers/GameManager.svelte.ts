@@ -1010,11 +1010,15 @@ export class GameManager {
 		return xpForLevel(level);
 	}
 
-	tick(deltaTime: number = 1000, skipAchievements = false) {
+	/**
+	 * `skipProduction` is what the browser passes: there the atoms are summed per frame in `+page.svelte` for a smooth
+	 * counter, and crediting them here too would pay every building twice. The simulation has no frame loop and pays here.
+	 */
+	tick(deltaTime: number = 1000, skipAchievements = false, skipProduction = false) {
 		this.inGameTime += deltaTime;
 
 		// Production - atoms per second scaled by deltaTime
-		const production = this.atomsPerSecond * (deltaTime / 1000);
+		const production = skipProduction ? 0 : this.atomsPerSecond * (deltaTime / 1000);
 		if (production > 0) {
 			this.addAtoms(production);
 		}
@@ -1056,7 +1060,7 @@ export class GameManager {
 		if (this.gameInterval) clearInterval(this.gameInterval);
 
 		this.gameInterval = setInterval(() => {
-			this.tick(1000);
+			this.tick(1000, false, true);
 		}, 1000);
 	}
 }
