@@ -1,14 +1,13 @@
-# What's new 04-09-2026
+# Unreleased
 
-- **Faster Loading**: The game now downloads roughly half as much code before it starts, and panels like the Skill Tree, Leaderboard and Settings load in the background once the game is running.
-- **Faster Loading**: The game loop starts immediately instead of waiting for the account, cloud save and leaderboard requests to answer.
-
-# What's new 26-08-2026
-
+- **Faster Loading**: The game downloads roughly half as much code before it starts, the game loop runs right away instead of waiting for the account, cloud save and leaderboard requests, and panels like the Skill Tree, Leaderboard and Settings load in the background.
+- **Smoother Gameplay**: The game loop, click particles, achievements and upgrade effects do far less work every frame, and the Photon Realm animations stop while you are in another realm.
 - **Rebalancing**: Building level bonus is now a smooth doubling every 100 owned plus a 1.5x per level, replacing the old cliff at exactly 100 owned.
 - **Rebalancing**: Buildings now pay exactly the atoms per second shown in the counter, instead of twice that.
+- **Rebalancing**: Auto-clicks now pay once instead of twice.
 - **Rebalancing**: Level Boost and Atom Soup (achievement) upgrades now stack additively within their own family instead of multiplying each other into absurd numbers.
 - **Rebalancing**: Power-ups can no longer spawn closer together than 20 seconds apart.
+- **Mobile**: The realm switcher sits below the navigation instead of over it, toasts and the autosave indicator no longer swallow taps meant for a modal, and holding a button keeps working when your finger drifts.
 
 # What's new 12-08-2026
 
