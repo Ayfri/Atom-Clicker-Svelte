@@ -60,7 +60,7 @@
 				<button
 					class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all whitespace-nowrap text-left group
 					{activeTab === tab.id
-						? 'bg-accent/20 text-accent border border-accent/30 shadow-[0_0_15px_rgba(var(--color-accent),0.1)]'
+						? 'bg-accent/20 text-accent border border-accent/30 shadow-[0_0_15px] shadow-accent/10'
 						: 'hover:bg-white/5 text-white/50 hover:text-white border border-transparent'}"
 					onclick={() => activeTab = tab.id}
 				>
