@@ -1,3 +1,8 @@
+# What's new 04-09-2026
+
+- **Faster Loading**: The game now downloads roughly half as much code before it starts, and panels like the Skill Tree, Leaderboard and Settings load in the background once the game is running.
+- **Faster Loading**: The game loop starts immediately instead of waiting for the account, cloud save and leaderboard requests to answer.
+
 # What's new 26-08-2026
 
 - **Rebalancing**: Building level bonus is now a smooth doubling every 100 owned plus a 1.5x per level, replacing the old cliff at exactly 100 owned.
